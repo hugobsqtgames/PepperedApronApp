@@ -189,3 +189,11 @@ export const contactSchema = z
     message: reqText(LIMITS.contactMessage),
   })
   .strict();
+
+export type FavoriteData = z.infer<typeof favoriteDataSchema>;
+export type CollectionData = z.infer<typeof collectionDataSchema>;
+export type CollectionItemData = z.infer<typeof collectionItemDataSchema>;
+export type MealPlanEntryData = z.infer<typeof mealPlanEntryDataSchema>;
+export type ShoppingListData = z.infer<typeof shoppingListDataSchema>;
+export type ShoppingItemData = z.infer<typeof shoppingItemDataSchema>;
+export type ShoppingCategoryData = z.infer<typeof shoppingCategoryDataSchema>;

@@ -120,3 +120,27 @@ export function diffFields(before: Record<string, unknown> | null, after: Record
   const keys = new Set([...Object.keys(before), ...Object.keys(after)]);
   return [...keys].filter((k) => JSON.stringify(before[k]) !== JSON.stringify(after[k]));
 }
+
+import type {
+  CollectionData,
+  CollectionItemData,
+  FavoriteData,
+  MealPlanEntryData,
+  RecipeData,
+  SettingsData,
+  ShoppingCategoryData,
+  ShoppingItemData,
+  ShoppingListData,
+} from './schemas';
+
+export interface EntityDataMap {
+  recipe: RecipeData;
+  favorite: FavoriteData;
+  collection: CollectionData;
+  collectionItem: CollectionItemData;
+  mealPlanEntry: MealPlanEntryData;
+  shoppingList: ShoppingListData;
+  shoppingItem: ShoppingItemData;
+  shoppingCategory: ShoppingCategoryData;
+  settings: SettingsData;
+}
