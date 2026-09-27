@@ -44,3 +44,18 @@ describe('parseIngredientLine', () => {
     expect(p('0 g de sucre')?.quantity).toBeNull();
   });
 });
+
+describe('round trip with localized unit labels', () => {
+  it.each([
+    ['2 c. à soupe huile', 'fr'],
+    ['1 c. à café sel', 'fr'],
+    ['2 cdas aceite', 'es'],
+    ['3 EL Öl', 'de'],
+    ['2 cucchiai olio', 'it'],
+    ['2 gousses ail', 'fr'],
+    ['1 Päckchen Hefe', 'de'],
+  ])('%s', (line) => {
+    const p0 = p(line)!;
+    expect(p0.unit).not.toBeNull();
+  });
+});

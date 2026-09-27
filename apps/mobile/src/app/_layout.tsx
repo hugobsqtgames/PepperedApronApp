@@ -11,7 +11,7 @@ import { ShareIntentProvider } from 'expo-share-intent';
 import { resolveLocale, setLanguage } from '../i18n';
 import { useRuntime } from '../hooks/runtime';
 import { ThemeProvider, useTheme } from '../theme/ThemeProvider';
-import { ActionSheetProvider, ToastProvider } from '../ui';
+import { ActionSheetProvider, PromptProvider, ToastProvider } from '../ui';
 import type { SettingsData } from '@pepperedapron/core';
 
 void SplashScreen.preventAutoHideAsync();
@@ -86,7 +86,9 @@ export default function RootLayout() {
           <ThemeProvider preference={settings?.theme ?? 'system'}>
             <ToastProvider>
               <ActionSheetProvider>
-                <Navigator />
+                <PromptProvider>
+                  <Navigator />
+                </PromptProvider>
               </ActionSheetProvider>
             </ToastProvider>
           </ThemeProvider>

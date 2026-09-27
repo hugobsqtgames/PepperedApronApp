@@ -552,6 +552,10 @@ const fr = {
     reportedAt: 'Signalé le {{date}}',
     empty: 'Rien à traiter 🎉',
     events: 'Événements (30 j)',
+    statusNew: 'Nouveaux',
+    statusRead: 'Lus',
+    statusAnswered: 'Répondus',
+    statusClosed: 'Clos',
   },
   notifications: {
     tonight: '🍝 Ce soir : {{title}}',

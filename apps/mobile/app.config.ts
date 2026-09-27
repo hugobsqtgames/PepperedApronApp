@@ -1,4 +1,13 @@
 import type { ConfigContext, ExpoConfig } from 'expo/config';
+import { withEntitlementsPlist, type ConfigPlugin } from 'expo/config-plugins';
+
+/** Several plugins add the same App Group; keep the entitlement list unique. */
+const withUniqueAppGroups: ConfigPlugin = (c) =>
+  withEntitlementsPlist(c, (m) => {
+    const k = 'com.apple.security.application-groups';
+    if (Array.isArray(m.modResults[k])) m.modResults[k] = [...new Set(m.modResults[k] as string[])];
+    return m;
+  });
 
 /**
  * One codebase, three environments. APP_VARIANT selects bundle ids, names and endpoints so that
@@ -15,7 +24,7 @@ const appGroup = `group.${bundleId}`;
 const ADMOB_IOS_APP_ID = process.env.ADMOB_IOS_APP_ID ?? 'ca-app-pub-3940256099942544~1458002511';
 const ADMOB_ANDROID_APP_ID = process.env.ADMOB_ANDROID_APP_ID ?? 'ca-app-pub-3940256099942544~3347511713';
 
-export default ({ config }: ConfigContext): ExpoConfig => ({
+const buildConfig = ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
   name: variant === 'production' ? 'PepperedApron' : `PepperedApron ${variant === 'development' ? 'Dev' : 'Beta'}`,
   slug: 'pepperedapron',
@@ -132,8 +141,9 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
         userTrackingUsageDescription: 'Allowing tracking shows more relevant ads. PepperedApron stays free either way.',
       },
     ],
-    'expo-live-activity',
+    // Order matters: apple-targets must create the widget target before expo-live-activity adds its own.
     '@bacons/apple-targets',
+    'expo-live-activity',
     ...(process.env.SENTRY_ORG && process.env.SENTRY_PROJECT
       ? ([['@sentry/react-native', { organization: process.env.SENTRY_ORG, project: process.env.SENTRY_PROJECT }]] as [string, unknown][])
       : []),
@@ -147,3 +157,5 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     eas: { projectId: process.env.EAS_PROJECT_ID },
   },
 });
+
+export default (ctx: ConfigContext): ExpoConfig => withUniqueAppGroups(buildConfig(ctx)) as ExpoConfig;

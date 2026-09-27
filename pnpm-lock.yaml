@@ -4,6 +4,11 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+patchedDependencies:
+  '@bacons/apple-targets@5.0.0':
+    hash: 8a7cd96e6ec578760764e8c68588639595aad00dd9b9fe2e328a4395ed95dd83
+    path: patches/@bacons__apple-targets@5.0.0.patch
+
 importers:
 
   .:
@@ -86,7 +91,7 @@ importers:
     dependencies:
       '@bacons/apple-targets':
         specifier: ^5.0.0
-        version: 5.0.0(expo@57.0.25)(typescript@6.0.3)
+        version: 5.0.0(patch_hash=8a7cd96e6ec578760764e8c68588639595aad00dd9b9fe2e328a4395ed95dd83)(expo@57.0.25)(typescript@6.0.3)
       '@expo/vector-icons':
         specifier: ^15.1.1
         version: 15.1.1(expo-font@57.0.4)(react-native@0.86.3(@babel/core@7.29.7)(@react-native/jest-preset@0.86.3(@babel/core@7.29.7)(react@19.2.3))(@react-native/metro-config@0.86.3(@babel/core@7.29.7))(@types/react@19.2.18)(react@19.2.3))(react@19.2.3)
@@ -6741,7 +6746,7 @@ snapshots:
       '@babel/helper-string-parser': 7.29.7
       '@babel/helper-validator-identifier': 7.29.7
 
-  '@bacons/apple-targets@5.0.0(expo@57.0.25)(typescript@6.0.3)':
+  '@bacons/apple-targets@5.0.0(patch_hash=8a7cd96e6ec578760764e8c68588639595aad00dd9b9fe2e328a4395ed95dd83)(expo@57.0.25)(typescript@6.0.3)':
     dependencies:
       '@bacons/xcode': 1.0.0-alpha.32
       '@expo/prebuild-config': 55.0.22(expo@57.0.25)(typescript@6.0.3)
@@ -8132,7 +8137,9 @@ snapshots:
       metro-runtime: 0.84.6
     transitivePeerDependencies:
       - '@babel/core'
+      - bufferutil
       - supports-color
+      - utf-8-validate
 
   '@react-native/normalize-colors@0.79.7': {}
 

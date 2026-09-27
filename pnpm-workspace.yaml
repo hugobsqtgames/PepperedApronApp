@@ -5,3 +5,5 @@ packages:
 onlyBuiltDependencies:
   - better-sqlite3
   - esbuild
+patchedDependencies:
+  '@bacons/apple-targets@5.0.0': patches/@bacons__apple-targets@5.0.0.patch
