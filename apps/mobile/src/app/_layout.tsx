@@ -12,6 +12,9 @@ import { resolveLocale, setLanguage } from '../i18n';
 import { useRuntime } from '../hooks/runtime';
 import { ThemeProvider, useTheme } from '../theme/ThemeProvider';
 import { ActionSheetProvider, PromptProvider, ToastProvider } from '../ui';
+import { UpdateRequired } from '../features/UpdateRequired';
+import { compareVersions } from '../lib/version';
+import { ENV } from '../services/env';
 import type { SettingsData } from '@pepperedapron/core';
 
 void SplashScreen.preventAutoHideAsync();
@@ -40,6 +43,9 @@ function Navigator() {
   useEffect(() => {
     void SystemUI.setBackgroundColorAsync(colors.background);
   }, [colors.background]);
+  if (rt.config && compareVersions(ENV.appVersion, rt.config.minAppVersion) < 0) {
+    return <UpdateRequired config={rt.config} />;
+  }
   return (
     <>
       <StatusBar style={dark ? 'light' : 'dark'} />

@@ -655,6 +655,11 @@ const fr = {
     nothing: 'Rien de prévu',
   },
   ads: { label: 'Publicité' },
+  update: {
+    title: 'Une mise à jour est nécessaire',
+    body: "Cette version de PepperedApron n'est plus prise en charge. Vos recettes restent sur cet appareil et se synchroniseront après la mise à jour.",
+    action: 'Mettre à jour',
+  },
 };
 
 export default fr;

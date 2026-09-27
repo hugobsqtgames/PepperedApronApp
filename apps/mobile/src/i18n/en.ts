@@ -653,6 +653,11 @@ const en: Translations = {
     nothing: 'Nothing planned',
   },
   ads: { label: 'Advertisement' },
+  update: {
+    title: 'Update required',
+    body: 'This version of PepperedApron is no longer supported. Your recipes stay on this device and will sync again after the update.',
+    action: 'Update',
+  },
 };
 
 export default en;

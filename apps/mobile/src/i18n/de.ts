@@ -661,6 +661,11 @@ const de: Translations = {
     nothing: 'Nichts geplant',
   },
   ads: { label: 'Werbung' },
+  update: {
+    title: 'Update erforderlich',
+    body: 'Diese Version von PepperedApron wird nicht mehr unterstützt. Deine Rezepte bleiben auf diesem Gerät und werden nach dem Update wieder synchronisiert.',
+    action: 'Aktualisieren',
+  },
 };
 
 export default de;

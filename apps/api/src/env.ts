@@ -60,7 +60,6 @@ const schema = z.object({
   MIN_APP_VERSION: z.string().default('2.0.0'),
   RATE_LIMIT_ENABLED: bool.default(true),
   ADMIN_EMAILS: z.string().default(''),
-  SENTRY_DSN: z.string().optional(),
   /** Legal notice (mentions légales): required in production. */
   LEGAL_PUBLISHER: z.string().default(''),
   LEGAL_ADDRESS: z.string().default(''),

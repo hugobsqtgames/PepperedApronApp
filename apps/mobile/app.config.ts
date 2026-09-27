@@ -74,7 +74,24 @@ const buildConfig = ({ config }: ConfigContext): ExpoConfig => ({
     },
     privacyManifests: {
       NSPrivacyTracking: false,
-      NSPrivacyCollectedDataTypes: [],
+      // Must match the App Store privacy labels (docs/PRIVACY.md). Ads SDKs ship their own manifests.
+      NSPrivacyCollectedDataTypes: [
+        ...(
+          [
+            ['EmailAddress', 'AppFunctionality'],
+            ['Name', 'AppFunctionality'],
+            ['PhotosorVideos', 'AppFunctionality'],
+            ['OtherUserContent', 'AppFunctionality'],
+            ['ProductInteraction', 'Analytics'],
+            ['CrashData', 'AppFunctionality'],
+          ] as const
+        ).map(([type, purpose]) => ({
+          NSPrivacyCollectedDataType: `NSPrivacyCollectedDataType${type}`,
+          NSPrivacyCollectedDataTypeLinked: true,
+          NSPrivacyCollectedDataTypeTracking: false,
+          NSPrivacyCollectedDataTypePurposes: [`NSPrivacyCollectedDataTypePurpose${purpose}`],
+        })),
+      ],
       NSPrivacyAccessedAPITypes: [
         {
           NSPrivacyAccessedAPIType: 'NSPrivacyAccessedAPICategoryUserDefaults',
