@@ -1,0 +1,8 @@
+{
+  "ios": {
+    "CFBundleDisplayName": "PepperedApron",
+    "NSCameraUsageDescription": "PepperedApron usa la cámara para añadir una foto a tus recetas o leer una receta impresa.",
+    "NSPhotoLibraryUsageDescription": "PepperedApron accede a tus fotos para ilustrar tus recetas o importar una receta desde una imagen.",
+    "NSUserTrackingUsageDescription": "Permitir el seguimiento muestra anuncios más relevantes. PepperedApron sigue siendo gratis en cualquier caso."
+  }
+}

@@ -131,7 +131,9 @@ export class LocalStore {
   // ------------------------------------------------------------------ events
   subscribe(fn: Listener): () => void {
     this.listeners.add(fn);
-    return () => this.listeners.delete(fn);
+    return () => {
+      this.listeners.delete(fn);
+    };
   }
   private emit(entities: Iterable<SyncEntity>) {
     const set = new Set(entities);

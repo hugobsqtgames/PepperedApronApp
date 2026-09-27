@@ -43,7 +43,9 @@ export class SyncEngine {
   }
   subscribe(fn: (s: SyncSnapshot) => void) {
     this.listeners.add(fn);
-    return () => this.listeners.delete(fn);
+    return () => {
+      this.listeners.delete(fn);
+    };
   }
   private set(p: Partial<SyncSnapshot>) {
     this.snap = { ...this.snap, ...p };
