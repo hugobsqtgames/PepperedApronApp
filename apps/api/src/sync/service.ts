@@ -97,12 +97,21 @@ export class SyncService {
       return { ...(done.result as PushResult), status: 'duplicate' };
     }
     let result: PushResult;
-    try {
-      result = await this.d.db.transaction(async (tx) => {
+    const run = () =>
+      this.d.db.transaction(async (tx) => {
         const r = await this.applyInTx(tx, userId, op);
         await tx.insert(syncOps).values({ opId: op.opId, userId, result: r });
         return r;
       });
+    const isUnique = (e: unknown) => (e as { code?: string }).code === '23505' || (e as { cause?: { code?: string } }).cause?.code === '23505';
+    try {
+      try {
+        result = await run();
+      } catch (e) {
+        // Two devices created the same deterministic row concurrently: retry once as an update.
+        if (!isUnique(e)) throw e;
+        result = await run();
+      }
     } catch (e) {
       if (e instanceof OpError) {
         result = { opId: op.opId, status: e.status, error: e.code };
@@ -111,7 +120,7 @@ export class SyncService {
           const scope = await scopeOf(this.d.db, userId);
           if (row[0] && canAccess(scope, row[0] as Row)) result.record = await this.recordFor(this.d.db, op.entity, row[0] as Row);
         }
-      } else if ((e as { code?: string }).code === '23505' || (e as { cause?: { code?: string } }).cause?.code === '23505') {
+      } else if (isUnique(e)) {
         result = { opId: op.opId, status: 'rejected', error: 'duplicate' };
       } else {
         throw e;

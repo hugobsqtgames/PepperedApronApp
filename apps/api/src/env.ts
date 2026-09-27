@@ -54,6 +54,11 @@ const schema = z.object({
   RATE_LIMIT_ENABLED: bool.default(true),
   ADMIN_EMAILS: z.string().default(''),
   SENTRY_DSN: z.string().optional(),
+  /** Legal notice (mentions légales): required in production. */
+  LEGAL_PUBLISHER: z.string().default(''),
+  LEGAL_ADDRESS: z.string().default(''),
+  LEGAL_CONTACT_EMAIL: z.string().default(''),
+  LEGAL_HOSTING: z.string().default(''),
 });
 
 export type Env = z.infer<typeof schema>;
@@ -69,6 +74,9 @@ export function loadEnv(source: Record<string, string | undefined> = process.env
     throw new Error('STORAGE_DRIVER=s3 requires S3_BUCKET, S3_ACCESS_KEY_ID, S3_SECRET_ACCESS_KEY and MEDIA_PUBLIC_URL');
   }
   if (env.MAIL_DRIVER === 'resend' && !env.RESEND_API_KEY) throw new Error('MAIL_DRIVER=resend requires RESEND_API_KEY');
+  if (env.NODE_ENV === 'production' && (!env.LEGAL_PUBLISHER || !env.LEGAL_CONTACT_EMAIL || !env.LEGAL_ADDRESS || !env.LEGAL_HOSTING)) {
+    throw new Error('Production requires LEGAL_PUBLISHER, LEGAL_ADDRESS, LEGAL_CONTACT_EMAIL and LEGAL_HOSTING');
+  }
   if ((env.NODE_ENV === 'production' || env.NODE_ENV === 'staging') && env.STORAGE_DRIVER === 'local') {
     throw new Error('Local storage is not allowed in staging/production');
   }
