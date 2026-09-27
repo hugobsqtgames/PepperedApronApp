@@ -2,9 +2,22 @@ import type { TFunction } from 'i18next';
 import { ApiError, NetworkError, ValidationError } from '@pepperedapron/client';
 
 const KNOWN = new Set([
-  'server_unavailable', 'session_expired', 'rate_limited', 'invalid_credentials', 'email_in_use', 'email_in_use_sign_in_with_password',
-  'invalid_or_expired_token', 'invalid_invite', 'already_in_household', 'publish_requires_verified_email', 'upload_failed',
-  'not_found', 'forbidden', 'already_reported', 'fetch_blocked_address', 'fetch_invalid_url',
+  'server_unavailable',
+  'session_expired',
+  'rate_limited',
+  'invalid_credentials',
+  'email_in_use',
+  'email_in_use_sign_in_with_password',
+  'invalid_or_expired_token',
+  'invalid_invite',
+  'already_in_household',
+  'publish_requires_verified_email',
+  'upload_failed',
+  'not_found',
+  'forbidden',
+  'already_reported',
+  'fetch_blocked_address',
+  'fetch_invalid_url',
 ]);
 
 /** Map any error to a friendly, translated sentence. Technical details never reach the UI. */

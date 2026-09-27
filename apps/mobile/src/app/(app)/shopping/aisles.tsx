@@ -24,7 +24,16 @@ export default function Aisles() {
     void repos.setCategoryOrder(next);
   };
   return (
-    <ScrollView style={{ backgroundColor: colors.background }} contentContainerStyle={{ padding: space.xl, gap: space.lg, maxWidth: 640, width: '100%', alignSelf: 'center' }}>
+    <ScrollView
+      style={{ backgroundColor: colors.background }}
+      contentContainerStyle={{
+        padding: space.xl,
+        gap: space.lg,
+        maxWidth: 640,
+        width: '100%',
+        alignSelf: 'center',
+      }}
+    >
       <Stack.Screen options={{ headerShown: true, title: t('shopping.aisles') }} />
       <Text color="textMuted">{t('shopping.aislesHint')}</Text>
       <Group>
@@ -32,18 +41,51 @@ export default function Aisles() {
           <ListRow
             key={c.key}
             title={aisleName(c.key, custom, t)}
-            onPress={c.custom ? () => prompt({ title: t('common.rename'), initial: aisleName(c.key, custom, t), maxLength: 60, onSubmit: (v) => void repos.renameCategory(c.key, v) }) : undefined}
+            onPress={
+              c.custom
+                ? () =>
+                    prompt({
+                      title: t('common.rename'),
+                      initial: aisleName(c.key, custom, t),
+                      maxLength: 60,
+                      onSubmit: (v) => void repos.renameCategory(c.key, v),
+                    })
+                : undefined
+            }
             chevron={false}
             right={
               <View style={{ flexDirection: 'row' }}>
-                <IconButton icon="chevron-up" label={`${t('editor.moveUp')} ${aisleName(c.key, custom, t)}`} variant="plain" size={40} onPress={() => move(i, -1)} />
-                <IconButton icon="chevron-down" label={`${t('editor.moveDown')} ${aisleName(c.key, custom, t)}`} variant="plain" size={40} onPress={() => move(i, 1)} />
+                <IconButton
+                  icon="chevron-up"
+                  label={`${t('editor.moveUp')} ${aisleName(c.key, custom, t)}`}
+                  variant="plain"
+                  size={40}
+                  onPress={() => move(i, -1)}
+                />
+                <IconButton
+                  icon="chevron-down"
+                  label={`${t('editor.moveDown')} ${aisleName(c.key, custom, t)}`}
+                  variant="plain"
+                  size={40}
+                  onPress={() => move(i, 1)}
+                />
               </View>
             }
           />
         ))}
       </Group>
-      <Button title={t('shopping.newAisle')} icon="add" variant="secondary" onPress={() => prompt({ title: t('shopping.newAisle'), maxLength: 60, onSubmit: (v) => void repos.createCategory(v) })} />
+      <Button
+        title={t('shopping.newAisle')}
+        icon="add"
+        variant="secondary"
+        onPress={() =>
+          prompt({
+            title: t('shopping.newAisle'),
+            maxLength: 60,
+            onSubmit: (v) => void repos.createCategory(v),
+          })
+        }
+      />
     </ScrollView>
   );
 }

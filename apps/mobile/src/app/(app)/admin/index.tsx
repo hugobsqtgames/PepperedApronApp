@@ -49,10 +49,38 @@ export default function AdminHome() {
   if (error) return <ErrorState message={error} onRetry={load} />;
   if (!s) return <LoadingState />;
   return (
-    <ScrollView contentContainerStyle={{ padding: space.lg, gap: space.xl, maxWidth: 900, width: '100%', alignSelf: 'center' }} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={async () => { setRefreshing(true); await load(); setRefreshing(false); }} />}>
+    <ScrollView
+      contentContainerStyle={{
+        padding: space.lg,
+        gap: space.xl,
+        maxWidth: 900,
+        width: '100%',
+        alignSelf: 'center',
+      }}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={async () => {
+            setRefreshing(true);
+            await load();
+            setRefreshing(false);
+          }}
+        />
+      }
+    >
       <Group>
-        <ListRow icon="flag-outline" title={t('admin.reports')} value={String(s.openReports)} onPress={() => router.push('/admin/reports')} />
-        <ListRow icon="mail-outline" title={t('admin.messages')} value={String(s.newMessages)} onPress={() => router.push('/admin/messages')} />
+        <ListRow
+          icon="flag-outline"
+          title={t('admin.reports')}
+          value={String(s.openReports)}
+          onPress={() => router.push('/admin/reports')}
+        />
+        <ListRow
+          icon="mail-outline"
+          title={t('admin.messages')}
+          value={String(s.newMessages)}
+          onPress={() => router.push('/admin/messages')}
+        />
       </Group>
       <Text variant="title2">{t('admin.stats')}</Text>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space.md }}>

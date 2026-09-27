@@ -22,12 +22,43 @@ export const CATEGORY_PHOTOS: Record<RecipeCategory, ImageSourcePropType> = {
 };
 
 export const CATEGORY_EMOJI: Record<RecipeCategory, string> = {
-  breakfast: '🥐', appetizer: '🫒', starter: '🥗', soup: '🍲', salad: '🥬', main: '🍽️', pasta: '🍝', meat: '🥩',
-  fish: '🐟', vegetarian: '🥕', side: '🥔', sauce: '🥫', baking: '🥖', dessert: '🍰', snack: '🍪', drinks: '🍹',
+  breakfast: '🥐',
+  appetizer: '🫒',
+  starter: '🥗',
+  soup: '🍲',
+  salad: '🥬',
+  main: '🍽️',
+  pasta: '🍝',
+  meat: '🥩',
+  fish: '🐟',
+  vegetarian: '🥕',
+  side: '🥔',
+  sauce: '🥫',
+  baking: '🥖',
+  dessert: '🍰',
+  snack: '🍪',
+  drinks: '🍹',
 };
 
 /** Order used on the home screen (most common first). */
-export const HOME_CATEGORIES: RecipeCategory[] = ['main', 'pasta', 'dessert', 'soup', 'salad', 'vegetarian', 'fish', 'meat', 'breakfast', 'baking', 'starter', 'appetizer', 'side', 'snack', 'sauce', 'drinks'];
+export const HOME_CATEGORIES: RecipeCategory[] = [
+  'main',
+  'pasta',
+  'dessert',
+  'soup',
+  'salad',
+  'vegetarian',
+  'fish',
+  'meat',
+  'breakfast',
+  'baking',
+  'starter',
+  'appetizer',
+  'side',
+  'snack',
+  'sauce',
+  'drinks',
+];
 
 export const ONBOARDING_PHOTOS = {
   recipes: require('../../assets/photos/onboarding-recipes.jpg'),

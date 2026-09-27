@@ -3,7 +3,11 @@ import { ENV } from '../services/env';
 import { runtime } from '../services/runtime';
 
 export function mediaBaseUrl(): string {
-  return (runtime.config?.mediaBaseUrl ?? process.env.EXPO_PUBLIC_MEDIA_URL ?? `${ENV.apiUrl.replace(/\/+$/, '')}/v1/media`).replace(/\/+$/, '');
+  return (
+    runtime.config?.mediaBaseUrl ??
+    process.env.EXPO_PUBLIC_MEDIA_URL ??
+    `${ENV.apiUrl.replace(/\/+$/, '')}/v1/media`
+  ).replace(/\/+$/, '');
 }
 
 /** Local file while the upload is pending (offline), otherwise the CDN URL. */

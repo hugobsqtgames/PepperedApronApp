@@ -1,9 +1,17 @@
-export const esc = (s: unknown) => String(s ?? '').replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
+export const esc = (s: unknown) =>
+  String(s ?? '').replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
 
 export const LOGO_SVG = `<svg viewBox="0 0 64 64" width="40" height="40" aria-hidden="true"><rect width="64" height="64" rx="16" fill="#1F4D3A"/><path d="M24 14h16v6c0 2 1.5 3 3.5 3.5L46 24v22a6 6 0 0 1-6 6H24a6 6 0 0 1-6-6V24l2.5-.5C22.5 23 24 22 24 20z" fill="#F7F1E6"/><circle cx="32" cy="38" r="6" fill="#D9822B"/><path d="M32 30c1.5-3 4-4 6-4" stroke="#1F4D3A" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg>`;
 
 /** Minimal, dependency-free page shell sharing the app's palette (light + dark). */
-export function page(opts: { title: string; lang: string; body: string; description?: string; image?: string | null; appLink?: string | null }): string {
+export function page(opts: {
+  title: string;
+  lang: string;
+  body: string;
+  description?: string;
+  image?: string | null;
+  appLink?: string | null;
+}): string {
   return `<!doctype html><html lang="${esc(opts.lang)}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${esc(opts.title)} · PepperedApron</title>
 <meta name="description" content="${esc(opts.description ?? '')}">
@@ -31,5 +39,7 @@ input{width:100%;padding:12px;border-radius:12px;border:1px solid var(--line);ba
 export type WebLang = 'fr' | 'en' | 'es' | 'de' | 'it';
 export function pickLang(acceptLanguage: string | undefined): WebLang {
   const langs = (acceptLanguage ?? '').split(',').map((l) => l.trim().slice(0, 2).toLowerCase());
-  return (langs.find((l) => ['fr', 'en', 'es', 'de', 'it'].includes(l)) as WebLang | undefined) ?? 'en';
+  return (
+    (langs.find((l) => ['fr', 'en', 'es', 'de', 'it'].includes(l)) as WebLang | undefined) ?? 'en'
+  );
 }

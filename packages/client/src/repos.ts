@@ -41,17 +41,41 @@ export class ValidationError extends Error {
 
 function validate<T extends z.ZodType>(schema: T, data: unknown): z.infer<T> {
   const r = schema.safeParse(data);
-  if (!r.success) throw new ValidationError(r.error.issues.map((i) => ({ path: i.path.join('.'), code: i.code })));
+  if (!r.success)
+    throw new ValidationError(
+      r.error.issues.map((i) => ({ path: i.path.join('.'), code: i.code })),
+    );
   return r.data;
 }
 
 export type Recipe = LocalRecord<'recipe'>;
 
 export const emptyRecipe = (servings = 4): RecipeData => ({
-  title: '', description: null, photoKey: null, prepMinutes: null, cookMinutes: null, restMinutes: null, totalMinutes: null,
-  servings, yieldLabel: null, difficulty: null, seasons: [], category: null, ovenTemperatureC: null, ovenMode: null,
-  notes: null, tips: null, extraInfo: null, source: null, sourceUrl: null, tags: [], visibility: 'private',
-  ingredients: [], steps: [], originRecipeId: null, householdId: null,
+  title: '',
+  description: null,
+  photoKey: null,
+  prepMinutes: null,
+  cookMinutes: null,
+  restMinutes: null,
+  totalMinutes: null,
+  servings,
+  yieldLabel: null,
+  difficulty: null,
+  seasons: [],
+  category: null,
+  ovenTemperatureC: null,
+  ovenMode: null,
+  notes: null,
+  tips: null,
+  extraInfo: null,
+  source: null,
+  sourceUrl: null,
+  tags: [],
+  visibility: 'private',
+  ingredients: [],
+  steps: [],
+  originRecipeId: null,
+  householdId: null,
 });
 
 /** Turn an import draft into editable recipe data (the user reviews everything). */
@@ -68,12 +92,18 @@ export function recipeFromDraft(d: RecipeDraft, defaultServings = 4): RecipeData
     difficulty: d.difficulty,
     category: d.category,
     ovenTemperatureC: d.ovenTemperatureC,
-    notes: [d.notes, d.unparsed.length ? d.unparsed.join('\n') : null].filter(Boolean).join('\n\n') || null,
+    notes:
+      [d.notes, d.unparsed.length ? d.unparsed.join('\n') : null].filter(Boolean).join('\n\n') ||
+      null,
     tips: d.tips,
-    source: d.author ? `${d.source ?? ''}${d.source ? ' · ' : ''}${d.author}`.slice(0, 500) : d.source,
+    source: d.author
+      ? `${d.source ?? ''}${d.source ? ' · ' : ''}${d.author}`.slice(0, 500)
+      : d.source,
     sourceUrl: d.sourceUrl,
     tags: d.tags.slice(0, 20),
-    ingredients: d.ingredients.slice(0, 200).map((i) => ({ id: uuidv7(), ...i, name: i.name.slice(0, 200) })),
+    ingredients: d.ingredients
+      .slice(0, 200)
+      .map((i) => ({ id: uuidv7(), ...i, name: i.name.slice(0, 200) })),
     steps: d.steps.slice(0, 100).map((s) => ({ id: uuidv7(), ...s, text: s.text.slice(0, 3000) })),
   };
 }
@@ -116,7 +146,11 @@ export class Repos {
   }
   canEdit(r: Recipe): boolean {
     const hh = this.householdId();
-    return r.ownerId === this.userId() || r.ownerId === null || (hh !== null && r.data.householdId === hh);
+    return (
+      r.ownerId === this.userId() ||
+      r.ownerId === null ||
+      (hh !== null && r.data.householdId === hh)
+    );
   }
   async createRecipe(input: RecipeInput): Promise<Recipe> {
     const data = validate(recipeDataSchema, input);
@@ -130,11 +164,18 @@ export class Repos {
   }
   deleteRecipe(id: string) {
     // Local cascade mirrors the server so the UI is consistent while offline.
-    for (const f of this.store.all('favorite').filter((x) => x.data.recipeId === id)) void this.store.remove('favorite', f.id);
-    for (const c of this.store.all('collectionItem').filter((x) => x.data.recipeId === id)) void this.store.remove('collectionItem', c.id);
+    for (const f of this.store.all('favorite').filter((x) => x.data.recipeId === id))
+      void this.store.remove('favorite', f.id);
+    for (const c of this.store.all('collectionItem').filter((x) => x.data.recipeId === id))
+      void this.store.remove('collectionItem', c.id);
     const title = this.store.get('recipe', id)?.data.title ?? '';
     for (const e of this.store.all('mealPlanEntry').filter((x) => x.data.recipeId === id)) {
-      void this.store.write('mealPlanEntry', e.id, { ...e.data, recipeId: null, customTitle: title.slice(0, 200) || '—' }, e.ownerId);
+      void this.store.write(
+        'mealPlanEntry',
+        e.id,
+        { ...e.data, recipeId: null, customTitle: title.slice(0, 200) || '—' },
+        e.ownerId,
+      );
     }
     return this.store.remove('recipe', id);
   }
@@ -197,7 +238,9 @@ export class Repos {
 
   // ================================================================== collections
   collections(): LocalRecord<'collection'>[] {
-    return this.store.all('collection').sort((a, b) => a.data.position - b.data.position || a.data.name.localeCompare(b.data.name));
+    return this.store
+      .all('collection')
+      .sort((a, b) => a.data.position - b.data.position || a.data.name.localeCompare(b.data.name));
   }
   collectionRecipes(collectionId: string): Recipe[] {
     return this.store
@@ -208,29 +251,53 @@ export class Repos {
       .filter((r): r is Recipe => r !== null);
   }
   collectionsOf(recipeId: string): string[] {
-    return this.store.all('collectionItem').filter((i) => i.data.recipeId === recipeId).map((i) => i.data.collectionId);
+    return this.store
+      .all('collectionItem')
+      .filter((i) => i.data.recipeId === recipeId)
+      .map((i) => i.data.collectionId);
   }
-  async createCollection(name: string, emoji: string | null = null): Promise<LocalRecord<'collection'>> {
+  async createCollection(
+    name: string,
+    emoji: string | null = null,
+  ): Promise<LocalRecord<'collection'>> {
     const position = this.collections().length;
-    const data: CollectionData = validate(collectionDataSchema, { name, emoji, position, householdId: null });
+    const data: CollectionData = validate(collectionDataSchema, {
+      name,
+      emoji,
+      position,
+      householdId: null,
+    });
     return this.store.write('collection', uuidv7(), data, this.userId());
   }
   async updateCollection(id: string, patch: Partial<CollectionData>) {
     const cur = this.store.get('collection', id);
     if (!cur) throw new Error('not_found');
-    return this.store.write('collection', id, validate(collectionDataSchema, { ...cur.data, ...patch }), cur.ownerId);
+    return this.store.write(
+      'collection',
+      id,
+      validate(collectionDataSchema, { ...cur.data, ...patch }),
+      cur.ownerId,
+    );
   }
   deleteCollection(id: string) {
-    for (const i of this.store.all('collectionItem').filter((x) => x.data.collectionId === id)) void this.store.remove('collectionItem', i.id);
+    for (const i of this.store.all('collectionItem').filter((x) => x.data.collectionId === id))
+      void this.store.remove('collectionItem', i.id);
     return this.store.remove('collection', id);
   }
   async setInCollection(collectionId: string, recipeId: string, inside: boolean) {
     const id = collectionItemId(collectionId, recipeId);
     if (!inside) return this.store.remove('collectionItem', id);
     if (this.store.get('collectionItem', id)) return;
-    const position = this.store.all('collectionItem').filter((i) => i.data.collectionId === collectionId).length;
+    const position = this.store
+      .all('collectionItem')
+      .filter((i) => i.data.collectionId === collectionId).length;
     const col = this.store.get('collection', collectionId);
-    await this.store.write('collectionItem', id, { collectionId, recipeId, position }, col?.ownerId ?? this.userId());
+    await this.store.write(
+      'collectionItem',
+      id,
+      { collectionId, recipeId, position },
+      col?.ownerId ?? this.userId(),
+    );
   }
 
   // ================================================================== meal plan
@@ -242,8 +309,16 @@ export class Repos {
         .map((e) => ({ ...e, date: e.data.date, slot: e.data.slot, position: e.data.position })),
     );
   }
-  async planMeal(p: { date: string; slot: MealSlot; recipeId?: string | null; customTitle?: string | null; servings?: number | null }) {
-    const all = this.store.all('mealPlanEntry').map((e) => ({ id: e.id, date: e.data.date, slot: e.data.slot, position: e.data.position }));
+  async planMeal(p: {
+    date: string;
+    slot: MealSlot;
+    recipeId?: string | null;
+    customTitle?: string | null;
+    servings?: number | null;
+  }) {
+    const all = this.store
+      .all('mealPlanEntry')
+      .map((e) => ({ id: e.id, date: e.data.date, slot: e.data.slot, position: e.data.position }));
     const data: MealPlanEntryData = validate(mealPlanEntryDataSchema, {
       date: p.date,
       slot: p.slot,
@@ -258,13 +333,31 @@ export class Repos {
   async moveMeal(id: string, date: string, slot: MealSlot) {
     const cur = this.store.get('mealPlanEntry', id);
     if (!cur) throw new Error('not_found');
-    const all = this.store.all('mealPlanEntry').filter((e) => e.id !== id).map((e) => ({ id: e.id, date: e.data.date, slot: e.data.slot, position: e.data.position }));
-    return this.store.write('mealPlanEntry', id, validate(mealPlanEntryDataSchema, { ...cur.data, date, slot, position: nextPosition(all, date, slot) }), cur.ownerId);
+    const all = this.store
+      .all('mealPlanEntry')
+      .filter((e) => e.id !== id)
+      .map((e) => ({ id: e.id, date: e.data.date, slot: e.data.slot, position: e.data.position }));
+    return this.store.write(
+      'mealPlanEntry',
+      id,
+      validate(mealPlanEntryDataSchema, {
+        ...cur.data,
+        date,
+        slot,
+        position: nextPosition(all, date, slot),
+      }),
+      cur.ownerId,
+    );
   }
   async updateMeal(id: string, patch: Partial<MealPlanEntryData>) {
     const cur = this.store.get('mealPlanEntry', id);
     if (!cur) throw new Error('not_found');
-    return this.store.write('mealPlanEntry', id, validate(mealPlanEntryDataSchema, { ...cur.data, ...patch }), cur.ownerId);
+    return this.store.write(
+      'mealPlanEntry',
+      id,
+      validate(mealPlanEntryDataSchema, { ...cur.data, ...patch }),
+      cur.ownerId,
+    );
   }
   removeMeal(id: string) {
     return this.store.remove('mealPlanEntry', id);
@@ -272,7 +365,10 @@ export class Repos {
 
   // ================================================================== shopping
   lists(): LocalRecord<'shoppingList'>[] {
-    return this.store.all('shoppingList').filter((l) => !l.data.archived).sort((a, b) => a.updatedAt.localeCompare(b.updatedAt));
+    return this.store
+      .all('shoppingList')
+      .filter((l) => !l.data.archived)
+      .sort((a, b) => a.updatedAt.localeCompare(b.updatedAt));
   }
   activeList(): LocalRecord<'shoppingList'> | null {
     const id = this.settings().activeShoppingListId;
@@ -280,7 +376,12 @@ export class Repos {
     return (id ? lists.find((l) => l.id === id) : undefined) ?? lists[0] ?? null;
   }
   async createList(name: string, emoji: string | null = null, makeActive = true) {
-    const data: ShoppingListData = validate(shoppingListDataSchema, { name, emoji, archived: false, householdId: this.householdId() });
+    const data: ShoppingListData = validate(shoppingListDataSchema, {
+      name,
+      emoji,
+      archived: false,
+      householdId: this.householdId(),
+    });
     const rec = await this.store.write('shoppingList', uuidv7(), data, this.userId());
     if (makeActive) await this.updateSettings({ activeShoppingListId: rec.id });
     return rec;
@@ -292,12 +393,18 @@ export class Repos {
   async updateList(id: string, patch: Partial<ShoppingListData>) {
     const cur = this.store.get('shoppingList', id);
     if (!cur) throw new Error('not_found');
-    return this.store.write('shoppingList', id, validate(shoppingListDataSchema, { ...cur.data, ...patch }), cur.ownerId);
+    return this.store.write(
+      'shoppingList',
+      id,
+      validate(shoppingListDataSchema, { ...cur.data, ...patch }),
+      cur.ownerId,
+    );
   }
   async deleteList(id: string) {
     for (const i of this.items(id)) void this.store.remove('shoppingItem', i.id);
     await this.store.remove('shoppingList', id);
-    if (this.settings().activeShoppingListId === id) await this.updateSettings({ activeShoppingListId: this.lists()[0]?.id ?? null });
+    if (this.settings().activeShoppingListId === id)
+      await this.updateSettings({ activeShoppingListId: this.lists()[0]?.id ?? null });
   }
   setActiveList(id: string) {
     return this.updateSettings({ activeShoppingListId: id });
@@ -309,9 +416,24 @@ export class Repos {
   async addItemText(listId: string, text: string) {
     const parsed = parseIngredientLine(text);
     if (!parsed) return null;
-    return this.addItem(listId, { name: parsed.name, quantity: parsed.quantity, unit: parsed.unit, note: parsed.note });
+    return this.addItem(listId, {
+      name: parsed.name,
+      quantity: parsed.quantity,
+      unit: parsed.unit,
+      note: parsed.note,
+    });
   }
-  async addItem(listId: string, p: { name: string; quantity?: number | null; unit?: string | null; note?: string | null; categoryKey?: string; recipeIds?: string[] }) {
+  async addItem(
+    listId: string,
+    p: {
+      name: string;
+      quantity?: number | null;
+      unit?: string | null;
+      note?: string | null;
+      categoryKey?: string;
+      recipeIds?: string[];
+    },
+  ) {
     const list = this.store.get('shoppingList', listId);
     if (!list) throw new Error('not_found');
     const items = this.items(listId);
@@ -331,7 +453,12 @@ export class Repos {
   async updateItem(id: string, patch: Partial<ShoppingItemData>) {
     const cur = this.store.get('shoppingItem', id);
     if (!cur) throw new Error('not_found');
-    return this.store.write('shoppingItem', id, validate(shoppingItemDataSchema, { ...cur.data, ...patch }), cur.ownerId);
+    return this.store.write(
+      'shoppingItem',
+      id,
+      validate(shoppingItemDataSchema, { ...cur.data, ...patch }),
+      cur.ownerId,
+    );
   }
   toggleItem(id: string) {
     const cur = this.store.get('shoppingItem', id);
@@ -342,7 +469,8 @@ export class Repos {
     return this.store.remove('shoppingItem', id);
   }
   async clearChecked(listId: string) {
-    for (const i of this.items(listId).filter((x) => x.data.checked)) await this.store.remove('shoppingItem', i.id);
+    for (const i of this.items(listId).filter((x) => x.data.checked))
+      await this.store.remove('shoppingItem', i.id);
   }
   async moveItemToList(id: string, listId: string) {
     const cur = this.store.get('shoppingItem', id);
@@ -351,19 +479,43 @@ export class Repos {
     await this.store.remove('shoppingItem', id);
   }
   /** Add every ingredient of the planned meals between two dates, merged and scaled. */
-  async addPlanToList(listId: string, start: string, end: string): Promise<{ added: number; updated: number }> {
+  async addPlanToList(
+    listId: string,
+    start: string,
+    end: string,
+  ): Promise<{ added: number; updated: number }> {
     const planned = this.entries(start, end)
       .filter((e) => e.data.recipeId)
       .map((e) => ({ entry: e, recipe: this.store.get('recipe', e.data.recipeId!) }))
-      .filter((x): x is { entry: LocalRecord<'mealPlanEntry'>; recipe: Recipe } => x.recipe !== null)
-      .map(({ entry, recipe }) => ({ recipeId: recipe.id, recipeServings: recipe.data.servings, plannedServings: entry.data.servings, ingredients: recipe.data.ingredients }));
+      .filter(
+        (x): x is { entry: LocalRecord<'mealPlanEntry'>; recipe: Recipe } => x.recipe !== null,
+      )
+      .map(({ entry, recipe }) => ({
+        recipeId: recipe.id,
+        recipeServings: recipe.data.servings,
+        plannedServings: entry.data.servings,
+        ingredients: recipe.data.ingredients,
+      }));
     return this.addLines(listId, shoppingLinesFromPlan(planned, this.settings().defaultServings));
   }
   /** Add one recipe's ingredients for a number of servings. */
   async addRecipeToList(listId: string, recipeId: string, servings: number) {
     const r = this.store.get('recipe', recipeId);
     if (!r) throw new Error('not_found');
-    return this.addLines(listId, shoppingLinesFromPlan([{ recipeId, recipeServings: r.data.servings, plannedServings: servings, ingredients: r.data.ingredients }], servings));
+    return this.addLines(
+      listId,
+      shoppingLinesFromPlan(
+        [
+          {
+            recipeId,
+            recipeServings: r.data.servings,
+            plannedServings: servings,
+            ingredients: r.data.ingredients,
+          },
+        ],
+        servings,
+      ),
+    );
   }
   private async addLines(listId: string, lines: ReturnType<typeof shoppingLinesFromPlan>) {
     const existing = this.items(listId).map((i) => ({ id: i.id, ...i.data }));
@@ -371,10 +523,20 @@ export class Repos {
     let updated = 0;
     for (const p of planMergeIntoList(existing, lines)) {
       if (p.kind === 'update') {
-        await this.updateItem(p.id, { quantity: p.quantity, unit: p.unit, recipeIds: p.recipeIds.slice(0, 50) });
+        await this.updateItem(p.id, {
+          quantity: p.quantity,
+          unit: p.unit,
+          recipeIds: p.recipeIds.slice(0, 50),
+        });
         updated++;
       } else {
-        await this.addItem(listId, { name: p.line.name, quantity: p.line.quantity, unit: p.line.unit, categoryKey: p.categoryKey, recipeIds: p.line.recipeIds.slice(0, 50) });
+        await this.addItem(listId, {
+          name: p.line.name,
+          quantity: p.line.quantity,
+          unit: p.line.unit,
+          categoryKey: p.categoryKey,
+          recipeIds: p.line.recipeIds.slice(0, 50),
+        });
         added++;
       }
     }
@@ -384,12 +546,32 @@ export class Repos {
   // ---------------------------------------------------------------- aisles
   /** Aisle order for the user's store, plus custom aisles. */
   categories(): { key: string; name: string | null; custom: boolean; hidden: boolean }[] {
-    const rows = this.store.all('shoppingCategory').filter((c) => c.ownerId === this.userId() || c.ownerId === null);
+    const rows = this.store
+      .all('shoppingCategory')
+      .filter((c) => c.ownerId === this.userId() || c.ownerId === null);
     const byKey = new Map(rows.map((r) => [r.data.key, r.data]));
-    const custom = rows.filter((r) => !(SHOPPING_CATEGORIES as readonly string[]).includes(r.data.key));
-    const keys = sortCategories(rows.sort((a, b) => a.data.position - b.data.position).map((r) => r.data.key).filter((k) => (SHOPPING_CATEGORIES as readonly string[]).includes(k)));
-    const ordered = [...keys.map((k) => ({ key: k, position: byKey.get(k)?.position ?? SHOPPING_CATEGORIES.indexOf(k as never) })), ...custom.map((c) => ({ key: c.data.key, position: c.data.position }))].sort((a, b) => a.position - b.position);
-    return ordered.map((o) => ({ key: o.key, name: byKey.get(o.key)?.name ?? null, custom: !(SHOPPING_CATEGORIES as readonly string[]).includes(o.key), hidden: byKey.get(o.key)?.hidden ?? false }));
+    const custom = rows.filter(
+      (r) => !(SHOPPING_CATEGORIES as readonly string[]).includes(r.data.key),
+    );
+    const keys = sortCategories(
+      rows
+        .sort((a, b) => a.data.position - b.data.position)
+        .map((r) => r.data.key)
+        .filter((k) => (SHOPPING_CATEGORIES as readonly string[]).includes(k)),
+    );
+    const ordered = [
+      ...keys.map((k) => ({
+        key: k,
+        position: byKey.get(k)?.position ?? SHOPPING_CATEGORIES.indexOf(k as never),
+      })),
+      ...custom.map((c) => ({ key: c.data.key, position: c.data.position })),
+    ].sort((a, b) => a.position - b.position);
+    return ordered.map((o) => ({
+      key: o.key,
+      name: byKey.get(o.key)?.name ?? null,
+      custom: !(SHOPPING_CATEGORIES as readonly string[]).includes(o.key),
+      hidden: byKey.get(o.key)?.hidden ?? false,
+    }));
   }
   categoryOrder(): string[] {
     return this.categories().map((c) => c.key);
@@ -401,18 +583,38 @@ export class Repos {
       const key = keys[i]!;
       const cur = existing.get(key);
       const id = cur?.id ?? shoppingCategoryId(me, key);
-      await this.store.write('shoppingCategory', id, { key, name: cur?.data.name ?? null, position: i, hidden: cur?.data.hidden ?? false }, me);
+      await this.store.write(
+        'shoppingCategory',
+        id,
+        { key, name: cur?.data.name ?? null, position: i, hidden: cur?.data.hidden ?? false },
+        me,
+      );
     }
   }
   async createCategory(name: string) {
     const id = uuidv7();
     const position = this.categories().length;
-    await this.store.write('shoppingCategory', id, { key: id, name: name.trim().slice(0, 60), position, hidden: false }, this.userId());
+    await this.store.write(
+      'shoppingCategory',
+      id,
+      { key: id, name: name.trim().slice(0, 60), position, hidden: false },
+      this.userId(),
+    );
     return id;
   }
   async renameCategory(key: string, name: string | null) {
     const cur = this.store.all('shoppingCategory').find((c) => c.data.key === key);
     const me = this.userId();
-    await this.store.write('shoppingCategory', cur?.id ?? shoppingCategoryId(me, key), { key, name: name?.trim().slice(0, 60) || null, position: cur?.data.position ?? this.categoryOrder().indexOf(key), hidden: cur?.data.hidden ?? false }, me);
+    await this.store.write(
+      'shoppingCategory',
+      cur?.id ?? shoppingCategoryId(me, key),
+      {
+        key,
+        name: name?.trim().slice(0, 60) || null,
+        position: cur?.data.position ?? this.categoryOrder().indexOf(key),
+        hidden: cur?.data.hidden ?? false,
+      },
+      me,
+    );
   }
 }

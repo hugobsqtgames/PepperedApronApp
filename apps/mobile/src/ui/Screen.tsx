@@ -1,5 +1,13 @@
 import type { ReactNode } from 'react';
-import { KeyboardAvoidingView, Platform, RefreshControl, ScrollView, View, type StyleProp, type ViewStyle } from 'react-native';
+import {
+  KeyboardAvoidingView,
+  Platform,
+  RefreshControl,
+  ScrollView,
+  View,
+  type StyleProp,
+  type ViewStyle,
+} from 'react-native';
 import { SafeAreaView, type Edge } from 'react-native-safe-area-context';
 import { useLayout } from '../lib/layout';
 import { useTheme } from '../theme/ThemeProvider';
@@ -35,14 +43,30 @@ export function Screen({
   const { colors } = useTheme();
   const layout = useLayout();
   const width = maxWidth ?? layout.contentMaxWidth;
-  const inner: StyleProp<ViewStyle> = [{ width: '100%', maxWidth: width, alignSelf: 'center', paddingHorizontal: padded ? layout.gutter : 0 }, contentStyle];
+  const inner: StyleProp<ViewStyle> = [
+    {
+      width: '100%',
+      maxWidth: width,
+      alignSelf: 'center',
+      paddingHorizontal: padded ? layout.gutter : 0,
+    },
+    contentStyle,
+  ];
   const body = scroll ? (
     <ScrollView
       testID={testID}
       keyboardShouldPersistTaps="handled"
       keyboardDismissMode="interactive"
       contentContainerStyle={{ paddingBottom: space.huge * 2 }}
-      refreshControl={onRefresh ? <RefreshControl refreshing={!!refreshing} onRefresh={onRefresh} tintColor={colors.primary} /> : undefined}
+      refreshControl={
+        onRefresh ? (
+          <RefreshControl
+            refreshing={!!refreshing}
+            onRefresh={onRefresh}
+            tintColor={colors.primary}
+          />
+        ) : undefined
+      }
     >
       <View style={inner}>{children}</View>
     </ScrollView>
@@ -54,7 +78,10 @@ export function Screen({
   return (
     <SafeAreaView edges={edges} style={{ flex: 1, backgroundColor: colors.background }}>
       {keyboard ? (
-        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        >
           {body}
         </KeyboardAvoidingView>
       ) : (

@@ -37,16 +37,56 @@ export default function Account() {
     }
   };
   return (
-    <ScrollView contentInsetAdjustmentBehavior="automatic" keyboardShouldPersistTaps="handled" contentContainerStyle={{ padding: space.lg, gap: space.xl, maxWidth: 640, width: '100%', alignSelf: 'center' }}>
+    <ScrollView
+      contentInsetAdjustmentBehavior="automatic"
+      keyboardShouldPersistTaps="handled"
+      contentContainerStyle={{
+        padding: space.lg,
+        gap: space.xl,
+        maxWidth: 640,
+        width: '100%',
+        alignSelf: 'center',
+      }}
+    >
       <Group title={t('settings.displayName')}>
-        <TextField value={name} onChangeText={setName} maxLength={80} containerStyle={{ padding: space.md }} />
+        <TextField
+          value={name}
+          onChangeText={setName}
+          maxLength={80}
+          containerStyle={{ padding: space.md }}
+        />
       </Group>
-      <Button title={t('common.save')} onPress={saveName} disabled={!name.trim() || name.trim() === rt.user?.displayName} />
+      <Button
+        title={t('common.save')}
+        onPress={saveName}
+        disabled={!name.trim() || name.trim() === rt.user?.displayName}
+      />
       <Group title={t('settings.email')} footer={rt.user?.email}>
-        <TextField containerStyle={{ padding: space.md }} label={t('settings.newEmail')} value={newEmail} onChangeText={setNewEmail} autoCapitalize="none" keyboardType="email-address" error={emailError} />
-        {rt.user?.hasPassword ? <TextField containerStyle={{ padding: space.md }} label={t('settings.passwordToConfirm')} value={password} onChangeText={setPassword} secureTextEntry /> : null}
+        <TextField
+          containerStyle={{ padding: space.md }}
+          label={t('settings.newEmail')}
+          value={newEmail}
+          onChangeText={setNewEmail}
+          autoCapitalize="none"
+          keyboardType="email-address"
+          error={emailError}
+        />
+        {rt.user?.hasPassword ? (
+          <TextField
+            containerStyle={{ padding: space.md }}
+            label={t('settings.passwordToConfirm')}
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry
+          />
+        ) : null}
       </Group>
-      <Button title={t('settings.changeEmail')} variant="secondary" onPress={changeEmail} disabled={!newEmail.trim()} />
+      <Button
+        title={t('settings.changeEmail')}
+        variant="secondary"
+        onPress={changeEmail}
+        disabled={!newEmail.trim()}
+      />
       {!rt.user?.emailVerified ? (
         <Text variant="callout" color="accent">
           {t('auth.verifyBanner')}

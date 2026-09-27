@@ -1,5 +1,12 @@
 import { forwardRef, useState } from 'react';
-import { StyleSheet, TextInput, View, type TextInputProps, type StyleProp, type ViewStyle } from 'react-native';
+import {
+  StyleSheet,
+  TextInput,
+  View,
+  type TextInputProps,
+  type StyleProp,
+  type ViewStyle,
+} from 'react-native';
 import { useTheme } from '../theme/ThemeProvider';
 import { radius, space } from '../theme/tokens';
 import { Icon, type IconName } from './Icon';
@@ -13,7 +20,10 @@ export interface TextFieldProps extends TextInputProps {
   containerStyle?: StyleProp<ViewStyle>;
 }
 
-export const TextField = forwardRef<TextInput, TextFieldProps>(function TextField({ label, error, helper, icon, containerStyle, style, multiline, onFocus, onBlur, ...rest }, ref) {
+export const TextField = forwardRef<TextInput, TextFieldProps>(function TextField(
+  { label, error, helper, icon, containerStyle, style, multiline, onFocus, onBlur, ...rest },
+  ref,
+) {
   const { colors } = useTheme();
   const [focused, setFocused] = useState(false);
   return (
@@ -26,7 +36,12 @@ export const TextField = forwardRef<TextInput, TextFieldProps>(function TextFiel
       <View
         style={[
           styles.box,
-          { backgroundColor: colors.surface, borderColor: error ? colors.danger : focused ? colors.primary : colors.line, minHeight: multiline ? 96 : 48, alignItems: multiline ? 'flex-start' : 'center' },
+          {
+            backgroundColor: colors.surface,
+            borderColor: error ? colors.danger : focused ? colors.primary : colors.line,
+            minHeight: multiline ? 96 : 48,
+            alignItems: multiline ? 'flex-start' : 'center',
+          },
         ]}
       >
         {icon ? <Icon name={icon} size={18} color="textSubtle" /> : null}
@@ -45,7 +60,15 @@ export const TextField = forwardRef<TextInput, TextFieldProps>(function TextFiel
             setFocused(false);
             onBlur?.(e);
           }}
-          style={[styles.input, { color: colors.text, paddingTop: multiline ? space.md : 0, textAlignVertical: multiline ? 'top' : 'center' }, style]}
+          style={[
+            styles.input,
+            {
+              color: colors.text,
+              paddingTop: multiline ? space.md : 0,
+              textAlignVertical: multiline ? 'top' : 'center',
+            },
+            style,
+          ]}
           maxFontSizeMultiplier={1.8}
           {...rest}
         />
@@ -64,6 +87,12 @@ export const TextField = forwardRef<TextInput, TextFieldProps>(function TextFiel
 });
 
 const styles = StyleSheet.create({
-  box: { flexDirection: 'row', gap: space.sm, borderWidth: 1.5, borderRadius: radius.lg, paddingHorizontal: space.md },
+  box: {
+    flexDirection: 'row',
+    gap: space.sm,
+    borderWidth: 1.5,
+    borderRadius: radius.lg,
+    paddingHorizontal: space.md,
+  },
   input: { flex: 1, fontSize: 16, minHeight: 44, paddingVertical: space.sm },
 });

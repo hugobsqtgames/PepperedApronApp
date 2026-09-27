@@ -8,8 +8,21 @@ export interface Quantity {
 }
 
 const UNICODE_FRACTIONS: Record<string, number> = {
-  '½': 1 / 2, '⅓': 1 / 3, '⅔': 2 / 3, '¼': 1 / 4, '¾': 3 / 4, '⅕': 1 / 5, '⅖': 2 / 5,
-  '⅗': 3 / 5, '⅘': 4 / 5, '⅙': 1 / 6, '⅚': 5 / 6, '⅛': 1 / 8, '⅜': 3 / 8, '⅝': 5 / 8, '⅞': 7 / 8,
+  '½': 1 / 2,
+  '⅓': 1 / 3,
+  '⅔': 2 / 3,
+  '¼': 1 / 4,
+  '¾': 3 / 4,
+  '⅕': 1 / 5,
+  '⅖': 2 / 5,
+  '⅗': 3 / 5,
+  '⅘': 4 / 5,
+  '⅙': 1 / 6,
+  '⅚': 5 / 6,
+  '⅛': 1 / 8,
+  '⅜': 3 / 8,
+  '⅝': 5 / 8,
+  '⅞': 7 / 8,
 };
 const UF = Object.keys(UNICODE_FRACTIONS).join('');
 
@@ -40,7 +53,14 @@ export function parseNumber(raw: string): number | null {
 }
 
 export function parseQuantity(raw: string): Quantity | null {
-  const m = raw.trim().match(new RegExp(`^(${NUMBER_PATTERN})(?:\\s*(?:-|–|—|à|a|to|bis|o|al)\\s*(${NUMBER_PATTERN}))?$`, 'i'));
+  const m = raw
+    .trim()
+    .match(
+      new RegExp(
+        `^(${NUMBER_PATTERN})(?:\\s*(?:-|–|—|à|a|to|bis|o|al)\\s*(${NUMBER_PATTERN}))?$`,
+        'i',
+      ),
+    );
   if (!m) return null;
   const value = parseNumber(m[1]!);
   if (value === null || !(value > 0)) return null;
@@ -49,8 +69,15 @@ export function parseQuantity(raw: string): Quantity | null {
 }
 
 const NICE_FRACTIONS: [number, string][] = [
-  [1 / 8, '⅛'], [1 / 4, '¼'], [1 / 3, '⅓'], [3 / 8, '⅜'], [1 / 2, '½'], [5 / 8, '⅝'],
-  [2 / 3, '⅔'], [3 / 4, '¾'], [7 / 8, '⅞'],
+  [1 / 8, '⅛'],
+  [1 / 4, '¼'],
+  [1 / 3, '⅓'],
+  [3 / 8, '⅜'],
+  [1 / 2, '½'],
+  [5 / 8, '⅝'],
+  [2 / 3, '⅔'],
+  [3 / 4, '¾'],
+  [7 / 8, '⅞'],
 ];
 
 function numberFormat(locale: Locale, maxDigits: number): Intl.NumberFormat {
@@ -70,7 +97,8 @@ export function formatNumber(v: number, locale: Locale, fractions: boolean): str
   if (fractions) {
     const whole = Math.floor(v + 1e-9);
     const frac = v - whole;
-    if (frac < 0.06) return numberFormat(locale, 0).format(whole === 0 ? Math.max(v, 0) : whole) || '0';
+    if (frac < 0.06)
+      return numberFormat(locale, 0).format(whole === 0 ? Math.max(v, 0) : whole) || '0';
     if (frac > 0.94) return numberFormat(locale, 0).format(whole + 1);
     let best: [number, string] = NICE_FRACTIONS[0]!;
     for (const f of NICE_FRACTIONS) if (Math.abs(f[0] - frac) < Math.abs(best[0] - frac)) best = f;
@@ -108,12 +136,19 @@ export function normalizeAmount<T extends AmountLike>(a: T): T {
   const baseMax = a.quantityMax === null ? null : a.quantityMax * u.toBase;
   const pick = (key: string): T => {
     const t = getUnit(key)!;
-    return { ...a, unit: key, quantity: base / t.toBase, quantityMax: baseMax === null ? null : baseMax / t.toBase };
+    return {
+      ...a,
+      unit: key,
+      quantity: base / t.toBase,
+      quantityMax: baseMax === null ? null : baseMax / t.toBase,
+    };
   };
   if (u.system === 'metric') {
-    if (u.dimension === 'mass') return base >= 1000 ? pick('kg') : base < 1 ? pick('mg') : pick('g');
+    if (u.dimension === 'mass')
+      return base >= 1000 ? pick('kg') : base < 1 ? pick('mg') : pick('g');
     if (base >= 1000) return pick('l');
-    if (u.key === 'l' || u.key === 'cl' || u.key === 'dl') return base % 10 === 0 ? pick('cl') : pick('ml');
+    if (u.key === 'l' || u.key === 'cl' || u.key === 'dl')
+      return base % 10 === 0 ? pick('cl') : pick('ml');
     return pick('ml');
   }
   if (u.key === 'oz' && base >= 453.592) return pick('lb');

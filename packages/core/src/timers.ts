@@ -17,7 +17,16 @@ export interface KitchenTimer {
 
 export type TimerState = 'running' | 'paused' | 'done';
 
-export function createTimer(p: { id: string; label: string; durationSeconds: number; recipeId?: string | null; stepIndex?: number | null }, now: number): KitchenTimer {
+export function createTimer(
+  p: {
+    id: string;
+    label: string;
+    durationSeconds: number;
+    recipeId?: string | null;
+    stepIndex?: number | null;
+  },
+  now: number,
+): KitchenTimer {
   return {
     id: p.id,
     label: p.label,
@@ -52,7 +61,8 @@ export function resumeTimer(t: KitchenTimer, now: number): KitchenTimer {
 }
 
 export function addTime(t: KitchenTimer, seconds: number, now: number): KitchenTimer {
-  if (t.pausedRemaining !== null) return { ...t, pausedRemaining: Math.max(0, t.pausedRemaining + seconds) };
+  if (t.pausedRemaining !== null)
+    return { ...t, pausedRemaining: Math.max(0, t.pausedRemaining + seconds) };
   const base = Math.max(now, t.endsAt ?? now);
   return { ...t, endsAt: base + seconds * 1000, durationSeconds: t.durationSeconds + seconds };
 }

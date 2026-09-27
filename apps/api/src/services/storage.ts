@@ -1,4 +1,10 @@
-import { CopyObjectCommand, DeleteObjectCommand, HeadObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import {
+  CopyObjectCommand,
+  DeleteObjectCommand,
+  HeadObjectCommand,
+  PutObjectCommand,
+  S3Client,
+} from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { createHmac, timingSafeEqual } from 'node:crypto';
 import fs from 'node:fs/promises';
@@ -28,20 +34,41 @@ export class S3Storage implements Storage {
     this.client = new S3Client({
       region: env.S3_REGION,
       endpoint: env.S3_ENDPOINT,
-      credentials: { accessKeyId: env.S3_ACCESS_KEY_ID!, secretAccessKey: env.S3_SECRET_ACCESS_KEY! },
+      credentials: {
+        accessKeyId: env.S3_ACCESS_KEY_ID!,
+        secretAccessKey: env.S3_SECRET_ACCESS_KEY!,
+      },
       forcePathStyle: !!env.S3_ENDPOINT,
     });
   }
   async presignPut(key: string, contentType: string, maxBytes: number): Promise<PresignedUpload> {
     // Content-Type is signed; size is verified after upload (HEAD) and rejected if too big.
-    const cmd = new PutObjectCommand({ Bucket: this.env.S3_BUCKET!, Key: key, ContentType: contentType, CacheControl: 'public, max-age=31536000, immutable' });
-    const url = await getSignedUrl(this.client, cmd, { expiresIn: EXPIRES, signableHeaders: new Set(['content-type']) });
+    const cmd = new PutObjectCommand({
+      Bucket: this.env.S3_BUCKET!,
+      Key: key,
+      ContentType: contentType,
+      CacheControl: 'public, max-age=31536000, immutable',
+    });
+    const url = await getSignedUrl(this.client, cmd, {
+      expiresIn: EXPIRES,
+      signableHeaders: new Set(['content-type']),
+    });
     void maxBytes;
-    return { url, method: 'PUT', headers: { 'Content-Type': contentType, 'Cache-Control': 'public, max-age=31536000, immutable' }, expiresAt: new Date(Date.now() + EXPIRES * 1000).toISOString() };
+    return {
+      url,
+      method: 'PUT',
+      headers: {
+        'Content-Type': contentType,
+        'Cache-Control': 'public, max-age=31536000, immutable',
+      },
+      expiresAt: new Date(Date.now() + EXPIRES * 1000).toISOString(),
+    };
   }
   async head(key: string) {
     try {
-      const r = await this.client.send(new HeadObjectCommand({ Bucket: this.env.S3_BUCKET!, Key: key }));
+      const r = await this.client.send(
+        new HeadObjectCommand({ Bucket: this.env.S3_BUCKET!, Key: key }),
+      );
       return { size: r.ContentLength ?? 0, contentType: r.ContentType ?? null };
     } catch {
       return null;
@@ -52,7 +79,13 @@ export class S3Storage implements Storage {
   }
   async copy(srcKey: string, destKey: string) {
     try {
-      await this.client.send(new CopyObjectCommand({ Bucket: this.env.S3_BUCKET!, Key: destKey, CopySource: `${this.env.S3_BUCKET}/${encodeURIComponent(srcKey)}` }));
+      await this.client.send(
+        new CopyObjectCommand({
+          Bucket: this.env.S3_BUCKET!,
+          Key: destKey,
+          CopySource: `${this.env.S3_BUCKET}/${encodeURIComponent(srcKey)}`,
+        }),
+      );
       return true;
     } catch {
       return false;
@@ -73,7 +106,9 @@ export class LocalStorage implements Storage {
     this.dir = path.resolve(env.STORAGE_LOCAL_DIR);
   }
   private sign(key: string, contentType: string, maxBytes: number, exp: number): string {
-    return createHmac('sha256', this.env.JWT_SECRET).update(`${key}|${contentType}|${maxBytes}|${exp}`).digest('base64url');
+    return createHmac('sha256', this.env.JWT_SECRET)
+      .update(`${key}|${contentType}|${maxBytes}|${exp}`)
+      .digest('base64url');
   }
   verify(key: string, contentType: string, maxBytes: number, exp: number, sig: string): boolean {
     if (!Number.isFinite(exp) || exp < Date.now() / 1000) return false;
@@ -88,8 +123,19 @@ export class LocalStorage implements Storage {
   }
   async presignPut(key: string, contentType: string, maxBytes: number): Promise<PresignedUpload> {
     const exp = Math.floor(Date.now() / 1000) + EXPIRES;
-    const q = new URLSearchParams({ key, ct: contentType, max: String(maxBytes), exp: String(exp), sig: this.sign(key, contentType, maxBytes, exp) });
-    return { url: `${this.env.API_PUBLIC_URL.replace(/\/+$/, '')}/v1/media-upload?${q}`, method: 'PUT', headers: { 'Content-Type': contentType }, expiresAt: new Date(exp * 1000).toISOString() };
+    const q = new URLSearchParams({
+      key,
+      ct: contentType,
+      max: String(maxBytes),
+      exp: String(exp),
+      sig: this.sign(key, contentType, maxBytes, exp),
+    });
+    return {
+      url: `${this.env.API_PUBLIC_URL.replace(/\/+$/, '')}/v1/media-upload?${q}`,
+      method: 'PUT',
+      headers: { 'Content-Type': contentType },
+      expiresAt: new Date(exp * 1000).toISOString(),
+    };
   }
   async write(key: string, data: Buffer, contentType: string) {
     const p = this.filePath(key);
@@ -110,7 +156,10 @@ export class LocalStorage implements Storage {
   async read(key: string): Promise<{ data: Buffer; contentType: string } | null> {
     const h = await this.head(key);
     if (!h) return null;
-    return { data: await fs.readFile(this.filePath(key)), contentType: h.contentType ?? 'application/octet-stream' };
+    return {
+      data: await fs.readFile(this.filePath(key)),
+      contentType: h.contentType ?? 'application/octet-stream',
+    };
   }
   async delete(key: string) {
     const p = this.filePath(key);

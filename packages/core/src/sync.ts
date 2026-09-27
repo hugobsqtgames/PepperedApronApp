@@ -110,12 +110,16 @@ export function mergeChangedFields(
 ): Record<string, unknown> {
   if (changedFields === null) return { ...server, ...client };
   const out = { ...server };
-  for (const f of changedFields) if (Object.prototype.hasOwnProperty.call(client, f)) out[f] = client[f];
+  for (const f of changedFields)
+    if (Object.prototype.hasOwnProperty.call(client, f)) out[f] = client[f];
   return out;
 }
 
 /** Compute the list of top-level fields that differ (used by the client to build ops). */
-export function diffFields(before: Record<string, unknown> | null, after: Record<string, unknown>): string[] {
+export function diffFields(
+  before: Record<string, unknown> | null,
+  after: Record<string, unknown>,
+): string[] {
   if (!before) return Object.keys(after);
   const keys = new Set([...Object.keys(before), ...Object.keys(after)]);
   return [...keys].filter((k) => JSON.stringify(before[k]) !== JSON.stringify(after[k]));

@@ -10,6 +10,8 @@ import type { DbOrTx } from '../db';
 const SYNC_LOCK_KEY = 747_001;
 
 export async function nextVersion(tx: DbOrTx): Promise<number> {
-  const r = await tx.execute<{ v: string | number }>(sql`SELECT pg_advisory_xact_lock(${SYNC_LOCK_KEY}), nextval('sync_version_seq') AS v`);
+  const r = await tx.execute<{ v: string | number }>(
+    sql`SELECT pg_advisory_xact_lock(${SYNC_LOCK_KEY}), nextval('sync_version_seq') AS v`,
+  );
   return Number(r.rows[0]!.v);
 }

@@ -7,7 +7,16 @@ export function BrandHeader({ title, subtitle }: { title: string; subtitle?: str
   const { dark } = useTheme();
   return (
     <View style={{ alignItems: 'center', gap: space.sm, paddingVertical: space.xxl }}>
-      <Image source={dark ? require('../../../assets/brand/mark-dark.png') : require('../../../assets/brand/mark.png')} style={{ width: 72, height: 72 }} accessibilityIgnoresInvertColors accessibilityLabel="PepperedApron" />
+      <Image
+        source={
+          dark
+            ? require('../../../assets/brand/mark-dark.png')
+            : require('../../../assets/brand/mark.png')
+        }
+        style={{ width: 72, height: 72 }}
+        accessibilityIgnoresInvertColors
+        accessibilityLabel="PepperedApron"
+      />
       <Text variant="title1" align="center" accessibilityRole="header">
         {title}
       </Text>

@@ -17,16 +17,22 @@ type Variant = 'development' | 'staging' | 'production';
 const variant = (process.env.APP_VARIANT ?? 'development') as Variant;
 const suffix = variant === 'production' ? '' : `.${variant === 'development' ? 'dev' : 'staging'}`;
 const bundleId = `app.pepperedapron${suffix}`;
-const webDomain = process.env.WEB_DOMAIN ?? (variant === 'production' ? 'pepperedapron.app' : `${variant}.pepperedapron.app`);
+const webDomain =
+  process.env.WEB_DOMAIN ??
+  (variant === 'production' ? 'pepperedapron.app' : `${variant}.pepperedapron.app`);
 const appGroup = `group.${bundleId}`;
 
 // Google's official test ad units are used unless real ids are provided (never ship test ids).
 const ADMOB_IOS_APP_ID = process.env.ADMOB_IOS_APP_ID ?? 'ca-app-pub-3940256099942544~1458002511';
-const ADMOB_ANDROID_APP_ID = process.env.ADMOB_ANDROID_APP_ID ?? 'ca-app-pub-3940256099942544~3347511713';
+const ADMOB_ANDROID_APP_ID =
+  process.env.ADMOB_ANDROID_APP_ID ?? 'ca-app-pub-3940256099942544~3347511713';
 
 const buildConfig = ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
-  name: variant === 'production' ? 'PepperedApron' : `PepperedApron ${variant === 'development' ? 'Dev' : 'Beta'}`,
+  name:
+    variant === 'production'
+      ? 'PepperedApron'
+      : `PepperedApron ${variant === 'development' ? 'Dev' : 'Beta'}`,
   slug: 'pepperedapron',
   scheme: 'pepperedapron',
   version: '2.0.0',
@@ -47,7 +53,11 @@ const buildConfig = ({ config }: ConfigContext): ExpoConfig => ({
     supportsTablet: true,
     requireFullScreen: false,
     usesAppleSignIn: true,
-    icon: { light: './assets/icon.png', dark: './assets/icon-dark.png', tinted: './assets/icon-tinted.png' },
+    icon: {
+      light: './assets/icon.png',
+      dark: './assets/icon-dark.png',
+      tinted: './assets/icon-tinted.png',
+    },
     associatedDomains: [`applinks:${webDomain}`, `webcredentials:${webDomain}`],
     entitlements: { 'com.apple.security.application-groups': [appGroup] },
     infoPlist: {
@@ -60,10 +70,22 @@ const buildConfig = ({ config }: ConfigContext): ExpoConfig => ({
       NSPrivacyTracking: false,
       NSPrivacyCollectedDataTypes: [],
       NSPrivacyAccessedAPITypes: [
-        { NSPrivacyAccessedAPIType: 'NSPrivacyAccessedAPICategoryUserDefaults', NSPrivacyAccessedAPITypeReasons: ['CA92.1', '1C8F.1'] },
-        { NSPrivacyAccessedAPIType: 'NSPrivacyAccessedAPICategoryFileTimestamp', NSPrivacyAccessedAPITypeReasons: ['C617.1'] },
-        { NSPrivacyAccessedAPIType: 'NSPrivacyAccessedAPICategorySystemBootTime', NSPrivacyAccessedAPITypeReasons: ['35F9.1'] },
-        { NSPrivacyAccessedAPIType: 'NSPrivacyAccessedAPICategoryDiskSpace', NSPrivacyAccessedAPITypeReasons: ['E174.1'] },
+        {
+          NSPrivacyAccessedAPIType: 'NSPrivacyAccessedAPICategoryUserDefaults',
+          NSPrivacyAccessedAPITypeReasons: ['CA92.1', '1C8F.1'],
+        },
+        {
+          NSPrivacyAccessedAPIType: 'NSPrivacyAccessedAPICategoryFileTimestamp',
+          NSPrivacyAccessedAPITypeReasons: ['C617.1'],
+        },
+        {
+          NSPrivacyAccessedAPIType: 'NSPrivacyAccessedAPICategorySystemBootTime',
+          NSPrivacyAccessedAPITypeReasons: ['35F9.1'],
+        },
+        {
+          NSPrivacyAccessedAPIType: 'NSPrivacyAccessedAPICategoryDiskSpace',
+          NSPrivacyAccessedAPITypeReasons: ['E174.1'],
+        },
       ],
     },
   },
@@ -76,8 +98,15 @@ const buildConfig = ({ config }: ConfigContext): ExpoConfig => ({
       monochromeImage: './assets/android-icon-monochrome.png',
     },
     predictiveBackGestureEnabled: true,
-    permissions: ['android.permission.CAMERA', 'android.permission.POST_NOTIFICATIONS', 'android.permission.SCHEDULE_EXACT_ALARM'],
-    blockedPermissions: ['android.permission.RECORD_AUDIO', 'android.permission.ACCESS_FINE_LOCATION'],
+    permissions: [
+      'android.permission.CAMERA',
+      'android.permission.POST_NOTIFICATIONS',
+      'android.permission.SCHEDULE_EXACT_ALARM',
+    ],
+    blockedPermissions: [
+      'android.permission.RECORD_AUDIO',
+      'android.permission.ACCESS_FINE_LOCATION',
+    ],
     intentFilters: [
       {
         action: 'VIEW',
@@ -111,8 +140,10 @@ const buildConfig = ({ config }: ConfigContext): ExpoConfig => ({
     [
       'expo-image-picker',
       {
-        photosPermission: 'PepperedApron accesses your photos to illustrate your recipes or import a recipe from an image.',
-        cameraPermission: 'PepperedApron uses the camera to add a photo to your recipes or read a printed recipe.',
+        photosPermission:
+          'PepperedApron accesses your photos to illustrate your recipes or import a recipe from an image.',
+        cameraPermission:
+          'PepperedApron uses the camera to add a photo to your recipes or read a printed recipe.',
         microphonePermission: false,
       },
     ],
@@ -138,14 +169,20 @@ const buildConfig = ({ config }: ConfigContext): ExpoConfig => ({
         androidAppId: ADMOB_ANDROID_APP_ID,
         // Nothing is initialised before the user's consent choice (UMP).
         delayAppMeasurementInit: true,
-        userTrackingUsageDescription: 'Allowing tracking shows more relevant ads. PepperedApron stays free either way.',
+        userTrackingUsageDescription:
+          'Allowing tracking shows more relevant ads. PepperedApron stays free either way.',
       },
     ],
     // Order matters: apple-targets must create the widget target before expo-live-activity adds its own.
     '@bacons/apple-targets',
     'expo-live-activity',
     ...(process.env.SENTRY_ORG && process.env.SENTRY_PROJECT
-      ? ([['@sentry/react-native', { organization: process.env.SENTRY_ORG, project: process.env.SENTRY_PROJECT }]] as [string, unknown][])
+      ? ([
+          [
+            '@sentry/react-native',
+            { organization: process.env.SENTRY_ORG, project: process.env.SENTRY_PROJECT },
+          ],
+        ] as [string, unknown][])
       : []),
   ],
   experiments: { typedRoutes: true },
@@ -158,4 +195,5 @@ const buildConfig = ({ config }: ConfigContext): ExpoConfig => ({
   },
 });
 
-export default (ctx: ConfigContext): ExpoConfig => withUniqueAppGroups(buildConfig(ctx)) as ExpoConfig;
+export default (ctx: ConfigContext): ExpoConfig =>
+  withUniqueAppGroups(buildConfig(ctx)) as ExpoConfig;

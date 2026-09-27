@@ -11,9 +11,16 @@ function enabled() {
 }
 
 export const haptic = {
-  light: () => enabled() && void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => undefined),
+  light: () =>
+    enabled() && void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => undefined),
   selection: () => enabled() && void Haptics.selectionAsync().catch(() => undefined),
-  success: () => enabled() && void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => undefined),
-  warning: () => enabled() && void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(() => undefined),
-  error: () => enabled() && void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(() => undefined),
+  success: () =>
+    enabled() &&
+    void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => undefined),
+  warning: () =>
+    enabled() &&
+    void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(() => undefined),
+  error: () =>
+    enabled() &&
+    void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(() => undefined),
 };

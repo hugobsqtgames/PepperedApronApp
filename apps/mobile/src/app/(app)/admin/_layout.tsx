@@ -10,7 +10,15 @@ export default function AdminLayout() {
   const { colors } = useTheme();
   if (rt.user?.role !== 'admin') return <Redirect href="/" />;
   return (
-    <Stack screenOptions={{ headerTintColor: colors.primary, headerStyle: { backgroundColor: colors.background }, headerTitleStyle: { color: colors.text }, contentStyle: { backgroundColor: colors.background }, headerBackButtonDisplayMode: 'minimal' }}>
+    <Stack
+      screenOptions={{
+        headerTintColor: colors.primary,
+        headerStyle: { backgroundColor: colors.background },
+        headerTitleStyle: { color: colors.text },
+        contentStyle: { backgroundColor: colors.background },
+        headerBackButtonDisplayMode: 'minimal',
+      }}
+    >
       <Stack.Screen name="index" options={{ title: t('admin.title') }} />
       <Stack.Screen name="reports" options={{ title: t('admin.reports') }} />
       <Stack.Screen name="messages" options={{ title: t('admin.messages') }} />

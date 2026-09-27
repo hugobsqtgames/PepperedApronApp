@@ -5,7 +5,25 @@ import { space } from '../theme/tokens';
 import { Button } from './Button';
 import { Text } from './Text';
 
-export function EmptyState({ emoji, title, body, action, onAction, secondary, onSecondary, testID }: { emoji: string; title: string; body?: string; action?: string; onAction?: () => void; secondary?: string; onSecondary?: () => void; testID?: string }) {
+export function EmptyState({
+  emoji,
+  title,
+  body,
+  action,
+  onAction,
+  secondary,
+  onSecondary,
+  testID,
+}: {
+  emoji: string;
+  title: string;
+  body?: string;
+  action?: string;
+  onAction?: () => void;
+  secondary?: string;
+  onSecondary?: () => void;
+  testID?: string;
+}) {
   const { colors } = useTheme();
   return (
     <View style={styles.wrap} testID={testID}>
@@ -22,8 +40,12 @@ export function EmptyState({ emoji, title, body, action, onAction, secondary, on
           {body}
         </Text>
       ) : null}
-      {action && onAction ? <Button title={action} onPress={onAction} style={{ marginTop: space.sm }} /> : null}
-      {secondary && onSecondary ? <Button title={secondary} variant="ghost" onPress={onSecondary} /> : null}
+      {action && onAction ? (
+        <Button title={action} onPress={onAction} style={{ marginTop: space.sm }} />
+      ) : null}
+      {secondary && onSecondary ? (
+        <Button title={secondary} variant="ghost" onPress={onSecondary} />
+      ) : null}
     </View>
   );
 }
@@ -31,14 +53,25 @@ export function EmptyState({ emoji, title, body, action, onAction, secondary, on
 /** Friendly error with retry — never a technical message. */
 export function ErrorState({ message, onRetry }: { message?: string; onRetry?: () => void }) {
   const { t } = useTranslation();
-  return <EmptyState emoji="🥄" title={message ?? t('errors.generic')} action={onRetry ? t('common.retry') : undefined} onAction={onRetry} />;
+  return (
+    <EmptyState
+      emoji="🥄"
+      title={message ?? t('errors.generic')}
+      action={onRetry ? t('common.retry') : undefined}
+      onAction={onRetry}
+    />
+  );
 }
 
 export function LoadingState({ label }: { label?: string }) {
   const { colors } = useTheme();
   const { t } = useTranslation();
   return (
-    <View style={styles.wrap} accessibilityRole="progressbar" accessibilityLabel={label ?? t('common.loading')}>
+    <View
+      style={styles.wrap}
+      accessibilityRole="progressbar"
+      accessibilityLabel={label ?? t('common.loading')}
+    >
       <ActivityIndicator color={colors.primary} size="large" />
       {label ? (
         <Text variant="callout" color="textMuted">
@@ -50,6 +83,19 @@ export function LoadingState({ label }: { label?: string }) {
 }
 
 const styles = StyleSheet.create({
-  wrap: { alignItems: 'center', justifyContent: 'center', gap: space.md, paddingVertical: space.huge, paddingHorizontal: space.xxl },
-  bubble: { width: 88, height: 88, borderRadius: 44, alignItems: 'center', justifyContent: 'center', marginBottom: space.sm },
+  wrap: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: space.md,
+    paddingVertical: space.huge,
+    paddingHorizontal: space.xxl,
+  },
+  bubble: {
+    width: 88,
+    height: 88,
+    borderRadius: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: space.sm,
+  },
 });

@@ -9,7 +9,16 @@ export default function Appearance() {
   const repos = useRepos();
   const s = useSettings();
   return (
-    <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ padding: space.lg, gap: space.xl, maxWidth: 640, width: '100%', alignSelf: 'center' }}>
+    <ScrollView
+      contentInsetAdjustmentBehavior="automatic"
+      contentContainerStyle={{
+        padding: space.lg,
+        gap: space.xl,
+        maxWidth: 640,
+        width: '100%',
+        alignSelf: 'center',
+      }}
+    >
       <View style={{ gap: space.sm }}>
         <Text variant="caption" color="textMuted" weight="600">
           {t('settings.theme')}
@@ -25,8 +34,23 @@ export default function Appearance() {
         />
       </View>
       <Group>
-        <ListRow title={t('settings.haptics')} subtitle={t('settings.hapticsBody')} toggle={s.hapticsEnabled} onToggle={(v) => void repos.updateSettings({ hapticsEnabled: v })} />
-        <ListRow title={t('settings.defaultServings')} chevron={false} right={<Stepper value={s.defaultServings} onChange={(v) => void repos.updateSettings({ defaultServings: v })} label={t('settings.defaultServings')} />} />
+        <ListRow
+          title={t('settings.haptics')}
+          subtitle={t('settings.hapticsBody')}
+          toggle={s.hapticsEnabled}
+          onToggle={(v) => void repos.updateSettings({ hapticsEnabled: v })}
+        />
+        <ListRow
+          title={t('settings.defaultServings')}
+          chevron={false}
+          right={
+            <Stepper
+              value={s.defaultServings}
+              onChange={(v) => void repos.updateSettings({ defaultServings: v })}
+              label={t('settings.defaultServings')}
+            />
+          }
+        />
       </Group>
     </ScrollView>
   );

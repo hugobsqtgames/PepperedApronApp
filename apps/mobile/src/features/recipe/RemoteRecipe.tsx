@@ -2,7 +2,14 @@ import { useState } from 'react';
 import { View } from 'react-native';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { computeTotalMinutes, formatMinutes, type Ingredient, type Locale, type RecipeCategory, type Step } from '@pepperedapron/core';
+import {
+  computeTotalMinutes,
+  formatMinutes,
+  type Ingredient,
+  type Locale,
+  type RecipeCategory,
+  type Step,
+} from '@pepperedapron/core';
 import { useSettings } from '../../hooks/runtime';
 import { useLayout } from '../../lib/layout';
 import { space } from '../../theme/tokens';
@@ -40,13 +47,26 @@ export function RemoteRecipe({ r, actions }: { r: RemoteRecipeData; actions: Rea
   const total = computeTotalMinutes(r);
   return (
     <Screen edges={['bottom']} padded={false}>
-      <RecipePhoto uri={r.photoUrl} category={(r.category as RecipeCategory) ?? null} style={{ width: '100%', aspectRatio: 4 / 3 }} emojiSize={64} />
+      <RecipePhoto
+        uri={r.photoUrl}
+        category={(r.category as RecipeCategory) ?? null}
+        style={{ width: '100%', aspectRatio: 4 / 3 }}
+        emojiSize={64}
+      />
       <View style={{ padding: layout.gutter, gap: space.xl }}>
         <View style={{ gap: space.sm }}>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space.sm }}>
-            {total ? <Badge icon="time-outline" label={formatMinutes(total, i18n.language as Locale)} tone="primary" /> : null}
+            {total ? (
+              <Badge
+                icon="time-outline"
+                label={formatMinutes(total, i18n.language as Locale)}
+                tone="primary"
+              />
+            ) : null}
             {r.difficulty ? <Badge label={t(`difficulty.${r.difficulty as 'easy'}`)} /> : null}
-            {r.saveCount ? <Badge label={t('community.saves', { count: r.saveCount })} tone="accent" /> : null}
+            {r.saveCount ? (
+              <Badge label={t('community.saves', { count: r.saveCount })} tone="accent" />
+            ) : null}
           </View>
           <Text variant="hero" accessibilityRole="header">
             {r.title}
@@ -59,14 +79,22 @@ export function RemoteRecipe({ r, actions }: { r: RemoteRecipeData; actions: Rea
         {actions}
         <Section title={t('recipe.ingredients')}>
           <Stepper value={servings} onChange={setServings} label={t('recipe.scale')} />
-          <IngredientList ingredients={r.ingredients} factor={servings / r.servings} system={s.unitSystem} />
+          <IngredientList
+            ingredients={r.ingredients}
+            factor={servings / r.servings}
+            system={s.unitSystem}
+          />
         </Section>
         <Section title={t('recipe.steps')}>
           <StepList steps={r.steps} />
         </Section>
         <TextBlock title={t('recipe.tips')} text={r.tips} icon="bulb-outline" />
         <SourceLink source={r.source} url={r.sourceUrl} />
-        <Button title={t('common.close')} variant="ghost" onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))} />
+        <Button
+          title={t('common.close')}
+          variant="ghost"
+          onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))}
+        />
       </View>
     </Screen>
   );

@@ -31,7 +31,11 @@ export function useRepos(): Repos {
  * Live query over the local store: `select` re-runs only when one of `entities` changes.
  * Results are served from memory, so this is instant and works offline.
  */
-export function useLive<T>(entities: SyncEntity[], select: (repos: Repos) => T, deps: unknown[] = []): T {
+export function useLive<T>(
+  entities: SyncEntity[],
+  select: (repos: Repos) => T,
+  deps: unknown[] = [],
+): T {
   const session = useSession();
   const key = entities.join(',');
   const selectRef = useRef(select);

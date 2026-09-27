@@ -27,7 +27,21 @@ async function pair(): Promise<[Device, Device]> {
   return [iphone, ipad];
 }
 
-const recipe = (title: string) => ({ ...emptyRecipe(4), title, ingredients: [{ id: crypto.randomUUID(), group: null, name: 'Farine', quantity: 250, quantityMax: null, unit: 'g', note: null }] });
+const recipe = (title: string) => ({
+  ...emptyRecipe(4),
+  title,
+  ingredients: [
+    {
+      id: crypto.randomUUID(),
+      group: null,
+      name: 'Farine',
+      quantity: 250,
+      quantityMax: null,
+      unit: 'g',
+      note: null,
+    },
+  ],
+});
 
 describe('offline first', () => {
   it('works fully offline, then syncs automatically and shows sync state', async () => {
@@ -52,7 +66,11 @@ describe('offline first', () => {
     await ipad.sync.sync();
     expect(ipad.repos.recipe(r.id)!.data.title).toBe('Crêpes');
     expect(ipad.repos.isFavorite(r.id)).toBe(true);
-    expect(ipad.repos.items(list.id).map((i) => [i.data.name, i.data.quantity, i.data.unit, i.data.categoryKey])).toEqual([['pommes de terre', 2, 'kg', 'produce']]);
+    expect(
+      ipad.repos
+        .items(list.id)
+        .map((i) => [i.data.name, i.data.quantity, i.data.unit, i.data.categoryKey]),
+    ).toEqual([['pommes de terre', 2, 'kg', 'produce']]);
     expect(ipad.repos.entries('2026-10-05', '2026-10-05')).toHaveLength(1);
     expect(ipad.repos.activeList()!.id).toBe(list.id);
   });
@@ -97,7 +115,11 @@ describe('conflicts between iPhone and iPad', () => {
     await ipad.sync.sync();
     await iphone.sync.sync();
     for (const d of [iphone, ipad]) {
-      expect(d.repos.recipe(r.id)!.data).toMatchObject({ title: 'Quiche lorraine', servings: 8, tips: 'Pâte maison' });
+      expect(d.repos.recipe(r.id)!.data).toMatchObject({
+        title: 'Quiche lorraine',
+        servings: 8,
+        tips: 'Pâte maison',
+      });
       expect(d.repos.recipe(r.id)!.state).toBe('synced');
     }
   });
@@ -119,7 +141,10 @@ describe('conflicts between iPhone and iPad', () => {
     expect(ipad.repos.recipe(r.id)!.state).toBe('pending');
     await ipad.sync.sync();
     await iphone.sync.sync();
-    expect(iphone.repos.recipe(r.id)!.data).toMatchObject({ notes: 'iPhone note', tips: 'iPad tip' });
+    expect(iphone.repos.recipe(r.id)!.data).toMatchObject({
+      notes: 'iPhone note',
+      tips: 'iPad tip',
+    });
   });
 
   it('deleted on one device while being edited on the other → disappears cleanly', async () => {
@@ -139,7 +164,8 @@ describe('conflicts between iPhone and iPad', () => {
     const [iphone, ipad] = await pair();
     const list = await iphone.repos.createList('Semaine');
     const items = [];
-    for (const t of ['lait', 'pain', 'oeufs', 'tomates']) items.push(await iphone.repos.addItemText(list.id, t));
+    for (const t of ['lait', 'pain', 'oeufs', 'tomates'])
+      items.push(await iphone.repos.addItemText(list.id, t));
     await iphone.sync.sync();
     await ipad.sync.sync();
     await iphone.repos.toggleItem(items[0]!.id);
@@ -149,8 +175,16 @@ describe('conflicts between iPhone and iPad', () => {
     await Promise.all([iphone.sync.sync(), ipad.sync.sync()]);
     await Promise.all([iphone.sync.sync(), ipad.sync.sync()]);
     for (const d of [iphone, ipad]) {
-      const state = d.repos.items(list.id).map((i) => [i.data.name, i.data.checked, i.data.quantity]).sort();
-      expect(state).toEqual([['lait', true, null], ['oeufs', true, null], ['pain', true, 2], ['tomates', false, null]]);
+      const state = d.repos
+        .items(list.id)
+        .map((i) => [i.data.name, i.data.checked, i.data.quantity])
+        .sort();
+      expect(state).toEqual([
+        ['lait', true, null],
+        ['oeufs', true, null],
+        ['pain', true, 2],
+        ['tomates', false, null],
+      ]);
     }
   });
 
@@ -165,7 +199,9 @@ describe('conflicts between iPhone and iPad', () => {
     await ipad.sync.sync();
     await iphone.sync.sync();
     expect(iphone.repos.isFavorite(r.id)).toBe(ipad.repos.isFavorite(r.id));
-    expect(iphone.store.all('favorite').filter((f) => f.id === favoriteId(iphone.userId, r.id)).length).toBeLessThanOrEqual(1);
+    expect(
+      iphone.store.all('favorite').filter((f) => f.id === favoriteId(iphone.userId, r.id)).length,
+    ).toBeLessThanOrEqual(1);
   });
 });
 
@@ -232,9 +268,15 @@ describe('resilience', () => {
 
   it('invalid data is refused locally with field errors', async () => {
     const [iphone] = await pair();
-    await expect(iphone.repos.createRecipe({ ...emptyRecipe(), title: '' })).rejects.toBeInstanceOf(ValidationError);
-    await expect(iphone.repos.createRecipe({ ...emptyRecipe(), title: 'x', servings: 0 })).rejects.toBeInstanceOf(ValidationError);
-    await expect(iphone.repos.planMeal({ date: '2026-10-01', slot: 'dinner' })).rejects.toBeInstanceOf(ValidationError);
+    await expect(iphone.repos.createRecipe({ ...emptyRecipe(), title: '' })).rejects.toBeInstanceOf(
+      ValidationError,
+    );
+    await expect(
+      iphone.repos.createRecipe({ ...emptyRecipe(), title: 'x', servings: 0 }),
+    ).rejects.toBeInstanceOf(ValidationError);
+    await expect(
+      iphone.repos.planMeal({ date: '2026-10-01', slot: 'dinner' }),
+    ).rejects.toBeInstanceOf(ValidationError);
   });
 });
 
@@ -264,7 +306,12 @@ describe('household', () => {
     await julie.repos.addItemText(list.id, 'beurre');
     await julie.sync.sync();
     await hugo.sync.sync();
-    expect(hugo.repos.items(list.id).map((i) => i.data.name).sort()).toEqual(['beurre', 'lait']);
+    expect(
+      hugo.repos
+        .items(list.id)
+        .map((i) => i.data.name)
+        .sort(),
+    ).toEqual(['beurre', 'lait']);
 
     await julie.api.leaveHousehold();
     julie.householdId = null;
@@ -278,10 +325,18 @@ describe('photos', () => {
   it('photo added offline is shown locally, uploaded later, then synced to other devices', async () => {
     const [iphone, ipad] = await pair();
     const file = path.join(await fs.mkdtemp(path.join(os.tmpdir(), 'photo-')), 'p.jpg');
-    await fs.writeFile(file, Buffer.concat([Buffer.from([0xff, 0xd8, 0xff, 0xe0]), Buffer.alloc(5000, 1)]));
+    await fs.writeFile(
+      file,
+      Buffer.concat([Buffer.from([0xff, 0xd8, 0xff, 0xe0]), Buffer.alloc(5000, 1)]),
+    );
     iphone.online = false;
     const r = await iphone.repos.createRecipe(recipe('Avec photo'));
-    await iphone.store.queuePhoto({ localUri: file, recipeId: r.id, contentType: 'image/jpeg', size: 5004 });
+    await iphone.store.queuePhoto({
+      localUri: file,
+      recipeId: r.id,
+      contentType: 'image/jpeg',
+      size: 5004,
+    });
     expect(iphone.store.localPhoto(r.id)!.localUri).toBe(file);
     await iphone.photos.run();
     expect(iphone.store.localPhoto(r.id)).toMatchObject({ state: 'pending', lastError: 'offline' });
@@ -300,7 +355,12 @@ describe('photos', () => {
     const file = path.join(await fs.mkdtemp(path.join(os.tmpdir(), 'photo-')), 'bad.jpg');
     await fs.writeFile(file, 'not an image at all');
     const r = await iphone.repos.createRecipe(recipe('Photo cassée'));
-    await iphone.store.queuePhoto({ localUri: file, recipeId: r.id, contentType: 'image/jpeg', size: 19 });
+    await iphone.store.queuePhoto({
+      localUri: file,
+      recipeId: r.id,
+      contentType: 'image/jpeg',
+      size: 19,
+    });
     await iphone.photos.run();
     expect(iphone.store.localPhoto(r.id)).toMatchObject({ state: 'error' });
     await iphone.sync.sync();
@@ -316,20 +376,57 @@ describe('shopping from planning', () => {
       title: 'Crêpes',
       servings: 4,
       ingredients: [
-        { id: crypto.randomUUID(), group: null, name: 'farine', quantity: 250, quantityMax: null, unit: 'g', note: null },
-        { id: crypto.randomUUID(), group: null, name: 'oeufs', quantity: 4, quantityMax: null, unit: null, note: null },
-        { id: crypto.randomUUID(), group: null, name: 'lait', quantity: 50, quantityMax: null, unit: 'cl', note: null },
+        {
+          id: crypto.randomUUID(),
+          group: null,
+          name: 'farine',
+          quantity: 250,
+          quantityMax: null,
+          unit: 'g',
+          note: null,
+        },
+        {
+          id: crypto.randomUUID(),
+          group: null,
+          name: 'oeufs',
+          quantity: 4,
+          quantityMax: null,
+          unit: null,
+          note: null,
+        },
+        {
+          id: crypto.randomUUID(),
+          group: null,
+          name: 'lait',
+          quantity: 50,
+          quantityMax: null,
+          unit: 'cl',
+          note: null,
+        },
       ],
     });
-    const gateau = await iphone.repos.createRecipe(recipeFromDraft(parseRecipeText('Gâteau\nPour 8 personnes\nIngrédients\n500 g de farine\n3 oeufs\nPréparation\n1. Mélanger.')));
-    await iphone.repos.planMeal({ date: '2026-10-12', slot: 'breakfast', recipeId: crepes.id, servings: 8 });
+    const gateau = await iphone.repos.createRecipe(
+      recipeFromDraft(
+        parseRecipeText(
+          'Gâteau\nPour 8 personnes\nIngrédients\n500 g de farine\n3 oeufs\nPréparation\n1. Mélanger.',
+        ),
+      ),
+    );
+    await iphone.repos.planMeal({
+      date: '2026-10-12',
+      slot: 'breakfast',
+      recipeId: crepes.id,
+      servings: 8,
+    });
     await iphone.repos.planMeal({ date: '2026-10-14', slot: 'snack', recipeId: gateau.id });
     await iphone.repos.planMeal({ date: '2026-10-20', slot: 'dinner', recipeId: gateau.id }); // next week: excluded
     const list = await iphone.repos.createList('Semaine');
     await iphone.repos.addItemText(list.id, '200 g de farine');
     const res = await iphone.repos.addPlanToList(list.id, '2026-10-12', '2026-10-18');
     expect(res).toEqual({ added: 2, updated: 1 });
-    const byName = Object.fromEntries(iphone.repos.items(list.id).map((i) => [i.data.name.toLowerCase(), i.data]));
+    const byName = Object.fromEntries(
+      iphone.repos.items(list.id).map((i) => [i.data.name.toLowerCase(), i.data]),
+    );
     expect(byName['farine']).toMatchObject({ quantity: 1.2, unit: 'kg', categoryKey: 'pantry' });
     expect(byName['oeufs']).toMatchObject({ quantity: 11, categoryKey: 'dairy_eggs' });
     expect(byName['lait']).toMatchObject({ quantity: 1, unit: 'l' });

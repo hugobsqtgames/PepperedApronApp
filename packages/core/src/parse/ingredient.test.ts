@@ -12,7 +12,10 @@ describe('parseIngredientLine', () => {
     ['1 1/2 cups flour, sifted', { quantity: 1.5, unit: 'cup', name: 'flour', note: 'sifted' }],
     ['2 tbsp olive oil', { quantity: 2, unit: 'tbsp', name: 'olive oil' }],
     ['400 ml de lait de coco', { quantity: 400, unit: 'ml', name: 'lait de coco' }],
-    ['1 kg de pommes de terre (à chair ferme)', { quantity: 1, unit: 'kg', name: 'pommes de terre', note: 'à chair ferme' }],
+    [
+      '1 kg de pommes de terre (à chair ferme)',
+      { quantity: 1, unit: 'kg', name: 'pommes de terre', note: 'à chair ferme' },
+    ],
     ['- 2 tomates', { quantity: 2, unit: null, name: 'tomates' }],
     ['• 1 pincée de sel', { quantity: 1, unit: 'pinch', name: 'sel' }],
     ['une pincée de muscade', { quantity: 1, unit: 'pinch', name: 'muscade' }],
@@ -29,15 +32,34 @@ describe('parseIngredientLine', () => {
     expect(p(line)).toMatchObject(expected);
   });
   it('ranges', () => {
-    expect(p('3-4 pommes de terre')).toMatchObject({ quantity: 3, quantityMax: 4, name: 'pommes de terre' });
+    expect(p('3-4 pommes de terre')).toMatchObject({
+      quantity: 3,
+      quantityMax: 4,
+      name: 'pommes de terre',
+    });
     expect(p('2 à 3 carottes')).toMatchObject({ quantity: 2, quantityMax: 3, name: 'carottes' });
   });
   it('lines without quantity keep the full text', () => {
     expect(p('Sel, poivre')).toMatchObject({ quantity: null, unit: null, name: 'Sel, poivre' });
-    expect(p('Quelques feuilles de basilic')).toMatchObject({ quantity: null, name: 'Quelques feuilles de basilic' });
+    expect(p('Quelques feuilles de basilic')).toMatchObject({
+      quantity: null,
+      name: 'Quelques feuilles de basilic',
+    });
   });
   it('absurd input never throws', () => {
-    for (const s of ['', '   ', '0 g', '1/0 g de sucre', '9999999999 kg', '((((', '🍅🍅', 'g', '-', '1.2.3 kg', 'x'.repeat(5000)]) {
+    for (const s of [
+      '',
+      '   ',
+      '0 g',
+      '1/0 g de sucre',
+      '9999999999 kg',
+      '((((',
+      '🍅🍅',
+      'g',
+      '-',
+      '1.2.3 kg',
+      'x'.repeat(5000),
+    ]) {
       expect(() => p(s)).not.toThrow();
     }
     expect(p('')).toBeNull();

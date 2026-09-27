@@ -25,16 +25,24 @@ export async function householdRoutes(app: FastifyInstance, { deps, requireAuth 
     const b = parse(z.object({ name }).strict(), req.body);
     return { household: await hs.rename(a.userId, b.name) };
   });
-  app.post('/household/invites', { config: { rateLimit: { max: 20, timeWindow: '1 hour' } } }, async (req, reply) => {
-    const a = await requireAuth(req);
-    reply.status(201);
-    return hs.createInvite(a.userId);
-  });
-  app.post('/household/join', { config: { rateLimit: { max: 10, timeWindow: '15 minutes' } } }, async (req) => {
-    const a = await requireAuth(req);
-    const b = parse(z.object({ code: z.string().min(4).max(20) }).strict(), req.body);
-    return { household: await hs.join(a.userId, b.code) };
-  });
+  app.post(
+    '/household/invites',
+    { config: { rateLimit: { max: 20, timeWindow: '1 hour' } } },
+    async (req, reply) => {
+      const a = await requireAuth(req);
+      reply.status(201);
+      return hs.createInvite(a.userId);
+    },
+  );
+  app.post(
+    '/household/join',
+    { config: { rateLimit: { max: 10, timeWindow: '15 minutes' } } },
+    async (req) => {
+      const a = await requireAuth(req);
+      const b = parse(z.object({ code: z.string().min(4).max(20) }).strict(), req.body);
+      return { household: await hs.join(a.userId, b.code) };
+    },
+  );
   app.post('/household/leave', async (req) => {
     const a = await requireAuth(req);
     await hs.leave(a.userId);

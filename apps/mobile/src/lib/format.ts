@@ -1,11 +1,29 @@
-import { convertAmount, formatAmount, getUnit, normalizeAmount, scaleAmount, unitLabel, celsiusToFahrenheit, type Ingredient, type Locale, type UnitSystem } from '@pepperedapron/core';
+import {
+  convertAmount,
+  formatAmount,
+  getUnit,
+  normalizeAmount,
+  scaleAmount,
+  unitLabel,
+  celsiusToFahrenheit,
+  type Ingredient,
+  type Locale,
+  type UnitSystem,
+} from '@pepperedapron/core';
 
-export function formatIngredient(i: Ingredient, factor: number, locale: Locale, system: UnitSystem): { amount: string; name: string; note: string | null } {
+export function formatIngredient(
+  i: Ingredient,
+  factor: number,
+  locale: Locale,
+  system: UnitSystem,
+): { amount: string; name: string; note: string | null } {
   let a = scaleAmount({ quantity: i.quantity, quantityMax: i.quantityMax, unit: i.unit }, factor);
   if (factor !== 1) a = normalizeAmount(a);
   a = convertAmount(a, system);
   const amount = formatAmount(a, locale);
-  const unit = getUnit(a.unit) ? unitLabel(a.unit, a.quantityMax ?? a.quantity, locale) : (a.unit ?? '');
+  const unit = getUnit(a.unit)
+    ? unitLabel(a.unit, a.quantityMax ?? a.quantity, locale)
+    : (a.unit ?? '');
   return { amount: [amount, unit].filter(Boolean).join(' '), name: i.name, note: i.note };
 }
 
@@ -15,7 +33,15 @@ export function formatOven(c: number, system: UnitSystem): string {
 
 /** Plain-text version of a recipe for sharing to Messages, WhatsApp, Notes… */
 export function recipeAsText(
-  r: { title: string; description: string | null; servings: number; ingredients: Ingredient[]; steps: { text: string; group: string | null }[]; tips: string | null; sourceUrl: string | null },
+  r: {
+    title: string;
+    description: string | null;
+    servings: number;
+    ingredients: Ingredient[];
+    steps: { text: string; group: string | null }[];
+    tips: string | null;
+    sourceUrl: string | null;
+  },
   labels: { ingredients: string; steps: string; tips: string; servings: string },
   locale: Locale,
   system: UnitSystem,

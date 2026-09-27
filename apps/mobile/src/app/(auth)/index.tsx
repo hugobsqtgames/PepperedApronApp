@@ -1,5 +1,12 @@
 import { useRef, useState } from 'react';
-import { FlatList, Image, StyleSheet, View, useWindowDimensions, type ViewToken } from 'react-native';
+import {
+  FlatList,
+  Image,
+  StyleSheet,
+  View,
+  useWindowDimensions,
+  type ViewToken,
+} from 'react-native';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -41,8 +48,26 @@ export default function Welcome() {
         viewabilityConfig={{ itemVisiblePercentThreshold: 60 }}
         renderItem={({ item }: { item: (typeof SLIDES)[number] }) => (
           <View style={{ width }}>
-            <Image source={item.photo} style={{ width, height: photoH, borderBottomLeftRadius: radius.xxl, borderBottomRightRadius: radius.xxl }} resizeMode="cover" accessibilityIgnoresInvertColors />
-            <View style={{ padding: space.xxl, gap: space.md, maxWidth: 560, alignSelf: 'center', width: '100%' }}>
+            <Image
+              source={item.photo}
+              style={{
+                width,
+                height: photoH,
+                borderBottomLeftRadius: radius.xxl,
+                borderBottomRightRadius: radius.xxl,
+              }}
+              resizeMode="cover"
+              accessibilityIgnoresInvertColors
+            />
+            <View
+              style={{
+                padding: space.xxl,
+                gap: space.md,
+                maxWidth: 560,
+                alignSelf: 'center',
+                width: '100%',
+              }}
+            >
               <Text variant="hero" accessibilityRole="header">
                 {t(`onboarding.${item.key}Title`)}
               </Text>
@@ -54,20 +79,52 @@ export default function Welcome() {
         )}
       />
       <View style={styles.footer}>
-        <View style={styles.dots} accessibilityRole="adjustable" accessibilityValue={{ now: index + 1, min: 1, max: SLIDES.length }}>
+        <View
+          style={styles.dots}
+          accessibilityRole="adjustable"
+          accessibilityValue={{ now: index + 1, min: 1, max: SLIDES.length }}
+        >
           {SLIDES.map((s, i) => (
-            <View key={s.key} style={[styles.dot, { backgroundColor: i === index ? colors.primary : colors.line, width: i === index ? 22 : 8 }]} />
+            <View
+              key={s.key}
+              style={[
+                styles.dot,
+                {
+                  backgroundColor: i === index ? colors.primary : colors.line,
+                  width: i === index ? 22 : 8,
+                },
+              ]}
+            />
           ))}
         </View>
         {last ? (
           <View style={{ gap: space.sm, width: '100%', maxWidth: 480 }}>
-            <Button title={t('onboarding.start')} size="lg" onPress={() => router.push('/sign-up')} testID="onboarding-start" />
-            <Button title={t('auth.haveAccount')} variant="ghost" onPress={() => router.push('/sign-in')} />
+            <Button
+              title={t('onboarding.start')}
+              size="lg"
+              onPress={() => router.push('/sign-up')}
+              testID="onboarding-start"
+            />
+            <Button
+              title={t('auth.haveAccount')}
+              variant="ghost"
+              onPress={() => router.push('/sign-in')}
+            />
           </View>
         ) : (
           <View style={{ flexDirection: 'row', gap: space.sm, width: '100%', maxWidth: 480 }}>
-            <Button title={t('common.skip')} variant="ghost" onPress={() => list.current?.scrollToIndex({ index: SLIDES.length - 1 })} style={{ flex: 1 }} />
-            <Button title={t('common.next')} onPress={() => list.current?.scrollToIndex({ index: index + 1 })} style={{ flex: 2 }} testID="onboarding-next" />
+            <Button
+              title={t('common.skip')}
+              variant="ghost"
+              onPress={() => list.current?.scrollToIndex({ index: SLIDES.length - 1 })}
+              style={{ flex: 1 }}
+            />
+            <Button
+              title={t('common.next')}
+              onPress={() => list.current?.scrollToIndex({ index: index + 1 })}
+              style={{ flex: 2 }}
+              testID="onboarding-next"
+            />
           </View>
         )}
       </View>
@@ -76,7 +133,12 @@ export default function Welcome() {
 }
 
 const styles = StyleSheet.create({
-  footer: { alignItems: 'center', gap: space.lg, paddingHorizontal: space.xxl, paddingBottom: space.lg },
+  footer: {
+    alignItems: 'center',
+    gap: space.lg,
+    paddingHorizontal: space.xxl,
+    paddingBottom: space.lg,
+  },
   dots: { flexDirection: 'row', gap: 6 },
   dot: { height: 8, borderRadius: 4 },
 });

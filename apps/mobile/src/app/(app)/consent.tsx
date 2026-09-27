@@ -26,7 +26,12 @@ export default function Consent() {
       </Text>
       <Text color="textMuted">{t('settings.analyticsBody')}</Text>
       <Button title={t('common.confirm')} onPress={() => choose(true)} testID="consent-accept" />
-      <Button title={t('common.skip')} variant="secondary" onPress={() => choose(false)} testID="consent-refuse" />
+      <Button
+        title={t('common.skip')}
+        variant="secondary"
+        onPress={() => choose(false)}
+        testID="consent-refuse"
+      />
     </View>
   );
 }

@@ -70,5 +70,11 @@ export type ContactStatus = (typeof CONTACT_STATUSES)[number];
 export const HOUSEHOLD_ROLES = ['owner', 'member'] as const;
 export type HouseholdRole = (typeof HOUSEHOLD_ROLES)[number];
 
-export const NOTIFICATION_CATEGORIES = ['mealReminder', 'shoppingReady', 'planningNudge', 'timers', 'household'] as const;
+export const NOTIFICATION_CATEGORIES = [
+  'mealReminder',
+  'shoppingReady',
+  'planningNudge',
+  'timers',
+  'household',
+] as const;
 export type NotificationCategory = (typeof NOTIFICATION_CATEGORIES)[number];

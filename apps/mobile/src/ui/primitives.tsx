@@ -1,11 +1,32 @@
 import { useEffect, useRef, type ReactNode } from 'react';
-import { Animated, Pressable, ScrollView, StyleSheet, Switch, View, type StyleProp, type ViewStyle } from 'react-native';
+import {
+  Animated,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Switch,
+  View,
+  type StyleProp,
+  type ViewStyle,
+} from 'react-native';
 import { useTheme } from '../theme/ThemeProvider';
 import { radius, space, TOUCH } from '../theme/tokens';
 import { Icon, type IconName } from './Icon';
 import { Text } from './Text';
 
-export function Card({ children, onPress, style, padded = true, accessibilityLabel }: { children: ReactNode; onPress?: () => void; style?: StyleProp<ViewStyle>; padded?: boolean; accessibilityLabel?: string }) {
+export function Card({
+  children,
+  onPress,
+  style,
+  padded = true,
+  accessibilityLabel,
+}: {
+  children: ReactNode;
+  onPress?: () => void;
+  style?: StyleProp<ViewStyle>;
+  padded?: boolean;
+  accessibilityLabel?: string;
+}) {
   const { colors, dark } = useTheme();
   const base: ViewStyle = {
     backgroundColor: colors.surface,
@@ -21,13 +42,34 @@ export function Card({ children, onPress, style, padded = true, accessibilityLab
   };
   if (!onPress) return <View style={[base, style]}>{children}</View>;
   return (
-    <Pressable accessibilityRole="button" accessibilityLabel={accessibilityLabel} onPress={onPress} style={({ pressed }) => [base, pressed && { opacity: 0.92, transform: [{ scale: 0.99 }] }, style]}>
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel}
+      onPress={onPress}
+      style={({ pressed }) => [
+        base,
+        pressed && { opacity: 0.92, transform: [{ scale: 0.99 }] },
+        style,
+      ]}
+    >
       {children}
     </Pressable>
   );
 }
 
-export function Chip({ label, selected, onPress, icon, testID }: { label: string; selected?: boolean; onPress?: () => void; icon?: IconName; testID?: string }) {
+export function Chip({
+  label,
+  selected,
+  onPress,
+  icon,
+  testID,
+}: {
+  label: string;
+  selected?: boolean;
+  onPress?: () => void;
+  icon?: IconName;
+  testID?: string;
+}) {
   const { colors } = useTheme();
   return (
     <Pressable
@@ -37,11 +79,23 @@ export function Chip({ label, selected, onPress, icon, testID }: { label: string
       onPress={onPress}
       style={({ pressed }) => [
         styles.chip,
-        { backgroundColor: selected ? colors.primary : colors.surface, borderColor: selected ? colors.primary : colors.line, opacity: pressed ? 0.8 : 1 },
+        {
+          backgroundColor: selected ? colors.primary : colors.surface,
+          borderColor: selected ? colors.primary : colors.line,
+          opacity: pressed ? 0.8 : 1,
+        },
       ]}
     >
-      {icon ? <Icon name={icon} size={15} tint={selected ? colors.onPrimary : colors.textMuted} /> : null}
-      <Text variant="callout" style={{ color: selected ? colors.onPrimary : colors.text, fontWeight: selected ? '600' : '400' }}>
+      {icon ? (
+        <Icon name={icon} size={15} tint={selected ? colors.onPrimary : colors.textMuted} />
+      ) : null}
+      <Text
+        variant="callout"
+        style={{
+          color: selected ? colors.onPrimary : colors.text,
+          fontWeight: selected ? '600' : '400',
+        }}
+      >
         {label}
       </Text>
     </Pressable>
@@ -50,16 +104,38 @@ export function Chip({ label, selected, onPress, icon, testID }: { label: string
 
 export function ChipRow({ children }: { children: ReactNode }) {
   return (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: space.sm, paddingHorizontal: space.lg }}>
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      contentContainerStyle={{ gap: space.sm, paddingHorizontal: space.lg }}
+    >
       {children}
     </ScrollView>
   );
 }
 
-export function Badge({ label, tone = 'neutral', icon }: { label: string; tone?: 'neutral' | 'primary' | 'accent' | 'danger'; icon?: IconName }) {
+export function Badge({
+  label,
+  tone = 'neutral',
+  icon,
+}: {
+  label: string;
+  tone?: 'neutral' | 'primary' | 'accent' | 'danger';
+  icon?: IconName;
+}) {
   const { colors } = useTheme();
-  const bg = { neutral: colors.surfaceMuted, primary: colors.primarySoft, accent: colors.accentSoft, danger: colors.dangerSoft }[tone];
-  const fg = { neutral: colors.textMuted, primary: colors.primary, accent: colors.accent, danger: colors.danger }[tone];
+  const bg = {
+    neutral: colors.surfaceMuted,
+    primary: colors.primarySoft,
+    accent: colors.accentSoft,
+    danger: colors.dangerSoft,
+  }[tone];
+  const fg = {
+    neutral: colors.textMuted,
+    primary: colors.primary,
+    accent: colors.accent,
+    danger: colors.danger,
+  }[tone];
   return (
     <View style={[styles.badge, { backgroundColor: bg }]}>
       {icon ? <Icon name={icon} size={13} tint={fg} /> : null}
@@ -70,7 +146,19 @@ export function Badge({ label, tone = 'neutral', icon }: { label: string; tone?:
   );
 }
 
-export function Section({ title, action, onAction, children, style }: { title: string; action?: string; onAction?: () => void; children: ReactNode; style?: StyleProp<ViewStyle> }) {
+export function Section({
+  title,
+  action,
+  onAction,
+  children,
+  style,
+}: {
+  title: string;
+  action?: string;
+  onAction?: () => void;
+  children: ReactNode;
+  style?: StyleProp<ViewStyle>;
+}) {
   return (
     <View style={[{ gap: space.md }, style]}>
       <View style={styles.sectionHead}>
@@ -78,7 +166,12 @@ export function Section({ title, action, onAction, children, style }: { title: s
           {title}
         </Text>
         {action && onAction ? (
-          <Pressable accessibilityRole="button" onPress={onAction} hitSlop={12} style={{ minHeight: TOUCH, justifyContent: 'center' }}>
+          <Pressable
+            accessibilityRole="button"
+            onPress={onAction}
+            hitSlop={12}
+            style={{ minHeight: TOUCH, justifyContent: 'center' }}
+          >
             <Text variant="callout" color="primary" weight="600">
               {action}
             </Text>
@@ -119,7 +212,12 @@ export function ListRow({
   const content = (
     <>
       {icon ? (
-        <View style={[styles.rowIcon, { backgroundColor: danger ? colors.dangerSoft : colors.primarySoft }]}>
+        <View
+          style={[
+            styles.rowIcon,
+            { backgroundColor: danger ? colors.dangerSoft : colors.primarySoft },
+          ]}
+        >
           <Icon name={icon} size={18} tint={danger ? colors.danger : colors.primary} />
         </View>
       ) : null}
@@ -140,7 +238,12 @@ export function ListRow({
       ) : null}
       {right}
       {toggle !== undefined ? (
-        <Switch value={toggle} onValueChange={onToggle} trackColor={{ true: colors.primary, false: colors.line }} accessibilityLabel={title} />
+        <Switch
+          value={toggle}
+          onValueChange={onToggle}
+          trackColor={{ true: colors.primary, false: colors.line }}
+          accessibilityLabel={title}
+        />
       ) : chevron ? (
         <Icon name="chevron-forward" size={18} color="textSubtle" />
       ) : null}
@@ -148,32 +251,74 @@ export function ListRow({
   );
   if (toggle !== undefined || !onPress) {
     return (
-      <View testID={testID} style={styles.listRow} accessible={toggle === undefined} accessibilityLabel={toggle === undefined ? [title, subtitle, value].filter(Boolean).join(', ') : undefined}>
+      <View
+        testID={testID}
+        style={styles.listRow}
+        accessible={toggle === undefined}
+        accessibilityLabel={
+          toggle === undefined ? [title, subtitle, value].filter(Boolean).join(', ') : undefined
+        }
+      >
         {content}
       </View>
     );
   }
   return (
-    <Pressable testID={testID} accessibilityRole="button" accessibilityLabel={[title, value].filter(Boolean).join(', ')} accessibilityHint={subtitle} onPress={onPress} style={({ pressed }) => [styles.listRow, pressed && { backgroundColor: colors.surfaceMuted }]}>
+    <Pressable
+      testID={testID}
+      accessibilityRole="button"
+      accessibilityLabel={[title, value].filter(Boolean).join(', ')}
+      accessibilityHint={subtitle}
+      onPress={onPress}
+      style={({ pressed }) => [styles.listRow, pressed && { backgroundColor: colors.surfaceMuted }]}
+    >
       {content}
     </Pressable>
   );
 }
 
-export function Group({ children, title, footer }: { children: ReactNode; title?: string; footer?: string }) {
+export function Group({
+  children,
+  title,
+  footer,
+}: {
+  children: ReactNode;
+  title?: string;
+  footer?: string;
+}) {
   const { colors } = useTheme();
   const items = (Array.isArray(children) ? children : [children]).filter(Boolean);
   return (
     <View style={{ gap: space.sm }}>
       {title ? (
-        <Text variant="micro" color="textMuted" style={{ textTransform: 'uppercase', marginLeft: space.lg }}>
+        <Text
+          variant="micro"
+          color="textMuted"
+          style={{ textTransform: 'uppercase', marginLeft: space.lg }}
+        >
           {title}
         </Text>
       ) : null}
-      <View style={{ backgroundColor: colors.surface, borderRadius: radius.xl, overflow: 'hidden', borderWidth: StyleSheet.hairlineWidth, borderColor: colors.line }}>
+      <View
+        style={{
+          backgroundColor: colors.surface,
+          borderRadius: radius.xl,
+          overflow: 'hidden',
+          borderWidth: StyleSheet.hairlineWidth,
+          borderColor: colors.line,
+        }}
+      >
         {items.map((c, i) => (
           <View key={i}>
-            {i > 0 ? <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: colors.line, marginLeft: space.lg }} /> : null}
+            {i > 0 ? (
+              <View
+                style={{
+                  height: StyleSheet.hairlineWidth,
+                  backgroundColor: colors.line,
+                  marginLeft: space.lg,
+                }}
+              />
+            ) : null}
             {c}
           </View>
         ))}
@@ -187,7 +332,21 @@ export function Group({ children, title, footer }: { children: ReactNode; title?
   );
 }
 
-export function Stepper({ value, onChange, min = 1, max = 100, label, testID }: { value: number; onChange: (v: number) => void; min?: number; max?: number; label: string; testID?: string }) {
+export function Stepper({
+  value,
+  onChange,
+  min = 1,
+  max = 100,
+  label,
+  testID,
+}: {
+  value: number;
+  onChange: (v: number) => void;
+  min?: number;
+  max?: number;
+  label: string;
+  testID?: string;
+}) {
   const { colors } = useTheme();
   const btn = (delta: number, icon: IconName, a11y: string) => (
     <Pressable
@@ -196,13 +355,31 @@ export function Stepper({ value, onChange, min = 1, max = 100, label, testID }: 
       disabled={delta < 0 ? value <= min : value >= max}
       onPress={() => onChange(Math.min(max, Math.max(min, value + delta)))}
       hitSlop={8}
-      style={({ pressed }) => [styles.stepBtn, { backgroundColor: colors.surfaceRaised, opacity: (delta < 0 ? value <= min : value >= max) ? 0.35 : pressed ? 0.7 : 1 }]}
+      style={({ pressed }) => [
+        styles.stepBtn,
+        {
+          backgroundColor: colors.surfaceRaised,
+          opacity: (delta < 0 ? value <= min : value >= max) ? 0.35 : pressed ? 0.7 : 1,
+        },
+      ]}
     >
       <Icon name={icon} size={18} color="primary" />
     </Pressable>
   );
   return (
-    <View testID={testID} style={[styles.stepper, { backgroundColor: colors.surfaceMuted }]} accessibilityRole="adjustable" accessibilityLabel={label} accessibilityValue={{ now: value, min, max }} accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]} onAccessibilityAction={(e) => onChange(Math.min(max, Math.max(min, value + (e.nativeEvent.actionName === 'increment' ? 1 : -1))))}>
+    <View
+      testID={testID}
+      style={[styles.stepper, { backgroundColor: colors.surfaceMuted }]}
+      accessibilityRole="adjustable"
+      accessibilityLabel={label}
+      accessibilityValue={{ now: value, min, max }}
+      accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
+      onAccessibilityAction={(e) =>
+        onChange(
+          Math.min(max, Math.max(min, value + (e.nativeEvent.actionName === 'increment' ? 1 : -1))),
+        )
+      }
+    >
       {btn(-1, 'remove', '−')}
       <Text variant="bodyStrong" style={{ minWidth: 36 }} align="center">
         {value}
@@ -212,15 +389,48 @@ export function Stepper({ value, onChange, min = 1, max = 100, label, testID }: 
   );
 }
 
-export function Segmented<T extends string>({ options, value, onChange }: { options: { value: T; label: string }[]; value: T; onChange: (v: T) => void }) {
+export function Segmented<T extends string>({
+  options,
+  value,
+  onChange,
+}: {
+  options: { value: T; label: string }[];
+  value: T;
+  onChange: (v: T) => void;
+}) {
   const { colors } = useTheme();
   return (
-    <View style={[styles.segmented, { backgroundColor: colors.surfaceMuted }]} accessibilityRole="tablist">
+    <View
+      style={[styles.segmented, { backgroundColor: colors.surfaceMuted }]}
+      accessibilityRole="tablist"
+    >
       {options.map((o) => {
         const selected = o.value === value;
         return (
-          <Pressable key={o.value} accessibilityRole="tab" accessibilityState={{ selected }} onPress={() => onChange(o.value)} style={[styles.segment, selected && { backgroundColor: colors.surfaceRaised, shadowColor: colors.shadow, shadowOpacity: 1, shadowRadius: 4, shadowOffset: { width: 0, height: 1 } }]}>
-            <Text variant="callout" style={{ fontWeight: selected ? '600' : '400', color: selected ? colors.text : colors.textMuted }} numberOfLines={1}>
+          <Pressable
+            key={o.value}
+            accessibilityRole="tab"
+            accessibilityState={{ selected }}
+            onPress={() => onChange(o.value)}
+            style={[
+              styles.segment,
+              selected && {
+                backgroundColor: colors.surfaceRaised,
+                shadowColor: colors.shadow,
+                shadowOpacity: 1,
+                shadowRadius: 4,
+                shadowOffset: { width: 0, height: 1 },
+              },
+            ]}
+          >
+            <Text
+              variant="callout"
+              style={{
+                fontWeight: selected ? '600' : '400',
+                color: selected ? colors.text : colors.textMuted,
+              }}
+              numberOfLines={1}
+            >
               {o.label}
             </Text>
           </Pressable>
@@ -230,15 +440,42 @@ export function Segmented<T extends string>({ options, value, onChange }: { opti
   );
 }
 
-export function Skeleton({ width, height, style }: { width?: number | `${number}%`; height: number; style?: StyleProp<ViewStyle> }) {
+export function Skeleton({
+  width,
+  height,
+  style,
+}: {
+  width?: number | `${number}%`;
+  height: number;
+  style?: StyleProp<ViewStyle>;
+}) {
   const { colors } = useTheme();
   const o = useRef(new Animated.Value(0.5)).current;
   useEffect(() => {
-    const a = Animated.loop(Animated.sequence([Animated.timing(o, { toValue: 1, duration: 700, useNativeDriver: true }), Animated.timing(o, { toValue: 0.5, duration: 700, useNativeDriver: true })]));
+    const a = Animated.loop(
+      Animated.sequence([
+        Animated.timing(o, { toValue: 1, duration: 700, useNativeDriver: true }),
+        Animated.timing(o, { toValue: 0.5, duration: 700, useNativeDriver: true }),
+      ]),
+    );
     a.start();
     return () => a.stop();
   }, [o]);
-  return <Animated.View accessibilityElementsHidden style={[{ width: width ?? '100%', height, borderRadius: radius.md, backgroundColor: colors.skeleton, opacity: o }, style]} />;
+  return (
+    <Animated.View
+      accessibilityElementsHidden
+      style={[
+        {
+          width: width ?? '100%',
+          height,
+          borderRadius: radius.md,
+          backgroundColor: colors.skeleton,
+          opacity: o,
+        },
+        style,
+      ]}
+    />
+  );
 }
 
 export function Divider() {
@@ -247,13 +484,62 @@ export function Divider() {
 }
 
 const styles = StyleSheet.create({
-  chip: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: space.md, minHeight: 36, borderRadius: radius.pill, borderWidth: 1 },
-  badge: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: space.sm, paddingVertical: 3, borderRadius: radius.pill, alignSelf: 'flex-start' },
+  chip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: space.md,
+    minHeight: 36,
+    borderRadius: radius.pill,
+    borderWidth: 1,
+  },
+  badge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: space.sm,
+    paddingVertical: 3,
+    borderRadius: radius.pill,
+    alignSelf: 'flex-start',
+  },
   sectionHead: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
-  listRow: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingHorizontal: space.lg, paddingVertical: space.md, minHeight: 52 },
-  rowIcon: { width: 32, height: 32, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
-  stepper: { flexDirection: 'row', alignItems: 'center', gap: space.sm, borderRadius: radius.pill, padding: 4, alignSelf: 'flex-start' },
-  stepBtn: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
+  listRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.md,
+    paddingHorizontal: space.lg,
+    paddingVertical: space.md,
+    minHeight: 52,
+  },
+  rowIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  stepper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.sm,
+    borderRadius: radius.pill,
+    padding: 4,
+    alignSelf: 'flex-start',
+  },
+  stepBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   segmented: { flexDirection: 'row', borderRadius: radius.md, padding: 3 },
-  segment: { flex: 1, minHeight: 36, borderRadius: radius.sm, alignItems: 'center', justifyContent: 'center', paddingHorizontal: space.sm },
+  segment: {
+    flex: 1,
+    minHeight: 36,
+    borderRadius: radius.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: space.sm,
+  },
 });

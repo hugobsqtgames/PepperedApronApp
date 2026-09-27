@@ -84,7 +84,11 @@ export class AppRuntime {
   }
 
   device() {
-    return { deviceName: Device.deviceName ?? Device.modelName ?? null, platform: Platform.OS, appVersion: ENV.appVersion };
+    return {
+      deviceName: Device.deviceName ?? Device.modelName ?? null,
+      platform: Platform.OS,
+      appVersion: ENV.appVersion,
+    };
   }
 
   async boot() {
@@ -114,8 +118,14 @@ export class AppRuntime {
   /** Called after any successful sign-in / sign-up. */
   async completeAuth(res: AuthResponse) {
     const u: CachedUser = {
-      id: res.user.id, email: res.user.email, displayName: res.user.displayName, emailVerified: res.user.emailVerified,
-      role: res.user.role, avatarKey: res.user.avatarKey, hasPassword: res.user.hasPassword, providers: res.user.providers,
+      id: res.user.id,
+      email: res.user.email,
+      displayName: res.user.displayName,
+      emailVerified: res.user.emailVerified,
+      role: res.user.role,
+      avatarKey: res.user.avatarKey,
+      hasPassword: res.user.hasPassword,
+      providers: res.user.providers,
     };
     await saveCachedUser(u);
     if (this.session && this.session.userId !== u.id) await this.closeSession(false);
@@ -137,8 +147,14 @@ export class AppRuntime {
       },
     });
     const householdId = await store.meta('household_id');
-    this.household = householdId ? (JSON.parse((await store.meta('household')) ?? 'null') as HouseholdView | null) : null;
-    const repos = new Repos(store, () => userId, () => this.household?.id ?? null);
+    this.household = householdId
+      ? (JSON.parse((await store.meta('household')) ?? 'null') as HouseholdView | null)
+      : null;
+    const repos = new Repos(
+      store,
+      () => userId,
+      () => this.household?.id ?? null,
+    );
     const photos = new PhotoUploader(store, this.api, putFile, () => this.scheduleSync(300));
     this.session = { userId, store, sync, repos, photos, driver };
 
@@ -159,7 +175,13 @@ export class AppRuntime {
     const interval = setInterval(() => {
       if (AppState.currentState === 'active') this.scheduleSync(0);
     }, 60_000);
-    this.cleanups = [unsubStore, unsubSync, () => net.remove(), () => app.remove(), () => clearInterval(interval)];
+    this.cleanups = [
+      unsubStore,
+      unsubSync,
+      () => net.remove(),
+      () => app.remove(),
+      () => clearInterval(interval),
+    ];
     this.scheduleSync(0);
   }
 
@@ -180,7 +202,16 @@ export class AppRuntime {
   async refreshRemote() {
     try {
       const me = await this.api.me();
-      const u: CachedUser = { id: me.id, email: me.email, displayName: me.displayName, emailVerified: me.emailVerified, role: me.role, avatarKey: me.avatarKey, hasPassword: me.hasPassword, providers: me.providers };
+      const u: CachedUser = {
+        id: me.id,
+        email: me.email,
+        displayName: me.displayName,
+        emailVerified: me.emailVerified,
+        role: me.role,
+        avatarKey: me.avatarKey,
+        hasPassword: me.hasPassword,
+        providers: me.providers,
+      };
       this.user = u;
       await saveCachedUser(u);
       this.emit();
@@ -199,7 +230,8 @@ export class AppRuntime {
       const { household } = await this.api.household();
       await this.setHousehold(household);
     } catch (e) {
-      if (!(e instanceof NetworkError)) console.warn('[household] refresh failed', (e as Error).message);
+      if (!(e instanceof NetworkError))
+        console.warn('[household] refresh failed', (e as Error).message);
     }
   }
 

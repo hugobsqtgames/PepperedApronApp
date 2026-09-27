@@ -15,7 +15,16 @@ export default function JoinHousehold() {
   const rt = useRuntime();
   const [error, setError] = useState<string | null>(null);
   if (rt.household) {
-    return <Screen scroll={false}><EmptyState emoji="🏡" title={t('errors.already_in_household')} action={t('common.close')} onAction={() => router.replace('/profile/household')} /></Screen>;
+    return (
+      <Screen scroll={false}>
+        <EmptyState
+          emoji="🏡"
+          title={t('errors.already_in_household')}
+          action={t('common.close')}
+          onAction={() => router.replace('/profile/household')}
+        />
+      </Screen>
+    );
   }
   return (
     <Screen edges={['top', 'bottom']} maxWidth={480}>

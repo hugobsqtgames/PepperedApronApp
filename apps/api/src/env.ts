@@ -1,8 +1,6 @@
 import { z } from 'zod';
 
-const bool = z
-  .enum(['true', 'false', '1', '0'])
-  .transform((v) => v === 'true' || v === '1');
+const bool = z.enum(['true', 'false', '1', '0']).transform((v) => v === 'true' || v === '1');
 
 const schema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'staging', 'production']).default('development'),
@@ -11,7 +9,10 @@ const schema = z.object({
   DATABASE_URL: z.string().min(1),
   DATABASE_POOL_MAX: z.coerce.number().int().min(1).default(10),
   JWT_SECRET: z.string().min(32, 'JWT_SECRET must be at least 32 characters'),
-  ACCESS_TOKEN_TTL_SECONDS: z.coerce.number().int().default(15 * 60),
+  ACCESS_TOKEN_TTL_SECONDS: z.coerce
+    .number()
+    .int()
+    .default(15 * 60),
   REFRESH_TOKEN_TTL_DAYS: z.coerce.number().int().default(90),
   /** Public base URL of the API (used in links and local media URLs). */
   API_PUBLIC_URL: z.url(),
@@ -46,10 +47,16 @@ const schema = z.object({
   ANDROID_PACKAGE: z.string().default('app.pepperedapron'),
   ANDROID_SHA256_CERT_FINGERPRINTS: z.string().default(''),
   APP_STORE_URL: z.string().default('https://apps.apple.com/app/pepperedapron'),
-  PLAY_STORE_URL: z.string().default('https://play.google.com/store/apps/details?id=app.pepperedapron'),
+  PLAY_STORE_URL: z
+    .string()
+    .default('https://play.google.com/store/apps/details?id=app.pepperedapron'),
 
   /** Remote-configurable ad placement settings (JSON). */
-  ADS_CONFIG: z.string().default('{"enabled":true,"homeNativeAfterSection":3,"searchNativeEvery":8,"interstitialMinMinutes":0}'),
+  ADS_CONFIG: z
+    .string()
+    .default(
+      '{"enabled":true,"homeNativeAfterSection":3,"searchNativeEvery":8,"interstitialMinMinutes":0}',
+    ),
   MIN_APP_VERSION: z.string().default('2.0.0'),
   RATE_LIMIT_ENABLED: bool.default(true),
   ADMIN_EMAILS: z.string().default(''),
@@ -70,17 +77,35 @@ export function loadEnv(source: Record<string, string | undefined> = process.env
     throw new Error(`Invalid environment configuration:\n${msg}`);
   }
   const env = parsed.data;
-  if (env.STORAGE_DRIVER === 's3' && (!env.S3_BUCKET || !env.S3_ACCESS_KEY_ID || !env.S3_SECRET_ACCESS_KEY || !env.MEDIA_PUBLIC_URL)) {
-    throw new Error('STORAGE_DRIVER=s3 requires S3_BUCKET, S3_ACCESS_KEY_ID, S3_SECRET_ACCESS_KEY and MEDIA_PUBLIC_URL');
+  if (
+    env.STORAGE_DRIVER === 's3' &&
+    (!env.S3_BUCKET || !env.S3_ACCESS_KEY_ID || !env.S3_SECRET_ACCESS_KEY || !env.MEDIA_PUBLIC_URL)
+  ) {
+    throw new Error(
+      'STORAGE_DRIVER=s3 requires S3_BUCKET, S3_ACCESS_KEY_ID, S3_SECRET_ACCESS_KEY and MEDIA_PUBLIC_URL',
+    );
   }
-  if (env.MAIL_DRIVER === 'resend' && !env.RESEND_API_KEY) throw new Error('MAIL_DRIVER=resend requires RESEND_API_KEY');
-  if (env.NODE_ENV === 'production' && (!env.LEGAL_PUBLISHER || !env.LEGAL_CONTACT_EMAIL || !env.LEGAL_ADDRESS || !env.LEGAL_HOSTING)) {
-    throw new Error('Production requires LEGAL_PUBLISHER, LEGAL_ADDRESS, LEGAL_CONTACT_EMAIL and LEGAL_HOSTING');
+  if (env.MAIL_DRIVER === 'resend' && !env.RESEND_API_KEY)
+    throw new Error('MAIL_DRIVER=resend requires RESEND_API_KEY');
+  if (
+    env.NODE_ENV === 'production' &&
+    (!env.LEGAL_PUBLISHER || !env.LEGAL_CONTACT_EMAIL || !env.LEGAL_ADDRESS || !env.LEGAL_HOSTING)
+  ) {
+    throw new Error(
+      'Production requires LEGAL_PUBLISHER, LEGAL_ADDRESS, LEGAL_CONTACT_EMAIL and LEGAL_HOSTING',
+    );
   }
-  if ((env.NODE_ENV === 'production' || env.NODE_ENV === 'staging') && env.STORAGE_DRIVER === 'local') {
+  if (
+    (env.NODE_ENV === 'production' || env.NODE_ENV === 'staging') &&
+    env.STORAGE_DRIVER === 'local'
+  ) {
     throw new Error('Local storage is not allowed in staging/production');
   }
   return env;
 }
 
-export const list = (s: string) => s.split(',').map((x) => x.trim()).filter(Boolean);
+export const list = (s: string) =>
+  s
+    .split(',')
+    .map((x) => x.trim())
+    .filter(Boolean);

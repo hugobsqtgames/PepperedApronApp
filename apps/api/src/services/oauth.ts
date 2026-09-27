@@ -35,7 +35,9 @@ export function remoteJwks(): JwksSources {
   return {
     apple: createRemoteJWKSet(new URL('https://appleid.apple.com/auth/keys')),
     google: createRemoteJWKSet(new URL('https://www.googleapis.com/oauth2/v3/certs')),
-    facebook: createRemoteJWKSet(new URL('https://limited.facebook.com/.well-known/oauth/openid/jwks/')),
+    facebook: createRemoteJWKSet(
+      new URL('https://limited.facebook.com/.well-known/oauth/openid/jwks/'),
+    ),
   };
 }
 
@@ -61,16 +63,26 @@ export class DefaultOAuthVerifier implements OAuthVerifier {
 
   private checkNonce(payload: Record<string, unknown>, nonce: string | undefined) {
     if (payload.nonce === undefined && nonce === undefined) return;
-    if (!nonce || (payload.nonce !== sha256hex(nonce) && payload.nonce !== nonce)) throw unauthorized('oauth_invalid_nonce');
+    if (!nonce || (payload.nonce !== sha256hex(nonce) && payload.nonce !== nonce))
+      throw unauthorized('oauth_invalid_nonce');
   }
 
   private async apple(input: OAuthInput): Promise<OAuthProfile> {
     if (!input.idToken) throw unauthorized('oauth_invalid_token');
-    const { payload } = await jwtVerify(input.idToken, this.jwks.apple, { issuer: 'https://appleid.apple.com', audience: list(this.env.APPLE_AUDIENCES) });
+    const { payload } = await jwtVerify(input.idToken, this.jwks.apple, {
+      issuer: 'https://appleid.apple.com',
+      audience: list(this.env.APPLE_AUDIENCES),
+    });
     this.checkNonce(payload, input.nonce);
     const email = typeof payload.email === 'string' ? payload.email : null;
     const verified = payload.email_verified === true || payload.email_verified === 'true';
-    return { provider: 'apple', subject: String(payload.sub), email, emailVerified: verified, name: input.name?.trim() || null };
+    return {
+      provider: 'apple',
+      subject: String(payload.sub),
+      email,
+      emailVerified: verified,
+      name: input.name?.trim() || null,
+    };
   }
 
   private async google(input: OAuthInput): Promise<OAuthProfile> {
@@ -111,12 +123,24 @@ export class DefaultOAuthVerifier implements OAuthVerifier {
       `https://graph.facebook.com/debug_token?input_token=${encodeURIComponent(input.accessToken)}&access_token=${encodeURIComponent(appToken)}`,
       { signal: AbortSignal.timeout(8000) },
     );
-    const d = (await dbg.json()) as { data?: { is_valid?: boolean; app_id?: string; user_id?: string } };
-    if (!d.data?.is_valid || d.data.app_id !== this.env.FACEBOOK_APP_ID || !d.data.user_id) throw unauthorized('oauth_invalid_token');
-    const me = await this.fetchImpl(`https://graph.facebook.com/me?fields=id,name,email&access_token=${encodeURIComponent(input.accessToken)}`, { signal: AbortSignal.timeout(8000) });
+    const d = (await dbg.json()) as {
+      data?: { is_valid?: boolean; app_id?: string; user_id?: string };
+    };
+    if (!d.data?.is_valid || d.data.app_id !== this.env.FACEBOOK_APP_ID || !d.data.user_id)
+      throw unauthorized('oauth_invalid_token');
+    const me = await this.fetchImpl(
+      `https://graph.facebook.com/me?fields=id,name,email&access_token=${encodeURIComponent(input.accessToken)}`,
+      { signal: AbortSignal.timeout(8000) },
+    );
     const p = (await me.json()) as { id?: string; name?: string; email?: string };
     if (p.id !== d.data.user_id) throw unauthorized('oauth_invalid_token');
     // Facebook e-mails are never trusted for account linking.
-    return { provider: 'facebook', subject: p.id, email: p.email ?? null, emailVerified: false, name: p.name ?? null };
+    return {
+      provider: 'facebook',
+      subject: p.id,
+      email: p.email ?? null,
+      emailVerified: false,
+      name: p.name ?? null,
+    };
   }
 }

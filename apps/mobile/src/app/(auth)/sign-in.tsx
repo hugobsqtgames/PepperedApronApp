@@ -21,7 +21,11 @@ export default function SignIn() {
     if (!isEmail(email)) return setError(t('errors.invalidEmail'));
     if (!password) return setError(t('errors.invalid_credentials'));
     try {
-      const res = await runtime.api.login({ email: email.trim(), password, device: runtime.device() });
+      const res = await runtime.api.login({
+        email: email.trim(),
+        password,
+        device: runtime.device(),
+      });
       await runtime.completeAuth(res);
     } catch (e) {
       onError(e);
@@ -33,16 +37,44 @@ export default function SignIn() {
       <BrandHeader title={t('auth.signInTitle')} />
       <View style={{ gap: space.lg }}>
         <SocialButtons onError={onError} />
-        <TextField label={t('auth.email')} value={email} onChangeText={setEmail} autoCapitalize="none" autoComplete="email" keyboardType="email-address" textContentType="emailAddress" returnKeyType="next" testID="signin-email" />
-        <TextField label={t('auth.password')} value={password} onChangeText={setPassword} secureTextEntry autoComplete="current-password" textContentType="password" returnKeyType="go" onSubmitEditing={() => void submit()} testID="signin-password" />
+        <TextField
+          label={t('auth.email')}
+          value={email}
+          onChangeText={setEmail}
+          autoCapitalize="none"
+          autoComplete="email"
+          keyboardType="email-address"
+          textContentType="emailAddress"
+          returnKeyType="next"
+          testID="signin-email"
+        />
+        <TextField
+          label={t('auth.password')}
+          value={password}
+          onChangeText={setPassword}
+          secureTextEntry
+          autoComplete="current-password"
+          textContentType="password"
+          returnKeyType="go"
+          onSubmitEditing={() => void submit()}
+          testID="signin-password"
+        />
         {error ? (
           <Text variant="callout" color="danger" accessibilityLiveRegion="assertive">
             {error}
           </Text>
         ) : null}
         <Button title={t('auth.signIn')} size="lg" onPress={submit} testID="signin-submit" />
-        <Button title={t('auth.forgot')} variant="ghost" onPress={() => router.push({ pathname: '/forgot-password', params: { email } })} />
-        <Button title={t('auth.noAccount')} variant="secondary" onPress={() => router.replace('/sign-up')} />
+        <Button
+          title={t('auth.forgot')}
+          variant="ghost"
+          onPress={() => router.push({ pathname: '/forgot-password', params: { email } })}
+        />
+        <Button
+          title={t('auth.noAccount')}
+          variant="secondary"
+          onPress={() => router.replace('/sign-up')}
+        />
         <LegalLinks />
       </View>
     </Screen>
@@ -59,10 +91,20 @@ export function LegalLinks() {
       </Text>
       {web ? (
         <View style={{ flexDirection: 'row', gap: space.lg }}>
-          <Text variant="caption" color="primary" accessibilityRole="link" onPress={() => void Linking.openURL(web.terms)}>
+          <Text
+            variant="caption"
+            color="primary"
+            accessibilityRole="link"
+            onPress={() => void Linking.openURL(web.terms)}
+          >
             {t('auth.terms')}
           </Text>
-          <Text variant="caption" color="primary" accessibilityRole="link" onPress={() => void Linking.openURL(web.privacy)}>
+          <Text
+            variant="caption"
+            color="primary"
+            accessibilityRole="link"
+            onPress={() => void Linking.openURL(web.privacy)}
+          >
             {t('auth.privacy')}
           </Text>
         </View>

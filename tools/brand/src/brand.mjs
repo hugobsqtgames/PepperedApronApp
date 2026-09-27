@@ -18,10 +18,12 @@ export const COLORS = {
 };
 
 const CHILI_T = 'translate(-22 4) translate(512 660) rotate(-14) scale(1.12) translate(-512 -660)';
-const CHILI_BODY = 'M556 556 C640 574 650 668 596 730 C556 776 486 790 410 772 C472 752 530 716 548 660 C558 628 548 596 526 574 C532 562 544 556 556 556 Z';
+const CHILI_BODY =
+  'M556 556 C640 574 650 668 596 730 C556 776 486 790 410 772 C472 752 530 716 548 660 C558 628 548 596 526 574 C532 562 544 556 556 556 Z';
 const CHILI_CAP = 'M512 566 C520 540 552 530 578 546 C570 566 546 578 522 578 Z';
 const CHILI_STEM = 'M552 544 C556 520 572 504 596 500';
-const APRON = 'M398 330 H626 Q648 330 650 352 L656 440 Q660 476 700 482 L716 484 Q740 488 742 514 L766 790 Q770 840 718 840 H306 Q254 840 258 790 L282 514 Q284 488 308 484 L324 482 Q364 476 368 440 L374 352 Q376 330 398 330 Z';
+const APRON =
+  'M398 330 H626 Q648 330 650 352 L656 440 Q660 476 700 482 L716 484 Q740 488 742 514 L766 790 Q770 840 718 840 H306 Q254 840 258 790 L282 514 Q284 488 308 484 L324 482 Q364 476 368 440 L374 352 Q376 330 398 330 Z';
 const straps = (c) => `
   <path d="M418 352 C410 250 614 250 606 352" fill="none" stroke="${c}" stroke-width="32" stroke-linecap="round"/>
   <path d="M300 500 C250 500 212 516 194 558 M300 500 C262 520 244 562 248 610" fill="none" stroke="${c}" stroke-width="28" stroke-linecap="round"/>
@@ -47,17 +49,35 @@ export function silhouette(color, id = 'cut') {
   <g transform="${LIFT}">${straps(color)}</g><g mask="url(#${id})"><g transform="${LIFT}"><path d="${APRON}" fill="${color}"/></g></g>`;
 }
 
-const svg = (w, h, body, viewBox = `0 0 ${w} ${h}`) => `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="${viewBox}">${body}</svg>`;
-const scaled = (s, body) => `<g transform="translate(${512 - 512 * s} ${512 - 512 * s}) scale(${s})">${body}</g>`;
+const svg = (w, h, body, viewBox = `0 0 ${w} ${h}`) =>
+  `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="${viewBox}">${body}</svg>`;
+const scaled = (s, body) =>
+  `<g transform="translate(${512 - 512 * s} ${512 - 512 * s}) scale(${s})">${body}</g>`;
 
 const C = COLORS;
 export const variants = {
   // iOS app icon (system applies the squircle mask).
-  icon: svg(1024, 1024, `<rect width="1024" height="1024" fill="${C.forest}"/>${mark({ apron: C.cream, chili: C.paprika, stem: C.forest })}`),
-  iconDark: svg(1024, 1024, `<rect width="1024" height="1024" fill="${C.night}"/>${mark({ apron: '#2E6A51', chili: '#E07A3F', stem: C.night })}`),
-  iconTinted: svg(1024, 1024, `<rect width="1024" height="1024" fill="#000"/>${silhouette('#FFFFFF', 't')}`),
+  icon: svg(
+    1024,
+    1024,
+    `<rect width="1024" height="1024" fill="${C.forest}"/>${mark({ apron: C.cream, chili: C.paprika, stem: C.forest })}`,
+  ),
+  iconDark: svg(
+    1024,
+    1024,
+    `<rect width="1024" height="1024" fill="${C.night}"/>${mark({ apron: '#2E6A51', chili: '#E07A3F', stem: C.night })}`,
+  ),
+  iconTinted: svg(
+    1024,
+    1024,
+    `<rect width="1024" height="1024" fill="#000"/>${silhouette('#FFFFFF', 't')}`,
+  ),
   // Android adaptive icon: content kept inside the 66% safe zone.
-  androidForeground: svg(1024, 1024, scaled(0.62, mark({ apron: C.cream, chili: C.paprika, stem: C.forest }))),
+  androidForeground: svg(
+    1024,
+    1024,
+    scaled(0.62, mark({ apron: C.cream, chili: C.paprika, stem: C.forest })),
+  ),
   androidBackground: svg(1024, 1024, `<rect width="1024" height="1024" fill="${C.forest}"/>`),
   androidMonochrome: svg(1024, 1024, scaled(0.62, silhouette('#FFFFFF', 'm'))),
   // Splash: mark only, background set by the splash config (light & dark).
@@ -86,7 +106,8 @@ export async function logoFull(dark = false) {
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   await fs.mkdir(out('docs/brand'), { recursive: true });
-  for (const [k, v] of Object.entries(variants)) await fs.writeFile(out('docs/brand', `${k}.svg`), v);
+  for (const [k, v] of Object.entries(variants))
+    await fs.writeFile(out('docs/brand', `${k}.svg`), v);
   await fs.writeFile(out('docs/brand/logo-full.svg'), await logoFull(false));
   await fs.writeFile(out('docs/brand/logo-full-dark.svg'), await logoFull(true));
   const A = (p) => out('apps/mobile/assets', p);
@@ -106,7 +127,13 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     { svg: variants.markOnDark, out: A('brand/mark-dark.png'), width: 512 },
     { svg: variants.icon, out: out('docs/brand/icon-1024.png'), width: 1024 },
     { svg: await logoFull(false), out: out('docs/brand/logo-full.png'), width: 1080, height: 256 },
-    { svg: await logoFull(true), out: out('docs/brand/logo-full-dark.png'), width: 1080, height: 256, background: C.night },
+    {
+      svg: await logoFull(true),
+      out: out('docs/brand/logo-full-dark.png'),
+      width: 1080,
+      height: 256,
+      background: C.night,
+    },
   ]);
   console.info('Brand assets generated.');
 }

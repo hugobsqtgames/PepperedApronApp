@@ -10,7 +10,16 @@ import { track } from '../../../services/analytics';
 import { haptic } from '../../../services/haptics';
 import { useTheme } from '../../../theme/ThemeProvider';
 import { radius, space } from '../../../theme/tokens';
-import { Button, EmptyState, RecipeCard, RecipePhoto, Segmented, Text, TextField, useActionSheet } from '../../../ui';
+import {
+  Button,
+  EmptyState,
+  RecipeCard,
+  RecipePhoto,
+  Segmented,
+  Text,
+  TextField,
+  useActionSheet,
+} from '../../../ui';
 
 export default function Favorites() {
   const { t } = useTranslation();
@@ -25,7 +34,12 @@ export default function Favorites() {
     collections: r.collections().map((c) => ({ c, recipes: r.collectionRecipes(c.id) })),
   }));
   const cols = layout.sidebar ? Math.max(2, layout.columns - 1) : layout.columns;
-  const w = tileWidth(layout.sidebar ? layout.width - 260 : layout.width, cols, space.md, layout.gutter);
+  const w = tileWidth(
+    layout.sidebar ? layout.width - 260 : layout.width,
+    cols,
+    space.md,
+    layout.gutter,
+  );
 
   const createCollection = async () => {
     if (!newName.trim()) return;
@@ -36,15 +50,42 @@ export default function Favorites() {
   };
 
   const header = (
-    <View style={{ paddingHorizontal: layout.gutter, paddingTop: space.lg, gap: space.md, paddingBottom: space.md }}>
+    <View
+      style={{
+        paddingHorizontal: layout.gutter,
+        paddingTop: space.lg,
+        gap: space.md,
+        paddingBottom: space.md,
+      }}
+    >
       <Text variant="title1" accessibilityRole="header">
         {t('favorites.title')}
       </Text>
-      <Segmented value={tab} onChange={setTab} options={[{ value: 'favorites', label: t('favorites.all') }, { value: 'collections', label: t('favorites.collections') }]} />
+      <Segmented
+        value={tab}
+        onChange={setTab}
+        options={[
+          { value: 'favorites', label: t('favorites.all') },
+          { value: 'collections', label: t('favorites.collections') },
+        ]}
+      />
       {tab === 'collections' ? (
         <View style={{ flexDirection: 'row', gap: space.sm, alignItems: 'flex-start' }}>
-          <TextField containerStyle={{ flex: 1 }} placeholder={`${t('favorites.newCollection')} — ${t('favorites.collectionExamples')}`} value={newName} onChangeText={setNewName} onSubmitEditing={() => void createCollection()} maxLength={80} returnKeyType="done" testID="new-collection" />
-          <Button title={t('common.create')} onPress={createCollection} disabled={!newName.trim()} />
+          <TextField
+            containerStyle={{ flex: 1 }}
+            placeholder={`${t('favorites.newCollection')} — ${t('favorites.collectionExamples')}`}
+            value={newName}
+            onChangeText={setNewName}
+            onSubmitEditing={() => void createCollection()}
+            maxLength={80}
+            returnKeyType="done"
+            testID="new-collection"
+          />
+          <Button
+            title={t('common.create')}
+            onPress={createCollection}
+            disabled={!newName.trim()}
+          />
         </View>
       ) : null}
     </View>
@@ -59,12 +100,31 @@ export default function Favorites() {
           numColumns={cols}
           keyExtractor={(r) => r.id}
           ListHeaderComponent={header}
-          columnWrapperStyle={cols > 1 ? { gap: space.md, paddingHorizontal: layout.gutter } : undefined}
+          columnWrapperStyle={
+            cols > 1 ? { gap: space.md, paddingHorizontal: layout.gutter } : undefined
+          }
           contentContainerStyle={{ gap: space.lg, paddingBottom: space.huge * 2 }}
           renderItem={({ item }) => (
-            <RecipeCard recipe={item} width={w} favorite onToggleFavorite={() => { haptic.light(); void repos.toggleFavorite(item.id); }} onPress={() => router.push(`/recipe/${item.id}`)} />
+            <RecipeCard
+              recipe={item}
+              width={w}
+              favorite
+              onToggleFavorite={() => {
+                haptic.light();
+                void repos.toggleFavorite(item.id);
+              }}
+              onPress={() => router.push(`/recipe/${item.id}`)}
+            />
           )}
-          ListEmptyComponent={<EmptyState emoji="💚" title={t('favorites.emptyTitle')} body={t('favorites.emptyBody')} action={t('tabs.search')} onAction={() => router.push('/search')} />}
+          ListEmptyComponent={
+            <EmptyState
+              emoji="💚"
+              title={t('favorites.emptyTitle')}
+              body={t('favorites.emptyBody')}
+              action={t('tabs.search')}
+              onAction={() => router.push('/search')}
+            />
+          }
         />
       </SafeAreaView>
     );
@@ -78,7 +138,9 @@ export default function Favorites() {
         numColumns={cols}
         keyExtractor={(x) => x.c.id}
         ListHeaderComponent={header}
-        columnWrapperStyle={cols > 1 ? { gap: space.md, paddingHorizontal: layout.gutter } : undefined}
+        columnWrapperStyle={
+          cols > 1 ? { gap: space.md, paddingHorizontal: layout.gutter } : undefined
+        }
         contentContainerStyle={{ gap: space.lg, paddingBottom: space.huge * 2 }}
         renderItem={({ item }) => (
           <Pressable
@@ -94,19 +156,41 @@ export default function Favorites() {
                     icon: 'trash-outline',
                     destructive: true,
                     onPress: () =>
-                      Alert.alert(t('favorites.deleteCollection'), t('favorites.deleteCollectionBody'), [
-                        { text: t('common.cancel'), style: 'cancel' },
-                        { text: t('common.delete'), style: 'destructive', onPress: () => void repos.deleteCollection(item.c.id) },
-                      ]),
+                      Alert.alert(
+                        t('favorites.deleteCollection'),
+                        t('favorites.deleteCollectionBody'),
+                        [
+                          { text: t('common.cancel'), style: 'cancel' },
+                          {
+                            text: t('common.delete'),
+                            style: 'destructive',
+                            onPress: () => void repos.deleteCollection(item.c.id),
+                          },
+                        ],
+                      ),
                   },
                 ],
               })
             }
             style={{ width: w, gap: space.sm }}
           >
-            <View style={[styles.mosaic, { width: w, height: w * 0.8, backgroundColor: colors.surfaceMuted }]}>
+            <View
+              style={[
+                styles.mosaic,
+                { width: w, height: w * 0.8, backgroundColor: colors.surfaceMuted },
+              ]}
+            >
               {item.recipes.slice(0, 4).map((r) => (
-                <RecipePhoto key={r.id} uri={recipePhotoUri(r)} category={r.data.category} style={{ width: item.recipes.length === 1 ? w : w / 2, height: item.recipes.length <= 2 ? w * 0.8 : w * 0.4 }} emojiSize={24} />
+                <RecipePhoto
+                  key={r.id}
+                  uri={recipePhotoUri(r)}
+                  category={r.data.category}
+                  style={{
+                    width: item.recipes.length === 1 ? w : w / 2,
+                    height: item.recipes.length <= 2 ? w * 0.8 : w * 0.4,
+                  }}
+                  emojiSize={24}
+                />
               ))}
               {item.recipes.length === 0 ? (
                 <Text style={{ fontSize: 34 }} maxFontSizeMultiplier={1}>
@@ -125,12 +209,25 @@ export default function Favorites() {
             </View>
           </Pressable>
         )}
-        ListEmptyComponent={<EmptyState emoji="📚" title={t('favorites.emptyCollectionsTitle')} body={t('favorites.emptyCollectionsBody')} />}
+        ListEmptyComponent={
+          <EmptyState
+            emoji="📚"
+            title={t('favorites.emptyCollectionsTitle')}
+            body={t('favorites.emptyCollectionsBody')}
+          />
+        }
       />
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  mosaic: { flexDirection: 'row', flexWrap: 'wrap', borderRadius: radius.xl, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' },
+  mosaic: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    borderRadius: radius.xl,
+    overflow: 'hidden',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 });

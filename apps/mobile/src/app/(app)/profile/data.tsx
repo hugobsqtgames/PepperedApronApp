@@ -19,7 +19,10 @@ export default function DataScreen() {
   const exportData = async () => {
     try {
       const data = await rt.api.exportData();
-      const f = new File(Paths.cache, `pepperedapron-export-${new Date().toISOString().slice(0, 10)}.json`);
+      const f = new File(
+        Paths.cache,
+        `pepperedapron-export-${new Date().toISOString().slice(0, 10)}.json`,
+      );
       f.write(JSON.stringify(data, null, 2));
       await Share.share({ url: f.uri, title: 'PepperedApron export' });
       toast(t('settings.exportDone'));
@@ -49,18 +52,56 @@ export default function DataScreen() {
     ]);
 
   return (
-    <ScrollView contentInsetAdjustmentBehavior="automatic" keyboardShouldPersistTaps="handled" contentContainerStyle={{ padding: space.lg, gap: space.xl, maxWidth: 640, width: '100%', alignSelf: 'center' }}>
+    <ScrollView
+      contentInsetAdjustmentBehavior="automatic"
+      keyboardShouldPersistTaps="handled"
+      contentContainerStyle={{
+        padding: space.lg,
+        gap: space.xl,
+        maxWidth: 640,
+        width: '100%',
+        alignSelf: 'center',
+      }}
+    >
       <Group>
-        <ListRow icon="download-outline" title={t('settings.export')} subtitle={t('settings.exportBody')} onPress={() => void exportData()} />
+        <ListRow
+          icon="download-outline"
+          title={t('settings.export')}
+          subtitle={t('settings.exportBody')}
+          onPress={() => void exportData()}
+        />
       </Group>
       <View style={{ gap: space.md }}>
         <Text variant="title3" color="danger">
           {t('settings.deleteAccount')}
         </Text>
         <Text color="textMuted">{t('settings.deleteAccountBody')}</Text>
-        {rt.user?.hasPassword ? <TextField label={t('settings.passwordToConfirm')} value={password} onChangeText={setPassword} secureTextEntry /> : null}
-        <TextField label={t('settings.deleteTypeConfirm')} value={confirm} onChangeText={setConfirm} autoCapitalize="characters" testID="delete-confirm" />
-        <Button title={t('settings.deleteAccount')} variant="danger" icon="trash-outline" loading={deleting} disabled={confirm.trim().toUpperCase() !== t('settings.deleteWord').toUpperCase() || (rt.user?.hasPassword === true && !password)} onPress={del} />
+        {rt.user?.hasPassword ? (
+          <TextField
+            label={t('settings.passwordToConfirm')}
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry
+          />
+        ) : null}
+        <TextField
+          label={t('settings.deleteTypeConfirm')}
+          value={confirm}
+          onChangeText={setConfirm}
+          autoCapitalize="characters"
+          testID="delete-confirm"
+        />
+        <Button
+          title={t('settings.deleteAccount')}
+          variant="danger"
+          icon="trash-outline"
+          loading={deleting}
+          disabled={
+            confirm.trim().toUpperCase() !== t('settings.deleteWord').toUpperCase() ||
+            (rt.user?.hasPassword === true && !password)
+          }
+          onPress={del}
+        />
       </View>
     </ScrollView>
   );

@@ -12,17 +12,65 @@ export interface ParsedIngredient {
 
 const WORD_NUMBERS: Record<string, number> = {
   // fr
-  un: 1, une: 1, deux: 2, trois: 3, quatre: 4, cinq: 5, six: 6, sept: 7, huit: 8, dix: 10, douze: 12, demi: 0.5, demie: 0.5,
+  un: 1,
+  une: 1,
+  deux: 2,
+  trois: 3,
+  quatre: 4,
+  cinq: 5,
+  six: 6,
+  sept: 7,
+  huit: 8,
+  dix: 10,
+  douze: 12,
+  demi: 0.5,
+  demie: 0.5,
   // en
-  a: 1, an: 1, one: 1, two: 2, three: 3, four: 4, five: 5, eight: 8, ten: 10, twelve: 12, half: 0.5, dozen: 12,
+  a: 1,
+  an: 1,
+  one: 1,
+  two: 2,
+  three: 3,
+  four: 4,
+  five: 5,
+  eight: 8,
+  ten: 10,
+  twelve: 12,
+  half: 0.5,
+  dozen: 12,
   // es / it
-  uno: 1, una: 1, dos: 2, tres: 3, cuatro: 4, cinco: 5, seis: 6, due: 2, tre: 3, quattro: 4, cinque: 5, sei: 6, mezzo: 0.5, mezza: 0.5, medio: 0.5, media: 0.5,
+  uno: 1,
+  una: 1,
+  dos: 2,
+  tres: 3,
+  cuatro: 4,
+  cinco: 5,
+  seis: 6,
+  due: 2,
+  tre: 3,
+  quattro: 4,
+  cinque: 5,
+  sei: 6,
+  mezzo: 0.5,
+  mezza: 0.5,
+  medio: 0.5,
+  media: 0.5,
   // de
-  ein: 1, eine: 1, einen: 1, zwei: 2, drei: 3, vier: 4, funf: 5, sechs: 6, halbe: 0.5, halber: 0.5,
+  ein: 1,
+  eine: 1,
+  einen: 1,
+  zwei: 2,
+  drei: 3,
+  vier: 4,
+  funf: 5,
+  sechs: 6,
+  halbe: 0.5,
+  halber: 0.5,
 };
 
 const BULLET_RE = /^\s*(?:[-–—•*·▪▫◦●○✓✔☐▢□>]+|\d+\s*[.)]\s+(?=\D))\s*/;
-const CONNECTOR_RE = /^(?:de la |de l'|de l’|du |des |de |d'|d’|of |di |del |della |dello |dei |degli |delle |de los |de las |von |vom )/i;
+const CONNECTOR_RE =
+  /^(?:de la |de l'|de l’|du |des |de |d'|d’|of |di |del |della |dello |dei |degli |delle |de los |de las |von |vom )/i;
 const RANGE_SEP = '(?:-|–|—|à|to|bis|a|o)';
 
 function stripConnector(s: string): string {
@@ -62,7 +110,9 @@ function splitNote(rest: string): { name: string; note: string | null } {
   const paren = name.match(/\(([^)]*)\)/);
   if (paren) {
     if (paren[1]!.trim()) notes.push(paren[1]!.trim());
-    name = (name.slice(0, paren.index) + name.slice(paren.index! + paren[0].length)).replace(/\s+/g, ' ').trim();
+    name = (name.slice(0, paren.index) + name.slice(paren.index! + paren[0].length))
+      .replace(/\s+/g, ' ')
+      .trim();
   }
   const comma = name.indexOf(',');
   if (comma > 0) {
@@ -81,14 +131,20 @@ function cleanName(s: string): string {
  * "200 g de farine (tamisée)" → { quantity: 200, unit: 'g', name: 'farine', note: 'tamisée' }
  */
 export function parseIngredientLine(input: string): ParsedIngredient | null {
-  const line = input.replace(/\u00a0/g, ' ').replace(BULLET_RE, '').trim();
+  const line = input
+    .replace(/\u00a0/g, ' ')
+    .replace(BULLET_RE, '')
+    .trim();
   if (!line) return null;
 
   let quantity: number | null = null;
   let quantityMax: number | null = null;
   let rest = line;
 
-  const numRe = new RegExp(`^(${NUMBER_PATTERN})(?:\\s*${RANGE_SEP}\\s*(${NUMBER_PATTERN}))?(?=\\s|[a-zA-Zµ°'’(]|$)`, 'i');
+  const numRe = new RegExp(
+    `^(${NUMBER_PATTERN})(?:\\s*${RANGE_SEP}\\s*(${NUMBER_PATTERN}))?(?=\\s|[a-zA-Zµ°'’(]|$)`,
+    'i',
+  );
   const m = line.match(numRe);
   if (m) {
     quantity = parseNumber(m[1]!);
@@ -113,7 +169,10 @@ export function parseIngredientLine(input: string): ParsedIngredient | null {
     const u = matchUnit(rest);
     if (u) {
       unit = u.key;
-      rest = rest.slice(u.length).replace(/^\.\s*/, '').trim();
+      rest = rest
+        .slice(u.length)
+        .replace(/^\.\s*/, '')
+        .trim();
     }
     rest = stripConnector(rest);
   } else {
@@ -123,7 +182,13 @@ export function parseIngredientLine(input: string): ParsedIngredient | null {
       const q = parseNumber(tail[2]!);
       const u = tail[3] ? matchUnit(tail[3]) : null;
       if (q !== null && (!tail[3] || (u && u.length >= tail[3].trim().length - 1))) {
-        return { name: cleanName(tail[1]!), quantity: q, quantityMax: null, unit: u?.key ?? null, note: null };
+        return {
+          name: cleanName(tail[1]!),
+          quantity: q,
+          quantityMax: null,
+          unit: u?.key ?? null,
+          note: null,
+        };
       }
     }
   }

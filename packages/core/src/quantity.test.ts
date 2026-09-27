@@ -1,12 +1,40 @@
 import { describe, expect, it } from 'vitest';
-import { convertAmount, formatAmount, formatNumber, normalizeAmount, parseNumber, parseQuantity, scaleAmount, scaleFactor } from './quantity';
-import { celsiusToFahrenheit, fahrenheitToCelsius, resolveUnit, thermostatToCelsius, unitLabel } from './units';
+import {
+  convertAmount,
+  formatAmount,
+  formatNumber,
+  normalizeAmount,
+  parseNumber,
+  parseQuantity,
+  scaleAmount,
+  scaleFactor,
+} from './quantity';
+import {
+  celsiusToFahrenheit,
+  fahrenheitToCelsius,
+  resolveUnit,
+  thermostatToCelsius,
+  unitLabel,
+} from './units';
 
-const A = (quantity: number | null, unit: string | null, quantityMax: number | null = null) => ({ quantity, unit, quantityMax });
+const A = (quantity: number | null, unit: string | null, quantityMax: number | null = null) => ({
+  quantity,
+  unit,
+  quantityMax,
+});
 
 describe('parseNumber / parseQuantity', () => {
   it.each([
-    ['1', 1], ['1.5', 1.5], ['1,5', 1.5], ['1/2', 0.5], ['1 1/2', 1.5], ['½', 0.5], ['1½', 1.5], ['1 ½', 1.5], ['¾', 0.75], ['10', 10],
+    ['1', 1],
+    ['1.5', 1.5],
+    ['1,5', 1.5],
+    ['1/2', 0.5],
+    ['1 1/2', 1.5],
+    ['½', 0.5],
+    ['1½', 1.5],
+    ['1 ½', 1.5],
+    ['¾', 0.75],
+    ['10', 10],
   ])('%s → %d', (s, v) => expect(parseNumber(s)).toBeCloseTo(v));
   it('rejects division by zero and junk', () => {
     expect(parseNumber('1/0')).toBeNull();

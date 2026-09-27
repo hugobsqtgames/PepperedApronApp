@@ -49,7 +49,8 @@ export default function AppLayout() {
     if (!s) return;
     track('app_open');
     // Consent is asked once, after onboarding, before any analytics or ad request.
-    if (s.repos.settings().analyticsConsent === null) setTimeout(() => router.push('/consent'), 400);
+    if (s.repos.settings().analyticsConsent === null)
+      setTimeout(() => router.push('/consent'), 400);
     else void initAds();
     void registerPushToken();
     let pending: ReturnType<typeof setTimeout> | null = null;
@@ -62,7 +63,13 @@ export default function AppLayout() {
     };
     refreshDerived();
     const off1 = s.store.subscribe((changed) => {
-      if (changed.has('mealPlanEntry') || changed.has('settings') || changed.has('shoppingItem') || changed.has('recipe')) refreshDerived();
+      if (
+        changed.has('mealPlanEntry') ||
+        changed.has('settings') ||
+        changed.has('shoppingItem') ||
+        changed.has('recipe')
+      )
+        refreshDerived();
     });
     const off2 = rt.onAfterSync(refreshDerived);
     return () => {
@@ -72,24 +79,51 @@ export default function AppLayout() {
     };
   }, [rt.session, rt]);
 
-  const sheet = { presentation: 'formSheet' as const, sheetGrabberVisible: true, sheetCornerRadius: 28, contentStyle: { backgroundColor: colors.background } };
+  const sheet = {
+    presentation: 'formSheet' as const,
+    sheetGrabberVisible: true,
+    sheetCornerRadius: 28,
+    contentStyle: { backgroundColor: colors.background },
+  };
   return (
-    <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background }, headerTintColor: colors.primary, headerStyle: { backgroundColor: colors.background }, headerShadowVisible: false, headerBackButtonDisplayMode: 'minimal', headerTitleStyle: { color: colors.text } }}>
+    <Stack
+      screenOptions={{
+        headerShown: false,
+        contentStyle: { backgroundColor: colors.background },
+        headerTintColor: colors.primary,
+        headerStyle: { backgroundColor: colors.background },
+        headerShadowVisible: false,
+        headerBackButtonDisplayMode: 'minimal',
+        headerTitleStyle: { color: colors.text },
+      }}
+    >
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="add" options={{ ...sheet, sheetAllowedDetents: 'fitToContents' }} />
       <Stack.Screen name="recipe/[id]/index" />
-      <Stack.Screen name="recipe/[id]/cook" options={{ presentation: 'fullScreenModal', animation: 'fade', gestureEnabled: false }} />
+      <Stack.Screen
+        name="recipe/[id]/cook"
+        options={{ presentation: 'fullScreenModal', animation: 'fade', gestureEnabled: false }}
+      />
       <Stack.Screen name="recipe/edit" options={{ presentation: 'modal', gestureEnabled: false }} />
       <Stack.Screen name="import/link" options={{ presentation: 'modal' }} />
       <Stack.Screen name="import/text" options={{ presentation: 'modal' }} />
       <Stack.Screen name="import/photo" options={{ presentation: 'modal' }} />
       <Stack.Screen name="import/shared" options={{ presentation: 'modal' }} />
       <Stack.Screen name="plan/pick" options={{ presentation: 'modal' }} />
-      <Stack.Screen name="shopping/item/[id]" options={{ ...sheet, sheetAllowedDetents: [0.7, 1] }} />
+      <Stack.Screen
+        name="shopping/item/[id]"
+        options={{ ...sheet, sheetAllowedDetents: [0.7, 1] }}
+      />
       <Stack.Screen name="shopping/lists" options={{ ...sheet, sheetAllowedDetents: [0.6, 1] }} />
-      <Stack.Screen name="consent" options={{ ...sheet, sheetAllowedDetents: 'fitToContents', gestureEnabled: false }} />
+      <Stack.Screen
+        name="consent"
+        options={{ ...sheet, sheetAllowedDetents: 'fitToContents', gestureEnabled: false }}
+      />
       <Stack.Screen name="collection/[id]" options={{ headerShown: true, title: '' }} />
-      <Stack.Screen name="calendar" options={{ headerShown: true, title: t('planning.calendar') }} />
+      <Stack.Screen
+        name="calendar"
+        options={{ headerShown: true, title: t('planning.calendar') }}
+      />
     </Stack>
   );
 }

@@ -14,7 +14,8 @@ import { MemoryPush } from '../src/services/push';
 import { LocalStorage } from '../src/services/storage';
 import type { SafeFetch } from '../src/lib/safeFetch';
 
-export const TEST_DB = process.env.TEST_DATABASE_URL ?? 'postgres://postgres@127.0.0.1:54329/pepperedapron_test';
+export const TEST_DB =
+  process.env.TEST_DATABASE_URL ?? 'postgres://postgres@127.0.0.1:54329/pepperedapron_test';
 
 type KeyPair = Awaited<ReturnType<typeof generateKeyPair>>;
 type PrivateKey = KeyPair['privateKey'];
@@ -58,8 +59,13 @@ export async function createTestApp(overrides: Record<string, string> = {}): Pro
   const { db, pool } = createDb(env.DATABASE_URL, 5);
   const mk = async () => generateKeyPair('RS256', { extractable: true });
   const [a, g, f] = await Promise.all([mk(), mk(), mk()]);
-  const jwks = async (k: KeyPair, kid: string) => createLocalJWKSet({ keys: [{ ...(await exportJWK(k.publicKey)), kid, alg: 'RS256' } as JWK] });
-  const oauth = new DefaultOAuthVerifier(env, { apple: await jwks(a, 'a'), google: await jwks(g, 'g'), facebook: await jwks(f, 'f') });
+  const jwks = async (k: KeyPair, kid: string) =>
+    createLocalJWKSet({ keys: [{ ...(await exportJWK(k.publicKey)), kid, alg: 'RS256' } as JWK] });
+  const oauth = new DefaultOAuthVerifier(env, {
+    apple: await jwks(a, 'a'),
+    google: await jwks(g, 'g'),
+    facebook: await jwks(f, 'f'),
+  });
   const fetchResponses = new Map<string, { status: number; contentType: string; body: string }>();
   const fetchUrl: SafeFetch = async (url) => {
     const r = fetchResponses.get(url);
@@ -72,7 +78,13 @@ export async function createTestApp(overrides: Record<string, string> = {}): Pro
   const app = await buildApp(deps);
   await app.ready();
   return {
-    app, db, env, mailer, push, deps, fetchResponses,
+    app,
+    db,
+    env,
+    mailer,
+    push,
+    deps,
+    fetchResponses,
     keys: { apple: a.privateKey, google: g.privateKey, facebook: f.privateKey },
     close: async () => {
       await app.close();
@@ -81,7 +93,12 @@ export async function createTestApp(overrides: Record<string, string> = {}): Pro
   };
 }
 
-export async function signIdToken(key: PrivateKey, kid: string, claims: Record<string, unknown>, opts: { iss: string; aud: string; exp?: string }) {
+export async function signIdToken(
+  key: PrivateKey,
+  kid: string,
+  claims: Record<string, unknown>,
+  opts: { iss: string; aud: string; exp?: string },
+) {
   return new SignJWT(claims)
     .setProtectedHeader({ alg: 'RS256', kid })
     .setIssuer(opts.iss)
@@ -94,18 +111,38 @@ export async function signIdToken(key: PrivateKey, kid: string, claims: Record<s
 export const sha256hex = (s: string) => createHash('sha256').update(s).digest('hex');
 
 let counter = 0;
-export const uniqueEmail = (p = 'user') => `${p}.${Date.now()}.${++counter}.${Math.random().toString(36).slice(2, 7)}@example.com`;
+export const uniqueEmail = (p = 'user') =>
+  `${p}.${Date.now()}.${++counter}.${Math.random().toString(36).slice(2, 7)}@example.com`;
 
 export interface Client {
   token: string;
   refreshToken: string;
   userId: string;
   email: string;
-  req(method: string, url: string, body?: unknown, headers?: Record<string, string>): Promise<LightMyRequestResponse>;
+  req(
+    method: string,
+    url: string,
+    body?: unknown,
+    headers?: Record<string, string>,
+  ): Promise<LightMyRequestResponse>;
 }
 
-export async function register(ctx: TestCtx, name = 'Julie', email = uniqueEmail()): Promise<Client> {
-  const res = await ctx.app.inject({ method: 'POST', url: '/v1/auth/register', payload: { email, password: 'correct horse battery', displayName: name, locale: 'fr', device: { deviceName: 'iPhone', platform: 'ios' } } });
+export async function register(
+  ctx: TestCtx,
+  name = 'Julie',
+  email = uniqueEmail(),
+): Promise<Client> {
+  const res = await ctx.app.inject({
+    method: 'POST',
+    url: '/v1/auth/register',
+    payload: {
+      email,
+      password: 'correct horse battery',
+      displayName: name,
+      locale: 'fr',
+      device: { deviceName: 'iPhone', platform: 'ios' },
+    },
+  });
   if (res.statusCode !== 201) throw new Error(`register failed ${res.statusCode} ${res.body}`);
   const j = res.json();
   const client: Client = {
@@ -114,7 +151,12 @@ export async function register(ctx: TestCtx, name = 'Julie', email = uniqueEmail
     userId: j.user.id,
     email,
     req: (method, url, body, headers = {}) =>
-      ctx.app.inject({ method: method as 'GET', url, payload: body as never, headers: { authorization: `Bearer ${client.token}`, ...headers } }),
+      ctx.app.inject({
+        method: method as 'GET',
+        url,
+        payload: body as never,
+        headers: { authorization: `Bearer ${client.token}`, ...headers },
+      }),
   };
   return client;
 }
@@ -129,32 +171,105 @@ export const tokenFromLink = (link: string) => new URL(link).searchParams.get('t
 
 export async function verify(ctx: TestCtx, c: Client) {
   const token = tokenFromLink(lastLinkTo(ctx, c.email));
-  const r = await ctx.app.inject({ method: 'POST', url: '/v1/auth/email/verify', payload: { token } });
+  const r = await ctx.app.inject({
+    method: 'POST',
+    url: '/v1/auth/email/verify',
+    payload: { token },
+  });
   if (r.statusCode !== 200) throw new Error('verify failed');
 }
 
 // ------------------------------------------------------------------ sync helpers
 export const recipeData = (p: Record<string, unknown> = {}) => ({
-  title: 'Tarte aux pommes', description: null, photoKey: null, prepMinutes: 20, cookMinutes: 40, restMinutes: null, totalMinutes: null,
-  servings: 6, yieldLabel: null, difficulty: 'easy', seasons: ['autumn'], category: 'dessert', ovenTemperatureC: 180, ovenMode: null,
-  notes: null, tips: null, extraInfo: null, source: null, sourceUrl: null, tags: [], visibility: 'private',
-  ingredients: [{ id: uuidv7(), group: null, name: 'Pommes', quantity: 4, quantityMax: null, unit: null, note: null }],
-  steps: [{ id: uuidv7(), group: null, text: 'Éplucher les pommes.', timerSeconds: null, timerLabel: null }],
-  originRecipeId: null, householdId: null, ...p,
+  title: 'Tarte aux pommes',
+  description: null,
+  photoKey: null,
+  prepMinutes: 20,
+  cookMinutes: 40,
+  restMinutes: null,
+  totalMinutes: null,
+  servings: 6,
+  yieldLabel: null,
+  difficulty: 'easy',
+  seasons: ['autumn'],
+  category: 'dessert',
+  ovenTemperatureC: 180,
+  ovenMode: null,
+  notes: null,
+  tips: null,
+  extraInfo: null,
+  source: null,
+  sourceUrl: null,
+  tags: [],
+  visibility: 'private',
+  ingredients: [
+    {
+      id: uuidv7(),
+      group: null,
+      name: 'Pommes',
+      quantity: 4,
+      quantityMax: null,
+      unit: null,
+      note: null,
+    },
+  ],
+  steps: [
+    {
+      id: uuidv7(),
+      group: null,
+      text: 'Éplucher les pommes.',
+      timerSeconds: null,
+      timerLabel: null,
+    },
+  ],
+  originRecipeId: null,
+  householdId: null,
+  ...p,
 });
 
-export const op = (entity: string, id: string, data: Record<string, unknown> | null, extra: Partial<{ op: 'upsert' | 'delete'; baseVersion: number | null; changedFields: string[] | null }> = {}) => ({
-  opId: uuidv7(), entity, id, op: extra.op ?? 'upsert', baseVersion: extra.baseVersion ?? null, changedFields: extra.changedFields ?? null, data,
+export const op = (
+  entity: string,
+  id: string,
+  data: Record<string, unknown> | null,
+  extra: Partial<{
+    op: 'upsert' | 'delete';
+    baseVersion: number | null;
+    changedFields: string[] | null;
+  }> = {},
+) => ({
+  opId: uuidv7(),
+  entity,
+  id,
+  op: extra.op ?? 'upsert',
+  baseVersion: extra.baseVersion ?? null,
+  changedFields: extra.changedFields ?? null,
+  data,
 });
 
 export async function push(c: Client, ...ops: ReturnType<typeof op>[]) {
   const r = await c.req('POST', '/v1/sync/push', { ops });
   if (r.statusCode !== 200) throw new Error(`push ${r.statusCode} ${r.body}`);
-  return r.json().results as { opId: string; status: string; error?: string; record?: { version: number; data: Record<string, unknown> | null; deleted: boolean; ownerId: string } }[];
+  return r.json().results as {
+    opId: string;
+    status: string;
+    error?: string;
+    record?: {
+      version: number;
+      data: Record<string, unknown> | null;
+      deleted: boolean;
+      ownerId: string;
+    };
+  }[];
 }
 
 export async function pullAll(c: Client, cursor = 0, limit = 500) {
-  const records: { entity: string; id: string; version: number; deleted: boolean; data: Record<string, unknown> | null }[] = [];
+  const records: {
+    entity: string;
+    id: string;
+    version: number;
+    deleted: boolean;
+    data: Record<string, unknown> | null;
+  }[] = [];
   let cur = cursor;
   let epoch = 0;
   for (let i = 0; i < 100; i++) {

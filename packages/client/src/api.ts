@@ -1,7 +1,17 @@
-import type { PullResponse, PushResponse, RecipeDraft, SyncOp, SyncRecord } from '@pepperedapron/core';
+import type {
+  PullResponse,
+  PushResponse,
+  RecipeDraft,
+  SyncOp,
+  SyncRecord,
+} from '@pepperedapron/core';
 
 export class ApiError extends Error {
-  constructor(public readonly status: number, public readonly code: string, public readonly details?: unknown) {
+  constructor(
+    public readonly status: number,
+    public readonly code: string,
+    public readonly details?: unknown,
+  ) {
     super(code);
   }
 }
@@ -100,7 +110,12 @@ export interface RemoteConfig {
   mediaBaseUrl: string;
   webBaseUrl: string;
   minAppVersion: string;
-  ads: { enabled: boolean; homeNativeAfterSection?: number; searchNativeEvery?: number; interstitialMinMinutes?: number };
+  ads: {
+    enabled: boolean;
+    homeNativeAfterSection?: number;
+    searchNativeEvery?: number;
+    interstitialMinMinutes?: number;
+  };
   legal: { privacy: string; terms: string; notice: string };
   stores: { ios: string; android: string };
 }
@@ -117,7 +132,12 @@ export class ApiClient {
     return this.o.baseUrl.replace(/\/+$/, '');
   }
 
-  private async raw(method: string, path: string, body: unknown, token: string | null): Promise<Response> {
+  private async raw(
+    method: string,
+    path: string,
+    body: unknown,
+    token: string | null,
+  ): Promise<Response> {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), this.o.timeoutMs ?? 20_000);
     try {
@@ -148,7 +168,11 @@ export class ApiClient {
     }
     if (!res.ok) {
       const err = (json as { error?: { code?: string; details?: unknown } } | null)?.error;
-      throw new ApiError(res.status, err?.code ?? (res.status >= 500 ? 'server_unavailable' : 'bad_request'), err?.details);
+      throw new ApiError(
+        res.status,
+        err?.code ?? (res.status >= 500 ? 'server_unavailable' : 'bad_request'),
+        err?.details,
+      );
     }
     return json as T;
   }
@@ -159,7 +183,12 @@ export class ApiClient {
       const t = await this.o.tokens.get();
       if (!t) return false;
       try {
-        const res = await this.raw('POST', '/v1/auth/refresh', { refreshToken: t.refreshToken }, null);
+        const res = await this.raw(
+          'POST',
+          '/v1/auth/refresh',
+          { refreshToken: t.refreshToken },
+          null,
+        );
         if (res.status === 401) {
           await this.o.tokens.clear();
           this.o.onSessionExpired?.();
@@ -176,9 +205,14 @@ export class ApiClient {
   }
 
   /** Authenticated request; refreshes the access token once on 401. */
-  async request<T>(method: string, path: string, body?: unknown, opts: { auth?: boolean } = {}): Promise<T> {
+  async request<T>(
+    method: string,
+    path: string,
+    body?: unknown,
+    opts: { auth?: boolean } = {},
+  ): Promise<T> {
     const auth = opts.auth ?? true;
-    const token = auth ? (await this.o.tokens.get())?.accessToken ?? null : null;
+    const token = auth ? ((await this.o.tokens.get())?.accessToken ?? null) : null;
     let res = await this.raw(method, path, body, token);
     if (auth && res.status === 401) {
       if (await this.refresh()) {
@@ -195,14 +229,36 @@ export class ApiClient {
     await this.o.tokens.set({ accessToken: r.accessToken, refreshToken: r.refreshToken });
     return r;
   }
-  register(p: { email: string; password: string; displayName: string; locale: string; device?: DeviceInfo }) {
-    return this.request<AuthResponse>('POST', '/v1/auth/register', p, { auth: false }).then((r) => this.storeAuth(r));
+  register(p: {
+    email: string;
+    password: string;
+    displayName: string;
+    locale: string;
+    device?: DeviceInfo;
+  }) {
+    return this.request<AuthResponse>('POST', '/v1/auth/register', p, { auth: false }).then((r) =>
+      this.storeAuth(r),
+    );
   }
   login(p: { email: string; password: string; device?: DeviceInfo }) {
-    return this.request<AuthResponse>('POST', '/v1/auth/login', p, { auth: false }).then((r) => this.storeAuth(r));
+    return this.request<AuthResponse>('POST', '/v1/auth/login', p, { auth: false }).then((r) =>
+      this.storeAuth(r),
+    );
   }
-  oauth(provider: 'apple' | 'google' | 'facebook', p: { idToken?: string; accessToken?: string; nonce?: string; name?: string; locale?: string; device?: DeviceInfo }) {
-    return this.request<AuthResponse>('POST', `/v1/auth/oauth/${provider}`, p, { auth: false }).then((r) => this.storeAuth(r));
+  oauth(
+    provider: 'apple' | 'google' | 'facebook',
+    p: {
+      idToken?: string;
+      accessToken?: string;
+      nonce?: string;
+      name?: string;
+      locale?: string;
+      device?: DeviceInfo;
+    },
+  ) {
+    return this.request<AuthResponse>('POST', `/v1/auth/oauth/${provider}`, p, {
+      auth: false,
+    }).then((r) => this.storeAuth(r));
   }
   async logout() {
     try {
@@ -212,10 +268,20 @@ export class ApiClient {
     }
   }
   forgotPassword(email: string) {
-    return this.request<{ ok: true }>('POST', '/v1/auth/password/forgot', { email }, { auth: false });
+    return this.request<{ ok: true }>(
+      'POST',
+      '/v1/auth/password/forgot',
+      { email },
+      { auth: false },
+    );
   }
   resetPassword(token: string, password: string) {
-    return this.request<{ ok: true }>('POST', '/v1/auth/password/reset', { token, password }, { auth: false });
+    return this.request<{ ok: true }>(
+      'POST',
+      '/v1/auth/password/reset',
+      { token, password },
+      { auth: false },
+    );
   }
   verifyEmail(token: string) {
     return this.request<{ ok: true }>('POST', '/v1/auth/email/verify', { token }, { auth: false });
@@ -238,7 +304,17 @@ export class ApiClient {
     return this.request('POST', '/v1/me/email', { newEmail, password });
   }
   sessions() {
-    return this.request<{ id: string; deviceName: string | null; platform: string | null; appVersion: string | null; createdAt: string; lastUsedAt: string; current: boolean }[]>('GET', '/v1/me/sessions');
+    return this.request<
+      {
+        id: string;
+        deviceName: string | null;
+        platform: string | null;
+        appVersion: string | null;
+        createdAt: string;
+        lastUsedAt: string;
+        current: boolean;
+      }[]
+    >('GET', '/v1/me/sessions');
   }
   revokeSession(id: string) {
     return this.request('DELETE', `/v1/me/sessions/${id}`);
@@ -267,7 +343,14 @@ export class ApiClient {
 
   // ---------------------------------------------------------------- media
   createUpload(contentType: string, size: number) {
-    return this.request<{ uploadId: string; key: string; url: string; method: 'PUT'; headers: Record<string, string>; expiresAt: string }>('POST', '/v1/uploads', { contentType, size });
+    return this.request<{
+      uploadId: string;
+      key: string;
+      url: string;
+      method: 'PUT';
+      headers: Record<string, string>;
+      expiresAt: string;
+    }>('POST', '/v1/uploads', { contentType, size });
   }
   completeUpload(uploadId: string) {
     return this.request<{ key: string; url: string }>('POST', `/v1/uploads/${uploadId}/complete`);
@@ -290,7 +373,10 @@ export class ApiClient {
     return this.request<{ household: HouseholdView }>('PATCH', '/v1/household', { name });
   }
   inviteToHousehold() {
-    return this.request<{ code: string; expiresAt: string; url: string }>('POST', '/v1/household/invites');
+    return this.request<{ code: string; expiresAt: string; url: string }>(
+      'POST',
+      '/v1/household/invites',
+    );
   }
   joinHousehold(code: string) {
     return this.request<{ household: HouseholdView }>('POST', '/v1/household/join', { code });
@@ -304,18 +390,40 @@ export class ApiClient {
   dissolveHousehold() {
     return this.request<{ household: null }>('DELETE', '/v1/household');
   }
-  publicRecipes(p: { sort?: 'recent' | 'popular'; category?: string; q?: string; limit?: number; offset?: number } = {}) {
-    const qs = new URLSearchParams(Object.entries(p).filter(([, v]) => v !== undefined && v !== '').map(([k, v]) => [k, String(v)]));
-    return this.request<{ items: PublicRecipeCard[] }>('GET', `/v1/public/recipes?${qs}`, undefined, { auth: false });
+  publicRecipes(
+    p: {
+      sort?: 'recent' | 'popular';
+      category?: string;
+      q?: string;
+      limit?: number;
+      offset?: number;
+    } = {},
+  ) {
+    const qs = new URLSearchParams(
+      Object.entries(p)
+        .filter(([, v]) => v !== undefined && v !== '')
+        .map(([k, v]) => [k, String(v)]),
+    );
+    return this.request<{ items: PublicRecipeCard[] }>(
+      'GET',
+      `/v1/public/recipes?${qs}`,
+      undefined,
+      { auth: false },
+    );
   }
   publicRecipe(id: string) {
-    return this.request<Record<string, unknown>>('GET', `/v1/public/recipes/${id}`, undefined, { auth: false });
+    return this.request<Record<string, unknown>>('GET', `/v1/public/recipes/${id}`, undefined, {
+      auth: false,
+    });
   }
   savePublicRecipe(id: string) {
     return this.request<{ record: SyncRecord }>('POST', `/v1/public/recipes/${id}/save`);
   }
   reportRecipe(id: string, reason: string, details?: string) {
-    return this.request('POST', `/v1/public/recipes/${id}/report`, { reason, details: details ?? null });
+    return this.request('POST', `/v1/public/recipes/${id}/report`, {
+      reason,
+      details: details ?? null,
+    });
   }
   shareRecipe(id: string) {
     return this.request<{ token: string; url: string }>('POST', `/v1/recipes/${id}/share`);
@@ -332,19 +440,32 @@ export class ApiClient {
   contact(p: { email: string | null; subject: string; message: string }) {
     return this.request('POST', '/v1/contact', p);
   }
-  trackEvents(events: { name: string; at: string; props?: Record<string, string | number | boolean> }[]) {
+  trackEvents(
+    events: { name: string; at: string; props?: Record<string, string | number | boolean> }[],
+  ) {
     return this.request<{ stored: number }>('POST', '/v1/analytics/events', { events });
   }
 
   // ---------------------------------------------------------------- admin
   admin = {
     stats: () => this.request<Record<string, unknown>>('GET', '/v1/admin/stats'),
-    reports: (status?: string) => this.request<{ items: Record<string, unknown>[] }>('GET', `/v1/admin/reports${status ? `?status=${status}` : ''}`),
-    handleReport: (id: string, p: { status: string; action: string; resolution?: string | null }) => this.request('PATCH', `/v1/admin/reports/${id}`, p),
+    reports: (status?: string) =>
+      this.request<{ items: Record<string, unknown>[] }>(
+        'GET',
+        `/v1/admin/reports${status ? `?status=${status}` : ''}`,
+      ),
+    handleReport: (id: string, p: { status: string; action: string; resolution?: string | null }) =>
+      this.request('PATCH', `/v1/admin/reports/${id}`, p),
     recipe: (id: string) => this.request<Record<string, unknown>>('GET', `/v1/admin/recipes/${id}`),
     user: (id: string) => this.request<Record<string, unknown>>('GET', `/v1/admin/users/${id}`),
-    setCanPublish: (id: string, canPublish: boolean) => this.request('PATCH', `/v1/admin/users/${id}`, { canPublish }),
-    messages: (status?: string) => this.request<{ items: Record<string, unknown>[] }>('GET', `/v1/admin/messages${status ? `?status=${status}` : ''}`),
-    setMessageStatus: (id: string, status: string) => this.request('PATCH', `/v1/admin/messages/${id}`, { status }),
+    setCanPublish: (id: string, canPublish: boolean) =>
+      this.request('PATCH', `/v1/admin/users/${id}`, { canPublish }),
+    messages: (status?: string) =>
+      this.request<{ items: Record<string, unknown>[] }>(
+        'GET',
+        `/v1/admin/messages${status ? `?status=${status}` : ''}`,
+      ),
+    setMessageStatus: (id: string, status: string) =>
+      this.request('PATCH', `/v1/admin/messages/${id}`, { status }),
   };
 }

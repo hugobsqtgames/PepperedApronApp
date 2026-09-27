@@ -5,7 +5,10 @@ import type { RouteCtx } from '../app';
 import { parse } from '../lib/validate';
 import { AdminService } from '../services/admin';
 
-const page = z.object({ limit: z.coerce.number().int().min(1).max(100).default(50), offset: z.coerce.number().int().min(0).default(0) });
+const page = z.object({
+  limit: z.coerce.number().int().min(1).max(100).default(50),
+  offset: z.coerce.number().int().min(0).default(0),
+});
 
 export async function adminRoutes(app: FastifyInstance, { deps, requireAdmin }: RouteCtx) {
   const admin = new AdminService(deps);
@@ -21,7 +24,16 @@ export async function adminRoutes(app: FastifyInstance, { deps, requireAdmin }: 
   app.patch('/admin/reports/:id', async (req) => {
     const a = await requireAdmin(req);
     const { id } = parse(z.object({ id: z.uuid() }), req.params);
-    const b = parse(z.object({ status: z.enum(REPORT_STATUSES), action: z.enum(['none', 'unpublish', 'unpublish_and_block']).default('none'), resolution: z.string().max(500).nullish() }).strict(), req.body);
+    const b = parse(
+      z
+        .object({
+          status: z.enum(REPORT_STATUSES),
+          action: z.enum(['none', 'unpublish', 'unpublish_and_block']).default('none'),
+          resolution: z.string().max(500).nullish(),
+        })
+        .strict(),
+      req.body,
+    );
     await admin.handleReport(a.userId, id, b.status, b.action, b.resolution ?? null);
     return { ok: true };
   });

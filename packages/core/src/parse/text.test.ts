@@ -35,8 +35,17 @@ Ajoutez un peu de cannelle.`);
     expect(d.cookMinutes).toBe(45);
     expect(d.ovenTemperatureC).toBe(180);
     expect(d.ingredients).toHaveLength(5);
-    expect(d.ingredients[0]).toMatchObject({ group: 'Pour la pâte', name: 'farine', quantity: 250, unit: 'g' });
-    expect(d.ingredients[3]).toMatchObject({ group: 'Pour la garniture', name: 'pommes', quantity: 4 });
+    expect(d.ingredients[0]).toMatchObject({
+      group: 'Pour la pâte',
+      name: 'farine',
+      quantity: 250,
+      unit: 'g',
+    });
+    expect(d.ingredients[3]).toMatchObject({
+      group: 'Pour la garniture',
+      name: 'pommes',
+      quantity: 4,
+    });
     expect(d.steps).toHaveLength(3);
     expect(d.steps[0]!.text).toBe('Mélanger la farine et le beurre du bout des doigts.');
     expect(d.steps[2]!.timerSeconds).toBe(45 * 60);
@@ -61,14 +70,24 @@ Step 2: Fry the garlic in the oil for 2 minutes.`);
     expect(d.cookMinutes).toBe(70);
     expect(d.ingredients.map((i) => i.unit)).toEqual(['g', 'clove', 'tbsp']);
     expect(d.ingredients[1]).toMatchObject({ name: 'garlic', note: 'minced' });
-    expect(d.steps.map((s) => s.text)).toEqual(['Boil the pasta.', 'Fry the garlic in the oil for 2 minutes.']);
+    expect(d.steps.map((s) => s.text)).toEqual([
+      'Boil the pasta.',
+      'Fry the garlic in the oil for 2 minutes.',
+    ]);
     expect(d.steps[1]!.timerSeconds).toBe(120);
   });
 
   it('parses German and Spanish and Italian headers', () => {
-    expect(parseRecipeText('Kuchen\nZutaten:\n200 g Mehl\nZubereitung:\n1. Backen.').ingredients[0]).toMatchObject({ quantity: 200, unit: 'g' });
-    expect(parseRecipeText('Tortilla\nIngredientes:\n4 huevos\nPreparación:\n1. Batir.').steps).toHaveLength(1);
-    expect(parseRecipeText('Tiramisù\nIngredienti\n250 g di mascarpone\nProcedimento\nMontare.').ingredients[0]!.name).toBe('mascarpone');
+    expect(
+      parseRecipeText('Kuchen\nZutaten:\n200 g Mehl\nZubereitung:\n1. Backen.').ingredients[0],
+    ).toMatchObject({ quantity: 200, unit: 'g' });
+    expect(
+      parseRecipeText('Tortilla\nIngredientes:\n4 huevos\nPreparación:\n1. Batir.').steps,
+    ).toHaveLength(1);
+    expect(
+      parseRecipeText('Tiramisù\nIngredienti\n250 g di mascarpone\nProcedimento\nMontare.')
+        .ingredients[0]!.name,
+    ).toBe('mascarpone');
   });
 
   it('handles a TikTok-style caption without headers and extracts hashtags', () => {
@@ -100,7 +119,16 @@ Faites cuire les pâtes puis mélangez avec la crème et le zeste du citron, c'e
     const long = 'Lorem ipsum dolor sit amet. '.repeat(40);
     const d = parseRecipeText(`Titre\n${long}`);
     expect(d.unparsed.length + (d.description ? 1 : 0)).toBeGreaterThan(0);
-    for (const s of ['', '\n\n\n', '#', '###', '1.', 'Ingrédients:', '🍕'.repeat(1000), 'a'.repeat(30000)]) {
+    for (const s of [
+      '',
+      '\n\n\n',
+      '#',
+      '###',
+      '1.',
+      'Ingrédients:',
+      '🍕'.repeat(1000),
+      'a'.repeat(30000),
+    ]) {
       expect(() => parseRecipeText(s)).not.toThrow();
     }
     expect(parseRecipeText('').title).toBeNull();

@@ -1,6 +1,23 @@
 import { describe, expect, it } from 'vitest';
-import { addDays, addMonths, emptyMainSlots, monthGrid, nextMeal, nextPosition, sortEntries, startOfWeek, weekDates } from './planning';
-import { addTime, createTimer, pauseTimer, remainingSeconds, resumeTimer, timerState } from './timers';
+import {
+  addDays,
+  addMonths,
+  emptyMainSlots,
+  monthGrid,
+  nextMeal,
+  nextPosition,
+  sortEntries,
+  startOfWeek,
+  weekDates,
+} from './planning';
+import {
+  addTime,
+  createTimer,
+  pauseTimer,
+  remainingSeconds,
+  resumeTimer,
+  timerState,
+} from './timers';
 
 describe('planning dates', () => {
   it('week starts on Monday, handles month/year boundaries and DST', () => {

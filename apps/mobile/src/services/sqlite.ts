@@ -2,7 +2,9 @@ import * as SQLite from 'expo-sqlite';
 import type { SqlDriver, SqlValue } from '@pepperedapron/client';
 
 /** expo-sqlite implementation of the platform-agnostic driver used by @pepperedapron/client. */
-export async function openSqliteDriver(name: string): Promise<SqlDriver & { close(): Promise<void>; name: string }> {
+export async function openSqliteDriver(
+  name: string,
+): Promise<SqlDriver & { close(): Promise<void>; name: string }> {
   const db = await SQLite.openDatabaseAsync(name);
   await db.execAsync('PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON;');
   let depth = 0;

@@ -6,7 +6,19 @@ import { haptic } from '../../services/haptics';
 import { space } from '../../theme/tokens';
 import { RecipeCard } from '../../ui';
 
-export function RecipeCarousel({ recipes, repos, wide, favorites, testID }: { recipes: Recipe[]; repos: Repos; wide?: boolean; favorites: Set<string>; testID?: string }) {
+export function RecipeCarousel({
+  recipes,
+  repos,
+  wide,
+  favorites,
+  testID,
+}: {
+  recipes: Recipe[];
+  repos: Repos;
+  wide?: boolean;
+  favorites: Set<string>;
+  testID?: string;
+}) {
   const layout = useLayout();
   return (
     <FlatList

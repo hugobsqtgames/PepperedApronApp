@@ -3,11 +3,21 @@ import { Linking, ScrollView, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { NOTIFICATION_CATEGORIES, type NotificationCategory } from '@pepperedapron/core';
 import { useRepos, useSettings } from '../../../hooks/runtime';
-import { ensureNotificationPermission, notificationsAllowed, rescheduleReminders } from '../../../services/notifications';
+import {
+  ensureNotificationPermission,
+  notificationsAllowed,
+  rescheduleReminders,
+} from '../../../services/notifications';
 import { space } from '../../../theme/tokens';
 import { Button, Chip, Group, ListRow, Text } from '../../../ui';
 
-const LABELS: Record<NotificationCategory, ['notifMealReminder' | 'notifShopping' | 'notifPlanning' | 'notifTimers' | 'notifHousehold', string]> = {
+const LABELS: Record<
+  NotificationCategory,
+  [
+    'notifMealReminder' | 'notifShopping' | 'notifPlanning' | 'notifTimers' | 'notifHousehold',
+    string,
+  ]
+> = {
   mealReminder: ['notifMealReminder', 'notifMealReminderBody'],
   shoppingReady: ['notifShopping', 'notifShoppingBody'],
   planningNudge: ['notifPlanning', 'notifPlanningBody'],
@@ -35,16 +45,35 @@ export default function NotificationSettings() {
     void rescheduleReminders(repos);
   };
   return (
-    <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ padding: space.lg, gap: space.xl, maxWidth: 640, width: '100%', alignSelf: 'center' }}>
+    <ScrollView
+      contentInsetAdjustmentBehavior="automatic"
+      contentContainerStyle={{
+        padding: space.lg,
+        gap: space.xl,
+        maxWidth: 640,
+        width: '100%',
+        alignSelf: 'center',
+      }}
+    >
       {allowed === false ? (
         <View style={{ gap: space.sm }}>
           <Text color="accent">{t('settings.notifDisabled')}</Text>
-          <Button title={t('errors.openSettings')} variant="secondary" onPress={() => void Linking.openSettings()} />
+          <Button
+            title={t('errors.openSettings')}
+            variant="secondary"
+            onPress={() => void Linking.openSettings()}
+          />
         </View>
       ) : null}
       <Group>
         {NOTIFICATION_CATEGORIES.map((c) => (
-          <ListRow key={c} title={t(`settings.${LABELS[c][0]}`)} subtitle={t(`settings.${LABELS[c][1]}` as never)} toggle={s.notifications[c]} onToggle={(v) => void set(c, v)} />
+          <ListRow
+            key={c}
+            title={t(`settings.${LABELS[c][0]}`)}
+            subtitle={t(`settings.${LABELS[c][1]}` as never)}
+            toggle={s.notifications[c]}
+            onToggle={(v) => void set(c, v)}
+          />
         ))}
       </Group>
       {s.notifications.mealReminder ? (
@@ -54,7 +83,15 @@ export default function NotificationSettings() {
           </Text>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space.sm }}>
             {TIMES.map((time) => (
-              <Chip key={time} label={time} selected={s.dinnerReminderTime === time} onPress={async () => { await repos.updateSettings({ dinnerReminderTime: time }); void rescheduleReminders(repos); }} />
+              <Chip
+                key={time}
+                label={time}
+                selected={s.dinnerReminderTime === time}
+                onPress={async () => {
+                  await repos.updateSettings({ dinnerReminderTime: time });
+                  void rescheduleReminders(repos);
+                }}
+              />
             ))}
           </View>
         </View>

@@ -63,7 +63,10 @@ export const recipeDataSchema = z
     servings: z.number().int().min(1).max(LIMITS.servingsMax),
     yieldLabel: optText(40),
     difficulty: z.enum(DIFFICULTIES).nullable(),
-    seasons: z.array(z.enum(SEASONS)).max(4).transform((s) => [...new Set(s)]),
+    seasons: z
+      .array(z.enum(SEASONS))
+      .max(4)
+      .transform((s) => [...new Set(s)]),
     category: z.enum(RECIPE_CATEGORIES).nullable(),
     ovenTemperatureC: z.number().int().min(LIMITS.ovenMinC).max(LIMITS.ovenMaxC).nullable(),
     ovenMode: z.enum(OVEN_MODES).nullable(),
@@ -71,8 +74,14 @@ export const recipeDataSchema = z
     tips: optText(LIMITS.longText),
     extraInfo: optText(LIMITS.longText),
     source: optText(LIMITS.source),
-    sourceUrl: z.url({ protocol: /^https?$/ }).max(LIMITS.url).nullable(),
-    tags: z.array(tag).max(LIMITS.tags).transform((t) => [...new Set(t.map((x) => x.toLowerCase()))]),
+    sourceUrl: z
+      .url({ protocol: /^https?$/ })
+      .max(LIMITS.url)
+      .nullable(),
+    tags: z
+      .array(tag)
+      .max(LIMITS.tags)
+      .transform((t) => [...new Set(t.map((x) => x.toLowerCase()))]),
     visibility: z.enum(VISIBILITIES),
     ingredients: z.array(ingredientSchema).max(LIMITS.ingredients),
     steps: z.array(stepSchema).max(LIMITS.steps),
@@ -83,7 +92,9 @@ export const recipeDataSchema = z
 export type RecipeData = z.infer<typeof recipeDataSchema>;
 export type RecipeInput = z.input<typeof recipeDataSchema>;
 
-export const favoriteDataSchema = z.object({ recipeId: uuid(), householdId: uuid().nullable() }).strict();
+export const favoriteDataSchema = z
+  .object({ recipeId: uuid(), householdId: uuid().nullable() })
+  .strict();
 export const collectionDataSchema = z
   .object({
     name: reqText(LIMITS.collectionName),
@@ -107,7 +118,9 @@ export const mealPlanEntryDataSchema = z
     householdId: uuid().nullable(),
   })
   .strict()
-  .refine((d) => d.recipeId !== null || d.customTitle !== null, { message: 'recipe_or_title_required' });
+  .refine((d) => d.recipeId !== null || d.customTitle !== null, {
+    message: 'recipe_or_title_required',
+  });
 
 export const shoppingListDataSchema = z
   .object({
@@ -169,7 +182,13 @@ export const DEFAULT_SETTINGS: SettingsData = {
   locale: null,
   unitSystem: 'metric',
   activeShoppingListId: null,
-  notifications: { mealReminder: true, shoppingReady: true, planningNudge: true, timers: true, household: true },
+  notifications: {
+    mealReminder: true,
+    shoppingReady: true,
+    planningNudge: true,
+    timers: true,
+    household: true,
+  },
   dinnerReminderTime: '17:30',
   hapticsEnabled: true,
   analyticsConsent: null,

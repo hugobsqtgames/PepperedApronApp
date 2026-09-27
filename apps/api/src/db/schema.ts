@@ -52,20 +52,27 @@ export const authIdentities = pgTable(
   'auth_identities',
   {
     id: uuid('id').primaryKey().defaultRandom(),
-    userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
     provider: text('provider').notNull(),
     subject: text('subject').notNull(),
     email: text('email'),
     createdAt: now('created_at'),
   },
-  (t) => [uniqueIndex('auth_identities_provider_subject_uq').on(t.provider, t.subject), index('auth_identities_user_idx').on(t.userId)],
+  (t) => [
+    uniqueIndex('auth_identities_provider_subject_uq').on(t.provider, t.subject),
+    index('auth_identities_user_idx').on(t.userId),
+  ],
 );
 
 export const sessions = pgTable(
   'sessions',
   {
     id: uuid('id').primaryKey().defaultRandom(),
-    userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
     refreshHash: text('refresh_hash').notNull(),
     previousHash: text('previous_hash'),
     deviceName: text('device_name'),
@@ -76,14 +83,20 @@ export const sessions = pgTable(
     expiresAt: ts('expires_at').notNull(),
     revokedAt: ts('revoked_at'),
   },
-  (t) => [uniqueIndex('sessions_refresh_uq').on(t.refreshHash), index('sessions_prev_idx').on(t.previousHash), index('sessions_user_idx').on(t.userId)],
+  (t) => [
+    uniqueIndex('sessions_refresh_uq').on(t.refreshHash),
+    index('sessions_prev_idx').on(t.previousHash),
+    index('sessions_user_idx').on(t.userId),
+  ],
 );
 
 export const emailTokens = pgTable(
   'email_tokens',
   {
     id: uuid('id').primaryKey().defaultRandom(),
-    userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
     kind: text('kind').notNull(),
     tokenHash: text('token_hash').notNull(),
     newEmail: text('new_email'),
@@ -91,14 +104,22 @@ export const emailTokens = pgTable(
     usedAt: ts('used_at'),
     createdAt: now('created_at'),
   },
-  (t) => [uniqueIndex('email_tokens_hash_uq').on(t.tokenHash), check('email_tokens_kind_ck', sql`${t.kind} in ('verify_email','reset_password','change_email')`)],
+  (t) => [
+    uniqueIndex('email_tokens_hash_uq').on(t.tokenHash),
+    check(
+      'email_tokens_kind_ck',
+      sql`${t.kind} in ('verify_email','reset_password','change_email')`,
+    ),
+  ],
 );
 
 export const pushTokens = pgTable(
   'push_tokens',
   {
     token: text('token').primaryKey(),
-    userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
     sessionId: uuid('session_id').references(() => sessions.id, { onDelete: 'cascade' }),
     platform: text('platform').notNull(),
     createdAt: now('created_at'),
@@ -118,8 +139,12 @@ export const households = pgTable('households', {
 export const householdMembers = pgTable(
   'household_members',
   {
-    householdId: uuid('household_id').notNull().references(() => households.id, { onDelete: 'cascade' }),
-    userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    householdId: uuid('household_id')
+      .notNull()
+      .references(() => households.id, { onDelete: 'cascade' }),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
     role: text('role').notNull().default('member'),
     joinedAt: now('joined_at'),
   },
@@ -135,7 +160,9 @@ export const householdInvites = pgTable(
   'household_invites',
   {
     id: uuid('id').primaryKey().defaultRandom(),
-    householdId: uuid('household_id').notNull().references(() => households.id, { onDelete: 'cascade' }),
+    householdId: uuid('household_id')
+      .notNull()
+      .references(() => households.id, { onDelete: 'cascade' }),
     code: text('code').notNull(),
     createdBy: uuid('created_by').references(() => users.id, { onDelete: 'set null' }),
     expiresAt: ts('expires_at').notNull(),
@@ -150,7 +177,9 @@ export const householdInvites = pgTable(
 // ---------------------------------------------------------------- synced entities
 const syncCols = () => ({
   id: uuid('id').primaryKey(),
-  ownerId: uuid('owner_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  ownerId: uuid('owner_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
   householdId: uuid('household_id').references(() => households.id, { onDelete: 'set null' }),
   version: bigint('version', { mode: 'number' }).notNull(),
   createdAt: now('created_at'),
@@ -178,7 +207,10 @@ export const recipes = pgTable(
     servings: integer('servings').notNull(),
     yieldLabel: text('yield_label'),
     difficulty: text('difficulty'),
-    seasons: text('seasons').array().notNull().default(sql`'{}'::text[]`),
+    seasons: text('seasons')
+      .array()
+      .notNull()
+      .default(sql`'{}'::text[]`),
     category: text('category'),
     ovenTemperatureC: integer('oven_temperature_c'),
     ovenMode: text('oven_mode'),
@@ -187,7 +219,10 @@ export const recipes = pgTable(
     extraInfo: text('extra_info'),
     source: text('source'),
     sourceUrl: text('source_url'),
-    tags: text('tags').array().notNull().default(sql`'{}'::text[]`),
+    tags: text('tags')
+      .array()
+      .notNull()
+      .default(sql`'{}'::text[]`),
     visibility: text('visibility').notNull().default('private'),
     originRecipeId: uuid('origin_recipe_id'),
     publishedAt: ts('published_at'),
@@ -204,7 +239,9 @@ export const recipeIngredients = pgTable(
   'recipe_ingredients',
   {
     id: uuid('id').notNull(),
-    recipeId: uuid('recipe_id').notNull().references(() => recipes.id, { onDelete: 'cascade' }),
+    recipeId: uuid('recipe_id')
+      .notNull()
+      .references(() => recipes.id, { onDelete: 'cascade' }),
     position: integer('position').notNull(),
     groupName: text('group_name'),
     name: text('name').notNull(),
@@ -214,32 +251,49 @@ export const recipeIngredients = pgTable(
     note: text('note'),
   },
   // Child ids are client-generated and only unique within their recipe.
-  (t) => [primaryKey({ columns: [t.recipeId, t.id] }), index('recipe_ingredients_recipe_idx').on(t.recipeId, t.position)],
+  (t) => [
+    primaryKey({ columns: [t.recipeId, t.id] }),
+    index('recipe_ingredients_recipe_idx').on(t.recipeId, t.position),
+  ],
 );
 
 export const recipeSteps = pgTable(
   'recipe_steps',
   {
     id: uuid('id').notNull(),
-    recipeId: uuid('recipe_id').notNull().references(() => recipes.id, { onDelete: 'cascade' }),
+    recipeId: uuid('recipe_id')
+      .notNull()
+      .references(() => recipes.id, { onDelete: 'cascade' }),
     position: integer('position').notNull(),
     groupName: text('group_name'),
     text: text('text').notNull(),
     timerSeconds: integer('timer_seconds'),
     timerLabel: text('timer_label'),
   },
-  (t) => [primaryKey({ columns: [t.recipeId, t.id] }), index('recipe_steps_recipe_idx').on(t.recipeId, t.position)],
+  (t) => [
+    primaryKey({ columns: [t.recipeId, t.id] }),
+    index('recipe_steps_recipe_idx').on(t.recipeId, t.position),
+  ],
 );
 
 export const favorites = pgTable(
   'favorites',
   { ...syncCols(), recipeId: uuid('recipe_id').notNull() },
-  (t) => [...syncIdx('favorites', t), uniqueIndex('favorites_owner_recipe_uq').on(t.ownerId, t.recipeId), index('favorites_recipe_idx').on(t.recipeId)],
+  (t) => [
+    ...syncIdx('favorites', t),
+    uniqueIndex('favorites_owner_recipe_uq').on(t.ownerId, t.recipeId),
+    index('favorites_recipe_idx').on(t.recipeId),
+  ],
 );
 
 export const collections = pgTable(
   'collections',
-  { ...syncCols(), name: text('name').notNull(), emoji: text('emoji'), position: integer('position').notNull().default(0) },
+  {
+    ...syncCols(),
+    name: text('name').notNull(),
+    emoji: text('emoji'),
+    position: integer('position').notNull().default(0),
+  },
   (t) => [...syncIdx('collections', t)],
 );
 
@@ -251,7 +305,10 @@ export const collectionItems = pgTable(
     recipeId: uuid('recipe_id').notNull(),
     position: integer('position').notNull().default(0),
   },
-  (t) => [...syncIdx('collection_items', t), index('collection_items_collection_idx').on(t.collectionId)],
+  (t) => [
+    ...syncIdx('collection_items', t),
+    index('collection_items_collection_idx').on(t.collectionId),
+  ],
 );
 
 export const mealPlanEntries = pgTable(
@@ -265,12 +322,20 @@ export const mealPlanEntries = pgTable(
     servings: integer('servings'),
     position: integer('position').notNull().default(0),
   },
-  (t) => [...syncIdx('meal_plan_entries', t), check('meal_plan_slot_ck', sql`${t.slot} in ('breakfast','lunch','snack','dinner')`)],
+  (t) => [
+    ...syncIdx('meal_plan_entries', t),
+    check('meal_plan_slot_ck', sql`${t.slot} in ('breakfast','lunch','snack','dinner')`),
+  ],
 );
 
 export const shoppingLists = pgTable(
   'shopping_lists',
-  { ...syncCols(), name: text('name').notNull(), emoji: text('emoji'), archived: boolean('archived').notNull().default(false) },
+  {
+    ...syncCols(),
+    name: text('name').notNull(),
+    emoji: text('emoji'),
+    archived: boolean('archived').notNull().default(false),
+  },
   (t) => [...syncIdx('shopping_lists', t)],
 );
 
@@ -286,7 +351,10 @@ export const shoppingItems = pgTable(
     checked: boolean('checked').notNull().default(false),
     position: integer('position').notNull().default(0),
     note: text('note'),
-    recipeIds: uuid('recipe_ids').array().notNull().default(sql`'{}'::uuid[]`),
+    recipeIds: uuid('recipe_ids')
+      .array()
+      .notNull()
+      .default(sql`'{}'::uuid[]`),
   },
   (t) => [...syncIdx('shopping_items', t), index('shopping_items_list_idx').on(t.listId)],
 );
@@ -300,7 +368,10 @@ export const shoppingCategories = pgTable(
     position: integer('position').notNull().default(0),
     hidden: boolean('hidden').notNull().default(false),
   },
-  (t) => [...syncIdx('shopping_categories', t), uniqueIndex('shopping_categories_owner_key_uq').on(t.ownerId, t.key)],
+  (t) => [
+    ...syncIdx('shopping_categories', t),
+    uniqueIndex('shopping_categories_owner_key_uq').on(t.ownerId, t.key),
+  ],
 );
 
 export const userSettings = pgTable(
@@ -314,7 +385,9 @@ export const syncOps = pgTable(
   'sync_ops',
   {
     opId: uuid('op_id').primaryKey(),
-    userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
     result: jsonb('result').notNull(),
     createdAt: now('created_at'),
   },
@@ -326,7 +399,9 @@ export const uploads = pgTable(
   'uploads',
   {
     id: uuid('id').primaryKey().defaultRandom(),
-    ownerId: uuid('owner_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    ownerId: uuid('owner_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
     key: text('key').notNull(),
     contentType: text('content_type').notNull(),
     maxBytes: integer('max_bytes').notNull(),
@@ -334,7 +409,11 @@ export const uploads = pgTable(
     status: text('status').notNull().default('pending'),
     createdAt: now('created_at'),
   },
-  (t) => [uniqueIndex('uploads_key_uq').on(t.key), index('uploads_owner_idx').on(t.ownerId), check('uploads_status_ck', sql`${t.status} in ('pending','ready')`)],
+  (t) => [
+    uniqueIndex('uploads_key_uq').on(t.key),
+    index('uploads_owner_idx').on(t.ownerId),
+    check('uploads_status_ck', sql`${t.status} in ('pending','ready')`),
+  ],
 );
 
 /** Storage objects to delete asynchronously (photo replaced, recipe or account deleted). */
@@ -348,8 +427,12 @@ export const shareLinks = pgTable(
   'share_links',
   {
     token: text('token').primaryKey(),
-    recipeId: uuid('recipe_id').notNull().references(() => recipes.id, { onDelete: 'cascade' }),
-    createdBy: uuid('created_by').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    recipeId: uuid('recipe_id')
+      .notNull()
+      .references(() => recipes.id, { onDelete: 'cascade' }),
+    createdBy: uuid('created_by')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
     createdAt: now('created_at'),
     revokedAt: ts('revoked_at'),
   },
@@ -360,7 +443,9 @@ export const reports = pgTable(
   'reports',
   {
     id: uuid('id').primaryKey().defaultRandom(),
-    recipeId: uuid('recipe_id').notNull().references(() => recipes.id, { onDelete: 'cascade' }),
+    recipeId: uuid('recipe_id')
+      .notNull()
+      .references(() => recipes.id, { onDelete: 'cascade' }),
     reporterId: uuid('reporter_id').references(() => users.id, { onDelete: 'set null' }),
     reason: text('reason').notNull(),
     details: text('details'),
@@ -370,7 +455,10 @@ export const reports = pgTable(
     handledAt: ts('handled_at'),
     createdAt: now('created_at'),
   },
-  (t) => [index('reports_status_idx').on(t.status, t.createdAt), uniqueIndex('reports_once_uq').on(t.recipeId, t.reporterId)],
+  (t) => [
+    index('reports_status_idx').on(t.status, t.createdAt),
+    uniqueIndex('reports_once_uq').on(t.recipeId, t.reporterId),
+  ],
 );
 
 export const contactMessages = pgTable(

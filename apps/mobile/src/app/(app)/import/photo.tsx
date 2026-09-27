@@ -26,10 +26,14 @@ export default function ImportPhoto() {
     const r = await pickImage(source);
     if (!r) return;
     if ('denied' in r) {
-      Alert.alert(source === 'camera' ? t('errors.cameraPermission') : t('errors.photoPermission'), undefined, [
-        { text: t('common.cancel'), style: 'cancel' },
-        { text: t('errors.openSettings'), onPress: () => void Linking.openSettings() },
-      ]);
+      Alert.alert(
+        source === 'camera' ? t('errors.cameraPermission') : t('errors.photoPermission'),
+        undefined,
+        [
+          { text: t('common.cancel'), style: 'cancel' },
+          { text: t('errors.openSettings'), onPress: () => void Linking.openSettings() },
+        ],
+      );
       return;
     }
     setUri(r.uri);
@@ -73,18 +77,54 @@ export default function ImportPhoto() {
         <LoadingState label={t('import.reading')} />
       ) : (
         <View style={{ gap: space.md, marginTop: space.xl }}>
-          {uri ? <Image source={{ uri }} style={{ width: '100%', aspectRatio: 3 / 4, borderRadius: radius.xl }} resizeMode="cover" accessibilityIgnoresInvertColors /> : null}
+          {uri ? (
+            <Image
+              source={{ uri }}
+              style={{ width: '100%', aspectRatio: 3 / 4, borderRadius: radius.xl }}
+              resizeMode="cover"
+              accessibilityIgnoresInvertColors
+            />
+          ) : null}
           {!uri ? (
             <>
-              <Button title={t('editor.takePhoto')} icon="camera-outline" onPress={() => pick('camera')} />
-              <Button title={t('editor.chooseLibrary')} icon="images-outline" variant="secondary" onPress={() => pick('library')} />
-              <Button title={t('editor.chooseFile')} icon="folder-outline" variant="ghost" onPress={() => pick('files')} />
+              <Button
+                title={t('editor.takePhoto')}
+                icon="camera-outline"
+                onPress={() => pick('camera')}
+              />
+              <Button
+                title={t('editor.chooseLibrary')}
+                icon="images-outline"
+                variant="secondary"
+                onPress={() => pick('library')}
+              />
+              <Button
+                title={t('editor.chooseFile')}
+                icon="folder-outline"
+                variant="ghost"
+                onPress={() => pick('files')}
+              />
             </>
           ) : (
             <>
-              {ocr ? <Button title={t('import.readText')} icon="scan-outline" onPress={read} /> : <Text variant="caption" color="textMuted">{t('import.ocrUnavailable')}</Text>}
-              <Button title={t('import.usePhoto')} icon="image-outline" variant="secondary" onPress={usePhoto} />
-              <Button title={t('editor.changePhoto')} variant="ghost" onPress={() => setUri(null)} />
+              {ocr ? (
+                <Button title={t('import.readText')} icon="scan-outline" onPress={read} />
+              ) : (
+                <Text variant="caption" color="textMuted">
+                  {t('import.ocrUnavailable')}
+                </Text>
+              )}
+              <Button
+                title={t('import.usePhoto')}
+                icon="image-outline"
+                variant="secondary"
+                onPress={usePhoto}
+              />
+              <Button
+                title={t('editor.changePhoto')}
+                variant="ghost"
+                onPress={() => setUri(null)}
+              />
             </>
           )}
         </View>

@@ -6,12 +6,70 @@ import { parseIngredientLine } from './ingredient';
 
 type Section = 'none' | 'ingredients' | 'steps' | 'tips' | 'notes';
 
-const H = (words: string[]) => new RegExp(`^(?:${words.join('|')})\\s*(?:\\(.*\\))?\\s*[:：]?$`, 'i');
+const H = (words: string[]) =>
+  new RegExp(`^(?:${words.join('|')})\\s*(?:\\(.*\\))?\\s*[:：]?$`, 'i');
 
 const HEADERS: [Section, RegExp][] = [
-  ['ingredients', H(['ingredients?', 'ingredientes?', 'zutaten', 'ingredienti', 'liste des ingredients', 'what you need', 'vous aurez besoin de', 'il vous faut', 'you will need', 'necesitas', 'du brauchst', 'occorrente'])],
-  ['steps', H(['preparation', 'preparations', 'etapes?', 'instructions?', 'method', 'methode', 'directions?', 'recette', 'deroulement', 'steps?', 'how to make( it)?', 'preparacion', 'elaboracion', 'pasos', 'instrucciones', 'zubereitung', 'anleitung', 'procedimento', 'preparazione', 'istruzioni', 'realisation', 'la recette'])],
-  ['tips', H(['astuces?', 'conseils?', 'tips?', 'trucs?', 'consejos?', 'trucos?', 'tipps?', 'consigli', 'suggerimenti', 'le conseil du chef', "chef's tips?"])],
+  [
+    'ingredients',
+    H([
+      'ingredients?',
+      'ingredientes?',
+      'zutaten',
+      'ingredienti',
+      'liste des ingredients',
+      'what you need',
+      'vous aurez besoin de',
+      'il vous faut',
+      'you will need',
+      'necesitas',
+      'du brauchst',
+      'occorrente',
+    ]),
+  ],
+  [
+    'steps',
+    H([
+      'preparation',
+      'preparations',
+      'etapes?',
+      'instructions?',
+      'method',
+      'methode',
+      'directions?',
+      'recette',
+      'deroulement',
+      'steps?',
+      'how to make( it)?',
+      'preparacion',
+      'elaboracion',
+      'pasos',
+      'instrucciones',
+      'zubereitung',
+      'anleitung',
+      'procedimento',
+      'preparazione',
+      'istruzioni',
+      'realisation',
+      'la recette',
+    ]),
+  ],
+  [
+    'tips',
+    H([
+      'astuces?',
+      'conseils?',
+      'tips?',
+      'trucs?',
+      'consejos?',
+      'trucos?',
+      'tipps?',
+      'consigli',
+      'suggerimenti',
+      'le conseil du chef',
+      "chef's tips?",
+    ]),
+  ],
   ['notes', H(['notes?', 'remarques?', 'notas?', 'hinweise?', 'anmerkungen', 'note'])],
 ];
 
@@ -21,15 +79,29 @@ const SERVINGS_RES = [
   /\b(?:portions?|servings?|rendement|yield|raciones|porciones|portionen|porzioni|personnes|nombre de parts)\s*[:：]\s*(\d{1,3})/i,
 ];
 
-const TIME_LABELS: [keyof Pick<RecipeDraft, 'prepMinutes' | 'cookMinutes' | 'restMinutes' | 'totalMinutes'>, RegExp][] = [
-  ['prepMinutes', /\b(?:temps de preparation|preparation|prep(?:aration)? time|prep|preparacion|tiempo de preparacion|zubereitungszeit|vorbereitung(?:szeit)?|arbeitszeit|preparazione|tempo di preparazione)\b/i],
-  ['cookMinutes', /\b(?:temps de cuisson|cuisson|cook(?:ing)? time|cook|bake time|baking time|coccion|tiempo de coccion|horneado|backzeit|kochzeit|garzeit|cottura|tempo di cottura)\b/i],
-  ['restMinutes', /\b(?:temps de repos|repos|refrigeration|rest(?:ing)? time|chill(?:ing)? time|reposo|ruhezeit|kuhlzeit|riposo)\b/i],
+const TIME_LABELS: [
+  keyof Pick<RecipeDraft, 'prepMinutes' | 'cookMinutes' | 'restMinutes' | 'totalMinutes'>,
+  RegExp,
+][] = [
+  [
+    'prepMinutes',
+    /\b(?:temps de preparation|preparation|prep(?:aration)? time|prep|preparacion|tiempo de preparacion|zubereitungszeit|vorbereitung(?:szeit)?|arbeitszeit|preparazione|tempo di preparazione)\b/i,
+  ],
+  [
+    'cookMinutes',
+    /\b(?:temps de cuisson|cuisson|cook(?:ing)? time|cook|bake time|baking time|coccion|tiempo de coccion|horneado|backzeit|kochzeit|garzeit|cottura|tempo di cottura)\b/i,
+  ],
+  [
+    'restMinutes',
+    /\b(?:temps de repos|repos|refrigeration|rest(?:ing)? time|chill(?:ing)? time|reposo|ruhezeit|kuhlzeit|riposo)\b/i,
+  ],
   ['totalMinutes', /\b(?:temps total|total time|total|tiempo total|gesamtzeit|tempo totale)\b/i],
 ];
 
-const STEP_PREFIX = /^\s*(?:(?:etape|step|paso|schritt|passo|passaggio)\s*\d+\s*[:.)-]?|\d{1,2}\s*[.)/-]|\d{1,2}\s*[️⃣]+|[①-⑳]|[-–•*·▪]\s)\s*/i;
-const GROUP_RE = /^(?:pour (?:la |le |les |l'|l’)?|for the |para (?:el |la |los |las )?|fur (?:den |die |das )?|per (?:il |la |lo |i |le )?)(.{2,50}?)\s*[:：]?$/i;
+const STEP_PREFIX =
+  /^\s*(?:(?:etape|step|paso|schritt|passo|passaggio)\s*\d+\s*[:.)-]?|\d{1,2}\s*[.)/-]|\d{1,2}\s*[️⃣]+|[①-⑳]|[-–•*·▪]\s)\s*/i;
+const GROUP_RE =
+  /^(?:pour (?:la |le |les |l'|l’)?|for the |para (?:el |la |los |las )?|fur (?:den |die |das )?|per (?:il |la |lo |i |le )?)(.{2,50}?)\s*[:：]?$/i;
 
 function detectHeader(line: string): Section | null {
   const n = normalizeText(line).replace(/^[#*_\s\p{Extended_Pictographic}️]+|[*_\s]+$/gu, '');
@@ -41,7 +113,9 @@ function extractOven(text: string): number | null {
   const n = normalizeText(text);
   let m = n.match(/(\d{2,3})\s*°\s*f\b/);
   if (m) return fahrenheitToCelsius(Number(m[1]));
-  m = n.match(/(\d{2,3})\s*(?:°\s*c?|degres|degrees|grad|gradi|grados)\b/) ?? n.match(/(\d{2,3})\s*°/);
+  m =
+    n.match(/(\d{2,3})\s*(?:°\s*c?|degres|degrees|grad|gradi|grados)\b/) ??
+    n.match(/(\d{2,3})\s*°/);
   if (m) {
     const v = Number(m[1]);
     if (v >= 50 && v <= 300) return v;
@@ -52,11 +126,14 @@ function extractOven(text: string): number | null {
 }
 
 function looksLikeStep(line: string): boolean {
-  return line.length > 70 || /[.!]$/.test(line.trim()) && line.split(' ').length > 6;
+  return line.length > 70 || (/[.!]$/.test(line.trim()) && line.split(' ').length > 6);
 }
 
 function cleanLine(line: string): string {
-  return line.replace(/\u00a0/g, ' ').replace(/\s+/g, ' ').trim();
+  return line
+    .replace(/\u00a0/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 /**
@@ -69,10 +146,13 @@ export function parseRecipeText(input: string): RecipeDraft {
 
   // Hashtags → tags (TikTok / Instagram captions), removed from the text.
   const tags = new Set<string>();
-  const withoutTags = text.replace(/(^|\s)#([\p{L}\p{N}_]{2,40})/gu, (_, pre: string, tag: string) => {
-    tags.add(tag.toLowerCase());
-    return pre;
-  });
+  const withoutTags = text.replace(
+    /(^|\s)#([\p{L}\p{N}_]{2,40})/gu,
+    (_, pre: string, tag: string) => {
+      tags.add(tag.toLowerCase());
+      return pre;
+    },
+  );
   draft.tags = [...tags].slice(0, 20);
 
   const lines = withoutTags.split('\n').map(cleanLine);
@@ -126,7 +206,11 @@ export function parseRecipeText(input: string): RecipeDraft {
       const o = extractOven(raw);
       if (o !== null) {
         draft.ovenTemperatureC = o;
-        if (raw.length < 60 && /\b(four|oven|horno|ofen|backofen|forno|thermostat|th\.?|prechauff|preheat)/.test(norm)) consumed = true;
+        if (
+          raw.length < 60 &&
+          /\b(four|oven|horno|ofen|backofen|forno|thermostat|th\.?|prechauff|preheat)/.test(norm)
+        )
+          consumed = true;
       }
     }
     if (consumed && section !== 'steps') continue;
@@ -154,12 +238,22 @@ export function parseRecipeText(input: string): RecipeDraft {
       if (!stepText) continue;
       const prev = draft.steps[draft.steps.length - 1];
       // A line without numbering that continues a sentence is merged into the previous step.
-      if (prev && !STEP_PREFIX.test(raw) && /^[a-zà-ÿ]/.test(stepText) && !/[.!?]$/.test(prev.text)) {
+      if (
+        prev &&
+        !STEP_PREFIX.test(raw) &&
+        /^[a-zà-ÿ]/.test(stepText) &&
+        !/[.!?]$/.test(prev.text)
+      ) {
         prev.text = `${prev.text} ${stepText}`;
         prev.timerSeconds ??= parseTimerSeconds(stepText);
         continue;
       }
-      draft.steps.push({ group, text: stepText, timerSeconds: parseTimerSeconds(stepText), timerLabel: null });
+      draft.steps.push({
+        group,
+        text: stepText,
+        timerSeconds: parseTimerSeconds(stepText),
+        timerLabel: null,
+      });
       continue;
     }
     if (section === 'tips') {
@@ -175,10 +269,18 @@ export function parseRecipeText(input: string): RecipeDraft {
 
   // Title: first short free line (before any section) that is not an ingredient.
   const titleIdx = freeLines.findIndex(
-    (l) => l.length >= 2 && l.length <= 120 && !/^https?:\/\//i.test(l) && !parseIngredientLine(l)?.quantity,
+    (l) =>
+      l.length >= 2 &&
+      l.length <= 120 &&
+      !/^https?:\/\//i.test(l) &&
+      !parseIngredientLine(l)?.quantity,
   );
   if (titleIdx >= 0) {
-    draft.title = freeLines[titleIdx]!.replace(/^[#*\s\p{Extended_Pictographic}️]+|[*\s\p{Extended_Pictographic}️]+$/gu, '').trim() || null;
+    draft.title =
+      freeLines[titleIdx]!.replace(
+        /^[#*\s\p{Extended_Pictographic}️]+|[*\s\p{Extended_Pictographic}️]+$/gu,
+        '',
+      ).trim() || null;
     freeLines.splice(titleIdx, 1);
   }
 
@@ -187,13 +289,27 @@ export function parseRecipeText(input: string): RecipeDraft {
     const rest: string[] = [];
     for (const l of freeLines) {
       const ing = parseIngredientLine(l);
-      if (STEP_PREFIX.test(l) && /^\s*(?:\d{1,2}\s*[.)]|etape|step|paso|schritt|passo)/i.test(normalizeText(l))) {
+      if (
+        STEP_PREFIX.test(l) &&
+        /^\s*(?:\d{1,2}\s*[.)]|etape|step|paso|schritt|passo)/i.test(normalizeText(l))
+      ) {
         const t = l.replace(STEP_PREFIX, '').trim();
-        if (t) draft.steps.push({ group: null, text: t, timerSeconds: parseTimerSeconds(t), timerLabel: null });
+        if (t)
+          draft.steps.push({
+            group: null,
+            text: t,
+            timerSeconds: parseTimerSeconds(t),
+            timerLabel: null,
+          });
       } else if (ing && ing.quantity !== null && l.length <= 80 && !looksLikeStep(l)) {
         draft.ingredients.push({ group: null, ...ing });
       } else if (looksLikeStep(l) && draft.ingredients.length > 0) {
-        draft.steps.push({ group: null, text: l, timerSeconds: parseTimerSeconds(l), timerLabel: null });
+        draft.steps.push({
+          group: null,
+          text: l,
+          timerSeconds: parseTimerSeconds(l),
+          timerLabel: null,
+        });
       } else {
         rest.push(l);
       }

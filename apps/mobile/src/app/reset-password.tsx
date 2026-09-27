@@ -33,11 +33,23 @@ export default function ResetPassword() {
         {done ? (
           <>
             <Text color="primary">{t('auth.resetDone')}</Text>
-            <Button title={t('common.continue')} onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))} />
+            <Button
+              title={t('common.continue')}
+              onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))}
+            />
           </>
         ) : (
           <>
-            <TextField label={t('settings.newPassword')} value={password} onChangeText={setPassword} secureTextEntry autoComplete="new-password" textContentType="newPassword" helper={t('auth.passwordHint')} error={error} />
+            <TextField
+              label={t('settings.newPassword')}
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+              autoComplete="new-password"
+              textContentType="newPassword"
+              helper={t('auth.passwordHint')}
+              error={error}
+            />
             <Button title={t('common.save')} onPress={submit} />
           </>
         )}

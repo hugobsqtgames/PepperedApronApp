@@ -19,7 +19,8 @@ export function singularize(word: string): string {
   if (word.endsWith('eaux')) return word.slice(0, -1);
   if (word.endsWith('ies') && word.length > 4) return word.slice(0, -3) + 'y';
   if (word.endsWith('oes')) return word.slice(0, -2);
-  if (word.endsWith('ches') || word.endsWith('shes') || word.endsWith('xes')) return word.slice(0, -2);
+  if (word.endsWith('ches') || word.endsWith('shes') || word.endsWith('xes'))
+    return word.slice(0, -2);
   if (word.endsWith('ss')) return word;
   if (word.endsWith('s') || word.endsWith('x')) return word.slice(0, -1);
   return word;
@@ -73,7 +74,8 @@ const ENTITIES: Record<string, string> = {
 export function decodeHtmlEntities(s: string): string {
   return s.replace(/&(#x[0-9a-f]+|#\d+|[a-z0-9]+);/gi, (m, e: string) => {
     if (e[0] === '#') {
-      const code = e[1] === 'x' || e[1] === 'X' ? parseInt(e.slice(2), 16) : parseInt(e.slice(1), 10);
+      const code =
+        e[1] === 'x' || e[1] === 'X' ? parseInt(e.slice(2), 16) : parseInt(e.slice(1), 10);
       return Number.isFinite(code) && code > 0 && code < 0x110000 ? String.fromCodePoint(code) : m;
     }
     return ENTITIES[e.toLowerCase()] ?? m;

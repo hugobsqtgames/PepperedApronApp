@@ -1,6 +1,16 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { collectionItemId, favoriteId, shoppingCategoryId, uuidv7 } from '@pepperedapron/core';
-import { createTestApp, op, pullAll, push, recipeData, register, verify, type Client, type TestCtx } from './helpers';
+import {
+  createTestApp,
+  op,
+  pullAll,
+  push,
+  recipeData,
+  register,
+  verify,
+  type Client,
+  type TestCtx,
+} from './helpers';
 
 let ctx: TestCtx;
 beforeAll(async () => {
@@ -8,8 +18,25 @@ beforeAll(async () => {
 });
 afterAll(async () => ctx.close());
 
-const listData = (p: Record<string, unknown> = {}) => ({ name: 'Courses de la semaine', emoji: null, archived: false, householdId: null, ...p });
-const itemData = (listId: string, p: Record<string, unknown> = {}) => ({ listId, name: 'Lait', quantity: 1, unit: 'l', categoryKey: 'dairy_eggs', checked: false, position: 0, note: null, recipeIds: [], ...p });
+const listData = (p: Record<string, unknown> = {}) => ({
+  name: 'Courses de la semaine',
+  emoji: null,
+  archived: false,
+  householdId: null,
+  ...p,
+});
+const itemData = (listId: string, p: Record<string, unknown> = {}) => ({
+  listId,
+  name: 'Lait',
+  quantity: 1,
+  unit: 'l',
+  categoryKey: 'dairy_eggs',
+  checked: false,
+  position: 0,
+  note: null,
+  recipeIds: [],
+  ...p,
+});
 
 describe('push & pull basics', () => {
   it('creates a recipe offline-style (client id) and pulls it with children', async () => {
@@ -17,7 +44,10 @@ describe('push & pull basics', () => {
     const id = uuidv7();
     const [r] = await push(c, op('recipe', id, recipeData()));
     expect(r!.status).toBe('applied');
-    expect(r!.record!.data).toMatchObject({ title: 'Tarte aux pommes', ingredients: [{ name: 'Pommes' }] });
+    expect(r!.record!.data).toMatchObject({
+      title: 'Tarte aux pommes',
+      ingredients: [{ name: 'Pommes' }],
+    });
     const { records } = await pullAll(c);
     const rec = records.find((x) => x.id === id)!;
     expect(rec.data).toMatchObject({ servings: 6, steps: [{ text: 'Éplucher les pommes.' }] });
@@ -45,7 +75,15 @@ describe('push & pull basics', () => {
     const c = await register(ctx);
     const other = await register(ctx);
     const id = uuidv7();
-    const [r] = await push(c, op('recipe', id, { ...recipeData(), ownerId: other.userId, version: 999999, saveCount: 1000 } as Record<string, unknown>));
+    const [r] = await push(
+      c,
+      op('recipe', id, {
+        ...recipeData(),
+        ownerId: other.userId,
+        version: 999999,
+        saveCount: 1000,
+      } as Record<string, unknown>),
+    );
     expect(r!.status).toBe('applied');
     expect(r!.record!.ownerId).toBe(c.userId);
     expect(r!.record!.version).toBeLessThan(999999);
@@ -55,7 +93,16 @@ describe('push & pull basics', () => {
     const c = await register(ctx);
     const ids = Array.from({ length: 40 }, () => uuidv7());
     // 4 devices pushing in parallel.
-    await Promise.all([0, 1, 2, 3].map((d) => push(c, ...ids.slice(d * 10, d * 10 + 10).map((id) => op('recipe', id, recipeData({ title: `R ${id}` }))))));
+    await Promise.all(
+      [0, 1, 2, 3].map((d) =>
+        push(
+          c,
+          ...ids
+            .slice(d * 10, d * 10 + 10)
+            .map((id) => op('recipe', id, recipeData({ title: `R ${id}` }))),
+        ),
+      ),
+    );
     const { records } = await pullAll(c, 0, 7);
     const got = records.filter((r) => r.entity === 'recipe').map((r) => r.id);
     expect(new Set(got)).toEqual(new Set(ids));
@@ -82,9 +129,25 @@ describe('conflicts (two devices)', () => {
     const [created] = await push(c, op('recipe', id, recipeData()));
     const base = created!.record!;
     // iPhone changes servings, iPad (same base) changes the title.
-    const [iphone] = await push(c, op('recipe', id, { ...base.data!, servings: 8 }, { baseVersion: base.version, changedFields: ['servings'] }));
+    const [iphone] = await push(
+      c,
+      op(
+        'recipe',
+        id,
+        { ...base.data!, servings: 8 },
+        { baseVersion: base.version, changedFields: ['servings'] },
+      ),
+    );
     expect(iphone!.status).toBe('applied');
-    const [ipad] = await push(c, op('recipe', id, { ...base.data!, title: 'Tarte fine' }, { baseVersion: base.version, changedFields: ['title'] }));
+    const [ipad] = await push(
+      c,
+      op(
+        'recipe',
+        id,
+        { ...base.data!, title: 'Tarte fine' },
+        { baseVersion: base.version, changedFields: ['title'] },
+      ),
+    );
     expect(ipad!.status).toBe('merged');
     expect(ipad!.record!.data).toMatchObject({ title: 'Tarte fine', servings: 8 });
   });
@@ -94,8 +157,24 @@ describe('conflicts (two devices)', () => {
     const id = uuidv7();
     const [created] = await push(c, op('recipe', id, recipeData({ notes: 'A' })));
     const base = created!.record!;
-    await push(c, op('recipe', id, { ...base.data!, notes: 'from iPhone', tips: 'tip' }, { baseVersion: base.version, changedFields: ['notes', 'tips'] }));
-    const [r] = await push(c, op('recipe', id, { ...base.data!, notes: 'from iPad' }, { baseVersion: base.version, changedFields: ['notes'] }));
+    await push(
+      c,
+      op(
+        'recipe',
+        id,
+        { ...base.data!, notes: 'from iPhone', tips: 'tip' },
+        { baseVersion: base.version, changedFields: ['notes', 'tips'] },
+      ),
+    );
+    const [r] = await push(
+      c,
+      op(
+        'recipe',
+        id,
+        { ...base.data!, notes: 'from iPad' },
+        { baseVersion: base.version, changedFields: ['notes'] },
+      ),
+    );
     expect(r!.record!.data).toMatchObject({ notes: 'from iPad', tips: 'tip' });
   });
 
@@ -104,8 +183,19 @@ describe('conflicts (two devices)', () => {
     const id = uuidv7();
     const [created] = await push(c, op('recipe', id, recipeData()));
     const base = created!.record!;
-    await push(c, op('recipe', id, { ...base.data!, servings: 2 }, { baseVersion: base.version, changedFields: ['servings'] }));
-    const [r] = await push(c, op('recipe', id, { ...base.data!, title: 'Nouveau' }, { baseVersion: base.version }));
+    await push(
+      c,
+      op(
+        'recipe',
+        id,
+        { ...base.data!, servings: 2 },
+        { baseVersion: base.version, changedFields: ['servings'] },
+      ),
+    );
+    const [r] = await push(
+      c,
+      op('recipe', id, { ...base.data!, title: 'Nouveau' }, { baseVersion: base.version }),
+    );
     expect(r!.record!.data).toMatchObject({ title: 'Nouveau' });
   });
 
@@ -114,7 +204,15 @@ describe('conflicts (two devices)', () => {
     const id = uuidv7();
     const [created] = await push(c, op('recipe', id, recipeData()));
     await push(c, op('recipe', id, null, { op: 'delete', baseVersion: created!.record!.version }));
-    const [r] = await push(c, op('recipe', id, { ...created!.record!.data!, title: 'X' }, { baseVersion: created!.record!.version, changedFields: ['title'] }));
+    const [r] = await push(
+      c,
+      op(
+        'recipe',
+        id,
+        { ...created!.record!.data!, title: 'X' },
+        { baseVersion: created!.record!.version, changedFields: ['title'] },
+      ),
+    );
     expect(r!.status).toBe('gone');
     expect(r!.record!.deleted).toBe(true);
     const [again] = await push(c, op('recipe', id, null, { op: 'delete' }));
@@ -128,8 +226,24 @@ describe('conflicts (two devices)', () => {
     await push(c, op('shoppingList', listId, listData()));
     const [created] = await push(c, op('shoppingItem', itemId, itemData(listId)));
     const base = created!.record!;
-    await push(c, op('shoppingItem', itemId, { ...base.data!, checked: true }, { baseVersion: base.version, changedFields: ['checked'] }));
-    const [r] = await push(c, op('shoppingItem', itemId, { ...base.data!, quantity: 2 }, { baseVersion: base.version, changedFields: ['quantity'] }));
+    await push(
+      c,
+      op(
+        'shoppingItem',
+        itemId,
+        { ...base.data!, checked: true },
+        { baseVersion: base.version, changedFields: ['checked'] },
+      ),
+    );
+    const [r] = await push(
+      c,
+      op(
+        'shoppingItem',
+        itemId,
+        { ...base.data!, quantity: 2 },
+        { baseVersion: base.version, changedFields: ['quantity'] },
+      ),
+    );
     expect(r!.record!.data).toMatchObject({ checked: true, quantity: 2 });
   });
 });
@@ -145,8 +259,20 @@ describe('cascades', () => {
       op('recipe', rid, recipeData({ title: 'Carbonara' })),
       op('favorite', favoriteId(c.userId, rid), { recipeId: rid, householdId: null }),
       op('collection', colId, { name: 'Italie', emoji: '🇮🇹', position: 0, householdId: null }),
-      op('collectionItem', collectionItemId(colId, rid), { collectionId: colId, recipeId: rid, position: 0 }),
-      op('mealPlanEntry', planId, { date: '2026-10-01', slot: 'dinner', recipeId: rid, customTitle: null, servings: 2, position: 0, householdId: null }),
+      op('collectionItem', collectionItemId(colId, rid), {
+        collectionId: colId,
+        recipeId: rid,
+        position: 0,
+      }),
+      op('mealPlanEntry', planId, {
+        date: '2026-10-01',
+        slot: 'dinner',
+        recipeId: rid,
+        customTitle: null,
+        servings: 2,
+        position: 0,
+        householdId: null,
+      }),
     );
     const before = await pullAll(c);
     await push(c, op('recipe', rid, null, { op: 'delete' }));
@@ -160,7 +286,12 @@ describe('cascades', () => {
   it('deleting a shopping list tombstones its items', async () => {
     const c = await register(ctx);
     const listId = uuidv7();
-    await push(c, op('shoppingList', listId, listData()), op('shoppingItem', uuidv7(), itemData(listId)), op('shoppingItem', uuidv7(), itemData(listId, { name: 'Pain' })));
+    await push(
+      c,
+      op('shoppingList', listId, listData()),
+      op('shoppingItem', uuidv7(), itemData(listId)),
+      op('shoppingItem', uuidv7(), itemData(listId, { name: 'Pain' })),
+    );
     const before = await pullAll(c);
     await push(c, op('shoppingList', listId, null, { op: 'delete' }));
     const after = await pullAll(c, before.cursor);
@@ -180,7 +311,12 @@ describe('authorization (IDOR)', () => {
     aliceRecipe = uuidv7();
     aliceList = uuidv7();
     aliceItem = uuidv7();
-    await push(alice, op('recipe', aliceRecipe, recipeData({ title: 'Secret' })), op('shoppingList', aliceList, listData()), op('shoppingItem', aliceItem, itemData(aliceList)));
+    await push(
+      alice,
+      op('recipe', aliceRecipe, recipeData({ title: 'Secret' })),
+      op('shoppingList', aliceList, listData()),
+      op('shoppingItem', aliceItem, itemData(aliceList)),
+    );
   });
 
   it("Bob cannot read Alice's private data", async () => {
@@ -197,7 +333,12 @@ describe('authorization (IDOR)', () => {
       op('shoppingList', aliceList, listData({ name: 'pwned' })),
       op('shoppingItem', aliceItem, itemData(aliceList, { name: 'pwned' })),
     );
-    expect(results.map((r) => r.status)).toEqual(['forbidden', 'forbidden', 'forbidden', 'forbidden']);
+    expect(results.map((r) => r.status)).toEqual([
+      'forbidden',
+      'forbidden',
+      'forbidden',
+      'forbidden',
+    ]);
     expect(results.every((r) => r.record === undefined)).toBe(true);
     const { records } = await pullAll(alice);
     expect(JSON.stringify(records)).not.toContain('pwned');
@@ -207,11 +348,27 @@ describe('authorization (IDOR)', () => {
     const results = await push(
       bob,
       op('shoppingItem', uuidv7(), itemData(aliceList)),
-      op('favorite', favoriteId(bob.userId, aliceRecipe), { recipeId: aliceRecipe, householdId: null }),
-      op('mealPlanEntry', uuidv7(), { date: '2026-10-01', slot: 'lunch', recipeId: aliceRecipe, customTitle: null, servings: null, position: 0, householdId: null }),
+      op('favorite', favoriteId(bob.userId, aliceRecipe), {
+        recipeId: aliceRecipe,
+        householdId: null,
+      }),
+      op('mealPlanEntry', uuidv7(), {
+        date: '2026-10-01',
+        slot: 'lunch',
+        recipeId: aliceRecipe,
+        customTitle: null,
+        servings: null,
+        position: 0,
+        householdId: null,
+      }),
       op('settings', alice.userId, { theme: 'dark' }),
     );
-    expect(results.map((r) => r.status)).toEqual(['forbidden', 'forbidden', 'forbidden', 'forbidden']);
+    expect(results.map((r) => r.status)).toEqual([
+      'forbidden',
+      'forbidden',
+      'forbidden',
+      'forbidden',
+    ]);
   });
 
   it('Bob cannot share rows into a household he does not belong to', async () => {
@@ -232,14 +389,33 @@ describe('authorization (IDOR)', () => {
   });
 
   it('photoKey must be an upload owned by the user', async () => {
-    const [r] = await push(bob, op('recipe', uuidv7(), recipeData({ photoKey: `u/${alice.userId}/${uuidv7()}.jpg` })));
+    const [r] = await push(
+      bob,
+      op('recipe', uuidv7(), recipeData({ photoKey: `u/${alice.userId}/${uuidv7()}.jpg` })),
+    );
     expect(r!.status).toBe('forbidden');
     expect(r!.error).toBe('photo_not_owned');
   });
 
   it('immutable fields cannot be changed', async () => {
-    const [cat] = await push(bob, op('shoppingCategory', shoppingCategoryId(bob.userId, 'produce'), { key: 'produce', name: null, position: 0, hidden: false }));
-    const [r] = await push(bob, op('shoppingCategory', shoppingCategoryId(bob.userId, 'produce'), { key: 'hacked', name: null, position: 0, hidden: false }, { baseVersion: cat!.record!.version }));
+    const [cat] = await push(
+      bob,
+      op('shoppingCategory', shoppingCategoryId(bob.userId, 'produce'), {
+        key: 'produce',
+        name: null,
+        position: 0,
+        hidden: false,
+      }),
+    );
+    const [r] = await push(
+      bob,
+      op(
+        'shoppingCategory',
+        shoppingCategoryId(bob.userId, 'produce'),
+        { key: 'hacked', name: null, position: 0, hidden: false },
+        { baseVersion: cat!.record!.version },
+      ),
+    );
     expect(r!.status).toBe('rejected');
   });
 
@@ -255,7 +431,13 @@ describe('authorization (IDOR)', () => {
   it('unauthenticated sync is refused; malformed pushes are rejected', async () => {
     expect((await ctx.app.inject({ method: 'GET', url: '/v1/sync/pull' })).statusCode).toBe(401);
     expect((await bob.req('POST', '/v1/sync/push', { ops: [] })).statusCode).toBe(400);
-    expect((await bob.req('POST', '/v1/sync/push', { ops: [{ ...op('recipe', 'not-a-uuid', {}), id: "1' OR '1'='1" }] })).statusCode).toBe(400);
+    expect(
+      (
+        await bob.req('POST', '/v1/sync/push', {
+          ops: [{ ...op('recipe', 'not-a-uuid', {}), id: "1' OR '1'='1" }],
+        })
+      ).statusCode,
+    ).toBe(400);
     expect((await bob.req('GET', '/v1/sync/pull?cursor=-5')).statusCode).toBe(400);
   });
 
@@ -271,25 +453,45 @@ describe('households', () => {
   it('shared rows become visible to members; leaving bumps the scope epoch and unshares', async () => {
     const hugo = await register(ctx, 'Hugo');
     const julie = await register(ctx, 'Julie');
-    const h = (await hugo.req('POST', '/v1/household', { name: 'Maison Busquet' })).json().household;
+    const h = (await hugo.req('POST', '/v1/household', { name: 'Maison Busquet' })).json()
+      .household;
     const invite = (await hugo.req('POST', '/v1/household/invites')).json();
     expect(invite.code).toMatch(/^[A-Z2-9]{8}$/);
-    const joined = await julie.req('POST', '/v1/household/join', { code: invite.code.toLowerCase() });
-    expect(joined.json().household.members.map((m: { displayName: string }) => m.displayName)).toEqual(['Hugo', 'Julie']);
+    const joined = await julie.req('POST', '/v1/household/join', {
+      code: invite.code.toLowerCase(),
+    });
+    expect(
+      joined.json().household.members.map((m: { displayName: string }) => m.displayName),
+    ).toEqual(['Hugo', 'Julie']);
 
     const listId = uuidv7();
     const privateId = uuidv7();
-    await push(hugo, op('shoppingList', listId, listData({ householdId: h.id })), op('shoppingList', privateId, listData({ name: 'Perso' })));
+    await push(
+      hugo,
+      op('shoppingList', listId, listData({ householdId: h.id })),
+      op('shoppingList', privateId, listData({ name: 'Perso' })),
+    );
     const itemId = uuidv7();
     // Julie adds to the shared list; the item is owned by the list owner and shared too.
-    const [added] = await push(julie, op('shoppingItem', itemId, itemData(listId, { name: 'Beurre' })));
+    const [added] = await push(
+      julie,
+      op('shoppingItem', itemId, itemData(listId, { name: 'Beurre' })),
+    );
     expect(added!.status).toBe('applied');
     const jPull = await pullAll(julie);
     expect(jPull.records.map((r) => r.id)).toEqual(expect.arrayContaining([listId, itemId]));
     expect(jPull.records.some((r) => r.id === privateId)).toBe(false);
     // Julie can edit but not un-share Hugo's list.
     const listRec = jPull.records.find((r) => r.id === listId)!;
-    const [unshare] = await push(julie, op('shoppingList', listId, { ...listRec.data!, householdId: null }, { baseVersion: listRec.version, changedFields: ['householdId'] }));
+    const [unshare] = await push(
+      julie,
+      op(
+        'shoppingList',
+        listId,
+        { ...listRec.data!, householdId: null },
+        { baseVersion: listRec.version, changedFields: ['householdId'] },
+      ),
+    );
     expect(unshare!.status).toBe('forbidden');
 
     const epochBefore = jPull.epoch;
@@ -330,11 +532,18 @@ describe('households', () => {
   it('notifies members with a push when someone joins', async () => {
     const a = await register(ctx, 'Anna');
     const b = await register(ctx, 'Ben');
-    await a.req('PUT', '/v1/me/push-token', { token: 'ExponentPushToken[abcdefghijklmnop]', platform: 'ios' });
+    await a.req('PUT', '/v1/me/push-token', {
+      token: 'ExponentPushToken[abcdefghijklmnop]',
+      platform: 'ios',
+    });
     await a.req('POST', '/v1/household', { name: 'H' });
     const { code } = (await a.req('POST', '/v1/household/invites')).json();
     await b.req('POST', '/v1/household/join', { code });
-    expect(ctx.push.sent.some((m) => m.to === 'ExponentPushToken[abcdefghijklmnop]' && m.body.includes('Ben'))).toBe(true);
+    expect(
+      ctx.push.sent.some(
+        (m) => m.to === 'ExponentPushToken[abcdefghijklmnop]' && m.body.includes('Ben'),
+      ),
+    ).toBe(true);
   });
 });
 
@@ -344,15 +553,29 @@ describe('public recipes in sync', () => {
     await verify(ctx, author);
     const reader = await register(ctx, 'Reader');
     const rid = uuidv7();
-    const [pub] = await push(author, op('recipe', rid, recipeData({ visibility: 'public', title: 'Public tarte' })));
-    const [fav] = await push(reader, op('favorite', favoriteId(reader.userId, rid), { recipeId: rid, householdId: null }));
+    const [pub] = await push(
+      author,
+      op('recipe', rid, recipeData({ visibility: 'public', title: 'Public tarte' })),
+    );
+    const [fav] = await push(
+      reader,
+      op('favorite', favoriteId(reader.userId, rid), { recipeId: rid, householdId: null }),
+    );
     expect(fav!.status).toBe('applied');
     const p1 = await pullAll(reader);
     expect(p1.records.find((r) => r.id === rid)!.data).toMatchObject({ title: 'Public tarte' });
     // Reader can't edit it.
     const [edit] = await push(reader, op('recipe', rid, recipeData({ title: 'x' })));
     expect(edit!.status).toBe('forbidden');
-    await push(author, op('recipe', rid, { ...pub!.record!.data!, visibility: 'private' }, { baseVersion: pub!.record!.version, changedFields: ['visibility'] }));
+    await push(
+      author,
+      op(
+        'recipe',
+        rid,
+        { ...pub!.record!.data!, visibility: 'private' },
+        { baseVersion: pub!.record!.version, changedFields: ['visibility'] },
+      ),
+    );
     const p2 = await pullAll(reader, p1.cursor);
     expect(p2.records.find((r) => r.id === rid)).toMatchObject({ deleted: true, data: null });
   });

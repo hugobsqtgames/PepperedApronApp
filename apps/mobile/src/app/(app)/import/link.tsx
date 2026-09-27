@@ -60,10 +60,35 @@ export default function ImportLink() {
         <LoadingState label={t('import.fetching')} />
       ) : (
         <View style={{ gap: space.lg, marginTop: space.xl }}>
-          <TextField icon="link-outline" placeholder={t('import.linkPlaceholder')} value={url} onChangeText={setUrl} autoCapitalize="none" autoCorrect={false} keyboardType="url" returnKeyType="go" onSubmitEditing={() => void run(url)} error={error} autoFocus testID="import-url" />
+          <TextField
+            icon="link-outline"
+            placeholder={t('import.linkPlaceholder')}
+            value={url}
+            onChangeText={setUrl}
+            autoCapitalize="none"
+            autoCorrect={false}
+            keyboardType="url"
+            returnKeyType="go"
+            onSubmitEditing={() => void run(url)}
+            error={error}
+            autoFocus
+            testID="import-url"
+          />
           <View style={{ flexDirection: 'row', gap: space.sm }}>
-            <Button title={t('import.paste')} icon="clipboard-outline" variant="secondary" onPress={async () => setUrl(await Clipboard.getStringAsync())} style={{ flex: 1 }} />
-            <Button title={t('import.fetch')} onPress={() => run(url)} style={{ flex: 1 }} disabled={!url.trim()} testID="import-url-submit" />
+            <Button
+              title={t('import.paste')}
+              icon="clipboard-outline"
+              variant="secondary"
+              onPress={async () => setUrl(await Clipboard.getStringAsync())}
+              style={{ flex: 1 }}
+            />
+            <Button
+              title={t('import.fetch')}
+              onPress={() => run(url)}
+              style={{ flex: 1 }}
+              disabled={!url.trim()}
+              testID="import-url-submit"
+            />
           </View>
           <Text variant="caption" color="textMuted">
             {t('add.shareTip')}

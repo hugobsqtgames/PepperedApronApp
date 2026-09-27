@@ -5,7 +5,9 @@ import { build } from 'esbuild';
 const externalNpm = {
   name: 'external-npm',
   setup(b) {
-    b.onResolve({ filter: /^[^./]/ }, (args) => (args.path.startsWith('@pepperedapron/') ? undefined : { path: args.path, external: true }));
+    b.onResolve({ filter: /^[^./]/ }, (args) =>
+      args.path.startsWith('@pepperedapron/') ? undefined : { path: args.path, external: true },
+    );
   },
 };
 

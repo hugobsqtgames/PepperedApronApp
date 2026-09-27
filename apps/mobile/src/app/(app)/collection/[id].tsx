@@ -16,17 +16,40 @@ export default function CollectionScreen() {
   const layout = useLayout();
   const sheet = useActionSheet();
   const prompt = usePrompt();
-  const { col, recipes, favs } = useLive(['collection', 'collectionItem', 'recipe', 'favorite'], (r) => ({
-    col: r.collections().find((c) => c.id === id) ?? null,
-    recipes: r.collectionRecipes(id),
-    favs: new Set(r.favoriteRecipes().map((x) => x.id)),
-  }), [id]);
+  const { col, recipes, favs } = useLive(
+    ['collection', 'collectionItem', 'recipe', 'favorite'],
+    (r) => ({
+      col: r.collections().find((c) => c.id === id) ?? null,
+      recipes: r.collectionRecipes(id),
+      favs: new Set(r.favoriteRecipes().map((x) => x.id)),
+    }),
+    [id],
+  );
   const cols = layout.sidebar ? Math.max(2, layout.columns - 1) : layout.columns;
-  const w = tileWidth(layout.sidebar ? layout.width - 260 : layout.width, cols, space.md, layout.gutter);
+  const w = tileWidth(
+    layout.sidebar ? layout.width - 260 : layout.width,
+    cols,
+    space.md,
+    layout.gutter,
+  );
 
-  if (!col) return <EmptyState emoji="📁" title={t('errors.not_found')} action={t('common.back')} onAction={() => router.back()} />;
+  if (!col)
+    return (
+      <EmptyState
+        emoji="📁"
+        title={t('errors.not_found')}
+        action={t('common.back')}
+        onAction={() => router.back()}
+      />
+    );
 
-  const rename = () => prompt({ title: t('common.rename'), initial: col.data.name, maxLength: 80, onSubmit: (v) => void repos.updateCollection(col.id, { name: v.slice(0, 80) }) });
+  const rename = () =>
+    prompt({
+      title: t('common.rename'),
+      initial: col.data.name,
+      maxLength: 80,
+      onSubmit: (v) => void repos.updateCollection(col.id, { name: v.slice(0, 80) }),
+    });
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
@@ -47,10 +70,21 @@ export default function CollectionScreen() {
                       icon: 'trash-outline',
                       destructive: true,
                       onPress: () =>
-                        Alert.alert(t('favorites.deleteCollection'), t('favorites.deleteCollectionBody'), [
-                          { text: t('common.cancel'), style: 'cancel' },
-                          { text: t('common.delete'), style: 'destructive', onPress: async () => { await repos.deleteCollection(col.id); router.back(); } },
-                        ]),
+                        Alert.alert(
+                          t('favorites.deleteCollection'),
+                          t('favorites.deleteCollectionBody'),
+                          [
+                            { text: t('common.cancel'), style: 'cancel' },
+                            {
+                              text: t('common.delete'),
+                              style: 'destructive',
+                              onPress: async () => {
+                                await repos.deleteCollection(col.id);
+                                router.back();
+                              },
+                            },
+                          ],
+                        ),
                     },
                   ],
                 })
@@ -64,16 +98,33 @@ export default function CollectionScreen() {
         data={recipes}
         numColumns={cols}
         keyExtractor={(r) => r.id}
-        columnWrapperStyle={cols > 1 ? { gap: space.md, paddingHorizontal: layout.gutter } : undefined}
+        columnWrapperStyle={
+          cols > 1 ? { gap: space.md, paddingHorizontal: layout.gutter } : undefined
+        }
         contentContainerStyle={{ gap: space.lg, paddingVertical: space.lg }}
         renderItem={({ item }) => (
           <RecipeCard
             recipe={item}
             width={w}
             favorite={favs.has(item.id)}
-            onToggleFavorite={() => { haptic.light(); void repos.toggleFavorite(item.id); }}
+            onToggleFavorite={() => {
+              haptic.light();
+              void repos.toggleFavorite(item.id);
+            }}
             onPress={() => router.push(`/recipe/${item.id}`)}
-            onLongPress={() => sheet({ title: item.data.title, options: [{ label: t('common.remove'), icon: 'remove-circle-outline', destructive: true, onPress: () => void repos.setInCollection(col.id, item.id, false) }] })}
+            onLongPress={() =>
+              sheet({
+                title: item.data.title,
+                options: [
+                  {
+                    label: t('common.remove'),
+                    icon: 'remove-circle-outline',
+                    destructive: true,
+                    onPress: () => void repos.setInCollection(col.id, item.id, false),
+                  },
+                ],
+              })
+            }
           />
         )}
         ListEmptyComponent={<EmptyState emoji="📭" title={t('favorites.emptyCollection')} />}

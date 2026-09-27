@@ -1,12 +1,29 @@
-import { formatAmount, getUnit, parseIngredientLine, unitLabel, uuidv7, type Ingredient, type Locale, type Step } from '@pepperedapron/core';
+import {
+  formatAmount,
+  getUnit,
+  parseIngredientLine,
+  unitLabel,
+  uuidv7,
+  type Ingredient,
+  type Locale,
+  type Step,
+} from '@pepperedapron/core';
 
-export type IngRow = { kind: 'group'; key: string; name: string } | { kind: 'ing'; key: string; text: string; source: Ingredient | null };
-export type StepRow = { kind: 'group'; key: string; name: string } | { kind: 'step'; key: string; text: string; timerMin: string; source: Step | null };
+export type IngRow =
+  | { kind: 'group'; key: string; name: string }
+  | { kind: 'ing'; key: string; text: string; source: Ingredient | null };
+export type StepRow =
+  | { kind: 'group'; key: string; name: string }
+  | { kind: 'step'; key: string; text: string; timerMin: string; source: Step | null };
 
 /** Human-readable line for an ingredient ("200 g farine (tamisée)") used by the one-line editor. */
 export function ingredientToLine(i: Ingredient, locale: Locale): string {
   const amount = formatAmount(i, locale);
-  const unit = i.unit ? (getUnit(i.unit) ? unitLabel(i.unit, i.quantityMax ?? i.quantity, locale) : i.unit) : '';
+  const unit = i.unit
+    ? getUnit(i.unit)
+      ? unitLabel(i.unit, i.quantityMax ?? i.quantity, locale)
+      : i.unit
+    : '';
   return [amount, unit, i.name].filter(Boolean).join(' ') + (i.note ? ` (${i.note})` : '');
 }
 
@@ -38,7 +55,15 @@ export function fromIngRows(rows: IngRow[], locale: Locale): Ingredient[] {
     }
     const p = parseIngredientLine(text);
     if (!p) continue;
-    out.push({ id: r.source?.id ?? uuidv7(), group, name: p.name.slice(0, 200), quantity: p.quantity, quantityMax: p.quantityMax, unit: p.unit, note: p.note?.slice(0, 200) ?? null });
+    out.push({
+      id: r.source?.id ?? uuidv7(),
+      group,
+      name: p.name.slice(0, 200),
+      quantity: p.quantity,
+      quantityMax: p.quantityMax,
+      unit: p.unit,
+      note: p.note?.slice(0, 200) ?? null,
+    });
   }
   return out;
 }
@@ -49,7 +74,13 @@ export function toStepRows(list: Step[]): StepRow[] {
   for (const s of list) {
     if (s.group && s.group !== group) rows.push({ kind: 'group', key: uuidv7(), name: s.group });
     group = s.group;
-    rows.push({ kind: 'step', key: s.id, text: s.text, timerMin: s.timerSeconds ? String(Math.round((s.timerSeconds / 60) * 10) / 10) : '', source: s });
+    rows.push({
+      kind: 'step',
+      key: s.id,
+      text: s.text,
+      timerMin: s.timerSeconds ? String(Math.round((s.timerSeconds / 60) * 10) / 10) : '',
+      source: s,
+    });
   }
   return rows;
 }
@@ -65,7 +96,13 @@ export function fromStepRows(rows: StepRow[]): Step[] {
     const text = r.text.trim();
     if (!text) continue;
     const min = Number(r.timerMin.replace(',', '.'));
-    out.push({ id: r.source?.id ?? uuidv7(), group, text: text.slice(0, 3000), timerSeconds: Number.isFinite(min) && min > 0 ? Math.min(Math.round(min * 60), 172800) : null, timerLabel: r.source?.timerLabel ?? null });
+    out.push({
+      id: r.source?.id ?? uuidv7(),
+      group,
+      text: text.slice(0, 3000),
+      timerSeconds: Number.isFinite(min) && min > 0 ? Math.min(Math.round(min * 60), 172800) : null,
+      timerLabel: r.source?.timerLabel ?? null,
+    });
   }
   return out;
 }

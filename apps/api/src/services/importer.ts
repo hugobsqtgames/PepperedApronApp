@@ -1,4 +1,10 @@
-import { emptyDraft, parseHtmlMeta, parseJsonLdRecipe, parseRecipeText, type RecipeDraft } from '@pepperedapron/core';
+import {
+  emptyDraft,
+  parseHtmlMeta,
+  parseJsonLdRecipe,
+  parseRecipeText,
+  type RecipeDraft,
+} from '@pepperedapron/core';
 import type { SafeFetch } from '../lib/safeFetch';
 import { SafeFetchError } from '../lib/safeFetch';
 
@@ -17,7 +23,8 @@ export function detectPlatform(url: URL): ImportPlatform {
   if (h.endsWith('instagram.com')) return 'instagram';
   if (h.endsWith('youtube.com') || h === 'youtu.be') return 'youtube';
   if (h.endsWith('facebook.com') || h === 'fb.watch') return 'facebook';
-  if (h.endsWith('pinterest.com') || h.endsWith('pinterest.fr') || h === 'pin.it') return 'pinterest';
+  if (h.endsWith('pinterest.com') || h.endsWith('pinterest.fr') || h === 'pin.it')
+    return 'pinterest';
   return 'web';
 }
 
@@ -46,19 +53,41 @@ export async function importFromUrl(fetchUrl: SafeFetch, raw: string): Promise<I
   const platform = detectPlatform(url);
   const draft = emptyDraft();
   draft.sourceUrl = url.toString();
-  draft.source = platform === 'web' ? url.hostname.replace(/^www\./, '') : platform[0]!.toUpperCase() + platform.slice(1);
+  draft.source =
+    platform === 'web'
+      ? url.hostname.replace(/^www\./, '')
+      : platform[0]!.toUpperCase() + platform.slice(1);
 
-  const oembed = platform === 'tiktok' ? `https://www.tiktok.com/oembed?url=${encodeURIComponent(url.toString())}` : platform === 'youtube' ? `https://www.youtube.com/oembed?format=json&url=${encodeURIComponent(url.toString())}` : null;
+  const oembed =
+    platform === 'tiktok'
+      ? `https://www.tiktok.com/oembed?url=${encodeURIComponent(url.toString())}`
+      : platform === 'youtube'
+        ? `https://www.youtube.com/oembed?format=json&url=${encodeURIComponent(url.toString())}`
+        : null;
   if (oembed) {
     try {
       const r = await fetchUrl(oembed, { accept: 'application/json', maxBytes: 512 * 1024 });
       if (r.status === 200) {
-        const j = JSON.parse(r.body) as { title?: string; author_name?: string; thumbnail_url?: string };
+        const j = JSON.parse(r.body) as {
+          title?: string;
+          author_name?: string;
+          thumbnail_url?: string;
+        };
         draft.author = j.author_name ?? null;
-        draft.imageUrl = j.thumbnail_url && /^https:\/\//.test(j.thumbnail_url) ? j.thumbnail_url : null;
+        draft.imageUrl =
+          j.thumbnail_url && /^https:\/\//.test(j.thumbnail_url) ? j.thumbnail_url : null;
         mergeCaption(draft, j.title ?? null);
         if (!draft.title && j.title) draft.title = j.title.split('\n')[0]!.slice(0, 120);
-        return { draft, platform, completeness: draft.ingredients.length || draft.steps.length ? 'partial' : j.title ? 'partial' : 'minimal' };
+        return {
+          draft,
+          platform,
+          completeness:
+            draft.ingredients.length || draft.steps.length
+              ? 'partial'
+              : j.title
+                ? 'partial'
+                : 'minimal',
+        };
       }
     } catch (e) {
       if (e instanceof SafeFetchError && e.code === 'blocked_address') throw e;
@@ -70,16 +99,22 @@ export async function importFromUrl(fetchUrl: SafeFetch, raw: string): Promise<I
   try {
     page = await fetchUrl(url.toString());
   } catch (e) {
-    if (e instanceof SafeFetchError && (e.code === 'blocked_address' || e.code === 'invalid_url')) throw e;
+    if (e instanceof SafeFetchError && (e.code === 'blocked_address' || e.code === 'invalid_url'))
+      throw e;
     return { draft, platform, completeness: 'minimal' };
   }
-  if (page.status >= 400 || !(page.contentType ?? '').includes('html')) return { draft, platform, completeness: 'minimal' };
+  if (page.status >= 400 || !(page.contentType ?? '').includes('html'))
+    return { draft, platform, completeness: 'minimal' };
 
   const structured = parseJsonLdRecipe(page.body);
   if (structured) {
     structured.sourceUrl = draft.sourceUrl;
     structured.source = draft.source;
-    return { draft: structured, platform, completeness: structured.ingredients.length && structured.steps.length ? 'full' : 'partial' };
+    return {
+      draft: structured,
+      platform,
+      completeness: structured.ingredients.length && structured.steps.length ? 'full' : 'partial',
+    };
   }
   const meta = parseHtmlMeta(page.body);
   draft.title = meta.title?.slice(0, 200) ?? null;
@@ -87,8 +122,13 @@ export async function importFromUrl(fetchUrl: SafeFetch, raw: string): Promise<I
   draft.author = meta.author;
   if (meta.siteName && platform === 'web') draft.source = meta.siteName.slice(0, 100);
   if (meta.description) {
-    if (platform === 'instagram' || platform === 'facebook' || platform === 'pinterest') mergeCaption(draft, meta.description);
+    if (platform === 'instagram' || platform === 'facebook' || platform === 'pinterest')
+      mergeCaption(draft, meta.description);
     else draft.description = meta.description.slice(0, 2000);
   }
-  return { draft, platform, completeness: draft.ingredients.length ? 'partial' : draft.title ? 'partial' : 'minimal' };
+  return {
+    draft,
+    platform,
+    completeness: draft.ingredients.length ? 'partial' : draft.title ? 'partial' : 'minimal',
+  };
 }

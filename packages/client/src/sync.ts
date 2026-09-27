@@ -36,7 +36,11 @@ export class SyncEngine {
   private listeners = new Set<(s: SyncSnapshot) => void>();
   private stopped = false;
 
-  constructor(private readonly store: LocalStore, private readonly api: ApiClient, private readonly o: SyncEngineOptions = {}) {}
+  constructor(
+    private readonly store: LocalStore,
+    private readonly api: ApiClient,
+    private readonly o: SyncEngineOptions = {},
+  ) {}
 
   get snapshot() {
     return this.snap;
@@ -54,7 +58,8 @@ export class SyncEngine {
 
   stop() {
     this.stopped = true;
-    if (this.timer) (this.o.clearTimer ?? clearTimeout)(this.timer as ReturnType<typeof setTimeout>);
+    if (this.timer)
+      (this.o.clearTimer ?? clearTimeout)(this.timer as ReturnType<typeof setTimeout>);
   }
 
   start() {
@@ -84,7 +89,12 @@ export class SyncEngine {
       await this.pushAll();
       await this.pullAll();
       this.failures = 0;
-      this.set({ status: 'idle', error: null, lastSyncedAt: new Date().toISOString(), pending: await this.store.pendingCount() });
+      this.set({
+        status: 'idle',
+        error: null,
+        lastSyncedAt: new Date().toISOString(),
+        pending: await this.store.pendingCount(),
+      });
     } catch (e) {
       const pending = await this.store.pendingCount();
       if (e instanceof ApiError && (e.status === 401 || e.code === 'session_expired')) {
@@ -94,7 +104,11 @@ export class SyncEngine {
       }
       this.failures++;
       const offline = e instanceof NetworkError;
-      this.set({ status: offline ? 'offline' : 'error', pending, error: offline ? 'offline' : 'sync_failed' });
+      this.set({
+        status: offline ? 'offline' : 'error',
+        pending,
+        error: offline ? 'offline' : 'sync_failed',
+      });
       this.scheduleRetry();
     }
   }
@@ -103,9 +117,11 @@ export class SyncEngine {
     if (this.stopped) return;
     const base = this.o.retryBaseMs ?? 2000;
     const max = this.o.retryMaxMs ?? 5 * 60_000;
-    const delay = Math.min(max, base * 2 ** Math.min(this.failures - 1, 10)) * (0.75 + Math.random() * 0.5);
+    const delay =
+      Math.min(max, base * 2 ** Math.min(this.failures - 1, 10)) * (0.75 + Math.random() * 0.5);
     const set = this.o.setTimer ?? ((fn: () => void, ms: number) => setTimeout(fn, ms));
-    if (this.timer) (this.o.clearTimer ?? clearTimeout)(this.timer as ReturnType<typeof setTimeout>);
+    if (this.timer)
+      (this.o.clearTimer ?? clearTimeout)(this.timer as ReturnType<typeof setTimeout>);
     this.timer = set(() => void this.sync(), delay);
   }
 
@@ -117,7 +133,10 @@ export class SyncEngine {
       try {
         res = await this.api.push(ops.map(({ seq: _s, attempts: _a, ...op }) => op));
       } catch (e) {
-        await this.store.releaseOps(ops.map((o) => o.seq), e instanceof ApiError ? e.code : 'network');
+        await this.store.releaseOps(
+          ops.map((o) => o.seq),
+          e instanceof ApiError ? e.code : 'network',
+        );
         throw e;
       }
       const byOp = new Map(res.results.map((r) => [r.opId, r]));
@@ -138,7 +157,8 @@ export class SyncEngine {
     if (known !== null && Number(known) !== epoch) {
       await this.store.resetForResync();
     }
-    if (known === null || Number(known) !== epoch) await this.store.setMeta('scope_epoch', String(epoch));
+    if (known === null || Number(known) !== epoch)
+      await this.store.setMeta('scope_epoch', String(epoch));
   }
 
   private async pullAll() {

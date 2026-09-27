@@ -16,6 +16,7 @@ module.exports = (config) => ({
   },
   images: { glyph: './assets/glyph.png' },
   entitlements: {
-    'com.apple.security.application-groups': config.ios.entitlements['com.apple.security.application-groups'],
+    'com.apple.security.application-groups':
+      config.ios.entitlements['com.apple.security.application-groups'],
   },
 });

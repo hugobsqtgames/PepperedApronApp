@@ -40,8 +40,15 @@ export function PromptProvider({ children }: { children: ReactNode }) {
     <Ctx.Provider value={show}>
       {children}
       <Modal visible={!!opts} transparent animationType="fade" onRequestClose={() => setOpts(null)}>
-        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={[styles.backdrop, { backgroundColor: colors.overlay }]}>
-          <Pressable style={StyleSheet.absoluteFill} onPress={() => setOpts(null)} accessibilityLabel={t('common.close')} />
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          style={[styles.backdrop, { backgroundColor: colors.overlay }]}
+        >
+          <Pressable
+            style={StyleSheet.absoluteFill}
+            onPress={() => setOpts(null)}
+            accessibilityLabel={t('common.close')}
+          />
           <View style={[styles.card, { backgroundColor: colors.surface }]} accessibilityViewIsModal>
             <Text variant="title3" accessibilityRole="header">
               {opts?.title}
@@ -51,10 +58,25 @@ export function PromptProvider({ children }: { children: ReactNode }) {
                 {opts.message}
               </Text>
             ) : null}
-            <TextField value={value} onChangeText={setValue} placeholder={opts?.placeholder} autoFocus multiline={opts?.multiline} maxLength={opts?.maxLength ?? 200} onSubmitEditing={opts?.multiline ? undefined : submit} returnKeyType="done" testID="prompt-input" />
+            <TextField
+              value={value}
+              onChangeText={setValue}
+              placeholder={opts?.placeholder}
+              autoFocus
+              multiline={opts?.multiline}
+              maxLength={opts?.maxLength ?? 200}
+              onSubmitEditing={opts?.multiline ? undefined : submit}
+              returnKeyType="done"
+              testID="prompt-input"
+            />
             <View style={{ flexDirection: 'row', gap: space.sm, justifyContent: 'flex-end' }}>
               <Button title={t('common.cancel')} variant="ghost" onPress={() => setOpts(null)} />
-              <Button title={opts?.confirm ?? t('common.ok')} onPress={submit} disabled={!value.trim()} testID="prompt-confirm" />
+              <Button
+                title={opts?.confirm ?? t('common.ok')}
+                onPress={submit}
+                disabled={!value.trim()}
+                testID="prompt-confirm"
+              />
             </View>
           </View>
         </KeyboardAvoidingView>
@@ -67,5 +89,12 @@ export const usePrompt = () => useContext(Ctx);
 
 const styles = StyleSheet.create({
   backdrop: { flex: 1, justifyContent: 'center', padding: space.xl },
-  card: { borderRadius: radius.xxl, padding: space.xl, gap: space.md, maxWidth: 460, width: '100%', alignSelf: 'center' },
+  card: {
+    borderRadius: radius.xxl,
+    padding: space.xl,
+    gap: space.md,
+    maxWidth: 460,
+    width: '100%',
+    alignSelf: 'center',
+  },
 });

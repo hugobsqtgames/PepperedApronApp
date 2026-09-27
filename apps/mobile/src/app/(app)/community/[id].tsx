@@ -8,7 +8,15 @@ import { useLive, useRepos, useRuntime } from '../../../hooks/runtime';
 import { errorMessage } from '../../../lib/errors';
 import { haptic } from '../../../services/haptics';
 import { space } from '../../../theme/tokens';
-import { Button, ErrorState, LoadingState, Screen, useActionSheet, usePrompt, useToast } from '../../../ui';
+import {
+  Button,
+  ErrorState,
+  LoadingState,
+  Screen,
+  useActionSheet,
+  usePrompt,
+  useToast,
+} from '../../../ui';
 
 export default function PublicRecipe() {
   const { id, report } = useLocalSearchParams<{ id: string; report?: string }>();
@@ -63,8 +71,18 @@ export default function PublicRecipe() {
     if (report && r) setTimeout(reportFlow, 400);
   }, [report, r, reportFlow]);
 
-  if (error) return <Screen scroll={false}><ErrorState message={error} onRetry={load} /></Screen>;
-  if (!r) return <Screen scroll={false}><LoadingState /></Screen>;
+  if (error)
+    return (
+      <Screen scroll={false}>
+        <ErrorState message={error} onRetry={load} />
+      </Screen>
+    );
+  if (!r)
+    return (
+      <Screen scroll={false}>
+        <LoadingState />
+      </Screen>
+    );
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
@@ -91,8 +109,22 @@ export default function PublicRecipe() {
               testID="save-public"
             />
             <View style={{ flexDirection: 'row', gap: space.sm }}>
-              <Button title={fav ? t('recipe.unfavorite') : t('recipe.favorite')} icon={fav ? 'heart' : 'heart-outline'} variant="secondary" style={{ flex: 1 }} onPress={async () => { haptic.light(); await repos.toggleFavorite(id); }} />
-              <Button title={t('recipe.report')} icon="flag-outline" variant="ghost" onPress={reportFlow} />
+              <Button
+                title={fav ? t('recipe.unfavorite') : t('recipe.favorite')}
+                icon={fav ? 'heart' : 'heart-outline'}
+                variant="secondary"
+                style={{ flex: 1 }}
+                onPress={async () => {
+                  haptic.light();
+                  await repos.toggleFavorite(id);
+                }}
+              />
+              <Button
+                title={t('recipe.report')}
+                icon="flag-outline"
+                variant="ghost"
+                onPress={reportFlow}
+              />
             </View>
           </View>
         }

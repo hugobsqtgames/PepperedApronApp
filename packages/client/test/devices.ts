@@ -1,7 +1,15 @@
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
-import { ApiClient, LocalStore, MemoryTokenStore, PhotoUploader, Repos, SyncEngine, type Tokens } from '../src';
+import {
+  ApiClient,
+  LocalStore,
+  MemoryTokenStore,
+  PhotoUploader,
+  Repos,
+  SyncEngine,
+  type Tokens,
+} from '../src';
 import { createTestApp, type TestCtx } from '../../../apps/api/test/helpers';
 import { betterSqliteDriver } from './betterSqliteDriver';
 
@@ -32,7 +40,10 @@ export class Device {
   signedOut = false;
   readonly tokens = new MemoryTokenStore();
   private driver!: ReturnType<typeof betterSqliteDriver>;
-  private constructor(private readonly server: Server, readonly file: string) {}
+  private constructor(
+    private readonly server: Server,
+    readonly file: string,
+  ) {}
 
   static async create(server: Server, name: string): Promise<Device> {
     const dir = await fs.mkdtemp(path.join(os.tmpdir(), `pa-${name}-`));
@@ -47,12 +58,25 @@ export class Device {
     this.store = await LocalStore.open(this.driver);
     const fetchImpl: typeof fetch = async (input, init) => {
       if (!this.online) throw new TypeError('Network request failed');
-      if (this.failServer) return new Response(JSON.stringify({ error: { code: 'internal' } }), { status: 503 });
+      if (this.failServer)
+        return new Response(JSON.stringify({ error: { code: 'internal' } }), { status: 503 });
       return fetch(input, init);
     };
-    this.api = new ApiClient({ baseUrl: this.server.url, tokens: this.tokens, fetchImpl, onSessionExpired: () => (this.signedOut = true) });
-    this.sync = new SyncEngine(this.store, this.api, { setTimer: () => 0, clearTimer: () => undefined });
-    this.repos = new Repos(this.store, () => this.userId, () => this.householdId);
+    this.api = new ApiClient({
+      baseUrl: this.server.url,
+      tokens: this.tokens,
+      fetchImpl,
+      onSessionExpired: () => (this.signedOut = true),
+    });
+    this.sync = new SyncEngine(this.store, this.api, {
+      setTimer: () => 0,
+      clearTimer: () => undefined,
+    });
+    this.repos = new Repos(
+      this.store,
+      () => this.userId,
+      () => this.householdId,
+    );
     this.photos = new PhotoUploader(this.store, this.api, async (url, headers, localUri) => {
       if (!this.online) throw new TypeError('Network request failed');
       const body = await fs.readFile(localUri);
@@ -67,7 +91,12 @@ export class Device {
   }
 
   async signUp(email: string, name = 'Julie') {
-    const r = await this.api.register({ email, password: 'correct horse battery', displayName: name, locale: 'fr' });
+    const r = await this.api.register({
+      email,
+      password: 'correct horse battery',
+      displayName: name,
+      locale: 'fr',
+    });
     this.userId = r.user.id;
     return r;
   }

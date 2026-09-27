@@ -4,7 +4,12 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { computeTotalMinutes, formatMinutes, type Locale, type Step } from '@pepperedapron/core';
-import { IngredientList, SourceLink, StepList, TextBlock } from '../../../../features/recipe/RecipeBody';
+import {
+  IngredientList,
+  SourceLink,
+  StepList,
+  TextBlock,
+} from '../../../../features/recipe/RecipeBody';
 import { useLive, useRepos, useRuntime } from '../../../../hooks/runtime';
 import { errorMessage } from '../../../../lib/errors';
 import { formatOven, recipeAsText } from '../../../../lib/format';
@@ -15,7 +20,19 @@ import { haptic } from '../../../../services/haptics';
 import { timers } from '../../../../services/timers';
 import { useTheme } from '../../../../theme/ThemeProvider';
 import { radius, space } from '../../../../theme/tokens';
-import { Badge, Button, EmptyState, IconButton, RecipePhoto, Screen, Section, Stepper, Text, useActionSheet, useToast } from '../../../../ui';
+import {
+  Badge,
+  Button,
+  EmptyState,
+  IconButton,
+  RecipePhoto,
+  Screen,
+  Section,
+  Stepper,
+  Text,
+  useActionSheet,
+  useToast,
+} from '../../../../ui';
 
 export default function RecipeDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -29,12 +46,16 @@ export default function RecipeDetail() {
   const sheet = useActionSheet();
   const locale = i18n.language as Locale;
 
-  const { recipe, favorite, settings, collections } = useLive(['recipe', 'favorite', 'settings', 'collectionItem'], (r) => ({
-    recipe: r.recipe(id),
-    favorite: r.isFavorite(id),
-    settings: r.settings(),
-    collections: r.collectionsOf(id).length,
-  }), [id]);
+  const { recipe, favorite, settings, collections } = useLive(
+    ['recipe', 'favorite', 'settings', 'collectionItem'],
+    (r) => ({
+      recipe: r.recipe(id),
+      favorite: r.isFavorite(id),
+      settings: r.settings(),
+      collections: r.collectionsOf(id).length,
+    }),
+    [id],
+  );
   const [servings, setServings] = useState<number | null>(null);
   useEffect(() => {
     if (recipe) track('recipe_viewed');
@@ -43,7 +64,13 @@ export default function RecipeDetail() {
   if (!recipe) {
     return (
       <Screen scroll={false}>
-        <EmptyState emoji="🍂" title={t('recipe.notFoundTitle')} body={t('recipe.notFoundBody')} action={t('common.back')} onAction={() => (router.canGoBack() ? router.back() : router.replace('/'))} />
+        <EmptyState
+          emoji="🍂"
+          title={t('recipe.notFoundTitle')}
+          body={t('recipe.notFoundBody')}
+          action={t('common.back')}
+          onAction={() => (router.canGoBack() ? router.back() : router.replace('/'))}
+        />
       </Screen>
     );
   }
@@ -67,7 +94,9 @@ export default function RecipeDetail() {
       const list = await repos.ensureActiveList(t('shopping.defaultName'));
       const res = await repos.addRecipeToList(list.id, recipe.id, current);
       haptic.success();
-      toast(t('recipe.addedToShopping', { count: res.added + res.updated, list: list.data.name }), { action: { label: t('tabs.shopping'), onPress: () => router.push('/shopping') } });
+      toast(t('recipe.addedToShopping', { count: res.added + res.updated, list: list.data.name }), {
+        action: { label: t('tabs.shopping'), onPress: () => router.push('/shopping') },
+      });
     } catch (e) {
       toast(errorMessage(e, t), { tone: 'error' });
     }
@@ -84,7 +113,10 @@ export default function RecipeDetail() {
             try {
               const { url } = await rt.api.shareRecipe(recipe.id);
               track('recipe_shared', { kind: 'link' });
-              await Share.share({ message: `${t('recipe.shareMessage', { title: d.title })}\n${url}`, url });
+              await Share.share({
+                message: `${t('recipe.shareMessage', { title: d.title })}\n${url}`,
+                url,
+              });
             } catch (e) {
               toast(errorMessage(e, t), { tone: 'error' });
             }
@@ -96,7 +128,17 @@ export default function RecipeDetail() {
           onPress: () => {
             track('recipe_shared', { kind: 'text' });
             void Share.share({
-              message: recipeAsText(d, { ingredients: t('recipe.ingredients'), steps: t('recipe.steps'), tips: t('recipe.tips'), servings: t('common.servings', { count: d.servings }) }, locale, settings.unitSystem),
+              message: recipeAsText(
+                d,
+                {
+                  ingredients: t('recipe.ingredients'),
+                  steps: t('recipe.steps'),
+                  tips: t('recipe.tips'),
+                  servings: t('common.servings', { count: d.servings }),
+                },
+                locale,
+                settings.unitSystem,
+              ),
             });
           },
         },
@@ -114,7 +156,8 @@ export default function RecipeDetail() {
       }
     };
     if (visibility === 'private') return void apply();
-    if (rt.user && !rt.user.emailVerified && rt.user.providers.length === 0) return toast(t('errors.publish_requires_verified_email'), { tone: 'error' });
+    if (rt.user && !rt.user.emailVerified && rt.user.providers.length === 0)
+      return toast(t('errors.publish_requires_verified_email'), { tone: 'error' });
     Alert.alert(t('recipe.makePublic'), t('recipe.makePublicBody'), [
       { text: t('common.cancel'), style: 'cancel' },
       { text: t('common.confirm'), onPress: () => void apply() },
@@ -125,8 +168,20 @@ export default function RecipeDetail() {
     sheet({
       title: d.title,
       options: [
-        ...(editable ? [{ label: t('recipe.edit'), icon: 'create-outline' as const, onPress: () => router.push({ pathname: '/recipe/edit', params: { id: recipe.id } }) }] : []),
-        { label: t('favorites.addTo'), icon: 'albums-outline' as const, onPress: () => router.push(`/recipe/${recipe.id}/collections`) },
+        ...(editable
+          ? [
+              {
+                label: t('recipe.edit'),
+                icon: 'create-outline' as const,
+                onPress: () => router.push({ pathname: '/recipe/edit', params: { id: recipe.id } }),
+              },
+            ]
+          : []),
+        {
+          label: t('favorites.addTo'),
+          icon: 'albums-outline' as const,
+          onPress: () => router.push(`/recipe/${recipe.id}/collections`),
+        },
         {
           label: t('recipe.duplicate'),
           icon: 'copy-outline' as const,
@@ -138,14 +193,27 @@ export default function RecipeDetail() {
         ...(mine
           ? [
               d.visibility === 'public'
-                ? { label: t('recipe.makePrivate'), icon: 'lock-closed-outline' as const, onPress: () => setVisibility('private') }
-                : { label: t('recipe.makePublic'), icon: 'globe-outline' as const, onPress: () => setVisibility('public') },
+                ? {
+                    label: t('recipe.makePrivate'),
+                    icon: 'lock-closed-outline' as const,
+                    onPress: () => setVisibility('private'),
+                  }
+                : {
+                    label: t('recipe.makePublic'),
+                    icon: 'globe-outline' as const,
+                    onPress: () => setVisibility('public'),
+                  },
               ...(rt.household
                 ? [
                     {
-                      label: d.householdId ? `✓ ${t('recipe.shareHousehold')}` : t('recipe.shareHousehold'),
+                      label: d.householdId
+                        ? `✓ ${t('recipe.shareHousehold')}`
+                        : t('recipe.shareHousehold'),
                       icon: 'people-outline' as const,
-                      onPress: () => void repos.updateRecipe(recipe.id, { householdId: d.householdId ? null : rt.household!.id }),
+                      onPress: () =>
+                        void repos.updateRecipe(recipe.id, {
+                          householdId: d.householdId ? null : rt.household!.id,
+                        }),
                     },
                   ]
                 : []),
@@ -167,7 +235,11 @@ export default function RecipeDetail() {
                   }
                 },
               },
-              { label: t('recipe.report'), icon: 'flag-outline' as const, onPress: () => router.push(`/community/${recipe.id}?report=1`) },
+              {
+                label: t('recipe.report'),
+                icon: 'flag-outline' as const,
+                onPress: () => router.push(`/community/${recipe.id}?report=1`),
+              },
             ]
           : []),
         ...(editable && mine
@@ -177,19 +249,23 @@ export default function RecipeDetail() {
                 icon: 'trash-outline' as const,
                 destructive: true,
                 onPress: () =>
-                  Alert.alert(t('recipe.deleteConfirm', { title: d.title }), t('recipe.deleteBody'), [
-                    { text: t('common.cancel'), style: 'cancel' },
-                    {
-                      text: t('common.delete'),
-                      style: 'destructive',
-                      onPress: async () => {
-                        await repos.deleteRecipe(recipe.id);
-                        haptic.warning();
-                        toast(t('recipe.deleted'));
-                        router.back();
+                  Alert.alert(
+                    t('recipe.deleteConfirm', { title: d.title }),
+                    t('recipe.deleteBody'),
+                    [
+                      { text: t('common.cancel'), style: 'cancel' },
+                      {
+                        text: t('common.delete'),
+                        style: 'destructive',
+                        onPress: async () => {
+                          await repos.deleteRecipe(recipe.id);
+                          haptic.warning();
+                          toast(t('recipe.deleted'));
+                          router.back();
+                        },
                       },
-                    },
-                  ]),
+                    ],
+                  ),
               },
             ]
           : []),
@@ -199,7 +275,12 @@ export default function RecipeDetail() {
   const startTimer = (s: Step, i: number) => {
     if (!s.timerSeconds) return;
     track('timer_started');
-    void timers.start({ label: s.timerLabel ?? `${d.title} — ${t('recipe.stepN', { n: i + 1 })}`, seconds: s.timerSeconds, recipeId: recipe.id, stepIndex: i });
+    void timers.start({
+      label: s.timerLabel ?? `${d.title} — ${t('recipe.stepN', { n: i + 1 })}`,
+      seconds: s.timerSeconds,
+      recipeId: recipe.id,
+      stepIndex: i,
+    });
     toast(t('recipe.timer', { time: `${Math.round(s.timerSeconds / 60)} min` }), { tone: 'info' });
   };
 
@@ -212,14 +293,27 @@ export default function RecipeDetail() {
   const header = (
     <View style={{ gap: space.md }}>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space.sm }}>
-        {total ? <Badge icon="time-outline" label={formatMinutes(total, locale)} tone="primary" /> : null}
+        {total ? (
+          <Badge icon="time-outline" label={formatMinutes(total, locale)} tone="primary" />
+        ) : null}
         {d.difficulty ? <Badge label={t(`difficulty.${d.difficulty}`)} /> : null}
         {d.category ? <Badge label={t(`categories.${d.category}`)} /> : null}
-        {d.seasons.map((s) => <Badge key={s} label={t(`seasons.${s}`)} tone="accent" />)}
-        {d.ovenTemperatureC ? <Badge icon="flame-outline" label={t('recipe.oven', { temp: formatOven(d.ovenTemperatureC, settings.unitSystem) })} /> : null}
-        {d.visibility === 'public' ? <Badge icon="globe-outline" label={t('recipe.public')} tone="primary" /> : null}
+        {d.seasons.map((s) => (
+          <Badge key={s} label={t(`seasons.${s}`)} tone="accent" />
+        ))}
+        {d.ovenTemperatureC ? (
+          <Badge
+            icon="flame-outline"
+            label={t('recipe.oven', { temp: formatOven(d.ovenTemperatureC, settings.unitSystem) })}
+          />
+        ) : null}
+        {d.visibility === 'public' ? (
+          <Badge icon="globe-outline" label={t('recipe.public')} tone="primary" />
+        ) : null}
         {d.householdId ? <Badge icon="people-outline" label={t('household.title')} /> : null}
-        {!mine && !d.householdId ? <Badge icon="globe-outline" label={t('community.title')} tone="accent" /> : null}
+        {!mine && !d.householdId ? (
+          <Badge icon="globe-outline" label={t('community.title')} tone="accent" />
+        ) : null}
         {collections ? <Badge icon="albums-outline" label={String(collections)} /> : null}
       </View>
       <Text variant="hero" accessibilityRole="header" testID="recipe-title">
@@ -233,15 +327,38 @@ export default function RecipeDetail() {
       ) : null}
       {recipe.state === 'error' ? (
         <Text variant="callout" color="danger">
-          {t('sync.itemError')}: {recipe.error?.startsWith('publish') ? t('errors.publish_requires_verified_email') : t('errors.invalidField')}
+          {t('sync.itemError')}:{' '}
+          {recipe.error?.startsWith('publish')
+            ? t('errors.publish_requires_verified_email')
+            : t('errors.invalidField')}
         </Text>
       ) : null}
       <View style={{ flexDirection: 'row', gap: space.sm, flexWrap: 'wrap' }}>
-        <IconButton icon={favorite ? 'heart' : 'heart-outline'} label={favorite ? t('recipe.unfavorite') : t('recipe.favorite')} onPress={toggleFav} color={favorite ? colors.accent : undefined} testID="recipe-favorite" />
-        <IconButton icon="calendar-outline" label={t('recipe.addToPlan')} onPress={() => router.push({ pathname: '/plan/pick', params: { recipeId: recipe.id } })} />
-        <IconButton icon="cart-outline" label={t('recipe.addToShopping')} onPress={() => void addToShopping()} testID="recipe-add-shopping" />
+        <IconButton
+          icon={favorite ? 'heart' : 'heart-outline'}
+          label={favorite ? t('recipe.unfavorite') : t('recipe.favorite')}
+          onPress={toggleFav}
+          color={favorite ? colors.accent : undefined}
+          testID="recipe-favorite"
+        />
+        <IconButton
+          icon="calendar-outline"
+          label={t('recipe.addToPlan')}
+          onPress={() => router.push({ pathname: '/plan/pick', params: { recipeId: recipe.id } })}
+        />
+        <IconButton
+          icon="cart-outline"
+          label={t('recipe.addToShopping')}
+          onPress={() => void addToShopping()}
+          testID="recipe-add-shopping"
+        />
         <IconButton icon="share-outline" label={t('recipe.share')} onPress={share} />
-        <IconButton icon="ellipsis-horizontal" label={t('common.more')} onPress={more} testID="recipe-more" />
+        <IconButton
+          icon="ellipsis-horizontal"
+          label={t('common.more')}
+          onPress={more}
+          testID="recipe-more"
+        />
       </View>
     </View>
   );
@@ -252,7 +369,12 @@ export default function RecipeDetail() {
         <Text variant="callout" color="textMuted">
           {t('recipe.servingsFor')}
         </Text>
-        <Stepper value={current} onChange={setServings} label={t('recipe.scale')} testID="servings-stepper" />
+        <Stepper
+          value={current}
+          onChange={setServings}
+          label={t('recipe.scale')}
+          testID="servings-stepper"
+        />
         <Text variant="callout" color="textMuted">
           {d.yieldLabel ?? t('recipe.people', { count: current })}
         </Text>
@@ -275,15 +397,25 @@ export default function RecipeDetail() {
       <SourceLink source={d.source} url={d.sourceUrl} />
       {d.tags.length ? (
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space.sm }}>
-          {d.tags.map((tag) => <Badge key={tag} label={`#${tag}`} />)}
+          {d.tags.map((tag) => (
+            <Badge key={tag} label={`#${tag}`} />
+          ))}
         </View>
       ) : null}
     </View>
   );
 
-  const hero = photo || layout.isTablet ? (
-    <RecipePhoto uri={photo} category={d.category} radius={layout.sidebar ? radius.xxl : 0} style={{ width: '100%', aspectRatio: layout.sidebar ? 16 / 10 : 4 / 3 }} emojiSize={72} recyclingKey={recipe.id} />
-  ) : null;
+  const hero =
+    photo || layout.isTablet ? (
+      <RecipePhoto
+        uri={photo}
+        category={d.category}
+        radius={layout.sidebar ? radius.xxl : 0}
+        style={{ width: '100%', aspectRatio: layout.sidebar ? 16 / 10 : 4 / 3 }}
+        emojiSize={72}
+        recyclingKey={recipe.id}
+      />
+    ) : null;
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
@@ -314,11 +446,33 @@ export default function RecipeDetail() {
         </View>
       </Screen>
       <View style={[styles.back, { top: insets.top + space.sm }]}>
-        <IconButton icon="chevron-back" label={t('common.back')} onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))} variant={photo && !layout.sidebar ? 'overlay' : 'surface'} />
+        <IconButton
+          icon="chevron-back"
+          label={t('common.back')}
+          onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))}
+          variant={photo && !layout.sidebar ? 'overlay' : 'surface'}
+        />
       </View>
       {d.steps.length ? (
-        <View style={[styles.cta, { paddingBottom: insets.bottom + space.md, backgroundColor: colors.background, borderTopColor: colors.line }]}>
-          <Button title={t('recipe.startCooking')} icon="play" size="lg" full onPress={() => router.push(`/recipe/${recipe.id}/cook`)} style={{ maxWidth: 520, alignSelf: 'center', width: '100%' }} testID="start-cooking" />
+        <View
+          style={[
+            styles.cta,
+            {
+              paddingBottom: insets.bottom + space.md,
+              backgroundColor: colors.background,
+              borderTopColor: colors.line,
+            },
+          ]}
+        >
+          <Button
+            title={t('recipe.startCooking')}
+            icon="play"
+            size="lg"
+            full
+            onPress={() => router.push(`/recipe/${recipe.id}/cook`)}
+            style={{ maxWidth: 520, alignSelf: 'center', width: '100%' }}
+            testID="start-cooking"
+          />
         </View>
       ) : null}
     </View>
@@ -327,5 +481,9 @@ export default function RecipeDetail() {
 
 const styles = StyleSheet.create({
   back: { position: 'absolute', left: space.lg },
-  cta: { paddingHorizontal: space.lg, paddingTop: space.md, borderTopWidth: StyleSheet.hairlineWidth },
+  cta: {
+    paddingHorizontal: space.lg,
+    paddingTop: space.md,
+    borderTopWidth: StyleSheet.hairlineWidth,
+  },
 });

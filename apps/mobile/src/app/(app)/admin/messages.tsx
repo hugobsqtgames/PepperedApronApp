@@ -5,7 +5,17 @@ import { useRuntime } from '../../../hooks/runtime';
 import { dateTime } from '../../../lib/dates';
 import { errorMessage } from '../../../lib/errors';
 import { space } from '../../../theme/tokens';
-import { Badge, Button, Card, EmptyState, ErrorState, LoadingState, Segmented, Text, useToast } from '../../../ui';
+import {
+  Badge,
+  Button,
+  Card,
+  EmptyState,
+  ErrorState,
+  LoadingState,
+  Segmented,
+  Text,
+  useToast,
+} from '../../../ui';
 
 interface Message {
   id: string;
@@ -49,8 +59,25 @@ export default function AdminMessages() {
     <FlatList
       data={items ?? []}
       keyExtractor={(m) => m.id}
-      contentContainerStyle={{ padding: space.lg, gap: space.md, maxWidth: 800, width: '100%', alignSelf: 'center' }}
-      ListHeaderComponent={<Segmented value={status} onChange={setStatus} options={[{ value: 'new', label: t('admin.statusNew') }, { value: 'read', label: t('admin.statusRead') }, { value: 'answered', label: t('admin.statusAnswered') }, { value: 'closed', label: t('admin.statusClosed') }]} />}
+      contentContainerStyle={{
+        padding: space.lg,
+        gap: space.md,
+        maxWidth: 800,
+        width: '100%',
+        alignSelf: 'center',
+      }}
+      ListHeaderComponent={
+        <Segmented
+          value={status}
+          onChange={setStatus}
+          options={[
+            { value: 'new', label: t('admin.statusNew') },
+            { value: 'read', label: t('admin.statusRead') },
+            { value: 'answered', label: t('admin.statusAnswered') },
+            { value: 'closed', label: t('admin.statusClosed') },
+          ]}
+        />
+      }
       renderItem={({ item: m }) => (
         <Card>
           <View style={{ gap: space.sm }}>
@@ -64,15 +91,55 @@ export default function AdminMessages() {
               {dateTime(m.createdAt, i18n.language)} {m.email ? `· ${m.email}` : ''}
             </Text>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space.sm }}>
-              {m.email ? <Button title="✉️" size="sm" variant="secondary" onPress={() => void Linking.openURL(`mailto:${m.email}?subject=${encodeURIComponent(`Re: ${m.subject}`)}`)} /> : null}
-              {m.status === 'new' ? <Button title={t('admin.markRead')} size="sm" variant="ghost" onPress={() => void set(m, 'read')} /> : null}
-              {m.status !== 'answered' ? <Button title={t('admin.markAnswered')} size="sm" variant="ghost" onPress={() => void set(m, 'answered')} /> : null}
-              {m.status !== 'closed' ? <Button title={t('admin.close')} size="sm" variant="ghost" onPress={() => void set(m, 'closed')} /> : null}
+              {m.email ? (
+                <Button
+                  title="✉️"
+                  size="sm"
+                  variant="secondary"
+                  onPress={() =>
+                    void Linking.openURL(
+                      `mailto:${m.email}?subject=${encodeURIComponent(`Re: ${m.subject}`)}`,
+                    )
+                  }
+                />
+              ) : null}
+              {m.status === 'new' ? (
+                <Button
+                  title={t('admin.markRead')}
+                  size="sm"
+                  variant="ghost"
+                  onPress={() => void set(m, 'read')}
+                />
+              ) : null}
+              {m.status !== 'answered' ? (
+                <Button
+                  title={t('admin.markAnswered')}
+                  size="sm"
+                  variant="ghost"
+                  onPress={() => void set(m, 'answered')}
+                />
+              ) : null}
+              {m.status !== 'closed' ? (
+                <Button
+                  title={t('admin.close')}
+                  size="sm"
+                  variant="ghost"
+                  onPress={() => void set(m, 'closed')}
+                />
+              ) : null}
             </View>
           </View>
         </Card>
       )}
-      ListEmptyComponent={error ? <ErrorState message={error} onRetry={load} /> : items === null ? <LoadingState /> : <EmptyState emoji="📭" title={t('admin.empty')} />}
+      ListEmptyComponent={
+        error ? (
+          <ErrorState message={error} onRetry={load} />
+        ) : items === null ? (
+          <LoadingState />
+        ) : (
+          <EmptyState emoji="📭" title={t('admin.empty')} />
+        )
+      }
     />
   );
 }

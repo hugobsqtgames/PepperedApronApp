@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -13,7 +13,19 @@ import { recipePhotoUri } from '../../../lib/media';
 import { haptic } from '../../../services/haptics';
 import { useTheme } from '../../../theme/ThemeProvider';
 import { radius, space } from '../../../theme/tokens';
-import { Button, Card, EmptyState, Icon, IconButton, RecipePhoto, Screen, Section, SyncIndicator, Text, useToast } from '../../../ui';
+import {
+  Button,
+  Card,
+  EmptyState,
+  Icon,
+  IconButton,
+  RecipePhoto,
+  Screen,
+  Section,
+  SyncIndicator,
+  Text,
+  useToast,
+} from '../../../ui';
 
 function greetingKey(d = new Date()) {
   const h = d.getHours();
@@ -30,28 +42,40 @@ export default function Home() {
   const [refreshing, setRefreshing] = useState(false);
   const today = toIsoDate(new Date());
 
-  const data = useLive(['recipe', 'favorite', 'mealPlanEntry'], (r) => {
-    const library = r.library();
-    const favs = r.favoriteRecipes();
-    const counts: Partial<Record<RecipeCategory, number>> = {};
-    for (const x of library) if (x.data.category) counts[x.data.category] = (counts[x.data.category] ?? 0) + 1;
-    return {
-      library,
-      favorites: favs.slice(0, 12),
-      favoriteIds: new Set(favs.map((f) => f.id)),
-      quick: library.filter((x) => {
-        const m = computeTotalMinutes(x.data);
-        return m !== null && m <= 30;
-      }).slice(0, 12),
-      recent: [...library].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)).slice(0, 12),
-      todayMeals: r.entries(today, today).map((e) => ({ entry: e, recipe: e.data.recipeId ? r.recipe(e.data.recipeId) : null })),
-      counts,
-    };
-  }, [today]);
+  const data = useLive(
+    ['recipe', 'favorite', 'mealPlanEntry'],
+    (r) => {
+      const library = r.library();
+      const favs = r.favoriteRecipes();
+      const counts: Partial<Record<RecipeCategory, number>> = {};
+      for (const x of library)
+        if (x.data.category) counts[x.data.category] = (counts[x.data.category] ?? 0) + 1;
+      return {
+        library,
+        favorites: favs.slice(0, 12),
+        favoriteIds: new Set(favs.map((f) => f.id)),
+        quick: library
+          .filter((x) => {
+            const m = computeTotalMinutes(x.data);
+            return m !== null && m <= 30;
+          })
+          .slice(0, 12),
+        recent: [...library].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)).slice(0, 12),
+        todayMeals: r
+          .entries(today, today)
+          .map((e) => ({ entry: e, recipe: e.data.recipeId ? r.recipe(e.data.recipeId) : null })),
+        counts,
+      };
+    },
+    [today],
+  );
 
   const [community, setCommunity] = useState<PublicRecipeCard[]>([]);
   useEffect(() => {
-    rt.api.publicRecipes({ sort: 'popular', limit: 10 }).then((r) => setCommunity(r.items)).catch(() => setCommunity([]));
+    rt.api
+      .publicRecipes({ sort: 'popular', limit: 10 })
+      .then((r) => setCommunity(r.items))
+      .catch(() => setCommunity([]));
   }, [rt.api]);
 
   const random = () => {
@@ -73,7 +97,14 @@ export default function Home() {
 
   return (
     <Screen refreshing={refreshing} onRefresh={refresh} testID="home">
-      <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: space.md, paddingTop: space.lg }}>
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'flex-start',
+          gap: space.md,
+          paddingTop: space.lg,
+        }}
+      >
         <View style={{ flex: 1, gap: space.xs }}>
           <Text variant="callout" color="textMuted">
             {t(greetingKey(), { name })}
@@ -82,7 +113,14 @@ export default function Home() {
             {t('home.question')}
           </Text>
         </View>
-        {!layout.sidebar ? <IconButton icon="person-circle-outline" label={t('tabs.profile')} onPress={() => router.push('/profile')} testID="open-profile" /> : null}
+        {!layout.sidebar ? (
+          <IconButton
+            icon="person-circle-outline"
+            label={t('tabs.profile')}
+            onPress={() => router.push('/profile')}
+            testID="open-profile"
+          />
+        ) : null}
       </View>
       <View style={{ gap: space.sm, marginTop: space.md }}>
         <SyncIndicator />
@@ -92,7 +130,16 @@ export default function Home() {
       <View style={{ gap: space.xxxl, marginTop: space.xl }}>
         {empty ? (
           <Card style={{ paddingVertical: space.lg }}>
-            <EmptyState emoji="🍴" title={t('home.emptyTitle')} body={t('home.emptyBody')} action={t('home.addFirst')} onAction={() => router.push('/add')} secondary={t('home.importLink')} onSecondary={() => router.push('/import/link')} testID="home-empty" />
+            <EmptyState
+              emoji="🍴"
+              title={t('home.emptyTitle')}
+              body={t('home.emptyBody')}
+              action={t('home.addFirst')}
+              onAction={() => router.push('/add')}
+              secondary={t('home.importLink')}
+              onSecondary={() => router.push('/import/link')}
+              testID="home-empty"
+            />
           </Card>
         ) : (
           <>
@@ -100,24 +147,58 @@ export default function Home() {
               {data.todayMeals.length ? (
                 <View style={{ gap: space.sm }}>
                   {data.todayMeals.map(({ entry, recipe }) => (
-                    <Card key={entry.id} padded={false} onPress={() => (recipe ? router.push(`/recipe/${recipe.id}`) : router.push('/planning'))} accessibilityLabel={`${t(`slots.${entry.data.slot}`)}: ${recipe?.data.title ?? entry.data.customTitle}`}>
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.md, padding: space.md }}>
-                        <RecipePhoto uri={recipe ? recipePhotoUri(recipe) : null} category={recipe?.data.category ?? null} radius={radius.md} style={{ width: 56, height: 56 }} emojiSize={24} />
+                    <Card
+                      key={entry.id}
+                      padded={false}
+                      onPress={() =>
+                        recipe ? router.push(`/recipe/${recipe.id}`) : router.push('/planning')
+                      }
+                      accessibilityLabel={`${t(`slots.${entry.data.slot}`)}: ${recipe?.data.title ?? entry.data.customTitle}`}
+                    >
+                      <View
+                        style={{
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          gap: space.md,
+                          padding: space.md,
+                        }}
+                      >
+                        <RecipePhoto
+                          uri={recipe ? recipePhotoUri(recipe) : null}
+                          category={recipe?.data.category ?? null}
+                          radius={radius.md}
+                          style={{ width: 56, height: 56 }}
+                          emojiSize={24}
+                        />
                         <View style={{ flex: 1 }}>
-                          <Text variant="micro" color="accent" style={{ textTransform: 'uppercase' }}>
+                          <Text
+                            variant="micro"
+                            color="accent"
+                            style={{ textTransform: 'uppercase' }}
+                          >
                             {t(`slots.${entry.data.slot}`)}
                           </Text>
                           <Text variant="bodyStrong" numberOfLines={2}>
                             {recipe?.data.title ?? entry.data.customTitle}
                           </Text>
                         </View>
-                        {recipe ? <IconButton icon="play" label={t('recipe.startCooking')} variant="primary" onPress={() => router.push(`/recipe/${recipe.id}/cook`)} /> : null}
+                        {recipe ? (
+                          <IconButton
+                            icon="play"
+                            label={t('recipe.startCooking')}
+                            variant="primary"
+                            onPress={() => router.push(`/recipe/${recipe.id}/cook`)}
+                          />
+                        ) : null}
                       </View>
                     </Card>
                   ))}
                 </View>
               ) : (
-                <Card onPress={() => router.push('/planning')} accessibilityLabel={t('home.planSomething')}>
+                <Card
+                  onPress={() => router.push('/planning')}
+                  accessibilityLabel={t('home.planSomething')}
+                >
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.md }}>
                     <Icon name="calendar-outline" size={26} color="primary" />
                     <View style={{ flex: 1 }}>
@@ -132,7 +213,22 @@ export default function Home() {
               )}
             </Section>
 
-            <Pressable accessibilityRole="button" onPress={random} style={({ pressed }) => [{ flexDirection: 'row', alignItems: 'center', gap: space.md, padding: space.lg, borderRadius: radius.xl, backgroundColor: colors.primary, opacity: pressed ? 0.92 : 1 }]} testID="random-recipe">
+            <Pressable
+              accessibilityRole="button"
+              onPress={random}
+              style={({ pressed }) => [
+                {
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: space.md,
+                  padding: space.lg,
+                  borderRadius: radius.xl,
+                  backgroundColor: colors.primary,
+                  opacity: pressed ? 0.92 : 1,
+                },
+              ]}
+              testID="random-recipe"
+            >
               <Text style={{ fontSize: 28 }} maxFontSizeMultiplier={1}>
                 🎲
               </Text>
@@ -143,12 +239,25 @@ export default function Home() {
             </Pressable>
 
             {data.favorites.length ? (
-              <Section title={t('home.favorites')} action={t('common.seeAll')} onAction={() => router.push('/favorites')}>
-                <RecipeCarousel recipes={data.favorites} repos={repos} favorites={data.favoriteIds} wide />
+              <Section
+                title={t('home.favorites')}
+                action={t('common.seeAll')}
+                onAction={() => router.push('/favorites')}
+              >
+                <RecipeCarousel
+                  recipes={data.favorites}
+                  repos={repos}
+                  favorites={data.favoriteIds}
+                  wide
+                />
               </Section>
             ) : null}
             {data.quick.length ? (
-              <Section title={t('home.quick')} action={t('common.seeAll')} onAction={() => router.push({ pathname: '/search', params: { maxMinutes: '30' } })}>
+              <Section
+                title={t('home.quick')}
+                action={t('common.seeAll')}
+                onAction={() => router.push({ pathname: '/search', params: { maxMinutes: '30' } })}
+              >
                 <RecipeCarousel recipes={data.quick} repos={repos} favorites={data.favoriteIds} />
               </Section>
             ) : null}
@@ -164,18 +273,41 @@ export default function Home() {
         </Section>
 
         {community.length ? (
-          <Section title={t('home.community')} action={t('common.seeAll')} onAction={() => router.push('/community')}>
+          <Section
+            title={t('home.community')}
+            action={t('common.seeAll')}
+            onAction={() => router.push('/community')}
+          >
             <View style={{ gap: space.sm }}>
               {community.slice(0, 5).map((c) => (
-                <Card key={c.id} padded={false} onPress={() => router.push(`/community/${c.id}`)} accessibilityLabel={c.title}>
-                  <View style={{ flexDirection: 'row', gap: space.md, padding: space.md, alignItems: 'center' }}>
-                    <RecipePhoto uri={c.photoUrl} category={(c.category as RecipeCategory) ?? null} radius={radius.md} style={{ width: 64, height: 64 }} emojiSize={26} />
+                <Card
+                  key={c.id}
+                  padded={false}
+                  onPress={() => router.push(`/community/${c.id}`)}
+                  accessibilityLabel={c.title}
+                >
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      gap: space.md,
+                      padding: space.md,
+                      alignItems: 'center',
+                    }}
+                  >
+                    <RecipePhoto
+                      uri={c.photoUrl}
+                      category={(c.category as RecipeCategory) ?? null}
+                      radius={radius.md}
+                      style={{ width: 64, height: 64 }}
+                      emojiSize={26}
+                    />
                     <View style={{ flex: 1, gap: 2 }}>
                       <Text variant="bodyStrong" numberOfLines={2}>
                         {c.title}
                       </Text>
                       <Text variant="caption" color="textMuted" numberOfLines={1}>
-                        {t('recipe.byAuthor', { name: c.authorName })} · {t('community.saves', { count: c.saveCount })}
+                        {t('recipe.byAuthor', { name: c.authorName })} ·{' '}
+                        {t('community.saves', { count: c.saveCount })}
                       </Text>
                     </View>
                   </View>
@@ -195,7 +327,16 @@ function VerifyBanner() {
   const rt = useRuntime();
   const toast = useToast();
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.md, padding: space.md, borderRadius: radius.lg, backgroundColor: colors.accentSoft }}>
+    <View
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: space.md,
+        padding: space.md,
+        borderRadius: radius.lg,
+        backgroundColor: colors.accentSoft,
+      }}
+    >
       <Icon name="mail-unread-outline" size={20} color="accent" />
       <Text variant="callout" style={{ flex: 1 }}>
         {t('auth.verifyBanner')}

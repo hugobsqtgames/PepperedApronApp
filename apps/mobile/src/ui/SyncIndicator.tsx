@@ -16,7 +16,13 @@ export function SyncIndicator() {
   if (s.status === 'syncing' && s.pending === 0) return null;
   const offline = s.status === 'offline';
   const error = s.status === 'error';
-  const label = offline ? t('sync.offline') : error ? t('sync.error') : s.status === 'signedOut' ? t('errors.session_expired') : t('sync.pending');
+  const label = offline
+    ? t('sync.offline')
+    : error
+      ? t('sync.error')
+      : s.status === 'signedOut'
+        ? t('errors.session_expired')
+        : t('sync.pending');
   return (
     <Pressable
       accessibilityRole="button"
@@ -25,12 +31,30 @@ export function SyncIndicator() {
       onPress={() => runtime.syncNow()}
       style={[styles.pill, { backgroundColor: error ? colors.dangerSoft : colors.surfaceMuted }]}
     >
-      <Icon name={offline ? 'cloud-offline-outline' : error ? 'alert-circle-outline' : 'sync-outline'} size={14} tint={error ? colors.danger : colors.textMuted} />
-      <Text variant="caption" numberOfLines={1} style={{ color: error ? colors.danger : colors.textMuted, flexShrink: 1 }}>
+      <Icon
+        name={offline ? 'cloud-offline-outline' : error ? 'alert-circle-outline' : 'sync-outline'}
+        size={14}
+        tint={error ? colors.danger : colors.textMuted}
+      />
+      <Text
+        variant="caption"
+        numberOfLines={1}
+        style={{ color: error ? colors.danger : colors.textMuted, flexShrink: 1 }}
+      >
         {error ? `${t('sync.error')} ${t('common.retry')}` : label}
       </Text>
     </Pressable>
   );
 }
 
-const styles = StyleSheet.create({ pill: { flexDirection: 'row', alignItems: 'center', gap: space.xs, paddingHorizontal: space.md, paddingVertical: 6, borderRadius: radius.pill, alignSelf: 'flex-start' } });
+const styles = StyleSheet.create({
+  pill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.xs,
+    paddingHorizontal: space.md,
+    paddingVertical: 6,
+    borderRadius: radius.pill,
+    alignSelf: 'flex-start',
+  },
+});

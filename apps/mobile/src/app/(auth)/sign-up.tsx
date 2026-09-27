@@ -15,7 +15,12 @@ export default function SignUp() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [errors, setErrors] = useState<{ name?: string; email?: string; password?: string; form?: string }>({});
+  const [errors, setErrors] = useState<{
+    name?: string;
+    email?: string;
+    password?: string;
+    form?: string;
+  }>({});
   const onError = useCallback((e: unknown) => setErrors({ form: errorMessage(e, t) }), [t]);
 
   const submit = async () => {
@@ -26,7 +31,13 @@ export default function SignUp() {
     setErrors(next);
     if (Object.keys(next).length) return;
     try {
-      const res = await runtime.api.register({ email: email.trim(), password, displayName: name.trim(), locale: i18n.language, device: runtime.device() });
+      const res = await runtime.api.register({
+        email: email.trim(),
+        password,
+        displayName: name.trim(),
+        locale: i18n.language,
+        device: runtime.device(),
+      });
       await runtime.completeAuth(res);
     } catch (e) {
       onError(e);
@@ -38,16 +49,50 @@ export default function SignUp() {
       <BrandHeader title={t('auth.signUpTitle')} />
       <View style={{ gap: space.lg }}>
         <SocialButtons onError={onError} />
-        <TextField label={t('auth.displayName')} value={name} onChangeText={setName} autoComplete="given-name" textContentType="givenName" maxLength={80} error={errors.name} testID="signup-name" />
-        <TextField label={t('auth.email')} value={email} onChangeText={setEmail} autoCapitalize="none" autoComplete="email" keyboardType="email-address" textContentType="emailAddress" error={errors.email} testID="signup-email" />
-        <TextField label={t('auth.password')} value={password} onChangeText={setPassword} secureTextEntry autoComplete="new-password" textContentType="newPassword" helper={t('auth.passwordHint')} error={errors.password} maxLength={128} testID="signup-password" />
+        <TextField
+          label={t('auth.displayName')}
+          value={name}
+          onChangeText={setName}
+          autoComplete="given-name"
+          textContentType="givenName"
+          maxLength={80}
+          error={errors.name}
+          testID="signup-name"
+        />
+        <TextField
+          label={t('auth.email')}
+          value={email}
+          onChangeText={setEmail}
+          autoCapitalize="none"
+          autoComplete="email"
+          keyboardType="email-address"
+          textContentType="emailAddress"
+          error={errors.email}
+          testID="signup-email"
+        />
+        <TextField
+          label={t('auth.password')}
+          value={password}
+          onChangeText={setPassword}
+          secureTextEntry
+          autoComplete="new-password"
+          textContentType="newPassword"
+          helper={t('auth.passwordHint')}
+          error={errors.password}
+          maxLength={128}
+          testID="signup-password"
+        />
         {errors.form ? (
           <Text variant="callout" color="danger" accessibilityLiveRegion="assertive">
             {errors.form}
           </Text>
         ) : null}
         <Button title={t('auth.signUp')} size="lg" onPress={submit} testID="signup-submit" />
-        <Button title={t('auth.haveAccount')} variant="ghost" onPress={() => router.replace('/sign-in')} />
+        <Button
+          title={t('auth.haveAccount')}
+          variant="ghost"
+          onPress={() => router.replace('/sign-in')}
+        />
         <LegalLinks />
       </View>
     </Screen>

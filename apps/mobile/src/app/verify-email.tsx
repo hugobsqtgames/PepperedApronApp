@@ -13,7 +13,13 @@ export default function VerifyEmail() {
   useEffect(() => {
     const run = async () => {
       try {
-        if (kind === 'change') await runtime.api.request('POST', '/v1/auth/email/confirm-change', { token }, { auth: false });
+        if (kind === 'change')
+          await runtime.api.request(
+            'POST',
+            '/v1/auth/email/confirm-change',
+            { token },
+            { auth: false },
+          );
         else await runtime.api.verifyEmail(token ?? '');
         runtime.updateUser({ emailVerified: true });
         void runtime.refreshRemote();
@@ -27,7 +33,18 @@ export default function VerifyEmail() {
   const close = () => (router.canGoBack() ? router.back() : router.replace('/'));
   return (
     <Screen scroll={false} edges={['top', 'bottom']}>
-      {state === 'loading' ? <LoadingState /> : state === 'ok' ? <EmptyState emoji="✅" title={t('auth.emailVerified')} action={t('common.continue')} onAction={close} /> : <EmptyState emoji="⏳" title={state} action={t('common.close')} onAction={close} />}
+      {state === 'loading' ? (
+        <LoadingState />
+      ) : state === 'ok' ? (
+        <EmptyState
+          emoji="✅"
+          title={t('auth.emailVerified')}
+          action={t('common.continue')}
+          onAction={close}
+        />
+      ) : (
+        <EmptyState emoji="⏳" title={state} action={t('common.close')} onAction={close} />
+      )}
     </Screen>
   );
 }

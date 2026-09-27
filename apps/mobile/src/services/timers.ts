@@ -1,7 +1,20 @@
 import { AppState, Platform } from 'react-native';
 import { File, Paths } from 'expo-file-system';
-import { addTime, createTimer, pauseTimer, remainingSeconds, resumeTimer, timerState, uuidv7, type KitchenTimer } from '@pepperedapron/core';
-import { cancelNotification, ensureNotificationPermission, scheduleTimerNotification } from './notifications';
+import {
+  addTime,
+  createTimer,
+  pauseTimer,
+  remainingSeconds,
+  resumeTimer,
+  timerState,
+  uuidv7,
+  type KitchenTimer,
+} from '@pepperedapron/core';
+import {
+  cancelNotification,
+  ensureNotificationPermission,
+  scheduleTimerNotification,
+} from './notifications';
 import { haptic } from './haptics';
 
 type Listener = (timers: KitchenTimer[]) => void;
@@ -75,9 +88,23 @@ class TimerManager {
     await this.syncLiveActivity();
   }
 
-  async start(p: { label: string; seconds: number; recipeId?: string | null; stepIndex?: number | null }) {
+  async start(p: {
+    label: string;
+    seconds: number;
+    recipeId?: string | null;
+    stepIndex?: number | null;
+  }) {
     await ensureNotificationPermission();
-    const t = createTimer({ id: uuidv7(), label: p.label, durationSeconds: p.seconds, recipeId: p.recipeId, stepIndex: p.stepIndex }, Date.now());
+    const t = createTimer(
+      {
+        id: uuidv7(),
+        label: p.label,
+        durationSeconds: p.seconds,
+        recipeId: p.recipeId,
+        stepIndex: p.stepIndex,
+      },
+      Date.now(),
+    );
     t.notificationId = await scheduleTimerNotification(t.id, t.label, t.endsAt!);
     haptic.light();
     await this.update([...this.timers, t]);
@@ -86,33 +113,44 @@ class TimerManager {
 
   async pause(id: string) {
     const now = Date.now();
-    const next = await Promise.all(this.timers.map(async (t) => {
-      if (t.id !== id) return t;
-      await cancelNotification(t.notificationId);
-      return { ...pauseTimer(t, now), notificationId: null };
-    }));
+    const next = await Promise.all(
+      this.timers.map(async (t) => {
+        if (t.id !== id) return t;
+        await cancelNotification(t.notificationId);
+        return { ...pauseTimer(t, now), notificationId: null };
+      }),
+    );
     await this.update(next);
   }
 
   async resume(id: string) {
     const now = Date.now();
-    const next = await Promise.all(this.timers.map(async (t) => {
-      if (t.id !== id) return t;
-      const r = resumeTimer(t, now);
-      return { ...r, notificationId: await scheduleTimerNotification(r.id, r.label, r.endsAt!) };
-    }));
+    const next = await Promise.all(
+      this.timers.map(async (t) => {
+        if (t.id !== id) return t;
+        const r = resumeTimer(t, now);
+        return { ...r, notificationId: await scheduleTimerNotification(r.id, r.label, r.endsAt!) };
+      }),
+    );
     await this.update(next);
   }
 
   async extend(id: string, seconds: number) {
     const now = Date.now();
-    const next = await Promise.all(this.timers.map(async (t) => {
-      if (t.id !== id) return t;
-      await cancelNotification(t.notificationId);
-      this.notified.delete(t.id);
-      const r = addTime(timerState(t, now) === 'done' ? { ...t, endsAt: now } : t, seconds, now);
-      return { ...r, notificationId: r.endsAt ? await scheduleTimerNotification(r.id, r.label, r.endsAt) : null };
-    }));
+    const next = await Promise.all(
+      this.timers.map(async (t) => {
+        if (t.id !== id) return t;
+        await cancelNotification(t.notificationId);
+        this.notified.delete(t.id);
+        const r = addTime(timerState(t, now) === 'done' ? { ...t, endsAt: now } : t, seconds, now);
+        return {
+          ...r,
+          notificationId: r.endsAt
+            ? await scheduleTimerNotification(r.id, r.label, r.endsAt)
+            : null,
+        };
+      }),
+    );
     await this.update(next);
   }
 
@@ -132,16 +170,34 @@ class TimerManager {
     try {
       const LA = await import('expo-live-activity');
       const now = Date.now();
-      const running = this.timers.filter((t) => timerState(t, now) === 'running').sort((a, b) => (a.endsAt ?? 0) - (b.endsAt ?? 0));
+      const running = this.timers
+        .filter((t) => timerState(t, now) === 'running')
+        .sort((a, b) => (a.endsAt ?? 0) - (b.endsAt ?? 0));
       const next = running[0];
       if (!next) {
-        if (this.liveActivityId) LA.stopActivity(this.liveActivityId, { title: '', progressBar: { progress: 1 } });
+        if (this.liveActivityId)
+          LA.stopActivity(this.liveActivityId, { title: '', progressBar: { progress: 1 } });
         this.liveActivityId = null;
         return;
       }
-      const state = { title: next.label, subtitle: running.length > 1 ? `+${running.length - 1}` : undefined, progressBar: { date: next.endsAt! }, imageName: 'glyph', dynamicIslandImageName: 'glyph' };
+      const state = {
+        title: next.label,
+        subtitle: running.length > 1 ? `+${running.length - 1}` : undefined,
+        progressBar: { date: next.endsAt! },
+        imageName: 'glyph',
+        dynamicIslandImageName: 'glyph',
+      };
       if (this.liveActivityId) LA.updateActivity(this.liveActivityId, state);
-      else this.liveActivityId = LA.startActivity(state, { backgroundColor: '#1F4D3A', titleColor: '#F7F1E6', subtitleColor: '#E8DFCF', progressViewTint: '#E8894F', timerType: 'circular', deepLinkUrl: next.recipeId ? `/recipe/${next.recipeId}/cook` : '/' }) ?? null;
+      else
+        this.liveActivityId =
+          LA.startActivity(state, {
+            backgroundColor: '#1F4D3A',
+            titleColor: '#F7F1E6',
+            subtitleColor: '#E8DFCF',
+            progressViewTint: '#E8894F',
+            timerType: 'circular',
+            deepLinkUrl: next.recipeId ? `/recipe/${next.recipeId}/cook` : '/',
+          }) ?? null;
     } catch {
       // Live Activities unavailable (older iOS, disabled by the user): notifications still fire.
     }

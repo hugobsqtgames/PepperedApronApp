@@ -3,16 +3,22 @@ import type { Locale } from './enums';
 /** ISO 8601 duration ("PT1H30M", "P0DT0H45M") → minutes. */
 export function parseIsoDuration(s: string | null | undefined): number | null {
   if (!s || typeof s !== 'string') return null;
-  const m = s.trim().match(/^P(?:(\d+(?:\.\d+)?)D)?(?:T(?:(\d+(?:\.\d+)?)H)?(?:(\d+(?:\.\d+)?)M)?(?:(\d+(?:\.\d+)?)S)?)?$/i);
+  const m = s
+    .trim()
+    .match(
+      /^P(?:(\d+(?:\.\d+)?)D)?(?:T(?:(\d+(?:\.\d+)?)H)?(?:(\d+(?:\.\d+)?)M)?(?:(\d+(?:\.\d+)?)S)?)?$/i,
+    );
   if (!m || s.trim() === 'P' || s.trim() === 'PT') return null;
   const [, d, h, min, sec] = m;
-  const total = Number(d ?? 0) * 1440 + Number(h ?? 0) * 60 + Number(min ?? 0) + Number(sec ?? 0) / 60;
+  const total =
+    Number(d ?? 0) * 1440 + Number(h ?? 0) * 60 + Number(min ?? 0) + Number(sec ?? 0) / 60;
   return Number.isFinite(total) ? Math.round(total) : null;
 }
 
 const HOUR = '(?:h|hr|hrs|hour|hours|heure|heures|hora|horas|std|std\\.|stunde|stunden|ora|ore)';
 const MIN = '(?:m|mn|min|mins|minute|minutes|minuto|minutos|minuten|minuti)';
-const SEC = '(?:s|sec|secs|second|seconds|seconde|secondes|segundo|segundos|sekunde|sekunden|secondo|secondi)';
+const SEC =
+  '(?:s|sec|secs|second|seconds|seconde|secondes|segundo|segundos|sekunde|sekunden|secondo|secondi)';
 
 /**
  * Free text duration → minutes. "1 h 30", "1h30", "90 min", "1 heure 15 minutes", "2 Std.", "45'".
@@ -20,7 +26,11 @@ const SEC = '(?:s|sec|secs|second|seconds|seconde|secondes|segundo|segundos|seku
  */
 export function parseDurationText(text: string): number | null {
   const s = text.toLowerCase().replace(/,/g, '.');
-  let m = s.match(new RegExp(`(\\d+(?:\\.\\d+)?)\\s*${HOUR}\\.?\\s*(?:et\\s+|and\\s+|y\\s+|und\\s+|e\\s+)?(\\d{1,2})\\s*(?:${MIN})?(?![a-z])`));
+  let m = s.match(
+    new RegExp(
+      `(\\d+(?:\\.\\d+)?)\\s*${HOUR}\\.?\\s*(?:et\\s+|and\\s+|y\\s+|und\\s+|e\\s+)?(\\d{1,2})\\s*(?:${MIN})?(?![a-z])`,
+    ),
+  );
   if (m) return Math.round(Number(m[1]) * 60 + Number(m[2]));
   m = s.match(new RegExp(`(\\d+(?:\\.\\d+)?)\\s*${HOUR}(?![a-z])`));
   if (m) return Math.round(Number(m[1]) * 60);
@@ -70,6 +80,8 @@ export function computeTotalMinutes(r: {
   totalMinutes: number | null;
 }): number | null {
   if (r.totalMinutes !== null && r.totalMinutes > 0) return r.totalMinutes;
-  const parts = [r.prepMinutes, r.cookMinutes, r.restMinutes].filter((x): x is number => x !== null);
+  const parts = [r.prepMinutes, r.cookMinutes, r.restMinutes].filter(
+    (x): x is number => x !== null,
+  );
   return parts.length ? parts.reduce((a, b) => a + b, 0) : null;
 }

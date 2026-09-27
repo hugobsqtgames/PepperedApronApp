@@ -15,7 +15,9 @@ export class SecureTokenStore implements TokenStore {
   }
   async set(t: Tokens) {
     this.cache = t;
-    await SecureStore.setItemAsync(KEY, JSON.stringify(t), { keychainAccessible: SecureStore.AFTER_FIRST_UNLOCK });
+    await SecureStore.setItemAsync(KEY, JSON.stringify(t), {
+      keychainAccessible: SecureStore.AFTER_FIRST_UNLOCK,
+    });
   }
   async clear() {
     this.cache = null;

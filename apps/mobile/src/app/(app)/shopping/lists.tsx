@@ -15,7 +15,9 @@ export default function ShoppingLists() {
   const { lists, active, counts } = useLive(['shoppingList', 'shoppingItem', 'settings'], (r) => ({
     lists: r.lists(),
     active: r.activeList()?.id ?? null,
-    counts: new Map(r.lists().map((l) => [l.id, r.items(l.id).filter((i) => !i.data.checked).length])),
+    counts: new Map(
+      r.lists().map((l) => [l.id, r.items(l.id).filter((i) => !i.data.checked).length]),
+    ),
   }));
   return (
     <ScrollView contentContainerStyle={{ padding: space.xl, gap: space.lg }}>
@@ -29,8 +31,19 @@ export default function ShoppingLists() {
               key={l.id}
               icon={l.id === active ? 'checkmark-circle' : 'list-outline'}
               title={`${l.data.emoji ? `${l.data.emoji} ` : ''}${l.data.name}`}
-              subtitle={[t('shopping.remaining', { count: counts.get(l.id) ?? 0 }), l.data.householdId ? t('shopping.shared') : null].filter(Boolean).join(' · ')}
-              right={l.id === active ? <Text variant="micro" color="primary">{t('shopping.active').toUpperCase()}</Text> : undefined}
+              subtitle={[
+                t('shopping.remaining', { count: counts.get(l.id) ?? 0 }),
+                l.data.householdId ? t('shopping.shared') : null,
+              ]
+                .filter(Boolean)
+                .join(' · ')}
+              right={
+                l.id === active ? (
+                  <Text variant="micro" color="primary">
+                    {t('shopping.active').toUpperCase()}
+                  </Text>
+                ) : undefined
+              }
               onPress={() => {
                 haptic.selection();
                 void repos.setActiveList(l.id);
@@ -43,7 +56,19 @@ export default function ShoppingLists() {
       ) : (
         <Text color="textMuted">{t('shopping.noList')}</Text>
       )}
-      <Button title={t('shopping.newList')} icon="add" onPress={() => prompt({ title: t('shopping.newList'), placeholder: t('shopping.listExamples'), maxLength: 80, onSubmit: (v) => void repos.createList(v).then(() => router.back()) })} testID="new-list" />
+      <Button
+        title={t('shopping.newList')}
+        icon="add"
+        onPress={() =>
+          prompt({
+            title: t('shopping.newList'),
+            placeholder: t('shopping.listExamples'),
+            maxLength: 80,
+            onSubmit: (v) => void repos.createList(v).then(() => router.back()),
+          })
+        }
+        testID="new-list"
+      />
       {lists.length ? (
         <Button
           title={t('common.edit')}
@@ -59,12 +84,30 @@ export default function ShoppingLists() {
                       sheet({
                         title: l.data.name,
                         options: [
-                          { label: t('shopping.renameList'), icon: 'pencil-outline', onPress: () => prompt({ title: t('shopping.renameList'), initial: l.data.name, maxLength: 80, onSubmit: (v) => void repos.updateList(l.id, { name: v }) }) },
+                          {
+                            label: t('shopping.renameList'),
+                            icon: 'pencil-outline',
+                            onPress: () =>
+                              prompt({
+                                title: t('shopping.renameList'),
+                                initial: l.data.name,
+                                maxLength: 80,
+                                onSubmit: (v) => void repos.updateList(l.id, { name: v }),
+                              }),
+                          },
                           {
                             label: t('common.delete'),
                             icon: 'trash-outline',
                             destructive: true,
-                            onPress: () => Alert.alert(t('shopping.deleteList'), t('shopping.deleteListBody'), [{ text: t('common.cancel'), style: 'cancel' }, { text: t('common.delete'), style: 'destructive', onPress: () => void repos.deleteList(l.id) }]),
+                            onPress: () =>
+                              Alert.alert(t('shopping.deleteList'), t('shopping.deleteListBody'), [
+                                { text: t('common.cancel'), style: 'cancel' },
+                                {
+                                  text: t('common.delete'),
+                                  style: 'destructive',
+                                  onPress: () => void repos.deleteList(l.id),
+                                },
+                              ]),
                           },
                         ],
                       }),

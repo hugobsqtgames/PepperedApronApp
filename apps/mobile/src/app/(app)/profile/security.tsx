@@ -44,12 +44,44 @@ export default function Security() {
   };
 
   return (
-    <ScrollView contentInsetAdjustmentBehavior="automatic" keyboardShouldPersistTaps="handled" contentContainerStyle={{ padding: space.lg, gap: space.xl, maxWidth: 640, width: '100%', alignSelf: 'center' }}>
+    <ScrollView
+      contentInsetAdjustmentBehavior="automatic"
+      keyboardShouldPersistTaps="handled"
+      contentContainerStyle={{
+        padding: space.lg,
+        gap: space.xl,
+        maxWidth: 640,
+        width: '100%',
+        alignSelf: 'center',
+      }}
+    >
       <Group title={t('settings.changePassword')}>
-        {rt.user?.hasPassword ? <TextField containerStyle={{ padding: space.md }} label={t('settings.currentPassword')} value={current} onChangeText={setCurrent} secureTextEntry autoComplete="current-password" /> : null}
-        <TextField containerStyle={{ padding: space.md }} label={t('settings.newPassword')} value={next} onChangeText={setNext} secureTextEntry autoComplete="new-password" helper={t('auth.passwordHint')} />
+        {rt.user?.hasPassword ? (
+          <TextField
+            containerStyle={{ padding: space.md }}
+            label={t('settings.currentPassword')}
+            value={current}
+            onChangeText={setCurrent}
+            secureTextEntry
+            autoComplete="current-password"
+          />
+        ) : null}
+        <TextField
+          containerStyle={{ padding: space.md }}
+          label={t('settings.newPassword')}
+          value={next}
+          onChangeText={setNext}
+          secureTextEntry
+          autoComplete="new-password"
+          helper={t('auth.passwordHint')}
+        />
       </Group>
-      <Button title={t('settings.changePassword')} variant="secondary" onPress={changePassword} disabled={!next} />
+      <Button
+        title={t('settings.changePassword')}
+        variant="secondary"
+        onPress={changePassword}
+        disabled={!next}
+      />
       {error ? (
         <ErrorState message={error} onRetry={load} />
       ) : !sessions ? (
@@ -59,7 +91,13 @@ export default function Security() {
           {sessions.map((s) => (
             <ListRow
               key={s.id}
-              icon={s.platform === 'android' ? 'logo-android' : s.platform === 'ios' ? 'phone-portrait-outline' : 'desktop-outline'}
+              icon={
+                s.platform === 'android'
+                  ? 'logo-android'
+                  : s.platform === 'ios'
+                    ? 'phone-portrait-outline'
+                    : 'desktop-outline'
+              }
               title={`${s.deviceName ?? s.platform ?? '—'}${s.current ? ` · ${t('settings.thisDevice')}` : ''}`}
               subtitle={t('settings.lastUsed', { date: dateTime(s.lastUsedAt, i18n.language) })}
               right={
@@ -71,7 +109,14 @@ export default function Security() {
                     onPress={() =>
                       Alert.alert(t('settings.revoke'), s.deviceName ?? undefined, [
                         { text: t('common.cancel'), style: 'cancel' },
-                        { text: t('settings.revoke'), style: 'destructive', onPress: async () => { await rt.api.revokeSession(s.id); void load(); } },
+                        {
+                          text: t('settings.revoke'),
+                          style: 'destructive',
+                          onPress: async () => {
+                            await rt.api.revokeSession(s.id);
+                            void load();
+                          },
+                        },
                       ])
                     }
                   />
@@ -82,7 +127,16 @@ export default function Security() {
           ))}
         </Group>
       )}
-      {sessions && sessions.length > 1 ? <Button title={t('settings.revokeOthers')} variant="danger" onPress={async () => { await rt.api.revokeOtherSessions(); void load(); }} /> : null}
+      {sessions && sessions.length > 1 ? (
+        <Button
+          title={t('settings.revokeOthers')}
+          variant="danger"
+          onPress={async () => {
+            await rt.api.revokeOtherSessions();
+            void load();
+          }}
+        />
+      ) : null}
     </ScrollView>
   );
 }

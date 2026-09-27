@@ -9,12 +9,25 @@ export interface Theme {
   preference: ThemePreference;
 }
 
-const ThemeContext = createContext<Theme>({ dark: false, colors: lightColors, preference: 'system' });
+const ThemeContext = createContext<Theme>({
+  dark: false,
+  colors: lightColors,
+  preference: 'system',
+});
 
-export function ThemeProvider({ preference, children }: { preference: ThemePreference; children: ReactNode }) {
+export function ThemeProvider({
+  preference,
+  children,
+}: {
+  preference: ThemePreference;
+  children: ReactNode;
+}) {
   const system = useColorScheme();
   const dark = preference === 'dark' || (preference === 'system' && system === 'dark');
-  const value = useMemo(() => ({ dark, colors: dark ? darkColors : lightColors, preference }), [dark, preference]);
+  const value = useMemo(
+    () => ({ dark, colors: dark ? darkColors : lightColors, preference }),
+    [dark, preference],
+  );
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 }
 

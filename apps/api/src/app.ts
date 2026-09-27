@@ -27,7 +27,13 @@ export interface RouteCtx {
 
 export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
   const app = Fastify({
-    logger: deps.env.NODE_ENV === 'test' ? false : { level: deps.env.NODE_ENV === 'production' ? 'info' : 'debug', redact: ['req.headers.authorization', 'req.body.password', 'req.body.refreshToken'] },
+    logger:
+      deps.env.NODE_ENV === 'test'
+        ? false
+        : {
+            level: deps.env.NODE_ENV === 'production' ? 'info' : 'debug',
+            redact: ['req.headers.authorization', 'req.body.password', 'req.body.refreshToken'],
+          },
     trustProxy: deps.env.TRUST_PROXY,
     bodyLimit: 1024 * 1024,
     disableRequestLogging: deps.env.NODE_ENV === 'test',
@@ -50,9 +56,15 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
     const h = req.headers.authorization;
     if (!h?.startsWith('Bearer ')) throw unauthorized('missing_token');
     const { userId, sessionId } = await verifyAccessToken(deps.env, h.slice(7));
-    const s = await deps.db.query.sessions.findFirst({ where: eq(sessions.id, sessionId), columns: { revokedAt: true, userId: true } });
+    const s = await deps.db.query.sessions.findFirst({
+      where: eq(sessions.id, sessionId),
+      columns: { revokedAt: true, userId: true },
+    });
     if (!s || s.revokedAt || s.userId !== userId) throw unauthorized('session_revoked');
-    const u = await deps.db.query.users.findFirst({ where: eq(users.id, userId), columns: { role: true } });
+    const u = await deps.db.query.users.findFirst({
+      where: eq(users.id, userId),
+      columns: { role: true },
+    });
     if (!u) throw unauthorized('account_deleted');
     req.auth = { userId, sessionId, role: u.role as 'user' | 'admin' };
     return req.auth;
@@ -73,12 +85,19 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
       return reply.status(err.status).send({ error: { code: err.code, details: err.details } });
     }
     if (err instanceof SafeFetchError) {
-      return reply.status(err.code === 'blocked_address' || err.code === 'invalid_url' ? 400 : 502).send({ error: { code: `fetch_${err.code}` } });
+      return reply
+        .status(err.code === 'blocked_address' || err.code === 'invalid_url' ? 400 : 502)
+        .send({ error: { code: `fetch_${err.code}` } });
     }
     const e = err as { statusCode?: number; code?: string; message?: string };
     if (e.statusCode === 429) return reply.status(429).send({ error: { code: 'rate_limited' } });
     if (e.statusCode && e.statusCode >= 400 && e.statusCode < 500) {
-      const code = e.code === 'FST_ERR_CTP_BODY_TOO_LARGE' ? 'payload_too_large' : e.code === 'FST_ERR_CTP_INVALID_MEDIA_TYPE' ? 'unsupported_media_type' : 'bad_request';
+      const code =
+        e.code === 'FST_ERR_CTP_BODY_TOO_LARGE'
+          ? 'payload_too_large'
+          : e.code === 'FST_ERR_CTP_INVALID_MEDIA_TYPE'
+            ? 'unsupported_media_type'
+            : 'bad_request';
       return reply.status(e.statusCode).send({ error: { code } });
     }
     req.log.error({ err }, 'unhandled error');
@@ -91,16 +110,19 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
     return { ok: true };
   });
 
-  await app.register(async (v1) => {
-    await authRoutes(v1, ctx);
-    await meRoutes(v1, ctx);
-    await syncRoutes(v1, ctx);
-    await mediaRoutes(v1, ctx);
-    await householdRoutes(v1, ctx);
-    await publicRoutes(v1, ctx);
-    await miscRoutes(v1, ctx);
-    await adminRoutes(v1, ctx);
-  }, { prefix: '/v1' });
+  await app.register(
+    async (v1) => {
+      await authRoutes(v1, ctx);
+      await meRoutes(v1, ctx);
+      await syncRoutes(v1, ctx);
+      await mediaRoutes(v1, ctx);
+      await householdRoutes(v1, ctx);
+      await publicRoutes(v1, ctx);
+      await miscRoutes(v1, ctx);
+      await adminRoutes(v1, ctx);
+    },
+    { prefix: '/v1' },
+  );
   await webRoutes(app, ctx);
   return app;
 }

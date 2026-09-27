@@ -36,7 +36,9 @@ export function weekDates(weekStart: string): string[] {
 export function monthGrid(iso: string, weekStartsOn: 0 | 1 = 1): string[][] {
   const first = `${iso.slice(0, 7)}-01`;
   const start = startOfWeek(first, weekStartsOn);
-  return Array.from({ length: 6 }, (_, w) => Array.from({ length: 7 }, (_, d) => addDays(start, w * 7 + d)));
+  return Array.from({ length: 6 }, (_, w) =>
+    Array.from({ length: 7 }, (_, d) => addDays(start, w * 7 + d)),
+  );
 }
 
 export function isSameMonth(a: string, b: string): boolean {
@@ -62,7 +64,10 @@ export function slotIndex(slot: MealSlot): number {
 
 export function sortEntries<T extends PlanEntryLike>(entries: T[]): T[] {
   return [...entries].sort(
-    (a, b) => a.date.localeCompare(b.date) || slotIndex(a.slot) - slotIndex(b.slot) || a.position - b.position,
+    (a, b) =>
+      a.date.localeCompare(b.date) ||
+      slotIndex(a.slot) - slotIndex(b.slot) ||
+      a.position - b.position,
   );
 }
 
@@ -85,7 +90,12 @@ export function emptyMainSlots(entries: PlanEntryLike[], weekStart: string): num
 }
 
 /** Next upcoming meal from `now` (slot times are conventions used for widgets & reminders). */
-export const SLOT_HOURS: Record<MealSlot, number> = { breakfast: 8, lunch: 12, snack: 16, dinner: 19 };
+export const SLOT_HOURS: Record<MealSlot, number> = {
+  breakfast: 8,
+  lunch: 12,
+  snack: 16,
+  dinner: 19,
+};
 
 export function nextMeal<T extends PlanEntryLike>(entries: T[], now: Date): T | null {
   const today = toIsoDate(now);

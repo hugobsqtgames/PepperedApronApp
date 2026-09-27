@@ -50,7 +50,10 @@ export class RecipeService {
 
   async full(db: DbOrTx, row: RecipeRow): Promise<FullRecipe> {
     const c = (await loadChildren(db, [row.id])).get(row.id)!;
-    const author = await db.query.users.findFirst({ where: eq(users.id, row.ownerId), columns: { id: true, displayName: true } });
+    const author = await db.query.users.findFirst({
+      where: eq(users.id, row.ownerId),
+      columns: { id: true, displayName: true },
+    });
     return {
       id: row.id,
       title: row.title,
@@ -85,7 +88,9 @@ export class RecipeService {
   }
 
   async getLive(db: DbOrTx, id: string): Promise<RecipeRow | null> {
-    const r = await db.query.recipes.findFirst({ where: and(eq(recipes.id, id), isNull(recipes.deletedAt)) });
+    const r = await db.query.recipes.findFirst({
+      where: and(eq(recipes.id, id), isNull(recipes.deletedAt)),
+    });
     return r ?? null;
   }
 
@@ -105,21 +110,58 @@ export class RecipeService {
         if (await this.d.storage.copy(src.photoKey, dest)) {
           photoKey = dest;
           const head = await this.d.storage.head(dest);
-          await tx.insert(uploads).values({ ownerId: userId, key: dest, contentType: head?.contentType ?? 'image/jpeg', maxBytes: head?.size ?? 0, sizeBytes: head?.size ?? 0, status: 'ready' });
+          await tx
+            .insert(uploads)
+            .values({
+              ownerId: userId,
+              key: dest,
+              contentType: head?.contentType ?? 'image/jpeg',
+              maxBytes: head?.size ?? 0,
+              sizeBytes: head?.size ?? 0,
+              status: 'ready',
+            });
         }
       }
       const version = await nextVersion(tx);
       const now = new Date();
-      const { id: _i, ownerId: _o, householdId: _h, version: _v, createdAt: _c, updatedAt: _u, deletedAt: _d, publishedAt: _p, saveCount: _s, ...rest } = src;
+      const {
+        id: _i,
+        ownerId: _o,
+        householdId: _h,
+        version: _v,
+        createdAt: _c,
+        updatedAt: _u,
+        deletedAt: _d,
+        publishedAt: _p,
+        saveCount: _s,
+        ...rest
+      } = src;
       const [row] = await tx
         .insert(recipes)
-        .values({ ...rest, id, ownerId: userId, householdId: null, version, createdAt: now, updatedAt: now, visibility: 'private', originRecipeId: src.id, photoKey, saveCount: 0, publishedAt: null })
+        .values({
+          ...rest,
+          id,
+          ownerId: userId,
+          householdId: null,
+          version,
+          createdAt: now,
+          updatedAt: now,
+          visibility: 'private',
+          originRecipeId: src.id,
+          photoKey,
+          saveCount: 0,
+          publishedAt: null,
+        })
         .returning();
       await replaceChildren(tx, id, {
         ingredients: c.ingredients.map((i) => ({ ...i, id: uuidv7() })),
         steps: c.steps.map((s) => ({ ...s, id: uuidv7() })),
       });
-      if (src.ownerId !== userId) await tx.update(recipes).set({ saveCount: sql`${recipes.saveCount} + 1` }).where(eq(recipes.id, src.id));
+      if (src.ownerId !== userId)
+        await tx
+          .update(recipes)
+          .set({ saveCount: sql`${recipes.saveCount} + 1` })
+          .where(eq(recipes.id, src.id));
       const cc = (await loadChildren(tx, [id])).get(id)!;
       const { id: rid, ownerId, version: rv, updatedAt, ...data } = row!;
       void data;
@@ -131,11 +173,31 @@ export class RecipeService {
         deleted: false,
         updatedAt: updatedAt.toISOString(),
         data: {
-          title: row!.title, description: row!.description, photoKey: row!.photoKey, prepMinutes: row!.prepMinutes, cookMinutes: row!.cookMinutes,
-          restMinutes: row!.restMinutes, totalMinutes: row!.totalMinutes, servings: row!.servings, yieldLabel: row!.yieldLabel, difficulty: row!.difficulty,
-          seasons: row!.seasons, category: row!.category, ovenTemperatureC: row!.ovenTemperatureC, ovenMode: row!.ovenMode, notes: row!.notes, tips: row!.tips,
-          extraInfo: row!.extraInfo, source: row!.source, sourceUrl: row!.sourceUrl, tags: row!.tags, visibility: row!.visibility,
-          ingredients: cc.ingredients, steps: cc.steps, originRecipeId: row!.originRecipeId, householdId: null,
+          title: row!.title,
+          description: row!.description,
+          photoKey: row!.photoKey,
+          prepMinutes: row!.prepMinutes,
+          cookMinutes: row!.cookMinutes,
+          restMinutes: row!.restMinutes,
+          totalMinutes: row!.totalMinutes,
+          servings: row!.servings,
+          yieldLabel: row!.yieldLabel,
+          difficulty: row!.difficulty,
+          seasons: row!.seasons,
+          category: row!.category,
+          ovenTemperatureC: row!.ovenTemperatureC,
+          ovenMode: row!.ovenMode,
+          notes: row!.notes,
+          tips: row!.tips,
+          extraInfo: row!.extraInfo,
+          source: row!.source,
+          sourceUrl: row!.sourceUrl,
+          tags: row!.tags,
+          visibility: row!.visibility,
+          ingredients: cc.ingredients,
+          steps: cc.steps,
+          originRecipeId: row!.originRecipeId,
+          householdId: null,
         },
       } satisfies SyncRecord;
     });

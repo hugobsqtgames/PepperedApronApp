@@ -22,7 +22,10 @@ export function createDb(url: string, max = 10): { db: Db; pool: pg.Pool } {
 export function migrationsFolder(): string {
   const here = path.dirname(fileURLToPath(import.meta.url));
   // src/db → ../../drizzle ; dist → ../drizzle
-  return process.env.MIGRATIONS_DIR ?? path.resolve(here, here.endsWith(path.join('src', 'db')) ? '../../drizzle' : '../drizzle');
+  return (
+    process.env.MIGRATIONS_DIR ??
+    path.resolve(here, here.endsWith(path.join('src', 'db')) ? '../../drizzle' : '../drizzle')
+  );
 }
 
 export async function runMigrations(db: Db): Promise<void> {

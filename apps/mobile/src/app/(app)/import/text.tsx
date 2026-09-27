@@ -20,9 +20,23 @@ export default function ImportText() {
         <IconButton icon="close" label={t('common.close')} onPress={() => router.back()} />
       </View>
       <View style={{ gap: space.lg, marginTop: space.xl }}>
-        <TextField placeholder={t('import.textPlaceholder')} value={text} onChangeText={setText} multiline style={{ minHeight: 260 }} maxLength={20000} testID="import-text" />
+        <TextField
+          placeholder={t('import.textPlaceholder')}
+          value={text}
+          onChangeText={setText}
+          multiline
+          style={{ minHeight: 260 }}
+          maxLength={20000}
+          testID="import-text"
+        />
         <View style={{ flexDirection: 'row', gap: space.sm }}>
-          <Button title={t('import.paste')} icon="clipboard-outline" variant="secondary" onPress={async () => setText(await Clipboard.getStringAsync())} style={{ flex: 1 }} />
+          <Button
+            title={t('import.paste')}
+            icon="clipboard-outline"
+            variant="secondary"
+            onPress={async () => setText(await Clipboard.getStringAsync())}
+            style={{ flex: 1 }}
+          />
           <Button
             title={t('import.analyze')}
             disabled={!text.trim()}

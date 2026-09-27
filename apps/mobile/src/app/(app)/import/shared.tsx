@@ -24,7 +24,9 @@ export default function SharedImport() {
 
   useEffect(() => {
     if (!payload) return;
-    track('import_share_extension', { kind: payload.imageUri ? 'image' : payload.url ? 'url' : 'text' });
+    track('import_share_extension', {
+      kind: payload.imageUri ? 'image' : payload.url ? 'url' : 'text',
+    });
     const go = async () => {
       if (payload.imageUri) {
         router.replace({ pathname: '/import/photo', params: { uri: payload.imageUri } });
@@ -34,8 +36,21 @@ export default function SharedImport() {
         try {
           const res = await rt.api.importUrl(payload.url);
           // Text shared alongside the link (captions) complements what the page exposes.
-          if (payload.text && payload.text.trim() !== payload.url && !res.draft.ingredients.length) {
-            openTextDraft(payload.text.replace(payload.url, ''), { sourceUrl: payload.url, source: res.draft.source, imageUrl: res.draft.imageUrl, title: res.draft.title ?? payload.title }, res.completeness);
+          if (
+            payload.text &&
+            payload.text.trim() !== payload.url &&
+            !res.draft.ingredients.length
+          ) {
+            openTextDraft(
+              payload.text.replace(payload.url, ''),
+              {
+                sourceUrl: payload.url,
+                source: res.draft.source,
+                imageUrl: res.draft.imageUrl,
+                title: res.draft.title ?? payload.title,
+              },
+              res.completeness,
+            );
           } else {
             openDraft(res.draft, { notice: res.completeness });
           }
@@ -44,7 +59,11 @@ export default function SharedImport() {
           d.sourceUrl = payload.url;
           d.title = payload.title;
           if (payload.text && payload.text.trim() !== payload.url) {
-            openTextDraft(payload.text.replace(payload.url, ''), { sourceUrl: payload.url, title: payload.title }, 'minimal');
+            openTextDraft(
+              payload.text.replace(payload.url, ''),
+              { sourceUrl: payload.url, title: payload.title },
+              'minimal',
+            );
           } else openDraft(d, { notice: 'minimal' });
           if (!(e instanceof NetworkError)) console.warn('[import] shared url failed');
         }
@@ -58,7 +77,16 @@ export default function SharedImport() {
   return (
     <Screen scroll={false} edges={['top', 'bottom']}>
       <View style={{ flex: 1, justifyContent: 'center' }}>
-        {payload ? <LoadingState label={t('import.received')} /> : <EmptyState emoji="📥" title={t('errors.import_failed')} action={t('common.close')} onAction={() => router.back()} />}
+        {payload ? (
+          <LoadingState label={t('import.received')} />
+        ) : (
+          <EmptyState
+            emoji="📥"
+            title={t('errors.import_failed')}
+            action={t('common.close')}
+            onAction={() => router.back()}
+          />
+        )}
       </View>
     </Screen>
   );

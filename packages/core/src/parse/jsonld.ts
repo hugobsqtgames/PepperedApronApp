@@ -6,7 +6,8 @@ import { parseIngredientLine } from './ingredient';
 type Json = null | boolean | number | string | Json[] | { [k: string]: Json };
 type Obj = { [k: string]: Json };
 
-const isObj = (v: Json | undefined): v is Obj => typeof v === 'object' && v !== null && !Array.isArray(v);
+const isObj = (v: Json | undefined): v is Obj =>
+  typeof v === 'object' && v !== null && !Array.isArray(v);
 
 function hasType(o: Obj, type: string): boolean {
   const t = o['@type'];
@@ -64,7 +65,15 @@ function servings(v: Json | undefined): { n: number | null; label: string | null
         const n = Number(m[1]);
         if (n > 0 && n <= 100) {
           const label = x.replace(m[1]!, '').trim() || null;
-          return { n, label: label && label.length <= 40 && !/^(personnes?|servings?|portions?|people|persons?)$/i.test(label) ? label : null };
+          return {
+            n,
+            label:
+              label &&
+              label.length <= 40 &&
+              !/^(personnes?|servings?|portions?|people|persons?)$/i.test(label)
+                ? label
+                : null,
+          };
         }
       }
     }
@@ -72,7 +81,11 @@ function servings(v: Json | undefined): { n: number | null; label: string | null
   return { n: null, label: null };
 }
 
-function steps(v: Json | undefined, group: string | null = null, out: DraftStep[] = []): DraftStep[] {
+function steps(
+  v: Json | undefined,
+  group: string | null = null,
+  out: DraftStep[] = [],
+): DraftStep[] {
   if (!v) return out;
   if (typeof v === 'string') {
     const t = stripHtml(v);
@@ -99,7 +112,10 @@ function steps(v: Json | undefined, group: string | null = null, out: DraftStep[
 
 function keywords(v: Json | undefined): string[] {
   const raw = Array.isArray(v) ? v.map((x) => text(x) ?? '') : (text(v) ?? '').split(',');
-  return raw.map((s) => s.trim().toLowerCase()).filter((s) => s.length > 1 && s.length <= 40).slice(0, 15);
+  return raw
+    .map((s) => s.trim().toLowerCase())
+    .filter((s) => s.length > 1 && s.length <= 40)
+    .slice(0, 15);
 }
 
 export function extractJsonLdBlocks(html: string): Json[] {
@@ -155,19 +171,33 @@ export function parseJsonLdRecipe(html: string): RecipeDraft | null {
     if (p) d.ingredients.push({ group: null, ...p });
   }
   d.steps = steps(recipe['recipeInstructions']);
-  d.tags = [...new Set([...keywords(recipe['keywords']), ...keywords(recipe['recipeCuisine'])])].slice(0, 20);
+  d.tags = [
+    ...new Set([...keywords(recipe['keywords']), ...keywords(recipe['recipeCuisine'])]),
+  ].slice(0, 20);
   const author = recipe['author'];
   d.author = text(Array.isArray(author) ? author[0] : author);
   return d;
 }
 
 /** OpenGraph / basic meta fallback for pages without JSON-LD (TikTok, Instagram, blogs). */
-export function parseHtmlMeta(html: string): { title: string | null; description: string | null; image: string | null; siteName: string | null; author: string | null } {
+export function parseHtmlMeta(html: string): {
+  title: string | null;
+  description: string | null;
+  image: string | null;
+  siteName: string | null;
+  author: string | null;
+} {
   const head = html.slice(0, 300_000);
   const meta = (names: string[]): string | null => {
     for (const n of names) {
-      const re1 = new RegExp(`<meta[^>]+(?:property|name)\\s*=\\s*["']${n}["'][^>]*content\\s*=\\s*["']([^"']*)["']`, 'i');
-      const re2 = new RegExp(`<meta[^>]+content\\s*=\\s*["']([^"']*)["'][^>]*(?:property|name)\\s*=\\s*["']${n}["']`, 'i');
+      const re1 = new RegExp(
+        `<meta[^>]+(?:property|name)\\s*=\\s*["']${n}["'][^>]*content\\s*=\\s*["']([^"']*)["']`,
+        'i',
+      );
+      const re2 = new RegExp(
+        `<meta[^>]+content\\s*=\\s*["']([^"']*)["'][^>]*(?:property|name)\\s*=\\s*["']${n}["']`,
+        'i',
+      );
       const m = head.match(re1) ?? head.match(re2);
       if (m?.[1]) return decodeHtmlEntities(m[1]).trim() || null;
     }
@@ -176,7 +206,9 @@ export function parseHtmlMeta(html: string): { title: string | null; description
   const titleTag = head.match(/<title[^>]*>([^<]*)<\/title>/i)?.[1];
   const image = meta(['og:image', 'og:image:url', 'twitter:image']);
   return {
-    title: meta(['og:title', 'twitter:title']) ?? (titleTag ? decodeHtmlEntities(titleTag).trim() || null : null),
+    title:
+      meta(['og:title', 'twitter:title']) ??
+      (titleTag ? decodeHtmlEntities(titleTag).trim() || null : null),
     description: meta(['og:description', 'description', 'twitter:description']),
     image: image && /^https?:\/\//i.test(image) ? image : null,
     siteName: meta(['og:site_name', 'application-name']),

@@ -30,7 +30,15 @@ export default function ForgotPassword() {
           {t('auth.forgotTitle')}
         </Text>
         <Text color="textMuted">{t('auth.forgotBody')}</Text>
-        <TextField label={t('auth.email')} value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" autoComplete="email" error={error} />
+        <TextField
+          label={t('auth.email')}
+          value={email}
+          onChangeText={setEmail}
+          autoCapitalize="none"
+          keyboardType="email-address"
+          autoComplete="email"
+          error={error}
+        />
         {sent ? (
           <Text color="primary" accessibilityLiveRegion="polite">
             {t('auth.linkSent')}

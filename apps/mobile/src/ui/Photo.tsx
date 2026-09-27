@@ -9,12 +9,39 @@ import { Text } from './Text';
  * Recipe image with graceful fallback: photos are optional, so a recipe without one shows a warm
  * category tile instead of a broken or empty frame. Images are disk-cached by expo-image.
  */
-export function RecipePhoto({ uri, category, style, radius = 0, emojiSize = 40, recyclingKey }: { uri: string | null; category: RecipeCategory | null; style?: StyleProp<ViewStyle>; radius?: number; emojiSize?: number; recyclingKey?: string }) {
+export function RecipePhoto({
+  uri,
+  category,
+  style,
+  radius = 0,
+  emojiSize = 40,
+  recyclingKey,
+}: {
+  uri: string | null;
+  category: RecipeCategory | null;
+  style?: StyleProp<ViewStyle>;
+  radius?: number;
+  emojiSize?: number;
+  recyclingKey?: string;
+}) {
   const { colors, dark } = useTheme();
   if (!uri) {
     return (
-      <View style={[styles.fallback, { backgroundColor: dark ? colors.surfaceRaised : colors.surfaceMuted, borderRadius: radius }, style]} accessibilityElementsHidden>
-        <Text style={{ fontSize: emojiSize, lineHeight: emojiSize * 1.2 }} maxFontSizeMultiplier={1}>
+      <View
+        style={[
+          styles.fallback,
+          {
+            backgroundColor: dark ? colors.surfaceRaised : colors.surfaceMuted,
+            borderRadius: radius,
+          },
+          style,
+        ]}
+        accessibilityElementsHidden
+      >
+        <Text
+          style={{ fontSize: emojiSize, lineHeight: emojiSize * 1.2 }}
+          maxFontSizeMultiplier={1}
+        >
           {CATEGORY_EMOJI[category ?? 'main']}
         </Text>
       </View>
@@ -33,4 +60,6 @@ export function RecipePhoto({ uri, category, style, radius = 0, emojiSize = 40, 
   );
 }
 
-const styles = StyleSheet.create({ fallback: { alignItems: 'center', justifyContent: 'center', overflow: 'hidden' } });
+const styles = StyleSheet.create({
+  fallback: { alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
+});

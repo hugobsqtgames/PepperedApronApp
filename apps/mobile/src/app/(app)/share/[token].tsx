@@ -18,7 +18,9 @@ export default function SharedRecipe() {
   const load = useCallback(async () => {
     setError(null);
     try {
-      const res = (await rt.api.sharedRecipe(token)) as unknown as RemoteRecipeData & { isMine: boolean };
+      const res = (await rt.api.sharedRecipe(token)) as unknown as RemoteRecipeData & {
+        isMine: boolean;
+      };
       if (res.isMine) return router.replace(`/recipe/${res.id}`);
       setR(res);
     } catch (e) {
@@ -28,8 +30,18 @@ export default function SharedRecipe() {
   useEffect(() => {
     void load();
   }, [load]);
-  if (error) return <Screen scroll={false}><ErrorState message={error} onRetry={load} /></Screen>;
-  if (!r) return <Screen scroll={false}><LoadingState /></Screen>;
+  if (error)
+    return (
+      <Screen scroll={false}>
+        <ErrorState message={error} onRetry={load} />
+      </Screen>
+    );
+  if (!r)
+    return (
+      <Screen scroll={false}>
+        <LoadingState />
+      </Screen>
+    );
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />

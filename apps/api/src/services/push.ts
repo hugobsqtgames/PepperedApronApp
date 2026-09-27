@@ -30,7 +30,10 @@ export class ExpoPush implements PushSender {
       const chunk = messages.slice(i, i + 100).map((m) => ({ ...m, sound: 'default' }));
       const res = await fetch('https://exp.host/--/api/v2/push/send', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...(this.token ? { Authorization: `Bearer ${this.token}` } : {}) },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(this.token ? { Authorization: `Bearer ${this.token}` } : {}),
+        },
         body: JSON.stringify(chunk),
         signal: AbortSignal.timeout(10_000),
       });
