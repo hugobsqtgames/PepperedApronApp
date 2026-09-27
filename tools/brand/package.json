@@ -1,0 +1,7 @@
+{
+  "name": "@pepperedapron/brand",
+  "private": true,
+  "type": "module",
+  "scripts": { "render": "node render.mjs" },
+  "devDependencies": { "playwright-core": "^1.55.0" }
+}
