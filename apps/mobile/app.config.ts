@@ -23,6 +23,12 @@ const webDomain =
 const appGroup = `group.${bundleId}`;
 
 // Google's official test ad units are used unless real ids are provided (never ship test ids).
+if (
+  variant === 'production' &&
+  (!process.env.ADMOB_IOS_APP_ID || !process.env.ADMOB_ANDROID_APP_ID)
+) {
+  throw new Error('Production builds require ADMOB_IOS_APP_ID and ADMOB_ANDROID_APP_ID.');
+}
 const ADMOB_IOS_APP_ID = process.env.ADMOB_IOS_APP_ID ?? 'ca-app-pub-3940256099942544~1458002511';
 const ADMOB_ANDROID_APP_ID =
   process.env.ADMOB_ANDROID_APP_ID ?? 'ca-app-pub-3940256099942544~3347511713';

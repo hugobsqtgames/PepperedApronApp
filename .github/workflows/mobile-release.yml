@@ -1,0 +1,45 @@
+name: Mobile build & submit
+
+# Cloud builds with EAS. Requires the EXPO_TOKEN repository secret; the other build secrets
+# (AdMob ids, OAuth client ids, Sentry…) live in EAS environment variables, not in GitHub.
+on:
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: EAS build profile
+        type: choice
+        options: [staging, production]
+        default: staging
+      platform:
+        description: Platform
+        type: choice
+        options: [all, ios, android]
+        default: all
+      submit:
+        description: Submit to TestFlight / Play internal testing (production only)
+        type: boolean
+        default: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/mobile
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+      - name: Build
+        run: >-
+          eas build --non-interactive --no-wait
+          --profile ${{ inputs.profile }} --platform ${{ inputs.platform }}
+          ${{ inputs.submit && inputs.profile == 'production' && '--auto-submit' || '' }}

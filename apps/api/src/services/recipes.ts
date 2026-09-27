@@ -110,16 +110,14 @@ export class RecipeService {
         if (await this.d.storage.copy(src.photoKey, dest)) {
           photoKey = dest;
           const head = await this.d.storage.head(dest);
-          await tx
-            .insert(uploads)
-            .values({
-              ownerId: userId,
-              key: dest,
-              contentType: head?.contentType ?? 'image/jpeg',
-              maxBytes: head?.size ?? 0,
-              sizeBytes: head?.size ?? 0,
-              status: 'ready',
-            });
+          await tx.insert(uploads).values({
+            ownerId: userId,
+            key: dest,
+            contentType: head?.contentType ?? 'image/jpeg',
+            maxBytes: head?.size ?? 0,
+            sizeBytes: head?.size ?? 0,
+            status: 'ready',
+          });
         }
       }
       const version = await nextVersion(tx);

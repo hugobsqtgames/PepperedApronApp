@@ -100,14 +100,12 @@ export class AuthService {
       })
       .returning();
     const version = await nextVersion(tx);
-    await tx
-      .insert(userSettings)
-      .values({
-        id: u!.id,
-        ownerId: u!.id,
-        version,
-        data: { ...DEFAULT_SETTINGS, locale: this.normLocale(p.locale) },
-      });
+    await tx.insert(userSettings).values({
+      id: u!.id,
+      ownerId: u!.id,
+      version,
+      data: { ...DEFAULT_SETTINGS, locale: this.normLocale(p.locale) },
+    });
     return u!;
   }
 

@@ -128,18 +128,16 @@ export async function miscRoutes(
       }
       const platform = (req.headers['x-app-platform'] as string | undefined)?.slice(0, 20) ?? null;
       const appVersion = (req.headers['x-app-version'] as string | undefined)?.slice(0, 20) ?? null;
-      await deps.db
-        .insert(analyticsEvents)
-        .values(
-          b.events.map((e) => ({
-            name: e.name,
-            day: e.at.slice(0, 10),
-            userId: a.userId,
-            platform,
-            appVersion,
-            props: e.props && Object.keys(e.props).length <= 8 ? e.props : null,
-          })),
-        );
+      await deps.db.insert(analyticsEvents).values(
+        b.events.map((e) => ({
+          name: e.name,
+          day: e.at.slice(0, 10),
+          userId: a.userId,
+          platform,
+          appVersion,
+          props: e.props && Object.keys(e.props).length <= 8 ? e.props : null,
+        })),
+      );
       reply.status(202);
       return { stored: b.events.length };
     },

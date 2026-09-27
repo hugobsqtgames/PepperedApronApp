@@ -36,7 +36,6 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
           },
     trustProxy: deps.env.TRUST_PROXY,
     bodyLimit: 1024 * 1024,
-    disableRequestLogging: deps.env.NODE_ENV === 'test',
   });
   app.decorateRequest('auth', null);
 

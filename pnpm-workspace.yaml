@@ -7,3 +7,5 @@ onlyBuiltDependencies:
   - esbuild
 patchedDependencies:
   '@bacons/apple-targets@5.0.0': patches/@bacons__apple-targets@5.0.0.patch
+# The @bacons/apple-targets patch only concerns the mobile app; API-only installs skip it.
+allowUnusedPatches: true

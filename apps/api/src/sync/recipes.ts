@@ -26,28 +26,24 @@ export async function loadChildren(
     .where(inArray(recipeSteps.recipeId, recipeIds))
     .orderBy(asc(recipeSteps.position));
   for (const i of ings) {
-    out
-      .get(i.recipeId)!
-      .ingredients.push({
-        id: i.id,
-        group: i.groupName,
-        name: i.name,
-        quantity: i.quantity,
-        quantityMax: i.quantityMax,
-        unit: i.unit,
-        note: i.note,
-      });
+    out.get(i.recipeId)!.ingredients.push({
+      id: i.id,
+      group: i.groupName,
+      name: i.name,
+      quantity: i.quantity,
+      quantityMax: i.quantityMax,
+      unit: i.unit,
+      note: i.note,
+    });
   }
   for (const s of stps) {
-    out
-      .get(s.recipeId)!
-      .steps.push({
-        id: s.id,
-        group: s.groupName,
-        text: s.text,
-        timerSeconds: s.timerSeconds,
-        timerLabel: s.timerLabel,
-      });
+    out.get(s.recipeId)!.steps.push({
+      id: s.id,
+      group: s.groupName,
+      text: s.text,
+      timerSeconds: s.timerSeconds,
+      timerLabel: s.timerLabel,
+    });
   }
   return out;
 }
@@ -59,35 +55,31 @@ export async function replaceChildren(tx: DbOrTx, recipeId: string, c: RecipeChi
   const seen = new Set<string>();
   const fresh = (id: string) => (seen.has(id) ? crypto.randomUUID() : (seen.add(id), id));
   if (c.ingredients.length) {
-    await tx
-      .insert(recipeIngredients)
-      .values(
-        c.ingredients.map((i, position) => ({
-          id: fresh(i.id),
-          recipeId,
-          position,
-          groupName: i.group,
-          name: i.name,
-          quantity: i.quantity,
-          quantityMax: i.quantityMax,
-          unit: i.unit,
-          note: i.note,
-        })),
-      );
+    await tx.insert(recipeIngredients).values(
+      c.ingredients.map((i, position) => ({
+        id: fresh(i.id),
+        recipeId,
+        position,
+        groupName: i.group,
+        name: i.name,
+        quantity: i.quantity,
+        quantityMax: i.quantityMax,
+        unit: i.unit,
+        note: i.note,
+      })),
+    );
   }
   if (c.steps.length) {
-    await tx
-      .insert(recipeSteps)
-      .values(
-        c.steps.map((s, position) => ({
-          id: fresh(s.id),
-          recipeId,
-          position,
-          groupName: s.group,
-          text: s.text,
-          timerSeconds: s.timerSeconds,
-          timerLabel: s.timerLabel,
-        })),
-      );
+    await tx.insert(recipeSteps).values(
+      c.steps.map((s, position) => ({
+        id: fresh(s.id),
+        recipeId,
+        position,
+        groupName: s.group,
+        text: s.text,
+        timerSeconds: s.timerSeconds,
+        timerLabel: s.timerLabel,
+      })),
+    );
   }
 }
