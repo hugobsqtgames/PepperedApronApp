@@ -97,6 +97,11 @@ export interface PullResponse {
   cursor: number;
   hasMore: boolean;
   scopeEpoch: number;
+  /**
+   * The cursor predates purged tombstones: deletions may have been missed. The client must drop
+   * its synced copy (keeping pending local changes) and pull again from 0.
+   */
+  resync?: boolean;
 }
 
 /**

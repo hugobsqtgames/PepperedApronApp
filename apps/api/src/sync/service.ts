@@ -25,6 +25,7 @@ import {
   shoppingItems,
   shoppingLists,
   syncOps,
+  syncState,
   uploads,
   users,
 } from '../db/schema';
@@ -40,7 +41,7 @@ import {
   visibleWhere,
   type Scope,
 } from './scope';
-import { nextVersion } from './version';
+import { nextVersion, TOMBSTONE_HORIZON } from './version';
 
 type Row = Record<string, unknown> & {
   id: string;
@@ -583,6 +584,21 @@ export class SyncService {
           where: eq(users.id, userId),
           columns: { scopeEpoch: true },
         });
+        const horizon =
+          (
+            await tx.query.syncState.findFirst({
+              where: eq(syncState.key, TOMBSTONE_HORIZON),
+            })
+          )?.value ?? 0;
+        if (cursor > 0 && cursor < horizon) {
+          return {
+            records: [],
+            cursor: 0,
+            hasMore: true,
+            scopeEpoch: u?.scopeEpoch ?? 0,
+            resync: true,
+          };
+        }
         const favIds = await favoritedRecipeIds(tx, userId);
         const rows: { entity: SyncEntity; row: Row }[] = [];
         for (const entity of SYNC_ENTITIES) {
@@ -605,7 +621,10 @@ export class SyncService {
         rows.sort((a, b) => a.row.version - b.row.version);
         const hasMore = rows.length > limit;
         const page = rows.slice(0, limit);
-        const newCursor = page.length ? page[page.length - 1]!.row.version : cursor;
+        const last = page.length ? page[page.length - 1]!.row.version : cursor;
+        // On the last page every visible row up to this snapshot has been sent; versions commit in
+        // order, so the cursor can safely move past the purge horizon (else it would loop on resync).
+        const newCursor = hasMore ? last : Math.max(last, horizon);
 
         // Public recipes referenced by favorites in this page (favorited after their last change).
         const inPage = new Set(page.filter((p) => p.entity === 'recipe').map((p) => p.row.id));

@@ -160,6 +160,29 @@ describe('conflicts between iPhone and iPad', () => {
     expect(await ipad.store.pendingCount()).toBe(0);
   });
 
+  it('offline for months: deletions whose tombstones were purged are still applied', async () => {
+    const { purgeRecipeTombstone, resetSyncHorizon } =
+      await import('../../../apps/api/test/helpers');
+    const [iphone, ipad] = await pair();
+    const old = await iphone.repos.createRecipe(recipe('Ancienne'));
+    await iphone.sync.sync();
+    iphone.online = false;
+    await ipad.sync.sync();
+    await ipad.repos.deleteRecipe(old.id);
+    await ipad.sync.sync();
+    // Meanwhile the offline iPhone keeps working.
+    const draft = await iphone.repos.createRecipe(recipe('Écrite hors ligne'));
+    await purgeRecipeTombstone(server.ctx, old.id);
+
+    iphone.online = true;
+    await iphone.sync.sync();
+    expect(iphone.repos.recipe(old.id)).toBeNull();
+    expect(iphone.repos.recipe(draft.id)!.state).toBe('synced');
+    await ipad.sync.sync();
+    expect(ipad.repos.recipe(draft.id)!.data.title).toBe('Écrite hors ligne');
+    await resetSyncHorizon(server.ctx);
+  });
+
   it('checking shopping items on two phones at the same time converges', async () => {
     const [iphone, ipad] = await pair();
     const list = await iphone.repos.createList('Semaine');

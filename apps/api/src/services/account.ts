@@ -8,6 +8,7 @@ import {
   recipes,
   reports,
   sessions,
+  syncState,
   uploads,
   users,
 } from '../db/schema';
@@ -15,6 +16,7 @@ import { verifyPassword } from '../lib/crypto';
 import { AppError, notFound } from '../lib/errors';
 import { TABLES } from '../sync/entities';
 import { loadChildren } from '../sync/recipes';
+import { TOMBSTONE_HORIZON } from '../sync/version';
 import { HouseholdService } from './households';
 
 export class AccountService {
@@ -178,7 +180,23 @@ export class AccountService {
     for (const table of Object.values(TABLES)) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const t = table as any;
-      await this.d.db.delete(t).where(sql`${t.deletedAt} < now() - make_interval(days => ${days})`);
+      await this.d.db.transaction(async (tx) => {
+        const old = sql`${t.deletedAt} < now() - make_interval(days => ${days})`;
+        const [top] = await tx
+          .select({ v: sql<string | null>`max(${t.version})` })
+          .from(t)
+          .where(old);
+        if (top?.v == null) return;
+        // Record the horizon before the tombstones disappear, in the same transaction.
+        await tx
+          .insert(syncState)
+          .values({ key: TOMBSTONE_HORIZON, value: Number(top.v) })
+          .onConflictDoUpdate({
+            target: syncState.key,
+            set: { value: sql`greatest(${syncState.value}, excluded.value)` },
+          });
+        await tx.delete(t).where(old);
+      });
     }
     await this.d.db.execute(
       sql`DELETE FROM sync_ops WHERE created_at < now() - interval '30 days'`,

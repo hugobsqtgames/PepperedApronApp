@@ -283,3 +283,21 @@ export async function pullAll(c: Client, cursor = 0, limit = 500) {
   }
   return { records, cursor: cur, epoch };
 }
+
+/** Simulates months passing: backdates a recipe tombstone then runs the purge job. */
+export async function purgeRecipeTombstone(ctx: TestCtx, recipeId: string, daysAgo = 120) {
+  const { recipes } = await import('../src/db/schema');
+  const { eq, sql } = await import('drizzle-orm');
+  const { AccountService } = await import('../src/services/account');
+  await ctx.db
+    .update(recipes)
+    .set({ deletedAt: sql`now() - make_interval(days => ${daysAgo})` })
+    .where(eq(recipes.id, recipeId));
+  await new AccountService(ctx.deps).purgeTombstones(90);
+}
+
+/** The purge horizon is global: tests that move it must reset it for the other suites. */
+export async function resetSyncHorizon(ctx: TestCtx) {
+  const { syncState } = await import('../src/db/schema');
+  await ctx.db.delete(syncState);
+}

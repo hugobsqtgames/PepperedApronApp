@@ -4,9 +4,11 @@ import {
   createTestApp,
   op,
   pullAll,
+  purgeRecipeTombstone,
   push,
   recipeData,
   register,
+  resetSyncHorizon,
   verify,
   type Client,
   type TestCtx,
@@ -578,5 +580,34 @@ describe('public recipes in sync', () => {
     );
     const p2 = await pullAll(reader, p1.cursor);
     expect(p2.records.find((r) => r.id === rid)).toMatchObject({ deleted: true, data: null });
+  });
+});
+
+describe('tombstone purge horizon', () => {
+  it('forces a full resync for cursors older than purged tombstones', async () => {
+    const { recipes } = await import('../src/db/schema');
+    const { eq } = await import('drizzle-orm');
+    const c = await register(ctx);
+    const keep = uuidv7();
+    const gone = uuidv7();
+    await push(c, op('recipe', keep, recipeData({ title: 'Gardée' })));
+    const [created] = await push(c, op('recipe', gone, recipeData({ title: 'Supprimée' })));
+    const staleCursor = created!.record!.version;
+    await push(c, op('recipe', gone, null, { op: 'delete' }));
+    // A device that synced before the deletion goes offline for months…
+    await purgeRecipeTombstone(ctx, gone);
+    expect(await ctx.db.select().from(recipes).where(eq(recipes.id, gone))).toHaveLength(0);
+
+    // …its next pull cannot see the tombstone any more, so the server asks for a resync.
+    const stale = await c.req('GET', `/v1/sync/pull?cursor=${staleCursor}`);
+    expect(stale.json()).toMatchObject({ resync: true, cursor: 0, records: [] });
+
+    // Up-to-date devices are unaffected, and a pull from 0 converges without the deleted recipe.
+    const { records, cursor } = await pullAll(c);
+    expect(records.some((r) => r.id === keep && !r.deleted)).toBe(true);
+    expect(records.some((r) => r.id === gone)).toBe(false);
+    const fresh = await c.req('GET', `/v1/sync/pull?cursor=${cursor}`);
+    expect(fresh.json().resync).toBeUndefined();
+    await resetSyncHorizon(ctx);
   });
 });

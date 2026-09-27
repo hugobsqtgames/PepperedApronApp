@@ -165,6 +165,10 @@ export class SyncEngine {
     for (let guard = 0; guard < 10_000; guard++) {
       const cursor = Number((await this.store.meta('cursor')) ?? 0);
       const page = await this.api.pull(cursor, this.o.pullLimit ?? 500);
+      if (page.resync) {
+        await this.store.resetForResync();
+        continue;
+      }
       const known = await this.store.meta('scope_epoch');
       if (known !== null && Number(known) !== page.scopeEpoch) {
         await this.store.resetForResync();

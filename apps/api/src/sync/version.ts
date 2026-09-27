@@ -15,3 +15,6 @@ export async function nextVersion(tx: DbOrTx): Promise<number> {
   );
   return Number(r.rows[0]!.v);
 }
+
+/** `sync_state` key: highest version among purged tombstones (see AccountService.purgeTombstones). */
+export const TOMBSTONE_HORIZON = 'tombstone_horizon';

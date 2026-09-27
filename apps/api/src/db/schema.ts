@@ -492,3 +492,12 @@ export const analyticsEvents = pgTable(
   },
   (t) => [index('analytics_name_day_idx').on(t.name, t.day)],
 );
+
+/**
+ * Server-wide sync bookkeeping. `tombstone_horizon` is the highest version of a purged tombstone:
+ * a client whose cursor is below it may have missed deletions and must resync from scratch.
+ */
+export const syncState = pgTable('sync_state', {
+  key: text('key').primaryKey(),
+  value: bigint('value', { mode: 'number' }).notNull(),
+});

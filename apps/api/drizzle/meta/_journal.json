@@ -8,6 +8,13 @@
       "when": 1790524605919,
       "tag": "0000_init",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1790537482025,
+      "tag": "0001_tombstone_horizon",
+      "breakpoints": true
     }
   ]
 }
