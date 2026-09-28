@@ -12,7 +12,7 @@ describe('absurd inputs', () => {
     const t0 = performance.now();
     const d = parseRecipeText(junk);
     expect(performance.now() - t0).toBeLessThan(2_000);
-    expect(d.title.length).toBeLessThanOrEqual(200);
+    expect((d.title ?? '').length).toBeLessThanOrEqual(200);
   });
 
   it('keeps non-Latin titles, trimming only decorative emoji (TikTok style)', () => {
