@@ -549,6 +549,51 @@ describe('households', () => {
   });
 });
 
+describe('household push preferences', () => {
+  const setup = async (token: string) => {
+    const a = await register(ctx, 'Anna');
+    const b = await register(ctx, 'Ben');
+    await a.req('PUT', '/v1/me/push-token', { token, platform: 'ios' });
+    await a.req('POST', '/v1/household', { name: 'H' });
+    const { code } = (await a.req('POST', '/v1/household/invites')).json();
+    return { a, b, code };
+  };
+
+  it('does not notify a member who switched household notifications off', async () => {
+    const token = 'ExponentPushToken[optedoutmember01]';
+    const { a, b, code } = await setup(token);
+    const s = (await pullAll(a)).records.find((r) => r.entity === 'settings')!;
+    const notifications = {
+      ...(s.data!.notifications as Record<string, unknown>),
+      household: false,
+    };
+    await push(
+      a,
+      op(
+        'settings',
+        a.userId,
+        { ...s.data!, notifications },
+        { baseVersion: s.version, changedFields: ['notifications'] },
+      ),
+    );
+    await b.req('POST', '/v1/household/join', { code });
+    expect(ctx.push.sent.some((m) => m.to === token)).toBe(false);
+  });
+
+  it('forgets tokens the push service reports as unregistered', async () => {
+    const { pushTokens } = await import('../src/db/schema');
+    const { eq } = await import('drizzle-orm');
+    const token = 'ExponentPushToken[uninstalledapp01]';
+    ctx.push.invalid.add(token);
+    const { b, code } = await setup(token);
+    await b.req('POST', '/v1/household/join', { code });
+    expect(ctx.push.sent.some((m) => m.to === token)).toBe(true);
+    expect(await ctx.db.select().from(pushTokens).where(eq(pushTokens.token, token))).toHaveLength(
+      0,
+    );
+  });
+});
+
 describe('public recipes in sync', () => {
   it('favorited public recipes are pulled read-only and disappear when unpublished', async () => {
     const author = await register(ctx, 'Chef');

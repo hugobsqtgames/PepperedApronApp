@@ -100,6 +100,15 @@ export function loadEnv(source: Record<string, string | undefined> = process.env
   ) {
     throw new Error('Local storage is not allowed in staging/production');
   }
+  if (env.NODE_ENV === 'production' || env.NODE_ENV === 'staging') {
+    // Misconfigurations that would otherwise fail silently for real users.
+    if (env.MAIL_DRIVER !== 'resend')
+      throw new Error('Staging/production must send real e-mails (MAIL_DRIVER=resend)');
+    if (!/^[A-Z0-9]{10}$/.test(env.APPLE_TEAM_ID) || env.APPLE_TEAM_ID === 'TEAMID1234')
+      throw new Error('Staging/production require the real APPLE_TEAM_ID (universal links)');
+    if (env.JWT_SECRET.startsWith('change-me'))
+      throw new Error('JWT_SECRET still has its example value');
+  }
   return env;
 }
 

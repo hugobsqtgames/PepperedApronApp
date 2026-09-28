@@ -36,7 +36,7 @@ packages/
 docs/
 ```
 
-Règles : aucune logique métier dans les écrans ; les écrans lisent via des hooks (`useRecipes`, …) branchés sur les repositories de `packages/client` ; tous les appels réseau passent par `ApiClient`.
+Règles : aucune logique métier dans les écrans ; les écrans lisent via des hooks (`useLive`, `useRepos`, `useSyncStatus`…) branchés sur les repositories de `packages/client` ; tous les appels réseau passent par `ApiClient`.
 
 ## 3. Modèle de données serveur
 
@@ -78,7 +78,9 @@ Visibilité d'une ligne pour un utilisateur U :
   - sinon **fusion champ par champ** : seuls les `changedFields` du client sont appliqués sur la version serveur courante (le dernier écrivain gagne *par champ*, pas par ligne) ; la réponse signale le conflit ; les ingrédients et étapes forment chacun un champ atomique ;
   - suppression = tombstone ; une modification sur une ligne supprimée est rejetée (`gone`) et le client purge.
   - chaque écriture prend une nouvelle `version` depuis `sync_version_seq`.
-- `GET /v1/sync/pull?cursor=N` : toutes les lignes visibles de `version > N`, paginées, + nouveau curseur. Garantie : pas de trou, car les versions sont prises dans des transactions et le pull ne lit que jusqu'au plus petit `version` encore en vol (`pg_snapshot_xmin` évité : on utilise un verrou consultatif léger par commit, voir `apps/api/src/sync`).
+- `GET /v1/sync/pull?cursor=N` : toutes les lignes visibles de `version > N`, paginées, + nouveau curseur. Garantie « pas de trou » : chaque écriture prend sa version sous un verrou consultatif transactionnel (`pg_advisory_xact_lock`), les versions sont donc validées dans l'ordre ; le pull lit en `REPEATABLE READ`. Détails et limites : [SYNC.md](SYNC.md).
+- Les recettes publiques mises en favori sont aussi tirées, en lecture seule ; si l'auteur les dépublie, le client reçoit une suppression.
+- Horizon de purge : les tombstones sont supprimés après 90 jours ; un appareil dont le curseur est antérieur reçoit `resync: true` et refait une synchro complète (ses modifications en attente sont conservées).
 - `scope_epoch` : quand un utilisateur rejoint/quitte un foyer ou qu'une ligne quitte le foyer, l'époque change et le client refait une resynchronisation complète (purge + pull depuis 0).
 - Photos : compressées (1600 px max, JPEG 0,8, EXIF supprimé) puis stockées localement ; l'upload est une tâche d'outbox différée ; la recette référence la clé dès que l'upload est confirmé.
 - Reprises : backoff exponentiel, jitter, synchro au retour réseau, au passage au premier plan, et après chaque écriture (debounce).

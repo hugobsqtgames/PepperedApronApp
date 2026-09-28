@@ -1,7 +1,14 @@
-import { and, asc, eq, isNull, sql } from 'drizzle-orm';
+import { and, asc, eq, inArray, isNull, sql } from 'drizzle-orm';
 import type { AppDeps } from '../context';
 import type { Tx } from '../db';
-import { householdInvites, householdMembers, households, pushTokens, users } from '../db/schema';
+import {
+  householdInvites,
+  householdMembers,
+  households,
+  pushTokens,
+  userSettings,
+  users,
+} from '../db/schema';
 import { inviteCode } from '../lib/crypto';
 import { badRequest, conflict, forbidden, notFound } from '../lib/errors';
 import { TABLES } from '../sync/entities';
@@ -221,8 +228,17 @@ export class HouseholdService {
       .from(pushTokens)
       .innerJoin(householdMembers, eq(householdMembers.userId, pushTokens.userId))
       .innerJoin(users, eq(users.id, pushTokens.userId))
+      .leftJoin(
+        userSettings,
+        and(eq(userSettings.ownerId, pushTokens.userId), isNull(userSettings.deletedAt)),
+      )
       .where(
-        and(eq(householdMembers.householdId, householdId), sql`${pushTokens.userId} <> ${actorId}`),
+        and(
+          eq(householdMembers.householdId, householdId),
+          sql`${pushTokens.userId} <> ${actorId}`,
+          // Respect the member's "Household" notification switch (on by default).
+          sql`coalesce((${userSettings.data} -> 'notifications' ->> 'household')::boolean, true)`,
+        ),
       );
     const body: Record<string, string> = {
       fr: `${actor?.displayName} a rejoint votre foyer`,
@@ -233,7 +249,7 @@ export class HouseholdService {
     };
     if (!tokens.length) return;
     try {
-      await this.d.push.send(
+      const { invalidTokens } = await this.d.push.send(
         tokens.map((t) => ({
           to: t.token,
           title: 'PepperedApron',
@@ -241,6 +257,8 @@ export class HouseholdService {
           data: { type: 'household' },
         })),
       );
+      if (invalidTokens.length)
+        await this.d.db.delete(pushTokens).where(inArray(pushTokens.token, invalidTokens));
     } catch (e) {
       console.error('[push] household notification failed', (e as Error).message);
     }

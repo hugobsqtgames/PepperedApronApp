@@ -124,6 +124,7 @@ export default function TabsLayout() {
           iconActive={tab.iconActive}
           label={t(`tabs.${tab.label}`)}
           vertical={vertical}
+          testID={`tab-${tab.name}`}
         />
       </TabTrigger>
     ));
