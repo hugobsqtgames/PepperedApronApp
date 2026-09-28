@@ -534,3 +534,27 @@ describe('robustness', () => {
     void uniqueEmail;
   });
 });
+
+describe('retention', () => {
+  it('purges analytics after 13 months and support data after 3 years', async () => {
+    const { analyticsEvents, contactMessages } = await import('../src/db/schema');
+    const { sql } = await import('drizzle-orm');
+    const { AccountService } = await import('../src/services/account');
+    await ctx.db.insert(analyticsEvents).values([
+      { name: 'old_event_e2e', day: '2024-01-01', createdAt: sql`now() - interval '14 months'` },
+      { name: 'recent_event_e2e', day: '2026-01-01' },
+    ] as never);
+    await ctx.db.insert(contactMessages).values({
+      email: 'old@example.com',
+      subject: 'Old',
+      message: 'Old message',
+      createdAt: sql`now() - interval '4 years'`,
+    } as never);
+    await new AccountService(ctx.deps).purgeTombstones();
+    const names = (await ctx.db.select().from(analyticsEvents)).map((e) => e.name);
+    expect(names).not.toContain('old_event_e2e');
+    expect(names).toContain('recent_event_e2e');
+    const msgs = await ctx.db.select().from(contactMessages);
+    expect(msgs.some((m) => m.email === 'old@example.com')).toBe(false);
+  });
+});

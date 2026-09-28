@@ -202,5 +202,13 @@ export class AccountService {
       sql`DELETE FROM sync_ops WHERE created_at < now() - interval '30 days'`,
     );
     await this.d.db.delete(sessions).where(sql`${sessions.expiresAt} < now() - interval '30 days'`);
+    // Retention periods published in the privacy policy (docs/PRIVACY.md).
+    await this.d.db
+      .delete(analyticsEvents)
+      .where(sql`${analyticsEvents.createdAt} < now() - interval '13 months'`);
+    await this.d.db
+      .delete(contactMessages)
+      .where(sql`${contactMessages.createdAt} < now() - interval '3 years'`);
+    await this.d.db.delete(reports).where(sql`${reports.createdAt} < now() - interval '3 years'`);
   }
 }

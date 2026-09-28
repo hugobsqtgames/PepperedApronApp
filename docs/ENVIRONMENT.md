@@ -11,7 +11,7 @@ L'API valide toute sa configuration au démarrage (zod) et **refuse de démarrer
 | `PORT` / `HOST` | `3000` / `0.0.0.0` | écoute HTTP |
 | `DATABASE_URL` | — | PostgreSQL (obligatoire) |
 | `DATABASE_POOL_MAX` | `10` | connexions par instance |
-| `JWT_SECRET` | — | ≥ 32 caractères aléatoires (`openssl rand -base64 48`) ; le changer déconnecte tout le monde sous 15 min |
+| `JWT_SECRET` | — | ≥ 32 caractères aléatoires (`openssl rand -base64 48`) ; le changer invalide seulement les jetons d'accès en cours : les apps en obtiennent un nouveau via leur jeton de rafraîchissement, sans déconnexion |
 | `ACCESS_TOKEN_TTL_SECONDS` | `900` | durée du jeton d'accès |
 | `REFRESH_TOKEN_TTL_DAYS` | `90` | durée d'une session d'appareil sans utilisation |
 | `API_PUBLIC_URL` | — | URL publique de l'API |

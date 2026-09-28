@@ -92,4 +92,4 @@ Les comptes listés dans `ADMIN_EMAILS` (e-mail vérifié) voient l'espace « Ad
 
 ## Tâches de maintenance
 
-Exécutées par chaque instance (idempotentes) : purge des fichiers supprimés (toutes les 10 min) ; purge quotidienne des tombstones de plus de 90 jours (avec mise à jour de l'horizon de synchro), des opérations de synchro de plus de 30 jours et des sessions expirées.
+Exécutées par chaque instance (idempotentes) : purge des fichiers supprimés (toutes les 10 min) ; purge quotidienne des tombstones de plus de 90 jours (avec mise à jour de l'horizon de synchro), des opérations de synchro de plus de 30 jours, des sessions expirées, des événements d'analyse de plus de 13 mois, des messages et signalements de plus de 3 ans.
