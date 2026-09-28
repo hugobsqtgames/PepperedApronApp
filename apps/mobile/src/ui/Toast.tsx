@@ -30,7 +30,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   const anim = useRef(new Animated.Value(0)).current;
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const insets = useSafeAreaInsets();
-  const { colors } = useTheme();
+  const { colors, dark } = useTheme();
 
   const show = useCallback(
     (text: string, opts: { tone?: ToastMsg['tone']; action?: ToastMsg['action'] } = {}) => {
@@ -100,7 +100,11 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                 }}
                 hitSlop={10}
               >
-                <Text variant="callout" weight="700" style={{ color: colors.accent }}>
+                <Text
+                  variant="callout"
+                  weight="700"
+                  style={{ color: dark ? '#A84A1A' : '#E8894F' }}
+                >
                   {msg.action.label}
                 </Text>
               </Pressable>

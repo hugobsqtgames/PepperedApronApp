@@ -36,6 +36,8 @@ export interface ThemeColors {
   accent: string;
   onAccent: string;
   accentSoft: string;
+  /** Paprika for text: the brand paprika is too light for small text (WCAG AA 4.5:1). */
+  accentText: string;
   danger: string;
   dangerSoft: string;
   success: string;
@@ -53,14 +55,15 @@ export const lightColors: ThemeColors = {
   line: palette.sand,
   text: palette.ink,
   textMuted: '#5E655F',
-  textSubtle: '#8A8F88',
+  textSubtle: '#646962',
   primary: palette.forest,
   onPrimary: palette.cream,
   primarySoft: '#DDE8E1',
   accent: palette.paprika,
   onAccent: '#FFFFFF',
   accentSoft: '#F8E3D5',
-  danger: '#B3412A',
+  accentText: '#A84A1A',
+  danger: '#A33A25',
   dangerSoft: '#F6DDD6',
   success: palette.forest,
   overlay: 'rgba(18, 24, 20, 0.45)',
@@ -77,13 +80,14 @@ export const darkColors: ThemeColors = {
   line: palette.nightLine,
   text: palette.parchment,
   textMuted: '#B3AC9F',
-  textSubtle: '#81796E',
+  textSubtle: '#958D81',
   primary: palette.sage,
   onPrimary: '#0E2218',
   primarySoft: '#1F3A2D',
   accent: palette.paprikaLight,
   onAccent: '#1D0F06',
   accentSoft: '#3A2518',
+  accentText: palette.paprikaLight,
   danger: '#EC8B73',
   dangerSoft: '#3B211B',
   success: palette.sage,

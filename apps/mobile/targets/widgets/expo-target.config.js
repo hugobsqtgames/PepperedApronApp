@@ -10,7 +10,7 @@ module.exports = (config) => ({
     $widgetBackground: { light: '#F7F1E6', dark: '#121814' },
     background: { light: '#F7F1E6', dark: '#121814' },
     forest: { light: '#1F4D3A', dark: '#86C1A2' },
-    paprika: { light: '#D2642A', dark: '#E8894F' },
+    paprika: { light: '#A84A1A', dark: '#E8894F' },
     ink: { light: '#1F2A24', dark: '#F2ECE1' },
     muted: { light: '#5E655F', dark: '#B3AC9F' },
   },

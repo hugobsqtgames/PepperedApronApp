@@ -28,7 +28,8 @@ export function Text({
       maxFontSizeMultiplier={maxFontSizeMultiplier ?? (display ? 1.4 : 2)}
       style={[
         t,
-        { color: colors[color] },
+        // Text never uses the raw brand paprika: it lacks contrast at small sizes.
+        { color: color === 'accent' ? colors.accentText : colors[color] },
         align ? { textAlign: align } : null,
         weight ? { fontWeight: weight } : null,
         style,
