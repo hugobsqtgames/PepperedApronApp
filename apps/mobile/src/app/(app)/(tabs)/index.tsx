@@ -115,6 +115,14 @@ export default function Home() {
         </View>
         {!layout.sidebar ? (
           <IconButton
+            icon="heart-outline"
+            label={t('tabs.favorites')}
+            onPress={() => router.push('/favorites')}
+            testID="open-favorites"
+          />
+        ) : null}
+        {!layout.sidebar ? (
+          <IconButton
             icon="person-circle-outline"
             label={t('tabs.profile')}
             onPress={() => router.push('/profile')}

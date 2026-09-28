@@ -42,7 +42,9 @@ name: Create a recipe, favorite it, shop for it, cook it
 - tapOn:
     id: item-check-farine
 - tapOn:
-    id: tab-favorites
+    id: tab-index
+- tapOn:
+    id: open-favorites
 - tapOn: Crêpes E2E
 - scrollUntilVisible:
     element:

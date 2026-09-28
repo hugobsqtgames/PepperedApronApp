@@ -116,8 +116,10 @@ export default function TabsLayout() {
   const insets = useSafeAreaInsets();
   const layout = useLayout();
 
+  // Phone bar: 2 tabs | + | 2 tabs, so the add button sits exactly in the middle.
+  // Favourites stay reachable from the home header, home sections and the profile.
   const triggers = (vertical: boolean) =>
-    TABS.map((tab) => (
+    TABS.filter((tab) => vertical || tab.name !== 'favorites').map((tab) => (
       <TabTrigger key={tab.name} name={tab.name} asChild>
         <TabButton
           icon={tab.icon}
