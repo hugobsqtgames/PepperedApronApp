@@ -313,6 +313,14 @@ describe('share links + web fallback page', () => {
       expect(fr.statusCode).toBe(200);
       expect(fr.headers['set-cookie']).toBeUndefined();
     }
+    const support = await ctx.app.inject({
+      method: 'GET',
+      url: '/support',
+      headers: { 'accept-language': 'de-DE,de;q=0.9' },
+    });
+    expect(support.statusCode).toBe(200);
+    expect(support.body).toContain('Hilfe &#38; Support');
+    expect(support.body).not.toContain('<script');
   });
 });
 

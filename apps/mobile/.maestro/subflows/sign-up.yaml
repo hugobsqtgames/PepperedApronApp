@@ -1,0 +1,29 @@
+appId: ${APP_ID}
+---
+- launchApp:
+    clearState: true
+    clearKeychain: true
+- evalScript: ${output.email = 'e2e.' + Date.now() + '@example.com'}
+- tapOn:
+    id: onboarding-start
+- tapOn:
+    id: signup-name
+- inputText: Camille
+- tapOn:
+    id: signup-email
+- inputText: ${output.email}
+- tapOn:
+    id: signup-password
+- inputText: correct-horse-battery
+- hideKeyboard
+- tapOn:
+    id: signup-submit
+# First launch asks for analytics/ads consent once.
+- extendedWaitUntil:
+    visible:
+      id: consent-refuse
+    timeout: 15000
+- tapOn:
+    id: consent-refuse
+- assertVisible:
+    id: home-empty

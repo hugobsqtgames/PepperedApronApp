@@ -1,0 +1,7 @@
+# Maestro E2E suite — run against a development or staging build:
+#   maestro test apps/mobile/.maestro -e APP_ID=app.pepperedapron.dev
+# The API configured in the build must be reachable (e-mails are not required: flows use password sign-up).
+flows:
+  - '*.yaml'
+executionOrder:
+  continueOnFailure: false

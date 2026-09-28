@@ -1,0 +1,31 @@
+appId: ${APP_ID}
+name: Plan a meal from a recipe and send the week to the shopping list
+---
+- runFlow: subflows/sign-up.yaml
+- tapOn:
+    id: tab-add
+- tapOn:
+    id: add-blank
+- tapOn:
+    id: editor-title
+- inputText: Soupe du soir
+- tapOn:
+    id: editor-ingredient-0
+- inputText: 1 kg carottes
+- hideKeyboard
+- tapOn:
+    id: editor-save
+- tapOn:
+    id: recipe-plan
+- tapOn:
+    id: plan-confirm
+- back
+- tapOn:
+    id: tab-planning
+- assertVisible: Soupe du soir
+- tapOn:
+    id: plan-to-shopping
+- tapOn:
+    id: tab-shopping
+- assertVisible:
+    id: item-check-carottes

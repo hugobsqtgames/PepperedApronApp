@@ -1,0 +1,24 @@
+appId: ${APP_ID}
+name: Import a recipe from pasted text, then find it with a natural-language search
+---
+- runFlow: subflows/sign-up.yaml
+- tapOn:
+    id: tab-add
+- tapOn:
+    id: add-text
+- tapOn:
+    id: import-text
+- inputText: "Poulet rapide au citron\nPour 2 personnes\nPréparation : 10 min\nCuisson : 15 min\n\nIngrédients\n2 filets de poulet\n1 citron\n\nÉtapes\nSaisir le poulet.\nArroser de citron."
+- hideKeyboard
+- tapOn:
+    id: import-text-submit
+- tapOn:
+    id: editor-save
+- assertVisible: Poulet rapide au citron
+- back
+- tapOn:
+    id: tab-search
+- tapOn:
+    id: search-input
+- inputText: poulet rapide
+- assertVisible: Poulet rapide au citron

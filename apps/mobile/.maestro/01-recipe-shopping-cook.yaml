@@ -1,0 +1,53 @@
+appId: ${APP_ID}
+name: Create a recipe, favorite it, shop for it, cook it
+---
+- runFlow: subflows/sign-up.yaml
+- tapOn:
+    id: tab-add
+- tapOn:
+    id: add-blank
+- tapOn:
+    id: editor-title
+- inputText: Crêpes E2E
+- tapOn:
+    id: editor-ingredient-0
+- inputText: 250 g farine
+- tapOn:
+    id: editor-add-ingredient
+- tapOn:
+    id: editor-ingredient-1
+- inputText: 3 oeufs
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      id: editor-step-0
+- tapOn:
+    id: editor-step-0
+- inputText: Mélanger la farine et les oeufs.
+- hideKeyboard
+- tapOn:
+    id: editor-save
+- assertVisible:
+    id: recipe-title
+- assertVisible: Crêpes E2E
+- tapOn:
+    id: recipe-favorite
+- tapOn:
+    id: recipe-add-shopping
+- back
+- tapOn:
+    id: tab-shopping
+- assertVisible:
+    id: item-check-farine
+- tapOn:
+    id: item-check-farine
+- tapOn:
+    id: tab-favorites
+- tapOn: Crêpes E2E
+- scrollUntilVisible:
+    element:
+      id: start-cooking
+- tapOn:
+    id: start-cooking
+- tapOn:
+    id: cook-finish

@@ -1,3 +1,4 @@
+import { supportPage } from '../web/support';
 import type { FastifyInstance, FastifyReply } from 'fastify';
 import { and, eq, isNull } from 'drizzle-orm';
 import { formatAmount, getUnit, unitLabel, type Ingredient, type Step } from '@pepperedapron/core';
@@ -231,6 +232,13 @@ export async function webRoutes(app: FastifyInstance, { deps }: RouteCtx) {
       return html(reply, page({ title: l.title, lang, body: l.html }));
     });
   }
+
+  // Support page (App Store "Support URL"), in the visitor's language.
+  app.get('/support', async (req, reply) => {
+    const lang = pickLang(req.headers['accept-language']);
+    const s = supportPage(lang, deps.env.LEGAL_CONTACT_EMAIL, deps.env.WEB_PUBLIC_URL);
+    return html(reply, page({ title: s.title, lang, body: s.html }));
+  });
 
   // Universal links (iOS) and App Links (Android).
   app.get('/.well-known/apple-app-site-association', async (_req, reply) => {

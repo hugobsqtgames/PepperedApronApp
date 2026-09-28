@@ -345,6 +345,7 @@ export default function RecipeDetail() {
           icon="calendar-outline"
           label={t('recipe.addToPlan')}
           onPress={() => router.push({ pathname: '/plan/pick', params: { recipeId: recipe.id } })}
+          testID="recipe-plan"
         />
         <IconButton
           icon="cart-outline"
