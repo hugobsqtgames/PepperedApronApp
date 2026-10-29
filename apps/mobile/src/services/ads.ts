@@ -29,9 +29,18 @@ export function adsEnabled() {
   return bannerUnitId('test') !== null;
 }
 
+let starting: Promise<void> | null = null;
+
 /** UMP consent (GDPR) first, then SDK initialisation. Safe to call several times. */
-export async function initAds() {
-  if (state.ready || !adsEnabled()) return;
+export function initAds(): Promise<void> {
+  if (state.ready || !adsEnabled()) return Promise.resolve();
+  starting ??= start().finally(() => {
+    starting = null;
+  });
+  return starting;
+}
+
+async function start() {
   try {
     const { default: mobileAds, AdsConsent } = await import('react-native-google-mobile-ads');
     await AdsConsent.requestInfoUpdate();

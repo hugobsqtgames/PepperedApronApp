@@ -11,7 +11,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { useRepos } from '../hooks/runtime';
 import { ONBOARDING_PHOTOS } from '../lib/categories';
-import { initAds } from '../services/ads';
 import { useTheme } from '../theme/ThemeProvider';
 import { radius, space } from '../theme/tokens';
 import { Button, Text } from '../ui';
@@ -35,11 +34,8 @@ export default function Welcome() {
     if (viewableItems[0]?.index != null) setIndex(viewableItems[0].index);
   }).current;
   const last = index === SLIDES.length - 1;
-  const start = async () => {
-    await repos.updateSettings({ onboardingDone: true });
-    // Google's consent form (GDPR) is shown once, only where required, before any ad request.
-    setTimeout(() => void initAds(), 600);
-  };
+  // The app then opens and asks for ad consent once (Google's form, only where required).
+  const start = () => repos.updateSettings({ onboardingDone: true });
   const photoH = Math.min(height * 0.5, 520);
 
   return (
