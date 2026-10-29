@@ -6,67 +6,61 @@
 |---|---|---|
 | Node.js | 22.x | `node -v` |
 | pnpm | 10.33 | `corepack enable` (la version est fixée dans `package.json`) |
-| PostgreSQL | 16 | ou `pnpm db:local` (cluster jetable, sans Docker) |
-| Xcode | 26+ | pour iOS, sur Mac uniquement |
-| Android Studio | récent | SDK et émulateur Android |
-| EAS CLI | ≥ 16 | `npm i -g eas-cli` pour les builds cloud |
+| Xcode | 26+ | pour iPhone/iPad, sur Mac uniquement |
+| Android Studio | récent | SDK, émulateur, ou téléphone en débogage USB |
+| EAS CLI | ≥ 16 | `npm i -g eas-cli`, seulement pour les builds cloud |
 
-## 2. Dépendances et base de données
+Aucun serveur ni base de données : l'app est autonome.
+
+## 2. Lancer l'app
 
 ```bash
 pnpm install
-pnpm db:local            # démarre Postgres sur 127.0.0.1:54329 (bases pepperedapron et pepperedapron_test)
-pnpm db:local stop       # l'arrêter
-```
-
-Avec un Postgres existant, créez les deux bases et adaptez `DATABASE_URL` / `TEST_DATABASE_URL`.
-
-## 3. API
-
-```bash
-cp apps/api/.env.example apps/api/.env      # valeurs de dev prêtes à l'emploi
-pnpm --filter @pepperedapron/api migrate    # applique apps/api/drizzle/*.sql
-pnpm --filter @pepperedapron/api dev        # rechargement à chaud, http://localhost:3000
-curl localhost:3000/health                  # {"ok":true}
-```
-
-En développement : e-mails affichés dans la console (liens de vérification / réinitialisation inclus), photos stockées dans `apps/api/.storage`, pas de push.
-
-Pour devenir administrateur : mettez votre e-mail dans `ADMIN_EMAILS`, puis vérifiez l'e-mail du compte et reconnectez-vous.
-
-## 4. Application mobile
-
-```bash
-cp apps/mobile/.env.example apps/mobile/.env
-```
-
-- Simulateur iOS : `EXPO_PUBLIC_API_URL=http://localhost:3000`.
-- Téléphone physique ou émulateur Android : utilisez l'IP du poste sur le réseau local (`http://192.168.x.y:3000`), ou `http://10.0.2.2:3000` pour l'émulateur Android.
-
-L'app contient des modules natifs : il faut un **build de développement** (une fois), puis le bundler Metro suffit.
-
-```bash
 cd apps/mobile
-npx expo run:ios                    # Mac : compile et installe sur le simulateur
-npx expo run:android                # émulateur ou appareil USB
-# ou, sans Mac :
-eas build --profile development --platform ios     # appareil enregistré (ad hoc)
-eas build --profile development-simulator --platform ios
-npx expo start --dev-client         # ensuite, à chaque session
+cp .env.example .env     # facultatif : tout a une valeur par défaut en développement
 ```
+
+L'app contient des modules natifs : il faut un **build de développement** (une fois, puis à chaque ajout de module natif). Ensuite le bundler Metro suffit.
+
+```bash
+# Mac + iPhone/iPad
+npx expo run:ios                      # simulateur
+npx expo run:ios --device             # iPhone branché (choisir l'équipe de signature dans Xcode la 1re fois)
+
+# Android
+npx expo run:android                  # émulateur ou téléphone branché (débogage USB activé)
+
+# Ensuite, à chaque session
+npx expo start --dev-client
+```
+
+Sans Mac : `eas build --profile development --platform ios` (appareil enregistré) ou `--profile development-simulator`.
 
 `npx expo prebuild --clean` régénère `ios/` et `android/` (non versionnés) à partir de `app.config.ts`.
 
+### iCloud en développement
+
+- La synchronisation iCloud ne fonctionne que sur un **appareil connecté à un compte iCloud** (simulateur : se connecter dans Réglages du simulateur ; c'est plus fiable sur un vrai iPhone).
+- Le conteneur `iCloud.app.pepperedapron.dev` doit exister dans le compte développeur Apple : il est créé automatiquement par EAS, ou dans Xcode (*Signing & Capabilities → iCloud → CloudKit containers / iCloud Documents*) lors du premier build signé.
+- Pour tester la synchro : installer le même build sur un iPhone et un iPad (ou un simulateur) avec le même identifiant Apple ; Réglages → Mes données affiche l'état.
+
 ### Variantes
 
-`APP_VARIANT=development|staging|production` change l'identifiant (`app.pepperedapron.dev`, `.staging`, sans suffixe), le nom affiché, le domaine des liens et l'App Group. Les trois variantes s'installent côte à côte.
+`APP_VARIANT=development|staging|production` change l'identifiant (`app.pepperedapron.dev`, `.staging`, sans suffixe), le nom affiché, l'App Group et le conteneur iCloud. Les trois variantes s'installent côte à côte, chacune avec ses propres données.
 
-## 5. Problèmes fréquents
+## 3. Site statique
+
+```bash
+pnpm build:site                       # apps/site/dist
+npx serve apps/site/dist              # aperçu local
+```
+
+## 4. Problèmes fréquents
 
 | Symptôme | Solution |
 |---|---|
-| `initdb: cannot be run as root` | le script bascule déjà sur l'utilisateur `postgres` ; vérifiez qu'il existe |
-| L'app affiche « Pas de connexion » sur un téléphone | `EXPO_PUBLIC_API_URL` pointe sur `localhost` : utilisez l'IP du poste |
-| « Sign in with Apple » échoue en dev | ajoutez `app.pepperedapron.dev` à `APPLE_AUDIENCES` côté API |
-| Widgets vides | ouvrez l'app une fois connecté : elle écrit les données dans l'App Group |
+| « Expo Go » ne charge pas l'app | normal : utiliser un build de développement (`npx expo run:ios` / `run:android`) |
+| Réglages → Mes données indique « iCloud indisponible » | se connecter à iCloud sur l'appareil ; vérifier que iCloud Drive est activé |
+| Les modifications n'arrivent pas sur l'autre appareil | iCloud transfère les fichiers en différé (quelques secondes à quelques minutes) ; tirer l'accueil vers le bas pour relancer |
+| Widgets vides | ouvrir l'app une fois : elle écrit les données dans l'App Group |
 | Échec de prebuild sur les cibles iOS | `pnpm install` doit avoir appliqué `patches/@bacons__apple-targets@5.0.0.patch` |

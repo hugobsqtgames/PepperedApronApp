@@ -19,17 +19,17 @@ Le texte ne promet que ce que l'app fait réellement (import TikTok/Instagram li
 | | |
 |---|---|
 | Catégorie | Cuisine et boissons (App Store : *Food & Drink*, secondaire *Lifestyle*) ; Play : *Food & Drink* |
-| Âge | 4+ / PEGI 3 — contenu communautaire modéré (signalements, dépublication) : répondre « oui » à *User-generated content* avec les moyens de modération |
+| Âge | 4+ / PEGI 3 — aucun contenu généré par d'autres utilisateurs (pas de communauté), publicité |
 | Prix | Gratuit, contient des publicités, aucun achat intégré |
-| URL d'assistance | `https://pepperedapron.app/support` (FAQ en 5 langues + contact) |
-| Politique de confidentialité | `https://pepperedapron.app/legal/privacy` |
+| URL d'assistance | `https://pepperedapron.app/<langue>/support/` (FAQ en 5 langues + contact) |
+| Politique de confidentialité | `https://pepperedapron.app/<langue>/privacy/` |
 | Copyright | © 2026 PepperedApron |
 
 ## Visuels
 
 - Icône : générée par `tools/brand` (`apps/mobile/assets/icon.png`, 1024×1024, sans transparence).
 - Bannière Google Play 1024×500 : [`assets/feature-graphic-<langue>.png`](assets/) — `node tools/brand/src/store.mjs` pour les régénérer.
-- Captures d'écran : à réaliser sur un build de production avec un compte de démonstration rempli (recettes avec photos, semaine planifiée, liste en cours), mode clair, heure 9:41, batterie pleine.
+- Captures d'écran : à réaliser sur un build de production rempli de données de démonstration (recettes avec photos, semaine planifiée, liste en cours ; importer un fichier de sauvegarde préparé via Réglages → Mes données), mode clair, heure 9:41, batterie pleine.
 
 | Plateforme | Tailles exigées |
 |---|---|
@@ -46,13 +46,12 @@ Ordre et écran pour chaque légende (`screenshots[i]`) :
 4. Liste de courses groupée par rayons
 5. Recherche « poulet rapide » avec résultats
 6. Mode cuisine avec un minuteur + Live Activity sur l'écran verrouillé
-7. Écran Foyer et bandeau hors ligne
+7. Réglages → iCloud « À jour » (iPhone et iPad côte à côte)
 
 Ajouter la légende en haut de chaque capture (Fraunces 700, crème sur fond vert forêt `#1F4D3A`) — même charte que la bannière.
 
 ## Notes pour la revue Apple / Google
 
-- Fournir un **compte de démonstration** (e-mail + mot de passe) avec des données ; les reviewers ne doivent pas avoir à créer de contenu.
-- Expliquer : l'extension de partage importe le lien et les métadonnées publiques ; aucune IA ; la publicité est désactivée en mode cuisine.
-- Sign in with Apple est proposé dès que Google/Facebook le sont (règle 4.8).
-- La suppression de compte est accessible dans Profil → Mes données (règle 5.1.1(v)).
+- Aucun compte : le reviewer ouvre l'app et l'utilise directement. Joindre un fichier de sauvegarde de démonstration (Réglages → Mes données → Importer) pour qu'il n'ait pas à créer de contenu.
+- Expliquer : l'extension de partage importe le lien et les métadonnées publiques ; aucune IA ; la publicité est désactivée en mode cuisine ; les données restent sur l'appareil et dans l'iCloud de l'utilisateur.
+- Pas de connexion tierce, donc pas de Sign in with Apple requis (règle 4.8) ; pas de compte, donc pas d'obligation de suppression de compte (5.1.1(v)) — l'effacement des données reste disponible dans Réglages → Mes données.
