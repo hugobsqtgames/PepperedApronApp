@@ -133,4 +133,44 @@ Faites cuire les pâtes puis mélangez avec la crème et le zeste du citron, c'e
     }
     expect(parseRecipeText('').title).toBeNull();
   });
+
+  it('reads text recognised from a photo of a printed card (wrapped lines, ligatures)', () => {
+    const ocr = [
+      'Gâteau au yaourt',
+      'Pour 6 personnes',
+      'Préparation : 10 min Cuisson : 35 min',
+      'Ingrédients',
+      '1 pot de yaourt nature',
+      '2 pots de sucre',
+      '3 pots de farine',
+      '3 œufs',
+      "1/2 pot d'huile",
+      '1 sachet de levure',
+      'Préparation',
+      '1. Préchauffez le four à 180 °C.',
+      '2. Mélangez le yaourt, le sucre et les',
+      'œufs.',
+      '3. Ajoutez la farine, la levure puis',
+      "l'huile.",
+      '4. Versez dans un moule beurré et',
+      'enfournez 35 minutes.',
+    ].join('\n');
+    const d = parseRecipeText(ocr);
+    expect(d).toMatchObject({
+      title: 'Gâteau au yaourt',
+      servings: 6,
+      prepMinutes: 10,
+      cookMinutes: 35,
+    });
+    expect(d.ingredients).toHaveLength(6);
+    expect(d.ingredients[4]).toMatchObject({ quantity: 0.5 });
+    expect(d.steps.map((s) => s.text)).toEqual([
+      'Préchauffez le four à 180 °C.',
+      'Mélangez le yaourt, le sucre et les œufs.',
+      "Ajoutez la farine, la levure puis l'huile.",
+      'Versez dans un moule beurré et enfournez 35 minutes.',
+    ]);
+    expect(d.steps[3]!.timerSeconds).toBe(35 * 60);
+    expect(d.unparsed).toEqual([]);
+  });
 });

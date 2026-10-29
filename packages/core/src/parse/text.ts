@@ -241,7 +241,7 @@ export function parseRecipeText(input: string): RecipeDraft {
       if (
         prev &&
         !STEP_PREFIX.test(raw) &&
-        /^[a-zà-ÿ]/.test(stepText) &&
+        /^\p{Ll}/u.test(stepText) &&
         !/[.!?]$/.test(prev.text)
       ) {
         prev.text = `${prev.text} ${stepText}`;
