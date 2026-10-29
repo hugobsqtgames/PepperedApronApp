@@ -19,7 +19,7 @@ pnpm test:core | test:client | test:mobile | test:site
 
 ### E2E (Maestro)
 
-Sur Mac avec un simulateur, ou un émulateur Android, avec un build de développement installé (aucun serveur nécessaire) :
+Sur Mac avec un simulateur iOS et un build de développement installé (aucun serveur nécessaire) :
 
 ```bash
 curl -Ls https://get.maestro.mobile.dev | bash
@@ -30,8 +30,8 @@ Les scénarios s'appuient sur des `testID` stables (pas sur les textes traduits)
 
 ## Intégration continue
 
-`.github/workflows/ci.yml` à chaque push et pull request : lint, format, typecheck, tests core/client/site, tests mobile, bundles Metro iOS et Android.
+`.github/workflows/ci.yml` à chaque push et pull request : lint, format, typecheck, tests core/client/site, tests mobile, bundle Metro iOS.
 
 ## Vérifications manuelles avant publication
 
-Checklist dans [RELEASE.md](RELEASE.md#checklist-avant-soumission) : appareils réels (iPhone petit et grand écran, iPad en portrait/paysage/Split View, Android), synchro iCloud entre iPhone et iPad, VoiceOver/TalkBack, grande taille de texte, mode sombre, mode avion, extension de partage depuis TikTok/Instagram/Safari/Photos, widgets, Live Activity, notifications.
+Checklist dans [RELEASE.md](RELEASE.md#checklist-avant-soumission) : appareils réels (iPhone petit et grand écran, iPad en portrait/paysage/Split View), synchro iCloud entre iPhone et iPad, VoiceOver, grande taille de texte, mode sombre, mode avion, extension de partage depuis TikTok/Instagram/Safari/Photos, widgets, Live Activity, notifications.

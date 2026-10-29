@@ -1,10 +1,5 @@
 import type { ConfigContext, ExpoConfig } from 'expo/config';
-import {
-  withAndroidManifest,
-  withEntitlementsPlist,
-  withInfoPlist,
-  type ConfigPlugin,
-} from 'expo/config-plugins';
+import { withEntitlementsPlist, withInfoPlist, type ConfigPlugin } from 'expo/config-plugins';
 
 /** Several plugins add the same App Group; keep the entitlement list unique. */
 const withUniqueAppGroups: ConfigPlugin = (c) =>
@@ -24,20 +19,6 @@ const withPrivateICloudContainer: ConfigPlugin = (c) =>
       Record<string, Record<string, unknown>> | undefined;
     for (const v of Object.values(containers ?? {}))
       v.NSUbiquitousContainerIsDocumentScopePublic = false;
-    return m;
-  });
-
-/**
- * Android's speech recognizer needs RECORD_AUDIO even to transcribe a file (imported videos), but
- * expo-image-picker blocks it when its microphone option is off. Applied around the config (before
- * `plugins` are registered), so this manifest change runs after the picker's.
- */
-const withSpeechRecognitionPermission: ConfigPlugin = (c) =>
-  withAndroidManifest(c, (m) => {
-    const name = 'android.permission.RECORD_AUDIO';
-    const manifest = m.modResults.manifest;
-    const perms = (manifest['uses-permission'] ?? []).filter((p) => p.$['android:name'] !== name);
-    manifest['uses-permission'] = [...perms, { $: { 'android:name': name } }];
     return m;
   });
 
@@ -63,6 +44,8 @@ const buildConfig = ({ config }: ConfigContext): ExpoConfig => ({
       ? 'PepperedApron'
       : `PepperedApron ${variant === 'development' ? 'Dev' : 'Beta'}`,
   slug: 'pepperedapron',
+  // iPhone and iPad only.
+  platforms: ['ios'],
   scheme: 'pepperedapron',
   version: '2.0.0',
   orientation: 'default',
@@ -119,24 +102,6 @@ const buildConfig = ({ config }: ConfigContext): ExpoConfig => ({
       ],
     },
   },
-  android: {
-    package: bundleId,
-    adaptiveIcon: {
-      backgroundColor: '#1F4D3A',
-      foregroundImage: './assets/android-icon-foreground.png',
-      backgroundImage: './assets/android-icon-background.png',
-      monochromeImage: './assets/android-icon-monochrome.png',
-    },
-    predictiveBackGestureEnabled: true,
-    // The local database and photos are included in the user's Google device backup.
-    allowBackup: true,
-    permissions: [
-      'android.permission.CAMERA',
-      'android.permission.POST_NOTIFICATIONS',
-      'android.permission.SCHEDULE_EXACT_ALARM',
-    ],
-    blockedPermissions: ['android.permission.ACCESS_FINE_LOCATION'],
-  },
   plugins: [
     'expo-router',
     'expo-sqlite',
@@ -168,7 +133,7 @@ const buildConfig = ({ config }: ConfigContext): ExpoConfig => ({
         microphonePermission: false,
       },
     ],
-    ['expo-notifications', { icon: './assets/notification-icon.png', color: '#1F4D3A' }],
+    'expo-notifications',
     [
       'expo-share-intent',
       {
@@ -180,7 +145,6 @@ const buildConfig = ({ config }: ConfigContext): ExpoConfig => ({
         },
         iosShareExtensionName: 'PepperedApron',
         iosAppGroupIdentifier: appGroup,
-        androidIntentFilters: ['text/*', 'image/*'],
       },
     ],
     // Order matters: apple-targets must create the widget target before expo-live-activity adds its own.
@@ -198,6 +162,4 @@ const buildConfig = ({ config }: ConfigContext): ExpoConfig => ({
 });
 
 export default (ctx: ConfigContext): ExpoConfig =>
-  withSpeechRecognitionPermission(
-    withPrivateICloudContainer(withUniqueAppGroups(buildConfig(ctx))),
-  ) as ExpoConfig;
+  withPrivateICloudContainer(withUniqueAppGroups(buildConfig(ctx))) as ExpoConfig;

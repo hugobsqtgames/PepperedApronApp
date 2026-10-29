@@ -19,7 +19,7 @@ interface PromptOpts {
 }
 const Ctx = createContext<(o: PromptOpts) => void>(() => undefined);
 
-/** Cross-platform text prompt (iOS Alert.prompt has no Android equivalent). */
+/** Text prompt matching the app's design (also used on iPad, where Alert.prompt looks out of place). */
 export function PromptProvider({ children }: { children: ReactNode }) {
   const { t } = useTranslation();
   const { colors } = useTheme();

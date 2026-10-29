@@ -54,7 +54,6 @@
   "scripts": {
     "start": "expo start",
     "ios": "expo run:ios",
-    "android": "expo run:android",
     "typecheck": "tsc --noEmit",
     "test": "jest",
     "lint": "eslint src",

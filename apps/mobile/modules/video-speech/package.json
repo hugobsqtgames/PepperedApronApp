@@ -1,7 +1,7 @@
 {
   "name": "video-speech",
   "version": "1.0.0",
-  "description": "On-device transcription of a video's speech (Apple Speech / Android SpeechRecognizer).",
+  "description": "On-device transcription of a video's speech (Apple Speech).",
   "main": "index.ts",
   "private": true
 }

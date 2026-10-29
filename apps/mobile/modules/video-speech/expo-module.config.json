@@ -1,5 +1,6 @@
 {
-  "platforms": ["apple", "android"],
-  "apple": { "modules": ["VideoSpeechModule"] },
-  "android": { "modules": ["app.pepperedapron.videospeech.VideoSpeechModule"] }
+  "platforms": ["apple"],
+  "apple": {
+    "modules": ["VideoSpeechModule"]
+  }
 }

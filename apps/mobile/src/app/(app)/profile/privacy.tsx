@@ -2,7 +2,6 @@ import { ScrollView, View } from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
 import { useTranslation } from 'react-i18next';
 import { sitePage } from '../../../services/env';
-import { CLOUD_SUPPORTED } from '../../../services/runtime';
 import { space } from '../../../theme/tokens';
 import { Card, Group, ListRow, Text } from '../../../ui';
 
@@ -24,9 +23,7 @@ export default function Privacy() {
       <Card>
         <View style={{ gap: space.sm }}>
           <Text variant="bodyStrong">{t('settings.privacyTitle')}</Text>
-          <Text color="textMuted">
-            {CLOUD_SUPPORTED ? t('settings.privacyBody') : t('settings.privacyBodyAndroid')}
-          </Text>
+          <Text color="textMuted">{t('settings.privacyBody')}</Text>
         </View>
       </Card>
       <Group>

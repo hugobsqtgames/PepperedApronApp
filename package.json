@@ -2,7 +2,7 @@
   "name": "pepperedapron",
   "private": true,
   "version": "2.0.0",
-  "description": "PepperedApron — recettes, planning de repas et listes de courses (iOS, iPadOS, Android). Sans compte ni serveur : données sur l'appareil et dans iCloud.",
+  "description": "PepperedApron — recettes, planning de repas et listes de courses (iPhone et iPad). Sans compte ni serveur : données sur l'appareil et dans iCloud.",
   "packageManager": "pnpm@10.33.0",
   "engines": {
     "node": ">=22"

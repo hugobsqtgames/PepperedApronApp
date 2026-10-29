@@ -52,8 +52,6 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm test:mobile
-      - name: Bundle iOS & Android (Metro)
+      - name: Bundle iOS (Metro)
         working-directory: apps/mobile
-        run: |
-          npx expo export --platform ios --output-dir dist-ios
-          npx expo export --platform android --output-dir dist-android
+        run: npx expo export --platform ios --output-dir dist-ios

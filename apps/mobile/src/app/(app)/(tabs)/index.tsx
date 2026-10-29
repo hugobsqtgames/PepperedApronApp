@@ -86,11 +86,7 @@ export default function Home() {
   const empty = data.library.length === 0;
 
   return (
-    <Screen
-      refreshing={refreshing}
-      onRefresh={rt.session?.cloud ? refresh : undefined}
-      testID="home"
-    >
+    <Screen refreshing={refreshing} onRefresh={refresh} testID="home">
       <View
         style={{
           flexDirection: 'row',

@@ -35,9 +35,6 @@
       "environment": "preview",
       "env": {
         "APP_VARIANT": "staging"
-      },
-      "android": {
-        "buildType": "apk"
       }
     },
     "production": {
@@ -46,18 +43,10 @@
       "autoIncrement": true,
       "env": {
         "APP_VARIANT": "production"
-      },
-      "android": {
-        "buildType": "app-bundle"
       }
     }
   },
   "submit": {
-    "production": {
-      "android": {
-        "track": "internal",
-        "releaseStatus": "draft"
-      }
-    }
+    "production": {}
   }
 }

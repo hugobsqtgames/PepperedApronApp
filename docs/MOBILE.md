@@ -1,11 +1,11 @@
 # Application mobile (`apps/mobile`)
 
-Expo SDK 57 · React Native 0.86 (nouvelle architecture) · Expo Router · TypeScript strict. Une base de code pour iPhone, iPad et Android.
+Expo SDK 57 · React Native 0.86 (nouvelle architecture) · Expo Router · TypeScript strict. Pour iPhone et iPad uniquement.
 
 ```
 app.config.ts           configuration native (variantes, permissions, plugins, cibles)
 eas.json                profils de build EAS
-assets/                 icônes (clair/sombre/teinté, Android adaptatif), splash, polices Fraunces, photos
+assets/                 icônes (clair/sombre/teinté), splash, polices Fraunces, photos
 locales/native/         textes système traduits (permissions, nom de l'app) en 5 langues
 targets/widgets/        extension WidgetKit (Swift)
 src/
@@ -28,7 +28,7 @@ Règle : les écrans ne contiennent pas de logique métier ; ils lisent via `use
 
 ## Navigation
 
-- iPhone / Android : barre d'onglets personnalisée (Accueil, Recherche, « + » au centre, Planning, Courses) ; Favoris et Réglages via les boutons de l'accueil.
+- iPhone : barre d'onglets personnalisée (Accueil, Recherche, « + » au centre, Planning, Courses) ; Favoris et Réglages via les boutons de l'accueil.
 - iPad (et grands écrans) : barre latérale, grilles multi-colonnes, largeur de lecture limitée.
 - Premier lancement : `Stack.Protected` affiche l'onboarding tant que `onboardingDone` est faux, puis l'app. Si la base locale ne peut pas s'ouvrir (stockage plein…), un écran d'erreur propose de réessayer.
 
@@ -42,11 +42,13 @@ Liens : seul le schéma `pepperedapron://` est utilisé (widgets, Live Activitie
 
 ## Extension de partage (import depuis TikTok, Instagram, Safari, Photos, Notes, Messages)
 
-`expo-share-intent` ajoute une extension iOS « PepperedApron » (texte, URL, page web, 1 image) et des filtres d'intent Android (`text/*`, `image/*`). L'extension transmet le contenu à l'app via l'App Group ; `(app)/_layout.tsx` l'oriente :
+`expo-share-intent` ajoute une extension iOS « PepperedApron » (texte, URL, page web, 1 image). L'extension transmet le contenu à l'app via l'App Group ; `(app)/_layout.tsx` l'oriente :
 
 - URL → import de lien directement depuis l'appareil (`services/importer.ts` + `packages/core/src/parse/url.ts` : légende de la page publique TikTok / description YouTube, et si la recette n'est qu'expliquée à l'oral, ses sous-titres automatiques publiés par la plateforme (ingrédients cités et phrases d'action, transcription complète dans les notes, sans IA) ; Instagram : légende de la page publique, ou de la page d'intégration officielle `/p/<code>/embed/captioned/` si la première demande une connexion, conseil « capture d'écran → Depuis une photo » pour les comptes privés ; JSON-LD, OpenGraph ; message honnête si la plateforme ne donne pas accès au contenu ; hors ligne, le lien est gardé comme source) ;
 - texte → structuration déterministe (titre, ingrédients, étapes) ;
 - image → photo de la recette ou lecture du texte sur l'appareil (OCR Apple Vision / ML Kit).
+
+Reel Instagram dont la recette n'est que dite à l'oral : l'app télécharge la vidéo publique dans le cache, le module local `modules/video-speech` (Swift) en extrait le son en 16 kHz mono et le fait transcrire par la reconnaissance vocale d'Apple **sur l'appareil** (`requiresOnDeviceRecognition`), puis le fichier est supprimé. Seule l'autorisation « Reconnaissance vocale » est demandée (pas le micro). Les ingrédients et étapes sont tirés de la transcription par les mêmes règles que les sous-titres TikTok/YouTube.
 
 Tout est modifiable avant enregistrement.
 
@@ -68,11 +70,11 @@ Aucune : pas de régie, pas d'analytics, pas de SDK de suivi.
 
 ## Accessibilité et confort
 
-Tailles dynamiques respectées (plafonnées pour les grands titres), libellés VoiceOver/TalkBack sur les contrôles, cibles tactiles ≥ 44 pt, contraste AA dans les deux thèmes, retours haptiques désactivables, mode sombre manuel ou automatique, alternatives au glisser-déposer (« Déplacer vers… », flèches haut/bas).
+Tailles dynamiques respectées (plafonnées pour les grands titres), libellés VoiceOver sur les contrôles, cibles tactiles ≥ 44 pt, contraste AA dans les deux thèmes, retours haptiques désactivables, mode sombre manuel ou automatique, alternatives au glisser-déposer (« Déplacer vers… », flèches haut/bas).
 
 ## Internationalisation
 
-`src/i18n/fr.ts` est la source et définit le type des clés ; `en`, `es`, `de`, `it` doivent avoir exactement les mêmes clés et variables (test `__tests__/i18n.test.ts`). Pluriels i18next (`_one`/`_other`). Textes système iOS/Android dans `locales/native/`. Unités : métrique par défaut, impérial disponible (conversion à l'affichage uniquement).
+`src/i18n/fr.ts` est la source et définit le type des clés ; `en`, `es`, `de`, `it` doivent avoir exactement les mêmes clés et variables (test `__tests__/i18n.test.ts`). Pluriels i18next (`_one`/`_other`). Textes système iOS (autorisations, nom de l'app) dans `locales/native/`. Unités : métrique par défaut, impérial disponible (conversion à l'affichage uniquement).
 
 ## Dépendances natives à surveiller
 

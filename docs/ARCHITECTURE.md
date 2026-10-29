@@ -4,11 +4,10 @@
 
 | Besoin | Choix | Raison |
 |---|---|---|
-| App iOS/iPadOS puis Android | **Expo SDK 57 + React Native + Expo Router** (TypeScript) | Une base de code pour iOS et Android, rendu natif (pas de WebView), modules natifs Swift (Share Extension, WidgetKit, ActivityKit) via config plugins, builds cloud EAS. |
+| App iPhone et iPad | **Expo SDK 57 + React Native + Expo Router** (TypeScript) | Rendu natif (pas de WebView), modules natifs Swift (Share Extension, WidgetKit, ActivityKit, écoute des vidéos) via config plugins et modules locaux, builds cloud EAS. Uniquement iOS/iPadOS. |
 | Données | **SQLite sur l'appareil** (`expo-sqlite`) | Seule source de vérité : instantané, hors ligne, transactionnel, inclus dans les sauvegardes de l'appareil. |
 | Comptes | **Aucun** | Rien à créer, rien à pirater, rien à héberger ; RGPD simple : l'éditeur ne détient aucune donnée. |
 | Synchro iPhone ↔ iPad | **iCloud Drive, conteneur privé de l'app** (`react-native-cloud-storage`) | Gratuit pour l'éditeur comme pour l'utilisateur, lié à son identifiant Apple, invisible dans l'app Fichiers. |
-| Android | Données sur le téléphone + sauvegarde Google de l'appareil (`allowBackup`), export/import d'un fichier | Pas d'équivalent d'iCloud sans compte ni serveur. |
 | Photos | Fichiers JPEG dans `Documents/photos` (1600 px, EXIF supprimé), copiés dans iCloud | Simples, sauvegardés, partagés entre recettes dupliquées. |
 | Import de liens | **Sur l'appareil** : oEmbed (TikTok, YouTube), schema.org/JSON-LD, OpenGraph | Aucun intermédiaire ; le site importé voit l'appareil comme un navigateur. |
 | Notifications | **Locales uniquement** (rappels de repas, planning, minuteurs) | Aucun serveur de push. |
@@ -23,7 +22,7 @@
 
 ```
 apps/
-  mobile/      Expo Router (iOS, iPadOS, Android) + cibles natives (targets/)
+  mobile/      Expo Router (iOS, iPadOS) + cibles natives (targets/) + module local video-speech (modules/)
   site/        générateur du site statique (pages légales + aide, 5 langues)
 packages/
   core/        Domaine pur TS : schémas zod, quantités/unités/fractions, mise à l'échelle,
@@ -71,4 +70,4 @@ Résumé (détails dans [SYNC.md](SYNC.md)) : chaque modification reçoit un hor
 
 ## 7. Coûts
 
-Aucun coût d'infrastructure : pas de serveur, pas de base, pas de stockage de fichiers (iCloud est fourni par Apple à l'utilisateur), site sur GitHub Pages. Restent le compte Apple Developer (99 $/an), Google Play (25 $ une fois) et éventuellement un nom de domaine.
+Aucun coût d'infrastructure : pas de serveur, pas de base, pas de stockage de fichiers (iCloud est fourni par Apple à l'utilisateur), site sur GitHub Pages. Restent le compte Apple Developer (99 $/an) et éventuellement un nom de domaine.

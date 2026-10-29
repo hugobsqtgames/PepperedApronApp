@@ -9,7 +9,7 @@ import { shareInbox, type SharedPayload } from '../../../services/shareInbox';
 import { EmptyState, LoadingState, Screen } from '../../../ui';
 
 /**
- * Entry point of the iOS Share Extension / Android share intent:
+ * Entry point of the iOS Share Extension:
  * - a link (TikTok, Instagram, a website…) → import of what is publicly available;
  * - an image → new recipe with that photo (optional on-device OCR from the photo screen);
  * - plain text → parsed into a draft.

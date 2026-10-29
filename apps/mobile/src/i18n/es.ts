@@ -319,9 +319,9 @@ const es: Translations = {
     listenPermission:
       'La receta se explica en voz alta en el vídeo, pero el reconocimiento de voz no está permitido. Actívalo en los Ajustes del teléfono (PepperedApron) y vuelve a importar el enlace.',
     listenLanguage:
-      'La receta se explica en voz alta, pero el reconocimiento de voz sin conexión de este idioma aún no está instalado en el teléfono. En Android se acaba de solicitar su descarga: vuelve a intentarlo en unos minutos. En iPhone: Ajustes → General → Teclado → activa el Dictado.',
+      'La receta se explica en voz alta, pero el reconocimiento de voz sin conexión de este idioma no está instalado en el iPhone. Actívalo en Ajustes → General → Teclado → Dictado y vuelve a importar el enlace.',
     listenFailed:
-      'La receta se explica en voz alta, pero el teléfono no pudo escuchar el vídeo (Android 13 o posterior). Consejo: haz una captura de la descripción o de la receta y luego «+» → «Desde una foto».',
+      'La receta se explica en voz alta, pero el iPhone no pudo escuchar el vídeo. Consejo: haz una captura de la descripción o de la receta y luego «+» → «Desde una foto».',
   },
   cook: {
     step: 'Paso {{n}} de {{total}}',
@@ -455,8 +455,6 @@ const es: Translations = {
     privacyTitle: 'Tus datos se quedan contigo',
     privacyBody:
       'Sin cuenta, sin servidor y sin publicidad: tus recetas, listas y planificación se guardan en este dispositivo y en tu iCloud privado, si lo activas. Nunca recibimos tus datos.',
-    privacyBodyAndroid:
-      'Sin cuenta, sin servidor y sin publicidad: tus recetas, listas y planificación se guardan en este teléfono. Nunca recibimos tus datos.',
     backup: 'Copia de seguridad',
     import: 'Importar una copia',
     importBody: 'Añade las recetas de un archivo exportado desde PepperedApron, sin borrar nada.',
@@ -507,10 +505,7 @@ const es: Translations = {
   },
   cloud: {
     title: 'iCloud',
-    titleAndroid: 'En este teléfono',
     body: 'Tus recetas se guardan en este dispositivo. Con iCloud, también se guardan en tu iCloud privado y son idénticas en tu iPhone y tu iPad. Sin crear ninguna cuenta.',
-    bodyAndroid:
-      'Tus recetas se guardan en este teléfono y se incluyen en su copia de seguridad de Google. Para pasarlas a otro, exporta una copia e impórtala en el otro dispositivo.',
     toggle: 'Sincronizar con iCloud',
     statusOff: 'Solo en este dispositivo',
     statusUnavailable:
@@ -518,7 +513,6 @@ const es: Translations = {
     statusError: 'No se puede sincronizar ahora. Se reintentará automáticamente.',
     statusSyncing: 'Sincronizando…',
     statusSynced: 'Al día en iCloud · {{time}}',
-    androidLocal: 'Guardado en este teléfono',
     openSettings: 'Abrir Ajustes',
     syncNow: 'Sincronizar ahora',
   },

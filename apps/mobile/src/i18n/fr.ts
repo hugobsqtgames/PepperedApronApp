@@ -319,9 +319,9 @@ const fr = {
     listenPermission:
       'La recette est expliquée à l’oral dans la vidéo, mais la reconnaissance vocale n’est pas autorisée. Autorisez-la dans les Réglages du téléphone (PepperedApron), puis importez à nouveau le lien.',
     listenLanguage:
-      'La recette est expliquée à l’oral, mais la reconnaissance vocale hors ligne de cette langue n’est pas encore installée sur le téléphone. Sur Android, son téléchargement vient d’être demandé : réessayez dans quelques minutes. Sur iPhone : Réglages → Général → Clavier → activez la Dictée.',
+      'La recette est expliquée à l’oral, mais la reconnaissance vocale hors ligne de cette langue n’est pas installée sur l’iPhone. Activez-la dans Réglages → Général → Clavier → Dictée, puis importez à nouveau le lien.',
     listenFailed:
-      'La recette est expliquée à l’oral, mais le téléphone n’a pas pu écouter la vidéo (Android 13 minimum). Astuce : faites une capture d’écran de la légende ou de la recette, puis « + » → « Depuis une photo ».',
+      'La recette est expliquée à l’oral, mais l’iPhone n’a pas pu écouter la vidéo. Astuce : faites une capture d’écran de la légende ou de la recette, puis « + » → « Depuis une photo ».',
   },
   cook: {
     step: 'Étape {{n}} / {{total}}',
@@ -455,8 +455,6 @@ const fr = {
     privacyTitle: 'Vos données restent chez vous',
     privacyBody:
       'Pas de compte, pas de serveur, pas de publicité : vos recettes, listes et votre planning sont enregistrés sur cet appareil et dans votre iCloud privé, si vous l’activez. Nous ne recevons aucune de vos données.',
-    privacyBodyAndroid:
-      'Pas de compte, pas de serveur, pas de publicité : vos recettes, listes et votre planning sont enregistrés sur ce téléphone. Nous ne recevons aucune de vos données.',
     backup: 'Sauvegarde',
     import: 'Importer une sauvegarde',
     importBody: 'Ajoute les recettes d’un fichier exporté depuis PepperedApron, sans rien effacer.',
@@ -507,10 +505,7 @@ const fr = {
   },
   cloud: {
     title: 'iCloud',
-    titleAndroid: 'Sur ce téléphone',
     body: 'Vos recettes sont enregistrées sur cet appareil. Avec iCloud, elles sont aussi sauvegardées dans votre iCloud privé et identiques sur votre iPhone et votre iPad. Aucun compte à créer.',
-    bodyAndroid:
-      'Vos recettes sont enregistrées sur ce téléphone et incluses dans sa sauvegarde Google. Pour les transférer, exportez une sauvegarde puis importez-la sur l’autre appareil.',
     toggle: 'Synchroniser avec iCloud',
     statusOff: 'Uniquement sur cet appareil',
     statusUnavailable:
@@ -518,7 +513,6 @@ const fr = {
     statusError: 'Synchronisation impossible pour le moment. Nouvel essai automatique.',
     statusSyncing: 'Synchronisation…',
     statusSynced: 'À jour dans iCloud · {{time}}',
-    androidLocal: 'Enregistré sur ce téléphone',
     openSettings: 'Ouvrir les Réglages',
     syncNow: 'Synchroniser maintenant',
   },

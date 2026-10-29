@@ -7,7 +7,6 @@
 | Node.js | 22.x | `node -v` |
 | pnpm | 10.33 | `corepack enable` (la version est fixée dans `package.json`) |
 | Xcode | 26+ | pour iPhone/iPad, sur Mac uniquement |
-| Android Studio | récent | SDK, émulateur, ou téléphone en débogage USB |
 | EAS CLI | ≥ 16 | `npm i -g eas-cli`, seulement pour les builds cloud |
 
 Aucun serveur ni base de données : l'app est autonome.
@@ -27,16 +26,13 @@ L'app contient des modules natifs : il faut un **build de développement** (une 
 npx expo run:ios                      # simulateur
 npx expo run:ios --device             # iPhone branché (choisir l'équipe de signature dans Xcode la 1re fois)
 
-# Android
-npx expo run:android                  # émulateur ou téléphone branché (débogage USB activé)
-
 # Ensuite, à chaque session
 npx expo start --dev-client
 ```
 
 Sans Mac : `eas build --profile development --platform ios` (appareil enregistré) ou `--profile development-simulator`.
 
-`npx expo prebuild --clean` régénère `ios/` et `android/` (non versionnés) à partir de `app.config.ts`.
+`npx expo prebuild --clean` régénère `ios/` (non versionné) à partir de `app.config.ts`.
 
 ### iCloud en développement
 
@@ -59,7 +55,7 @@ npx serve apps/site/dist              # aperçu local
 
 | Symptôme | Solution |
 |---|---|
-| « Expo Go » ne charge pas l'app | normal : utiliser un build de développement (`npx expo run:ios` / `run:android`) |
+| « Expo Go » ne charge pas l'app | normal : utiliser un build de développement (`npx expo run:ios`) |
 | Réglages → Mes données indique « iCloud indisponible » | se connecter à iCloud sur l'appareil ; vérifier que iCloud Drive est activé |
 | Les modifications n'arrivent pas sur l'autre appareil | iCloud transfère les fichiers en différé (quelques secondes à quelques minutes) ; tirer l'accueil vers le bas pour relancer |
 | Widgets vides | ouvrir l'app une fois : elle écrit les données dans l'App Group |

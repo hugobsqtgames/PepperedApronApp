@@ -10,13 +10,8 @@ on:
         type: choice
         options: [staging, production]
         default: staging
-      platform:
-        description: Platform
-        type: choice
-        options: [all, ios, android]
-        default: all
       submit:
-        description: Submit to TestFlight / Play internal testing (production only)
+        description: Submit to TestFlight (production only)
         type: boolean
         default: false
 
@@ -41,5 +36,5 @@ jobs:
       - name: Build
         run: >-
           eas build --non-interactive --no-wait
-          --profile ${{ inputs.profile }} --platform ${{ inputs.platform }}
+          --profile ${{ inputs.profile }} --platform ios
           ${{ inputs.submit && inputs.profile == 'production' && '--auto-submit' || '' }}

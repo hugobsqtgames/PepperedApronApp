@@ -1,6 +1,5 @@
 pnpm-lock.yaml
 apps/mobile/ios
-apps/mobile/android
 apps/mobile/dist-*
 apps/mobile/.expo
 **/dist

@@ -106,11 +106,11 @@ export const FAQ = {
       ],
       [
         'Où sont enregistrées mes recettes ?',
-        'Sur votre appareil. Sur iPhone et iPad, elles sont aussi synchronisées dans votre iCloud privé (Réglages → Mes données). Personne d’autre n’y a accès, pas même nous.',
+        'Sur votre appareil. Elles sont aussi synchronisées dans votre iCloud privé (Réglages → Mes données). Personne d’autre n’y a accès, pas même nous.',
       ],
       [
         'Comment retrouver mes recettes sur un nouveau téléphone ?',
-        'Sur iPhone et iPad, gardez la synchronisation iCloud activée et utilisez le même identifiant Apple : tout revient automatiquement. Sur Android, ou pour changer de plateforme, utilisez Réglages → Mes données → Exporter, puis Importer sur le nouvel appareil.',
+        'Sur iPhone et iPad, gardez la synchronisation iCloud activée et utilisez le même identifiant Apple : tout revient automatiquement. Sans iCloud : Réglages → Mes données → Exporter, puis Importer sur le nouvel appareil.',
       ],
       [
         'Puis-je utiliser l’app hors ligne ?',
@@ -138,11 +138,11 @@ export const FAQ = {
       ['Do I need an account?', 'No. Open the app and start: there is no account and no password.'],
       [
         'Where are my recipes stored?',
-        'On your device. On iPhone and iPad they are also synced to your private iCloud (Settings → My data). Nobody else can access them, not even us.',
+        'On your device. They are also synced to your private iCloud (Settings → My data). Nobody else can access them, not even us.',
       ],
       [
         'How do I get my recipes on a new phone?',
-        'On iPhone and iPad, keep iCloud sync on and use the same Apple Account: everything comes back automatically. On Android, or to switch platforms, use Settings → My data → Export, then Import on the new device.',
+        'On iPhone and iPad, keep iCloud sync on and use the same Apple Account: everything comes back automatically. Without iCloud: Settings → My data → Export, then Import on the new device.',
       ],
       [
         'Can I use the app offline?',
@@ -171,7 +171,7 @@ export const FAQ = {
       ],
       [
         '¿Cómo recupero mis recetas en un teléfono nuevo?',
-        'En iPhone y iPad, deja activada la sincronización con iCloud y usa la misma cuenta de Apple: todo vuelve automáticamente. En Android, o para cambiar de plataforma, usa Ajustes → Mis datos → Exportar y luego Importar en el nuevo dispositivo.',
+        'En iPhone y iPad, deja activada la sincronización con iCloud y usa la misma cuenta de Apple: todo vuelve automáticamente. Sin iCloud: Ajustes → Mis datos → Exportar y luego Importar en el nuevo dispositivo.',
       ],
       [
         '¿Puedo usar la app sin conexión?',
@@ -203,7 +203,7 @@ export const FAQ = {
       ],
       [
         'Wie bekomme ich meine Rezepte auf ein neues Telefon?',
-        'Lass auf iPhone und iPad die iCloud-Synchronisierung aktiviert und nutze denselben Apple Account: Alles kommt automatisch zurück. Unter Android oder beim Plattformwechsel: Einstellungen → Meine Daten → Exportieren, dann auf dem neuen Gerät Importieren.',
+        'Lass auf iPhone und iPad die iCloud-Synchronisierung aktiviert und nutze denselben Apple Account: Alles kommt automatisch zurück. Ohne iCloud: Einstellungen → Meine Daten → Exportieren, dann auf dem neuen Gerät Importieren.',
       ],
       [
         'Kann ich die App offline nutzen?',
@@ -235,7 +235,7 @@ export const FAQ = {
       ],
       [
         'Come ritrovo le ricette su un nuovo telefono?',
-        'Su iPhone e iPad lascia attiva la sincronizzazione iCloud e usa lo stesso Apple Account: tutto torna automaticamente. Su Android, o per cambiare piattaforma, usa Impostazioni → I miei dati → Esporta, poi Importa sul nuovo dispositivo.',
+        'Su iPhone e iPad lascia attiva la sincronizzazione iCloud e usa lo stesso Apple Account: tutto torna automaticamente. Senza iCloud: Impostazioni → I miei dati → Esporta, poi Importa sul nuovo dispositivo.',
       ],
       [
         'Posso usare l’app offline?',
@@ -279,7 +279,7 @@ export const LEGAL = {
       html: `<h1>Politique de confidentialité</h1><p class="muted">Mise à jour : ${UPDATED}</p><div class="card">
 <h2>En bref</h2><p>PepperedApron n'a ni compte, ni serveur, ni publicité, ni mesure d'audience. Vos recettes, photos, listes, planning et réglages restent sur votre appareil et, si vous l'activez, dans votre iCloud privé. L'éditeur ne reçoit, ne stocke et ne vend aucune de ces données.</p>
 <h2>Responsable de traitement</h2><p>${p.publisher}, ${p.address} — ${mail(p)}</p>
-<h2>Données sur votre appareil et dans iCloud</h2><p>Vos contenus sont stockés localement. Sur iPhone et iPad, la synchronisation iCloud (activée par défaut, désactivable dans Réglages → Mes données) les copie dans le conteneur privé de l'app dans votre compte iCloud, géré par Apple (voir la politique de confidentialité d'Apple). L'éditeur n'y a pas accès. Sur Android, les données peuvent être incluses dans la sauvegarde Google de votre appareil si vous l'avez activée.</p>
+<h2>Données sur votre appareil et dans iCloud</h2><p>Vos contenus sont stockés localement. Sur iPhone et iPad, la synchronisation iCloud (activée par défaut, désactivable dans Réglages → Mes données) les copie dans le conteneur privé de l'app dans votre compte iCloud, géré par Apple (voir la politique de confidentialité d'Apple). L'éditeur n'y a pas accès. Elles sont aussi incluses dans la sauvegarde iCloud de l'appareil si vous l'avez activée.</p>
 <h2>Import depuis un lien</h2><p>Lorsque vous importez une recette depuis un lien, l'app contacte directement le site concerné (ou le service oEmbed de TikTok ou YouTube), comme le ferait un navigateur. Ce site reçoit alors votre adresse IP selon sa propre politique.</p>
 <h2>Photos et texte</h2><p>L'appareil photo et la photothèque ne sont utilisés que lorsque vous le demandez. La lecture du texte d'une photo se fait sur l'appareil ; rien n'est envoyé.</p>
 <h2>Nous contacter</h2><p>Si vous nous écrivez par e-mail, nous utilisons votre adresse et votre message uniquement pour vous répondre, et les conservons au plus 3 ans.</p>
@@ -307,7 +307,7 @@ export const LEGAL = {
       html: `<h1>Privacy policy</h1><p class="muted">Updated: ${UPDATED}</p><div class="card">
 <h2>In short</h2><p>PepperedApron has no account, no server, no ads and no analytics. Your recipes, photos, lists, meal plan and settings stay on your device and, if you turn it on, in your private iCloud. The publisher never receives, stores or sells any of this data.</p>
 <h2>Controller</h2><p>${p.publisher}, ${p.address} — ${mail(p)}</p>
-<h2>Data on your device and in iCloud</h2><p>Your content is stored locally. On iPhone and iPad, iCloud sync (on by default, can be turned off in Settings → My data) copies it to the app's private container in your iCloud account, operated by Apple (see Apple's privacy policy). The publisher has no access to it. On Android, the data may be included in your device's Google backup if you turned it on.</p>
+<h2>Data on your device and in iCloud</h2><p>Your content is stored locally. On iPhone and iPad, iCloud sync (on by default, can be turned off in Settings → My data) copies it to the app's private container in your iCloud account, operated by Apple (see Apple's privacy policy). The publisher has no access to it. They are also included in the device's iCloud Backup if you turned it on.</p>
 <h2>Importing from a link</h2><p>When you import a recipe from a link, the app contacts that website (or the TikTok or YouTube oEmbed service) directly, like a browser would. That website then receives your IP address under its own policy.</p>
 <h2>Photos and text</h2><p>The camera and photo library are only used when you ask. Reading the text of a photo happens on the device; nothing is sent.</p>
 <h2>Contacting us</h2><p>If you e-mail us, we use your address and message only to answer you and keep them for at most 3 years.</p>

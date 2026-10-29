@@ -324,9 +324,9 @@ const de: Translations = {
     listenPermission:
       'Das Rezept wird im Video nur gesprochen, aber die Spracherkennung ist nicht erlaubt. Erlaube sie in den Einstellungen des Telefons (PepperedApron) und importiere den Link erneut.',
     listenLanguage:
-      'Das Rezept wird nur gesprochen, aber die Offline-Spracherkennung für diese Sprache ist noch nicht installiert. Unter Android wurde der Download gerade angefordert: Versuch es in ein paar Minuten erneut. Auf dem iPhone: Einstellungen → Allgemein → Tastatur → Diktierfunktion aktivieren.',
+      'Das Rezept wird nur gesprochen, aber die Offline-Spracherkennung für diese Sprache ist auf dem iPhone nicht installiert. Aktiviere sie unter Einstellungen → Allgemein → Tastatur → Diktierfunktion und importiere den Link erneut.',
     listenFailed:
-      'Das Rezept wird nur gesprochen, aber das Telefon konnte das Video nicht anhören (ab Android 13). Tipp: Mach einen Screenshot der Beschreibung oder des Rezepts, dann „+“ → „Aus einem Foto“.',
+      'Das Rezept wird nur gesprochen, aber das iPhone konnte das Video nicht anhören. Tipp: Mach einen Screenshot der Beschreibung oder des Rezepts, dann „+“ → „Aus einem Foto“.',
   },
   cook: {
     step: 'Schritt {{n}} von {{total}}',
@@ -460,8 +460,6 @@ const de: Translations = {
     privacyTitle: 'Deine Daten bleiben bei dir',
     privacyBody:
       'Kein Konto, kein Server, keine Werbung: Deine Rezepte, Listen und dein Wochenplan werden auf diesem Gerät und – wenn du es aktivierst – in deiner privaten iCloud gespeichert. Wir erhalten keine deiner Daten.',
-    privacyBodyAndroid:
-      'Kein Konto, kein Server, keine Werbung: Deine Rezepte, Listen und dein Wochenplan werden auf diesem Telefon gespeichert. Wir erhalten keine deiner Daten.',
     backup: 'Sicherung',
     import: 'Sicherung importieren',
     importBody:
@@ -513,10 +511,7 @@ const de: Translations = {
   },
   cloud: {
     title: 'iCloud',
-    titleAndroid: 'Auf diesem Telefon',
     body: 'Deine Rezepte werden auf diesem Gerät gespeichert. Mit iCloud werden sie zusätzlich in deiner privaten iCloud gesichert und sind auf iPhone und iPad identisch. Kein Konto nötig.',
-    bodyAndroid:
-      'Deine Rezepte werden auf diesem Telefon gespeichert und sind in dessen Google-Sicherung enthalten. Zum Übertragen exportierst du eine Sicherung und importierst sie auf dem anderen Gerät.',
     toggle: 'Mit iCloud synchronisieren',
     statusOff: 'Nur auf diesem Gerät',
     statusUnavailable:
@@ -524,7 +519,6 @@ const de: Translations = {
     statusError: 'Synchronisierung gerade nicht möglich. Neuer Versuch erfolgt automatisch.',
     statusSyncing: 'Wird synchronisiert …',
     statusSynced: 'Aktuell in iCloud · {{time}}',
-    androidLocal: 'Auf diesem Telefon gespeichert',
     openSettings: 'Einstellungen öffnen',
     syncNow: 'Jetzt synchronisieren',
   },

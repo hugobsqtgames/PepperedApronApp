@@ -10,8 +10,8 @@ Il n'y a **aucun serveur à exploiter** : pas de base, pas de sauvegarde à fair
 
 ## Qualité de l'app
 
-- Plantages et blocages : App Store Connect → *TestFlight / Crashes* et Xcode Organizer ; Google Play Console → *Android vitals*. Aucun SDK de suivi supplémentaire (aucune donnée envoyée à l'éditeur).
-- Avis des stores : répondre depuis App Store Connect / Play Console.
+- Plantages et blocages : App Store Connect → *TestFlight / Crashes* et Xcode Organizer. Aucun SDK de suivi supplémentaire (aucune donnée envoyée à l'éditeur).
+- Avis : répondre depuis App Store Connect.
 
 ## Support
 
@@ -25,4 +25,4 @@ Chaque version passe par un build EAS et la revue des stores ([RELEASE](RELEASE.
 
 ## Retour arrière
 
-Publier la version précédente corrigée (les stores ne permettent pas de réinstaller une ancienne version). Les données locales et iCloud ne dépendent d'aucun serveur : elles ne sont pas affectées par une publication.
+Publier la version précédente corrigée (l'App Store ne permet pas de réinstaller une ancienne version). Les données locales et iCloud ne dépendent d'aucun serveur : elles ne sont pas affectées par une publication.

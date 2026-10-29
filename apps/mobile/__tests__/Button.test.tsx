@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react-native';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import { ThemeProvider } from '../src/theme/ThemeProvider';
 import { Button } from '../src/ui/Button';
 
@@ -12,9 +12,16 @@ describe('Button', () => {
   });
 
   it('awaits async actions and accepts taps again afterwards', async () => {
-    const onPress = jest.fn(() => new Promise<void>((r) => setTimeout(r, 10)));
+    const onPress = jest.fn(() => new Promise<void>((r) => setTimeout(r, 50)));
     await wrap(<Button title="Enregistrer" onPress={onPress} />);
     await fireEvent.press(screen.getByRole('button'));
+    // A second tap while the action runs is ignored…
+    await fireEvent.press(screen.getByRole('button'));
+    expect(onPress).toHaveBeenCalledTimes(1);
+    // …and accepted once it has finished.
+    await waitFor(() =>
+      expect(screen.getByRole('button').props.accessibilityState).toMatchObject({ busy: false }),
+    );
     await fireEvent.press(screen.getByRole('button'));
     expect(onPress).toHaveBeenCalledTimes(2);
   });

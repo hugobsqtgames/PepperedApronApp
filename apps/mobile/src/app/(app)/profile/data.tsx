@@ -7,7 +7,6 @@ import { exportData, ImportFormatError, importData } from '@pepperedapron/client
 import { cloudStatusText } from '../../../features/CloudStatus';
 import { useCloudStatus, useRuntime, useSession } from '../../../hooks/runtime';
 import { errorMessage } from '../../../lib/errors';
-import { CLOUD_SUPPORTED } from '../../../services/runtime';
 import { space } from '../../../theme/tokens';
 import { Button, Group, ListRow, Text, TextField, useToast } from '../../../ui';
 
@@ -57,9 +56,7 @@ export default function DataScreen() {
   const del = () =>
     Alert.alert(
       t('settings.deleteAll'),
-      CLOUD_SUPPORTED && rt.cloudEnabled
-        ? t('settings.deleteAllCloud')
-        : t('settings.deleteAllBody'),
+      rt.cloudEnabled ? t('settings.deleteAllCloud') : t('settings.deleteAllBody'),
       [
         { text: t('common.cancel'), style: 'cancel' },
         {
@@ -96,35 +93,33 @@ export default function DataScreen() {
       }}
     >
       <View style={{ gap: space.sm }}>
-        <Text variant="title3">{CLOUD_SUPPORTED ? t('cloud.title') : t('cloud.titleAndroid')}</Text>
-        <Text color="textMuted">{CLOUD_SUPPORTED ? t('cloud.body') : t('cloud.bodyAndroid')}</Text>
+        <Text variant="title3">{t('cloud.title')}</Text>
+        <Text color="textMuted">{t('cloud.body')}</Text>
       </View>
-      {CLOUD_SUPPORTED ? (
-        <Group>
+      <Group>
+        <ListRow
+          icon="cloud-outline"
+          title={t('cloud.toggle')}
+          subtitle={cloudStatusText(cloud, t, i18n.language)}
+          toggle={rt.cloudEnabled}
+          onToggle={(v) => void rt.setCloudEnabled(v)}
+          testID="icloud-toggle"
+        />
+        {cloud.status === 'unavailable' ? (
           <ListRow
-            icon="cloud-outline"
-            title={t('cloud.toggle')}
-            subtitle={cloudStatusText(cloud, t, i18n.language)}
-            toggle={rt.cloudEnabled}
-            onToggle={(v) => void rt.setCloudEnabled(v)}
-            testID="icloud-toggle"
+            icon="settings-outline"
+            title={t('cloud.openSettings')}
+            onPress={() => void Linking.openSettings()}
           />
-          {cloud.status === 'unavailable' ? (
-            <ListRow
-              icon="settings-outline"
-              title={t('cloud.openSettings')}
-              onPress={() => void Linking.openSettings()}
-            />
-          ) : rt.cloudEnabled ? (
-            <ListRow
-              icon="sync-outline"
-              title={t('cloud.syncNow')}
-              onPress={() => void rt.syncNow()}
-              chevron={false}
-            />
-          ) : null}
-        </Group>
-      ) : null}
+        ) : rt.cloudEnabled ? (
+          <ListRow
+            icon="sync-outline"
+            title={t('cloud.syncNow')}
+            onPress={() => void rt.syncNow()}
+            chevron={false}
+          />
+        ) : null}
+      </Group>
       <Group title={t('settings.backup')}>
         <ListRow
           icon="share-outline"
@@ -144,9 +139,7 @@ export default function DataScreen() {
           {t('settings.deleteAll')}
         </Text>
         <Text color="textMuted">
-          {CLOUD_SUPPORTED && rt.cloudEnabled
-            ? t('settings.deleteAllCloud')
-            : t('settings.deleteAllBody')}
+          {rt.cloudEnabled ? t('settings.deleteAllCloud') : t('settings.deleteAllBody')}
         </Text>
         <TextField
           label={t('settings.deleteTypeConfirm')}

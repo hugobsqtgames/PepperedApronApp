@@ -43,9 +43,9 @@ Déclencheurs (iOS) : au lancement, au retour au premier plan, 2 s après une mo
 
 L'utilisateur peut désactiver iCloud sur un appareil (Réglages → Mes données) : l'appareil garde ses données et ne lit ni n'écrit plus le conteneur.
 
-## Android
+## Sans iCloud
 
-Pas d'iCloud : les données restent sur le téléphone, incluses dans la sauvegarde Google de l'appareil (`allowBackup`). Pour changer de téléphone ou de plateforme : Réglages → Mes données → Exporter (fichier JSON), puis Importer sur l'autre appareil.
+Si l'utilisateur coupe iCloud, les données restent sur l'appareil (et dans sa sauvegarde iCloud s'il l'utilise). Pour les transférer : Réglages → Mes données → Exporter (fichier JSON), puis Importer sur l'autre appareil.
 
 ## Export / import
 

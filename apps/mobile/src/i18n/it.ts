@@ -322,9 +322,9 @@ const it: Translations = {
     listenPermission:
       'La ricetta è spiegata a voce nel video, ma il riconoscimento vocale non è consentito. Attivalo nelle Impostazioni del telefono (PepperedApron), poi importa di nuovo il link.',
     listenLanguage:
-      'La ricetta è spiegata a voce, ma il riconoscimento vocale offline di questa lingua non è ancora installato sul telefono. Su Android è stato appena richiesto il download: riprova tra qualche minuto. Su iPhone: Impostazioni → Generali → Tastiera → attiva la Dettatura.',
+      'La ricetta è spiegata a voce, ma il riconoscimento vocale offline di questa lingua non è installato sull’iPhone. Attivalo in Impostazioni → Generali → Tastiera → Dettatura, poi importa di nuovo il link.',
     listenFailed:
-      'La ricetta è spiegata a voce, ma il telefono non è riuscito ad ascoltare il video (Android 13 o successivo). Consiglio: fai uno screenshot della didascalia o della ricetta, poi «+» → «Da una foto».',
+      'La ricetta è spiegata a voce, ma l’iPhone non è riuscito ad ascoltare il video. Consiglio: fai uno screenshot della didascalia o della ricetta, poi «+» → «Da una foto».',
   },
   cook: {
     step: 'Passaggio {{n}} di {{total}}',
@@ -458,8 +458,6 @@ const it: Translations = {
     privacyTitle: 'I tuoi dati restano tuoi',
     privacyBody:
       'Nessun account, nessun server, nessuna pubblicità: ricette, liste e planning sono salvati su questo dispositivo e nel tuo iCloud privato, se lo attivi. Non riceviamo nessuno dei tuoi dati.',
-    privacyBodyAndroid:
-      'Nessun account, nessun server, nessuna pubblicità: ricette, liste e planning sono salvati su questo telefono. Non riceviamo nessuno dei tuoi dati.',
     backup: 'Backup',
     import: 'Importa un backup',
     importBody:
@@ -511,10 +509,7 @@ const it: Translations = {
   },
   cloud: {
     title: 'iCloud',
-    titleAndroid: 'Su questo telefono',
     body: 'Le tue ricette sono salvate su questo dispositivo. Con iCloud vengono anche salvate nel tuo iCloud privato e sono identiche su iPhone e iPad. Nessun account da creare.',
-    bodyAndroid:
-      'Le tue ricette sono salvate su questo telefono e incluse nel suo backup Google. Per trasferirle, esporta un backup e importalo sull’altro dispositivo.',
     toggle: 'Sincronizza con iCloud',
     statusOff: 'Solo su questo dispositivo',
     statusUnavailable:
@@ -522,7 +517,6 @@ const it: Translations = {
     statusError: 'Sincronizzazione al momento impossibile. Nuovo tentativo automatico.',
     statusSyncing: 'Sincronizzazione…',
     statusSynced: 'Aggiornato su iCloud · {{time}}',
-    androidLocal: 'Salvato su questo telefono',
     openSettings: 'Apri Impostazioni',
     syncNow: 'Sincronizza ora',
   },

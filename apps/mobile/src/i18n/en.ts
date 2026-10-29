@@ -319,9 +319,9 @@ const en: Translations = {
     listenPermission:
       'The recipe is explained out loud in the video, but speech recognition isn’t allowed. Allow it in the phone’s Settings (PepperedApron), then import the link again.',
     listenLanguage:
-      'The recipe is explained out loud, but offline speech recognition for this language isn’t installed on the phone yet. On Android, its download has just been requested: try again in a few minutes. On iPhone: Settings → General → Keyboard → turn on Dictation.',
+      'The recipe is explained out loud, but offline speech recognition for this language isn’t installed on the iPhone. Turn it on in Settings → General → Keyboard → Dictation, then import the link again.',
     listenFailed:
-      'The recipe is explained out loud, but the phone couldn’t listen to the video (Android 13 or later). Tip: take a screenshot of the caption or recipe, then “+” → “From a photo”.',
+      'The recipe is explained out loud, but the iPhone couldn’t listen to the video. Tip: take a screenshot of the caption or recipe, then “+” → “From a photo”.',
   },
   cook: {
     step: 'Step {{n}} of {{total}}',
@@ -455,8 +455,6 @@ const en: Translations = {
     privacyTitle: 'Your data stays with you',
     privacyBody:
       'No account, no server, no ads: your recipes, lists and meal plan are stored on this device and in your private iCloud, if you turn it on. We never receive any of your data.',
-    privacyBodyAndroid:
-      'No account, no server, no ads: your recipes, lists and meal plan are stored on this phone. We never receive any of your data.',
     backup: 'Backup',
     import: 'Import a backup',
     importBody:
@@ -508,17 +506,13 @@ const en: Translations = {
   },
   cloud: {
     title: 'iCloud',
-    titleAndroid: 'On this phone',
     body: 'Your recipes are stored on this device. With iCloud, they are also backed up to your private iCloud and identical on your iPhone and iPad. No account needed.',
-    bodyAndroid:
-      'Your recipes are stored on this phone and included in its Google backup. To move them, export a backup and import it on the other device.',
     toggle: 'Sync with iCloud',
     statusOff: 'Only on this device',
     statusUnavailable: 'iCloud unavailable: sign in to iCloud in the device Settings.',
     statusError: 'Sync is not possible right now. It will retry automatically.',
     statusSyncing: 'Syncing…',
     statusSynced: 'Up to date in iCloud · {{time}}',
-    androidLocal: 'Stored on this phone',
     openSettings: 'Open Settings',
     syncNow: 'Sync now',
   },

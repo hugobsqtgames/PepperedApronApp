@@ -1,4 +1,4 @@
-/** On-device text recognition (Apple Vision / Google ML Kit). Nothing leaves the phone. */
+/** On-device text recognition (Apple Vision). Nothing leaves the phone. */
 export async function ocrSupported(): Promise<boolean> {
   try {
     const m = await import('expo-text-extractor');

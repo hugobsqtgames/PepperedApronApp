@@ -42,7 +42,7 @@ export function mark({ apron, chili, stem, strap = apron }) {
   </g></g>`;
 }
 
-/** Single-colour silhouette with the chili cut out (Android monochrome, notification, tinted). */
+/** Single-colour silhouette with the chili cut out (iOS tinted icon). */
 export function silhouette(color, id = 'cut') {
   return `<defs><mask id="${id}" maskUnits="userSpaceOnUse" x="0" y="0" width="1024" height="1024"><rect width="1024" height="1024" fill="#fff"/>
   <g transform="${LIFT} ${CHILI_T}"><path d="${CHILI_BODY}" fill="#000"/><path d="${CHILI_CAP}" fill="#000" stroke="#000" stroke-width="10"/></g></mask></defs>
@@ -51,8 +51,6 @@ export function silhouette(color, id = 'cut') {
 
 const svg = (w, h, body, viewBox = `0 0 ${w} ${h}`) =>
   `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="${viewBox}">${body}</svg>`;
-const scaled = (s, body) =>
-  `<g transform="translate(${512 - 512 * s} ${512 - 512 * s}) scale(${s})">${body}</g>`;
 
 const C = COLORS;
 export const variants = {
@@ -72,19 +70,9 @@ export const variants = {
     1024,
     `<rect width="1024" height="1024" fill="#000"/>${silhouette('#FFFFFF', 't')}`,
   ),
-  // Android adaptive icon: content kept inside the 66% safe zone.
-  androidForeground: svg(
-    1024,
-    1024,
-    scaled(0.62, mark({ apron: C.cream, chili: C.paprika, stem: C.forest })),
-  ),
-  androidBackground: svg(1024, 1024, `<rect width="1024" height="1024" fill="${C.forest}"/>`),
-  androidMonochrome: svg(1024, 1024, scaled(0.62, silhouette('#FFFFFF', 'm'))),
   // Splash: mark only, background set by the splash config (light & dark).
   splash: svg(1024, 1024, mark({ apron: C.forest, chili: C.paprika, stem: C.cream })),
   splashDark: svg(1024, 1024, mark({ apron: C.cream, chili: C.paprika, stem: C.night })),
-  // Android notification icon: white silhouette.
-  notification: svg(96, 96, silhouette('#FFFFFF', 'n'), '0 0 1024 1024'),
   // Live Activity / widget glyph (small, < 4 KB).
   glyph: svg(96, 96, mark({ apron: C.cream, chili: C.paprika, stem: C.forest }), '0 0 1024 1024'),
   // Mark on transparent background for UI and documents.
@@ -115,12 +103,8 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     { svg: variants.icon, out: A('icon.png'), width: 1024 },
     { svg: variants.iconDark, out: A('icon-dark.png'), width: 1024 },
     { svg: variants.iconTinted, out: A('icon-tinted.png'), width: 1024 },
-    { svg: variants.androidForeground, out: A('android-icon-foreground.png'), width: 1024 },
-    { svg: variants.androidBackground, out: A('android-icon-background.png'), width: 1024 },
-    { svg: variants.androidMonochrome, out: A('android-icon-monochrome.png'), width: 1024 },
     { svg: variants.splash, out: A('splash-icon.png'), width: 1024 },
     { svg: variants.splashDark, out: A('splash-icon-dark.png'), width: 1024 },
-    { svg: variants.notification, out: A('notification-icon.png'), width: 96 },
     { svg: variants.glyph, out: A('liveActivity/glyph.png'), width: 64 },
     { svg: variants.glyph, out: out('apps/mobile/targets/widgets/assets/glyph.png'), width: 96 },
     { svg: variants.mark, out: A('brand/mark.png'), width: 512 },

@@ -1,7 +1,7 @@
 import { useWindowDimensions } from 'react-native';
 
 /**
- * Layout classes. iPad (and large Android tablets) get a sidebar, multi-column grids and
+ * Layout classes. iPad gets a sidebar, multi-column grids and
  * side-by-side panes; phones get the tab bar and a single column.
  */
 export function useLayout() {

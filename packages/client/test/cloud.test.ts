@@ -287,19 +287,19 @@ describe('photos through iCloud', () => {
   });
 });
 
-describe('export and import (backup, moving to Android)', () => {
+describe('export and import (backup, moving to a phone without iCloud)', () => {
   it('round-trips all data into a fresh device', async () => {
     const r = await iphone.repos.createRecipe(recipe('Couscous'));
     await iphone.repos.toggleFavorite(r.id);
     await iphone.repos.deleteRecipe((await iphone.repos.createRecipe(recipe('Gone'))).id);
     const json = JSON.stringify(await exportData(iphone.store, () => time.ms));
     expect(json).not.toContain('Gone');
-    const android = await SimDevice.create('android', icloud, time);
-    android.cloudEnabled = false;
-    expect(await importData(android.store, json)).toBe(2);
-    expect(android.repos.favoriteRecipes().map((x) => x.data.title)).toEqual(['Couscous']);
+    const newPhone = await SimDevice.create('new-phone', icloud, time);
+    newPhone.cloudEnabled = false;
+    expect(await importData(newPhone.store, json)).toBe(2);
+    expect(newPhone.repos.favoriteRecipes().map((x) => x.data.title)).toEqual(['Couscous']);
     // Importing twice changes nothing.
-    expect(await importData(android.store, json)).toBe(0);
+    expect(await importData(newPhone.store, json)).toBe(0);
   });
 
   it('rejects files that are not a PepperedApron backup', async () => {

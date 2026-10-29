@@ -57,14 +57,12 @@ export function useLive<T>(
   return value;
 }
 
-const NO_CLOUD: CloudSnapshot = { status: 'off', lastSyncedAt: null };
-
-/** iCloud sync state ('off' on Android or when the user turned it off). */
+/** iCloud sync state ('off' when the user turned it off on this device). */
 export function useCloudStatus(): CloudSnapshot {
   const cloud = useSession().cloud;
   return useSyncExternalStore(
-    (cb) => cloud?.subscribe(cb) ?? (() => undefined),
-    () => cloud?.snapshot ?? NO_CLOUD,
+    (cb) => cloud.subscribe(cb),
+    () => cloud.snapshot,
   );
 }
 

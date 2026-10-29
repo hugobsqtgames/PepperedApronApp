@@ -1,5 +1,4 @@
 import * as Notifications from 'expo-notifications';
-import { Platform } from 'react-native';
 import {
   addDays,
   emptyMainSlots,
@@ -32,18 +31,6 @@ export async function ensureNotificationPermission(): Promise<boolean> {
   const r = await Notifications.requestPermissionsAsync({
     ios: { allowAlert: true, allowSound: true, allowBadge: false },
   });
-  if (Platform.OS === 'android') {
-    await Notifications.setNotificationChannelAsync('timers', {
-      name: 'Minuteurs',
-      importance: Notifications.AndroidImportance.HIGH,
-      sound: 'default',
-      vibrationPattern: [0, 400, 200, 400],
-    });
-    await Notifications.setNotificationChannelAsync('reminders', {
-      name: 'Rappels',
-      importance: Notifications.AndroidImportance.DEFAULT,
-    });
-  }
   return r.granted;
 }
 
@@ -71,7 +58,6 @@ export async function scheduleTimerNotification(
     trigger: {
       type: Notifications.SchedulableTriggerInputTypes.DATE,
       date: new Date(endsAt),
-      channelId: 'timers',
     },
   });
 }
@@ -127,7 +113,6 @@ export async function rescheduleReminders(repos: Repos, now = new Date()) {
         trigger: {
           type: Notifications.SchedulableTriggerInputTypes.DATE,
           date: at,
-          channelId: 'reminders',
         },
       });
     }
@@ -150,7 +135,6 @@ export async function rescheduleReminders(repos: Repos, now = new Date()) {
           trigger: {
             type: Notifications.SchedulableTriggerInputTypes.DATE,
             date: sunday,
-            channelId: 'reminders',
           },
         });
       }
@@ -174,7 +158,6 @@ export async function scheduleShoppingReady(repos: Repos, count: number, now = n
     trigger: {
       type: Notifications.SchedulableTriggerInputTypes.DATE,
       date: at,
-      channelId: 'reminders',
     },
   });
 }

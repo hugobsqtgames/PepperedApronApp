@@ -1,4 +1,4 @@
-import { AppState, Platform, type AppStateStatus } from 'react-native';
+import { AppState, type AppStateStatus } from 'react-native';
 import { CloudStorage } from 'react-native-cloud-storage';
 import {
   CloudSync,
@@ -15,13 +15,11 @@ export type RuntimeStatus = 'booting' | 'ready' | 'failed';
 export interface Session {
   store: LocalStore;
   repos: Repos;
-  /** iCloud sync (iPhone/iPad only; null on Android). */
-  cloud: CloudSync | null;
+  /** iCloud sync between the user's iPhone and iPad. */
+  cloud: CloudSync;
   driver: SqlDriver & { close(): Promise<void>; name: string };
 }
 
-/** iCloud is an Apple service: Android keeps everything on the phone (plus Google backup). */
-export const CLOUD_SUPPORTED = Platform.OS === 'ios';
 const DB_NAME = 'pepperedapron.db';
 
 type Listener = () => void;
@@ -61,19 +59,18 @@ export class AppRuntime {
       const store = await LocalStore.open(driver);
       const repos = new Repos(store);
       this.cloudEnabled = (await store.meta('icloud_enabled')) !== '0';
-      const cloud = CLOUD_SUPPORTED
-        ? new CloudSync(store, iCloudDrive, localPhotos, {
-            enabled: () => this.cloudEnabled,
-            onChanged: () => {
-              for (const h of this.changeHooks) h();
-            },
-          })
-        : null;
+      const cloud = new CloudSync(store, iCloudDrive, localPhotos, {
+        enabled: () => this.cloudEnabled,
+        onChanged: () => {
+          for (const h of this.changeHooks) h();
+        },
+      });
       this.session = { store, repos, cloud, driver };
       this.status = 'ready';
       this.emit();
-      if (cloud) this.watchCloud(store);
-      else void removeOrphanPhotos(store, localPhotos).catch(() => undefined);
+      this.watchCloud(store);
+      // With iCloud off, unused photo files are cleaned here (CloudSync does it otherwise).
+      if (!this.cloudEnabled) void removeOrphanPhotos(store, localPhotos).catch(() => undefined);
     } catch (e) {
       console.warn('[runtime] cannot open the database', (e as Error).message);
       this.status = 'failed';
@@ -103,7 +100,7 @@ export class AppRuntime {
   }
 
   syncNow() {
-    return this.session?.cloud?.sync() ?? Promise.resolve();
+    return this.session?.cloud.sync() ?? Promise.resolve();
   }
 
   async setCloudEnabled(enabled: boolean) {

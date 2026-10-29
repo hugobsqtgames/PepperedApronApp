@@ -4,7 +4,6 @@ import { useTranslation } from 'react-i18next';
 import { cloudStatusIcon, cloudStatusText } from '../../../features/CloudStatus';
 import { useCloudStatus, useLive, useRepos, useSettings } from '../../../hooks/runtime';
 import { ENV } from '../../../services/env';
-import { CLOUD_SUPPORTED } from '../../../services/runtime';
 import { useTheme } from '../../../theme/ThemeProvider';
 import { space } from '../../../theme/tokens';
 import { Group, ListRow, Text, usePrompt } from '../../../ui';
@@ -55,7 +54,7 @@ export default function Settings() {
       <Group>
         <ListRow
           icon={cloudStatusIcon(cloud)}
-          title={CLOUD_SUPPORTED ? t('cloud.title') : t('cloud.titleAndroid')}
+          title={t('cloud.title')}
           subtitle={cloudStatusText(cloud, t, i18n.language)}
           onPress={() => router.push('/profile/data')}
           testID="open-data"

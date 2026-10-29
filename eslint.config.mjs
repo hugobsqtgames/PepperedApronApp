@@ -10,7 +10,6 @@ export default tseslint.config(
       '**/dist/**',
       '**/.expo/**',
       'apps/mobile/ios/**',
-      'apps/mobile/android/**',
       '**/*.config.js',
       '**/babel.config.js',
       '**/metro.config.js',
