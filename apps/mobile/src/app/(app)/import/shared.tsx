@@ -46,7 +46,7 @@ export default function SharedImport() {
               res.completeness,
             );
           } else {
-            openDraft(res.draft, { notice: res.completeness });
+            openDraft(res.draft, { notice: res.fromSpeech ? 'speech' : res.completeness });
           }
         } catch {
           // Not a usable link: keep what was shared so the user can complete it.

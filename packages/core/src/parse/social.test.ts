@@ -66,6 +66,7 @@ describe('social captions', () => {
       caption: 'Salade 🥗',
       author: 'Guillaumine',
       image: 'https://p16.tiktokcdn.com/cover.jpg',
+      subtitles: null,
     });
     expect(tiktokCaption('<html>login</html>')).toBeNull();
     expect(

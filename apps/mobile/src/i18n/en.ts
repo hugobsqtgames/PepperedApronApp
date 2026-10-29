@@ -311,6 +311,8 @@ const en: Translations = {
     noText: 'No readable text in this photo.',
     ocrUnavailable: 'Text recognition is not available on this device.',
     received: 'Received from Share',
+    speech:
+      'Part of this recipe comes from what is said in the video (automatic subtitles): check the ingredients, quantities and steps. The full transcript is in the notes.',
   },
   cook: {
     step: 'Step {{n}} of {{total}}',

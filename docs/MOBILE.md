@@ -44,7 +44,7 @@ Liens : seul le schéma `pepperedapron://` est utilisé (widgets, Live Activitie
 
 `expo-share-intent` ajoute une extension iOS « PepperedApron » (texte, URL, page web, 1 image) et des filtres d'intent Android (`text/*`, `image/*`). L'extension transmet le contenu à l'app via l'App Group ; `(app)/_layout.tsx` l'oriente :
 
-- URL → import de lien directement depuis l'appareil (`services/importer.ts` + `packages/core/src/parse/url.ts` : oEmbed TikTok/YouTube, JSON-LD, OpenGraph ; message honnête si la plateforme ne donne pas accès au contenu ; hors ligne, le lien est gardé comme source) ;
+- URL → import de lien directement depuis l'appareil (`services/importer.ts` + `packages/core/src/parse/url.ts` : légende de la page publique TikTok / description YouTube, et si la recette n'est qu'expliquée à l'oral, ses sous-titres automatiques publiés par la plateforme (ingrédients cités et phrases d'action, transcription complète dans les notes, sans IA) ; JSON-LD, OpenGraph ; message honnête si la plateforme ne donne pas accès au contenu ; hors ligne, le lien est gardé comme source) ;
 - texte → structuration déterministe (titre, ingrédients, étapes) ;
 - image → photo de la recette ou lecture du texte sur l'appareil (OCR Apple Vision / ML Kit).
 

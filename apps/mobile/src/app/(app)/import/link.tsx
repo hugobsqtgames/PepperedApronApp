@@ -27,7 +27,7 @@ export default function ImportLink() {
     try {
       // Offline or unreadable pages still open a draft keeping the link: nothing is lost.
       const res = await importLink(raw);
-      openDraft(res.draft, { notice: res.completeness });
+      openDraft(res.draft, { notice: res.fromSpeech ? 'speech' : res.completeness });
     } catch (e) {
       setError(e instanceof ImportUrlError ? t('errors.invalid_url') : errorMessage(e, t));
     } finally {

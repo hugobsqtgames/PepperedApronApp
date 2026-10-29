@@ -2,7 +2,7 @@
 
 | Niveau | Où | Outil | Ce qui est couvert |
 |---|---|---|---|
-| Unitaires domaine | `packages/core/src/**/*.test.ts` | Vitest | fractions et quantités, conversions métrique/impérial, mise à l'échelle, parsing de lignes d'ingrédients (5 langues), texte libre, JSON-LD, import de liens (oEmbed, schema.org, OpenGraph, hors ligne, liens invalides), recherche « langage naturel » et frigo, rayons, fusion de listes, planning, identifiants |
+| Unitaires domaine | `packages/core/src/**/*.test.ts` | Vitest | fractions et quantités, conversions métrique/impérial, mise à l'échelle, parsing de lignes d'ingrédients (5 langues), texte libre, JSON-LD, import de liens (légendes TikTok, descriptions YouTube, recettes dites à l'oral via les sous-titres, schema.org, OpenGraph, hors ligne, liens invalides), recherche « langage naturel » et frigo, rayons, fusion de listes, planning, identifiants |
 | Données et synchro | `packages/client/test/*.test.ts` | Vitest + better-sqlite3 + faux iCloud | horloge logique hybride ; store local (persistance après redémarrage, tombstones, validation, cascades, ids déterministes, fusion) ; iPhone, iPad et autres appareils simulés partageant un iCloud : hors ligne, conflits, suppressions, mauvaise date, fichiers en cours de téléchargement ou tronqués, écriture interrompue, format futur, photos, effacement global, export/import |
 | Mobile | `apps/mobile/__tests__` | Jest (jest-expo) + Testing Library | parité des 5 traductions (clés et variables), modèle de l'éditeur, formatage, messages d'erreur, contraste WCAG des couleurs, composants |
 | Site | `apps/site/src/build.test.mjs` | `node:test` | chaque page liée par l'app existe dans les 5 langues, échappement des mentions, refus de publier sans mentions légales |

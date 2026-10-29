@@ -17,3 +17,4 @@ export * from './parse/text';
 export * from './parse/jsonld';
 export * from './parse/url';
 export * from './parse/social';
+export * from './parse/transcript';

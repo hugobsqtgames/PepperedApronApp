@@ -6,7 +6,10 @@ import {
   tiktokCaption,
   unflattenCaption,
   youtubeDescription,
+  youtubeSubtitles,
+  type Subtitles,
 } from './social';
+import { recipeFromTranscript, vttToLines } from './transcript';
 import { parseRecipeText } from './text';
 
 export type ImportPlatform = 'tiktok' | 'instagram' | 'youtube' | 'facebook' | 'pinterest' | 'web';
@@ -16,6 +19,8 @@ export interface ImportResult {
   platform: ImportPlatform;
   /** full: structured recipe found; partial: caption/description parsed; minimal: link only. */
   completeness: 'full' | 'partial' | 'minimal';
+  /** Part of the recipe comes from what is said in the video (automatic subtitles). */
+  fromSpeech?: boolean;
 }
 
 export interface FetchedPage {
@@ -167,13 +172,18 @@ async function importVideo(
   let caption: string | null = null;
   let author = oembed.author_name ?? null;
   let image = oembed.thumbnail_url ?? null;
+  let subtitles: Subtitles | null = null;
   if (pageHtml && platform === 'tiktok') {
     const tt = tiktokCaption(pageHtml);
     caption = tt?.caption ?? null;
     author ??= tt?.author ?? null;
     image ??= tt?.image ?? null;
+    subtitles = tt?.subtitles ?? null;
   }
-  if (pageHtml && platform === 'youtube') caption = youtubeDescription(pageHtml);
+  if (pageHtml && platform === 'youtube') {
+    caption = youtubeDescription(pageHtml);
+    subtitles = youtubeSubtitles(pageHtml);
+  }
   // TikTok's oEmbed title is the caption itself; YouTube's is the video title.
   if (!caption && platform === 'tiktok') caption = oembed.title ?? null;
 
@@ -185,10 +195,30 @@ async function importVideo(
     (platform === 'youtube' && oembed.title ? oembed.title.slice(0, 200) : null) ??
     (caption ? captionTitle(caption) : null) ??
     draft.title;
+  // Recipe explained out loud: complete what the caption lacks with the spoken words.
+  let fromSpeech = false;
+  if (subtitles && (!draft.ingredients.length || !draft.steps.length)) {
+    const vtt = await getText(fetchPage, subtitles.url, 'text/vtt,*/*');
+    const lines = vtt?.replace(/^\uFEFF/, '').startsWith('WEBVTT') ? vttToLines(vtt) : [];
+    if (lines.length) {
+      const spoken = recipeFromTranscript(lines);
+      if (!draft.ingredients.length && spoken.ingredients.length) {
+        draft.ingredients = spoken.ingredients;
+        fromSpeech = true;
+      }
+      if (!draft.steps.length && spoken.steps.length) {
+        draft.steps = spoken.steps;
+        fromSpeech = true;
+      }
+      // The full transcript stays available to complete the recipe by hand.
+      draft.notes = [draft.notes, `🎙️ ${spoken.text}`].filter(Boolean).join('\n\n').slice(0, 5000);
+    }
+  }
   const found = draft.ingredients.length > 0 || draft.steps.length > 0;
   return {
     draft,
     platform,
     completeness: found ? 'partial' : draft.title ? 'partial' : 'minimal',
+    fromSpeech,
   };
 }

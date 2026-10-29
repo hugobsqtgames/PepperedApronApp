@@ -348,7 +348,9 @@ export default function RecipeEditor() {
                     ? t('import.minimal')
                     : draft.notice === 'partial'
                       ? t('import.partial')
-                      : t('editor.importedNotice')}
+                      : draft.notice === 'speech'
+                        ? t('import.speech')
+                        : t('editor.importedNotice')}
               </Text>
             </View>
           ) : null}

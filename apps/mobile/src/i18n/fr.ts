@@ -311,6 +311,8 @@ const fr = {
     noText: 'Aucun texte lisible sur cette photo.',
     ocrUnavailable: 'La lecture de texte n’est pas disponible sur cet appareil.',
     received: 'Reçu depuis le partage',
+    speech:
+      'Une partie de la recette vient de ce qui est dit dans la vidéo (sous-titres automatiques) : vérifiez les ingrédients, les quantités et les étapes. La transcription complète est dans les notes.',
   },
   cook: {
     step: 'Étape {{n}} / {{total}}',

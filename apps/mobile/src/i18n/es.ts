@@ -311,6 +311,8 @@ const es: Translations = {
     noText: 'No hay texto legible en esta foto.',
     ocrUnavailable: 'El reconocimiento de texto no está disponible en este dispositivo.',
     received: 'Recibido desde Compartir',
+    speech:
+      'Parte de la receta viene de lo que se dice en el vídeo (subtítulos automáticos): revisa los ingredientes, las cantidades y los pasos. La transcripción completa está en las notas.',
   },
   cook: {
     step: 'Paso {{n}} de {{total}}',

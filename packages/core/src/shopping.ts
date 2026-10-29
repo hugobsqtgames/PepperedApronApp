@@ -991,3 +991,27 @@ export function groupByCategory<
       .sort((a, b) => Number(a.checked) - Number(b.checked) || a.position - b.position),
   }));
 }
+
+/**
+ * Food words found in a list of normalized, singular tokens (longest match first, no overlap;
+ * household items such as "papier cuisson" are not food). Used to spot ingredients in speech.
+ */
+export function foodSpans(tokens: string[]): { start: number; end: number }[] {
+  const out: { start: number; end: number }[] = [];
+  let i = 0;
+  while (i < tokens.length) {
+    let best = 0;
+    for (const e of DICT) {
+      const n = e.tokens.length;
+      if (!n || n <= best || e.category === 'household' || i + n > tokens.length) continue;
+      let ok = true;
+      for (let j = 0; j < n && ok; j++) ok = tokens[i + j] === e.tokens[j];
+      if (ok) best = n;
+    }
+    if (best) {
+      out.push({ start: i, end: i + best });
+      i += best;
+    } else i++;
+  }
+  return out;
+}

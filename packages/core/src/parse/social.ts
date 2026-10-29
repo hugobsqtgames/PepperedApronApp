@@ -14,10 +14,17 @@ function jsonString(html: string, key: string): string | null {
   }
 }
 
+export interface Subtitles {
+  /** WebVTT file of the video's subtitles (automatic speech recognition by the platform). */
+  url: string;
+  language: string | null;
+}
+
 export interface SocialCaption {
   caption: string | null;
   author: string | null;
   image: string | null;
+  subtitles: Subtitles | null;
 }
 
 /** TikTok video page: the caption lives in the page's rehydration JSON. */
@@ -34,8 +41,19 @@ export function tiktokCaption(html: string): SocialCaption | null {
           itemInfo?: {
             itemStruct?: {
               desc?: string;
+              /** The caption split in its original lines. */
+              contents?: { desc?: string }[];
               author?: { nickname?: string; uniqueId?: string };
-              video?: { cover?: string; originCover?: string };
+              video?: {
+                cover?: string;
+                originCover?: string;
+                subtitleInfos?: {
+                  Url?: string;
+                  Format?: string;
+                  LanguageCodeName?: string;
+                  Source?: string;
+                }[];
+              };
             };
           };
         }
@@ -44,10 +62,18 @@ export function tiktokCaption(html: string): SocialCaption | null {
     const item = data.__DEFAULT_SCOPE__?.['webapp.video-detail']?.itemInfo?.itemStruct;
     if (!item) return null;
     const image = item.video?.originCover ?? item.video?.cover ?? null;
+    const lines = item.contents?.map((c) => c.desc ?? '');
+    const caption = lines?.some((l) => l.trim()) ? lines.join('\n') : item.desc;
+    // Prefer the original-language recognition over machine translations.
+    const subs = (item.video?.subtitleInfos ?? []).filter(
+      (x) => x.Url && /^https:\/\//.test(x.Url) && (x.Format ?? 'webvtt') === 'webvtt',
+    );
+    const sub = subs.find((x) => x.Source === 'ASR') ?? subs[0];
     return {
-      caption: item.desc?.trim() || null,
+      caption: caption?.trim() || null,
       author: item.author?.nickname || item.author?.uniqueId || null,
       image: image && /^https:\/\//.test(image) ? image : null,
+      subtitles: sub ? { url: sub.Url!, language: sub.LanguageCodeName ?? null } : null,
     };
   } catch {
     return null;
@@ -67,6 +93,48 @@ export function youtubeDescription(html: string): string | null {
   } catch {
     return null;
   }
+}
+
+/** JSON array starting at `from` (balanced brackets, strings respected). */
+function jsonArrayAt(text: string, from: number): unknown[] | null {
+  if (text[from] !== '[') return null;
+  let depth = 0;
+  let inString = false;
+  for (let i = from; i < text.length && i < from + 200_000; i++) {
+    const c = text[i];
+    if (inString) {
+      if (c === '\\') i++;
+      else if (c === '"') inString = false;
+    } else if (c === '"') inString = true;
+    else if (c === '[' || c === '{') depth++;
+    else if (c === ']' || c === '}') {
+      depth--;
+      if (depth === 0) {
+        try {
+          return JSON.parse(text.slice(from, i + 1)) as unknown[];
+        } catch {
+          return null;
+        }
+      }
+    }
+  }
+  return null;
+}
+
+/** YouTube subtitles: a creator's own track first, else the automatic one. */
+export function youtubeSubtitles(html: string): Subtitles | null {
+  const key = '"captionTracks":';
+  const at = html.indexOf(key);
+  if (at < 0) return null;
+  const tracks = (jsonArrayAt(html, at + key.length) ?? []) as {
+    baseUrl?: string;
+    languageCode?: string;
+    kind?: string;
+  }[];
+  const ok = tracks.filter((t) => t.baseUrl && /^https:\/\/www\.youtube\.com\//.test(t.baseUrl));
+  const t = ok.find((x) => x.kind !== 'asr') ?? ok[0];
+  if (!t) return null;
+  return { url: `${t.baseUrl}&fmt=vtt`, language: t.languageCode ?? null };
 }
 
 /**
