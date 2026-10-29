@@ -37,6 +37,8 @@ Une synchronisation (`CloudSync.sync()`, une seule à la fois ; une demande pend
 
 Pourquoi un fichier par appareil : iCloud Drive ne sait pas fusionner deux écritures concurrentes du même fichier (il crée des versions en conflit). Ici chaque fichier n'a qu'un seul auteur, et la fusion se fait dans l'app, enregistrement par enregistrement, de façon déterministe : tous les appareils convergent vers le même état.
 
+**Évolution du format des enregistrements** : un champ ajouté plus tard l'est toujours avec une valeur par défaut (`rating`, `personalNote`, `review` sur les recettes, `leftover` sur les repas, `price` sur les articles, `cookTextScale` dans les réglages), et les entités nouvelles (`cookLog`, `planTemplate`, `price`) sont de simples nouveaux types. Un appareil pas encore mis à jour ignore ce qu'il ne comprend pas ; après sa mise à jour, `DATA_VERSION` (`packages/core/src/sync.ts`) ayant changé, il relit une fois tous les fichiers d'appareils et récupère ce qu'il avait ignoré.
+
 Les tombstones sont conservés indéfiniment (quelques dizaines d'octets chacun) : un appareil resté longtemps hors ligne, ou restauré depuis une vieille sauvegarde, ne peut pas faire réapparaître une recette supprimée.
 
 Déclencheurs (iOS) : au lancement, au retour au premier plan, 2 s après une modification, chaque minute au premier plan, au changement de disponibilité d'iCloud, et en tirant l'accueil vers le bas.

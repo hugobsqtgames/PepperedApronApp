@@ -2,10 +2,11 @@ import { useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { parseNumber, resolveUnit } from '@pepperedapron/core';
+import { parseNumber, parsePrice, resolveUnit } from '@pepperedapron/core';
 import { useLive, useRepos } from '../../../../hooks/runtime';
 import { aisleName } from '../../../../lib/aisles';
 import { errorMessage } from '../../../../lib/errors';
+import { currencyCode } from '../../../../lib/money';
 import { space } from '../../../../theme/tokens';
 import {
   Button,
@@ -43,6 +44,11 @@ export default function ShoppingItemEditor() {
   const [unit, setUnit] = useState(item?.data.unit ?? '');
   const [note, setNote] = useState(item?.data.note ?? '');
   const [aisle, setAisle] = useState(item?.data.categoryKey ?? 'other');
+  const [price, setPrice] = useState(
+    item?.data.price !== null && item?.data.price !== undefined
+      ? item.data.price.toFixed(2).replace('.', ',')
+      : '',
+  );
   if (!item)
     return (
       <EmptyState
@@ -64,6 +70,9 @@ export default function ShoppingItemEditor() {
         note: note.trim() || null,
         categoryKey: aisle,
       });
+      // Remembered for the next lists (budget estimate).
+      const p = price.trim() ? parsePrice(price) : null;
+      if (p !== item.data.price) await repos.setItemPrice(item.id, p);
       router.back();
     } catch (e) {
       toast(errorMessage(e, t), { tone: 'error' });
@@ -97,6 +106,15 @@ export default function ShoppingItemEditor() {
         />
       </View>
       <TextField label={t('editor.notes')} value={note} onChangeText={setNote} maxLength={200} />
+      <TextField
+        label={t('budget.price', { currency: currencyCode() })}
+        helper={t('budget.priceHint')}
+        value={price}
+        onChangeText={setPrice}
+        keyboardType="decimal-pad"
+        maxLength={10}
+        testID="item-price"
+      />
       <Text variant="caption" color="textMuted" weight="600">
         {t('shopping.aisle')}
       </Text>

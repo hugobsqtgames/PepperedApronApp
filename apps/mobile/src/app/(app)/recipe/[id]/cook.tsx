@@ -12,15 +12,33 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useKeepAwake } from 'expo-keep-awake';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
-import { formatClock, timerState, type KitchenTimer } from '@pepperedapron/core';
+import {
+  formatClock,
+  scaleStepText,
+  timerState,
+  type KitchenTimer,
+  type Locale,
+} from '@pepperedapron/core';
 import { IngredientList } from '../../../../features/recipe/RecipeBody';
-import { useLive } from '../../../../hooks/runtime';
+import { useLive, useRepos } from '../../../../hooks/runtime';
 import { useLayout } from '../../../../lib/layout';
 import { haptic } from '../../../../services/haptics';
 import { timers } from '../../../../services/timers';
 import { useTheme } from '../../../../theme/ThemeProvider';
 import { radius, space } from '../../../../theme/tokens';
-import { Button, EmptyState, Icon, IconButton, Text } from '../../../../ui';
+import {
+  Button,
+  EmptyState,
+  Icon,
+  IconButton,
+  Stars,
+  Text,
+  useActionSheet,
+  usePrompt,
+} from '../../../../ui';
+
+const TIMER_PRESETS = [1, 3, 5, 10, 15, 20, 30, 45, 60];
+const TEXT_SCALES = [0.85, 1, 1.15, 1.3, 1.5, 1.75];
 
 function useTimers() {
   const [list, setList] = useState<KitchenTimer[]>(timers.list());
@@ -33,8 +51,11 @@ function useTimers() {
 
 export default function CookMode() {
   useKeepAwake();
-  const { id } = useLocalSearchParams<{ id: string }>();
-  const { t } = useTranslation();
+  const { id, servings } = useLocalSearchParams<{ id: string; servings?: string }>();
+  const { t, i18n } = useTranslation();
+  const repos = useRepos();
+  const sheet = useActionSheet();
+  const prompt = usePrompt();
   const { colors } = useTheme();
   const layout = useLayout();
   const { width } = useWindowDimensions();
@@ -64,6 +85,39 @@ export default function CookMode() {
   }
   const steps = recipe.data.steps;
   const total = steps.length;
+  // The number of servings chosen on the recipe: quantities follow, in the steps too.
+  const people = Number(servings) > 0 ? Number(servings) : recipe.data.servings;
+  const factor = people / recipe.data.servings;
+  const scale = settings.cookTextScale;
+  const setScale = (dir: 1 | -1) => {
+    const i = TEXT_SCALES.findIndex((x) => x >= scale - 0.01);
+    const next = TEXT_SCALES[Math.max(0, Math.min(TEXT_SCALES.length - 1, i + dir))]!;
+    if (next !== scale) void repos.updateSettings({ cookTextScale: next });
+  };
+
+  /** A timer of its own ("pasta", "sauce"): pick a duration, then name it. */
+  const newTimer = () =>
+    sheet({
+      title: t('cook.newTimer'),
+      options: TIMER_PRESETS.map((m) => ({
+        label: t('common.minutes', { count: m }),
+        icon: 'timer-outline' as const,
+        onPress: () =>
+          setTimeout(
+            () =>
+              prompt({
+                title: t('cook.timerName'),
+                placeholder: t('cook.timerNamePlaceholder'),
+                initial: `${t('cook.timerLabel')} ${m} min`,
+                maxLength: 40,
+                confirm: t('cook.startTimer', { time: formatClock(m * 60) }),
+                onSubmit: (label) =>
+                  void timers.start({ label, seconds: m * 60, recipeId: recipe.id }),
+              }),
+            350,
+          ),
+      })),
+    });
   const paneWidth = layout.wide ? width * 0.62 : width;
 
   const go = (i: number) => {
@@ -75,6 +129,8 @@ export default function CookMode() {
   };
   const finish = () => {
     haptic.success();
+    // Cooking history: one entry per recipe and day.
+    void repos.logCooked(recipe.id);
     setDone(true);
   };
 
@@ -94,17 +150,47 @@ export default function CookMode() {
           body={t('cook.doneBody')}
           action={t('cook.addNote')}
           onAction={() =>
-            router.replace({ pathname: '/recipe/edit', params: { id: recipe.id, focus: 'notes' } })
+            prompt({
+              title: t('recipe.personalNote'),
+              message: t('recipe.personalNoteHint'),
+              initial: recipe.data.personalNote ?? '',
+              multiline: true,
+              maxLength: 2000,
+              allowEmpty: true,
+              onSubmit: (v) => void repos.setPersonalNote(recipe.id, v || null),
+            })
           }
           secondary={t('common.close')}
           onSecondary={() => router.back()}
         />
+        <View style={{ alignItems: 'center', gap: space.sm }}>
+          <Text variant="callout" color="textMuted">
+            {t('cook.rate')}
+          </Text>
+          <Stars
+            value={recipe.data.rating}
+            onChange={(v) => void repos.setRating(recipe.id, v)}
+            size={36}
+          />
+          <Text variant="caption" color="textMuted">
+            {t('history.loggedAuto')}
+          </Text>
+        </View>
       </View>
     );
   }
 
   const ingredientsPanel = (
-    <IngredientList ingredients={recipe.data.ingredients} factor={1} system={settings.unitSystem} />
+    <View style={{ gap: space.md }}>
+      <Text variant="callout" color="textMuted">
+        {t('cook.forPeople', { count: people })}
+      </Text>
+      <IngredientList
+        ingredients={recipe.data.ingredients}
+        factor={factor}
+        system={settings.unitSystem}
+      />
+    </View>
   );
 
   return (
@@ -130,6 +216,9 @@ export default function CookMode() {
               }}
             />
           </View>
+          <Text variant="caption" color="textMuted" align="center">
+            {t('cook.screenOn')}
+          </Text>
         </View>
         {!layout.wide ? (
           <IconButton
@@ -172,9 +261,10 @@ export default function CookMode() {
                 <Text
                   variant="cook"
                   maxFontSizeMultiplier={1.6}
+                  style={{ fontSize: 30 * scale, lineHeight: 42 * scale }}
                   accessibilityLabel={`${t('recipe.stepN', { n: i + 1 })}. ${item.text}`}
                 >
-                  {item.text}
+                  {scaleStepText(item.text, factor, i18n.language as Locale)}
                 </Text>
                 {item.timerSeconds ? (
                   <Button
@@ -214,6 +304,22 @@ export default function CookMode() {
         ) : null}
       </View>
 
+      <View style={styles.tools}>
+        <IconButton icon="remove" label={t('cook.smallerText')} onPress={() => setScale(-1)} />
+        <Text variant="bodyStrong" accessibilityElementsHidden>
+          Aa
+        </Text>
+        <IconButton icon="add" label={t('cook.biggerText')} onPress={() => setScale(1)} />
+        <View style={{ flex: 1 }} />
+        <Button
+          title={t('cook.newTimer')}
+          icon="timer-outline"
+          variant="secondary"
+          size="sm"
+          onPress={newTimer}
+          testID="cook-new-timer"
+        />
+      </View>
       {running.length ? <TimerTray timers={running} /> : null}
 
       <View style={[styles.nav, { paddingBottom: insets.bottom + space.md }]}>
@@ -375,6 +481,13 @@ const styles = StyleSheet.create({
   },
   progress: { height: 6, borderRadius: 3, overflow: 'hidden', marginHorizontal: space.lg },
   nav: { flexDirection: 'row', gap: space.md, paddingHorizontal: space.lg, paddingTop: space.md },
+  tools: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.sm,
+    paddingHorizontal: space.lg,
+    paddingTop: space.sm,
+  },
   timer: {
     flexDirection: 'row',
     alignItems: 'center',

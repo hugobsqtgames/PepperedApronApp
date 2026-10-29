@@ -6,6 +6,7 @@ import {
   NOTIFICATION_CATEGORIES,
   OVEN_MODES,
   RECIPE_CATEGORIES,
+  REVIEW_NOTICES,
   SEASONS,
   THEMES,
   UNIT_SYSTEMS,
@@ -83,6 +84,13 @@ export const recipeDataSchema = z
       .transform((t) => [...new Set(t.map((x) => x.toLowerCase()))]),
     ingredients: z.array(ingredientSchema).max(LIMITS.ingredients),
     steps: z.array(stepSchema).max(LIMITS.steps),
+    // Added later: defaults keep older data and backups valid.
+    /** The user's own rating, 1 to 5 stars. */
+    rating: z.number().int().min(1).max(5).nullable().default(null),
+    /** The user's own remarks ("less salt next time"), kept apart from the imported notes. */
+    personalNote: optText(LIMITS.personalNote).default(null),
+    /** Saved automatically from the share sheet: what to check, until the user dismisses it. */
+    review: z.enum(REVIEW_NOTICES).nullable().default(null),
   })
   .strict();
 export type RecipeData = z.infer<typeof recipeDataSchema>;
@@ -108,6 +116,8 @@ export const mealPlanEntryDataSchema = z
     customTitle: optText(LIMITS.customTitle),
     servings: z.number().int().min(1).max(LIMITS.servingsMax).nullable(),
     position: z.number().int().min(0).max(1000),
+    /** Leftovers of another planned meal: eaten, but not bought or cooked again. */
+    leftover: z.boolean().default(false),
   })
   .strict()
   .refine((d) => d.recipeId !== null || d.customTitle !== null, {
@@ -133,6 +143,8 @@ export const shoppingItemDataSchema = z
     position: z.number().int().min(0).max(1000000),
     note: optText(200),
     recipeIds: z.array(uuid()).max(50),
+    /** Estimated price of the line, in the user's currency. */
+    price: z.number().min(0).max(LIMITS.priceMax).nullable().default(null),
   })
   .strict();
 
@@ -166,6 +178,8 @@ export const settingsDataSchema = z
     onboardingDone: z.boolean(),
     /** Used to greet the user; optional (older data has no such field). */
     firstName: optText(LIMITS.firstName).default(null),
+    /** Text size in cooking mode (1 = normal). */
+    cookTextScale: z.number().min(0.8).max(2).default(1),
   })
   .strict();
 export type SettingsData = z.infer<typeof settingsDataSchema>;
@@ -186,7 +200,42 @@ export const DEFAULT_SETTINGS: SettingsData = {
   defaultServings: 4,
   onboardingDone: false,
   firstName: null,
+  cookTextScale: 1,
 };
+
+/** One time a recipe was cooked (cooking history). */
+export const cookLogDataSchema = z.object({ recipeId: uuid(), date: isoDate }).strict();
+
+export const planTemplateMealSchema = z
+  .object({
+    /** 0 = first day of the week. */
+    day: z.number().int().min(0).max(6),
+    slot: z.enum(MEAL_SLOTS),
+    recipeId: uuid().nullable(),
+    customTitle: optText(LIMITS.customTitle),
+    servings: z.number().int().min(1).max(LIMITS.servingsMax).nullable(),
+    leftover: z.boolean().default(false),
+  })
+  .strict();
+export type PlanTemplateMeal = z.infer<typeof planTemplateMealSchema>;
+
+/** A reusable week of meals ("Classic week"). */
+export const planTemplateDataSchema = z
+  .object({
+    name: reqText(LIMITS.templateName),
+    meals: z.array(planTemplateMealSchema).max(LIMITS.templateMeals),
+  })
+  .strict();
+
+/** Last price paid for a product, remembered to estimate the shopping budget. */
+export const priceDataSchema = z
+  .object({
+    name: reqText(LIMITS.shoppingItemName),
+    price: z.number().min(0).max(LIMITS.priceMax),
+    quantity: z.number().positive().max(LIMITS.quantityMax).nullable(),
+    unit: optText(24),
+  })
+  .strict();
 
 export type FavoriteData = z.infer<typeof favoriteDataSchema>;
 export type CollectionData = z.infer<typeof collectionDataSchema>;
@@ -195,3 +244,6 @@ export type MealPlanEntryData = z.infer<typeof mealPlanEntryDataSchema>;
 export type ShoppingListData = z.infer<typeof shoppingListDataSchema>;
 export type ShoppingItemData = z.infer<typeof shoppingItemDataSchema>;
 export type ShoppingCategoryData = z.infer<typeof shoppingCategoryDataSchema>;
+export type CookLogData = z.infer<typeof cookLogDataSchema>;
+export type PlanTemplateData = z.infer<typeof planTemplateDataSchema>;
+export type PriceData = z.infer<typeof priceDataSchema>;

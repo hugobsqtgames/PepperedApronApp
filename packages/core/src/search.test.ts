@@ -156,3 +156,48 @@ describe('searchRecipes', () => {
     expect(isActiveSearch(' a', EMPTY_FILTERS)).toBe(true);
   });
 });
+
+describe('ingredients to avoid and diets', () => {
+  const base = {
+    description: null,
+    category: null,
+    tags: [],
+    difficulty: null,
+    seasons: [],
+    totalMinutes: 20,
+    updatedAt: '2026-01-01',
+  };
+  const recipes = [
+    {
+      ...base,
+      id: '1',
+      title: 'Risotto',
+      ingredientNames: ['riz', 'champignons de Paris', 'parmesan'],
+      diets: ['vegetarian' as const, 'glutenFree' as const],
+    },
+    {
+      ...base,
+      id: '2',
+      title: 'Curry',
+      ingredientNames: ['poulet', 'lait de coco'],
+      diets: ['glutenFree' as const],
+    },
+    {
+      ...base,
+      id: '3',
+      title: 'Salade',
+      ingredientNames: ['tomates', 'mozzarella'],
+      diets: ['vegetarian' as const, 'glutenFree' as const],
+    },
+  ];
+  it('excludes recipes with an ingredient, even of several words', () => {
+    const ids = (f: Partial<typeof EMPTY_FILTERS>) =>
+      searchRecipes(recipes, '', { ...EMPTY_FILTERS, ...f })
+        .map((r) => r.recipe.id)
+        .sort();
+    expect(ids({ excluded: ['champignon'] })).toEqual(['2', '3']);
+    expect(ids({ excluded: ['lait de coco'] })).toEqual(['1', '3']);
+    expect(ids({ diets: ['vegetarian'] })).toEqual(['1', '3']);
+    expect(ids({ diets: ['vegetarian'], excluded: ['tomate'] })).toEqual(['1']);
+  });
+});

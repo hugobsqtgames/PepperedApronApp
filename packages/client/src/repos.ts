@@ -1,5 +1,20 @@
 import {
+  addDays,
   categorizeIngredient,
+  cookLogDataSchema,
+  dietTags,
+  estimateLinePrice,
+  findDuplicate,
+  ingredientKey,
+  leftoverSlot,
+  mealsFromTemplate,
+  planTemplateDataSchema,
+  priceDataSchema,
+  priceId,
+  recipeSeasons,
+  templateFromWeek,
+  toIsoDate,
+  uuidv5,
   collectionItemId,
   computeTotalMinutes,
   DEFAULT_SETTINGS,
@@ -21,6 +36,8 @@ import {
   sortEntries,
   uuidv7,
   type CollectionData,
+  type DuplicateMatch,
+  type PlanTemplateData,
   type MealPlanEntryData,
   type MealSlot,
   type RecipeData,
@@ -74,6 +91,9 @@ export const emptyRecipe = (servings = 4): RecipeData => ({
   tags: [],
   ingredients: [],
   steps: [],
+  rating: null,
+  personalNote: null,
+  review: null,
 });
 
 /** Turn an import draft into editable recipe data (the user reviews everything). */
@@ -151,6 +171,16 @@ export class Repos {
         customTitle: title.slice(0, 200) || '—',
       });
     }
+    for (const tp of this.store.all('planTemplate'))
+      if (tp.data.meals.some((m) => m.recipeId === id))
+        await this.store.write('planTemplate', tp.id, {
+          ...tp.data,
+          meals: tp.data.meals.map((m) =>
+            m.recipeId === id
+              ? { ...m, recipeId: null, customTitle: title.slice(0, 200) || '—' }
+              : m,
+          ),
+        });
     await this.store.removeMany([
       ...this.store
         .all('favorite')
@@ -160,6 +190,10 @@ export class Repos {
         .all('collectionItem')
         .filter((x) => x.data.recipeId === id)
         .map((c) => ({ entity: 'collectionItem' as const, id: c.id })),
+      ...this.store
+        .all('cookLog')
+        .filter((x) => x.data.recipeId === id)
+        .map((c) => ({ entity: 'cookLog' as const, id: c.id })),
       { entity: 'recipe', id },
     ]);
   }
@@ -171,7 +205,35 @@ export class Repos {
       title: `${cur.data.title} ${suffix}`.slice(0, 200),
       ingredients: cur.data.ingredients.map((i) => ({ ...i, id: uuidv7() })),
       steps: cur.data.steps.map((s) => ({ ...s, id: uuidv7() })),
+      review: null,
     });
+  }
+  /** A recipe that looks like the same as this one (same link, or same title and ingredients). */
+  findDuplicate(
+    c: { title: string; sourceUrl: string | null; ingredientNames: string[] },
+    excludeId?: string,
+  ): DuplicateMatch | null {
+    return findDuplicate(
+      c,
+      this.recipes()
+        .filter((r) => r.id !== excludeId)
+        .map((r) => ({
+          id: r.id,
+          title: r.data.title,
+          sourceUrl: r.data.sourceUrl,
+          ingredientNames: r.data.ingredients.map((i) => i.name),
+        })),
+    );
+  }
+  setRating(id: string, rating: number | null) {
+    return this.updateRecipe(id, { rating });
+  }
+  setPersonalNote(id: string, personalNote: string | null) {
+    return this.updateRecipe(id, { personalNote });
+  }
+  /** The user checked a recipe saved from the share sheet. */
+  dismissReview(id: string) {
+    return this.updateRecipe(id, { review: null });
   }
   searchable(recipes: Recipe[] = this.recipes()): (SearchableRecipe & { record: Recipe })[] {
     return recipes.map((r) => ({
@@ -181,16 +243,58 @@ export class Repos {
       category: r.data.category,
       tags: r.data.tags,
       difficulty: r.data.difficulty,
-      seasons: r.data.seasons,
+      seasons: recipeSeasons(r.data),
       totalMinutes: computeTotalMinutes(r.data),
       ingredientNames: r.data.ingredients.map((i) => i.name),
       updatedAt: r.updatedAt,
+      diets: dietTags(r.data.ingredients.map((i) => i.name)),
       record: r,
     }));
   }
   randomRecipe(exclude?: string): Recipe | null {
     const all = this.library().filter((r) => r.id !== exclude);
     return all.length ? all[Math.floor(Math.random() * all.length)]! : null;
+  }
+
+  // ================================================================== cooking history
+  /** Times a recipe was cooked, most recent first. */
+  cookLogs(recipeId: string): LocalRecord<'cookLog'>[] {
+    return this.store
+      .all('cookLog')
+      .filter((c) => c.data.recipeId === recipeId)
+      .sort((a, b) => b.data.date.localeCompare(a.data.date));
+  }
+  /** Cooked count and last date of every recipe cooked at least once. */
+  cookStats(): Map<string, { count: number; last: string }> {
+    const out = new Map<string, { count: number; last: string }>();
+    for (const c of this.store.all('cookLog')) {
+      const cur = out.get(c.data.recipeId);
+      if (!cur) out.set(c.data.recipeId, { count: 1, last: c.data.date });
+      else {
+        cur.count++;
+        if (c.data.date > cur.last) cur.last = c.data.date;
+      }
+    }
+    return out;
+  }
+  /** One entry per recipe and day: tapping twice the same evening is harmless. */
+  async logCooked(recipeId: string, date: string = toIsoDate(new Date())) {
+    const data = validate(cookLogDataSchema, { recipeId, date });
+    return this.store.write('cookLog', uuidv5(`cook-log:${recipeId}:${date}`), data);
+  }
+  removeCookLog(id: string) {
+    return this.store.remove('cookLog', id);
+  }
+  /** Recipes cooked before but not since `days` days: ideas to bring back. */
+  forgottenRecipes(today: string = toIsoDate(new Date()), days = 60): Recipe[] {
+    const limit = addDays(today, -days);
+    const stats = this.cookStats();
+    return this.recipes()
+      .filter((r) => {
+        const s = stats.get(r.id);
+        return s !== undefined && s.last < limit;
+      })
+      .sort((a, b) => stats.get(a.id)!.last.localeCompare(stats.get(b.id)!.last));
   }
 
   // ================================================================== favorites
@@ -290,6 +394,7 @@ export class Repos {
     recipeId?: string | null;
     customTitle?: string | null;
     servings?: number | null;
+    leftover?: boolean;
   }) {
     const all = this.store
       .all('mealPlanEntry')
@@ -301,8 +406,83 @@ export class Repos {
       customTitle: p.customTitle ?? null,
       servings: p.servings ?? null,
       position: nextPosition(all, p.date, p.slot),
+      leftover: p.leftover ?? false,
     });
     return this.store.write('mealPlanEntry', uuidv7(), data);
+  }
+  /**
+   * Cook more for leftovers: the meal is cooked for `portions` more people, and the leftovers are
+   * planned (by default the next day's lunch) without being bought twice.
+   */
+  async planLeftovers(
+    entryId: string,
+    portions: number,
+    target?: { date: string; slot: MealSlot },
+  ) {
+    const e = this.store.get('mealPlanEntry', entryId);
+    if (!e) throw new Error('not_found');
+    const recipe = e.data.recipeId ? this.recipe(e.data.recipeId) : null;
+    const eaters = e.data.servings ?? recipe?.data.servings ?? this.settings().defaultServings;
+    const to = target ?? leftoverSlot(e.data.date);
+    await this.updateMeal(entryId, { servings: Math.min(eaters + portions, 100) });
+    return this.planMeal({
+      date: to.date,
+      slot: to.slot,
+      recipeId: recipe ? recipe.id : null,
+      customTitle: recipe ? null : e.data.customTitle,
+      servings: portions,
+      leftover: true,
+    });
+  }
+
+  // ---------------------------------------------------------------- reusable weeks
+  templates(): LocalRecord<'planTemplate'>[] {
+    return this.store.all('planTemplate').sort((a, b) => a.data.name.localeCompare(b.data.name));
+  }
+  async saveWeekAsTemplate(name: string, weekStart: string) {
+    const meals = templateFromWeek(
+      this.entries(weekStart, addDays(weekStart, 6)).map((e) => ({ ...e.data })),
+      weekStart,
+    );
+    const data: PlanTemplateData = validate(planTemplateDataSchema, { name, meals });
+    return this.store.write('planTemplate', uuidv7(), data);
+  }
+  /** Fill a week from a template; `replace` empties the week first. Returns the meals added. */
+  async applyTemplate(id: string, weekStart: string, replace = false): Promise<number> {
+    const tp = this.store.get('planTemplate', id);
+    if (!tp) throw new Error('not_found');
+    if (replace)
+      await this.store.remove(
+        'mealPlanEntry',
+        ...this.entries(weekStart, addDays(weekStart, 6)).map((e) => e.id),
+      );
+    let added = 0;
+    for (const m of mealsFromTemplate(tp.data.meals, weekStart)) {
+      const recipeId = m.recipeId && this.recipe(m.recipeId) ? m.recipeId : null;
+      if (!recipeId && !m.customTitle) continue;
+      await this.planMeal({
+        date: m.date,
+        slot: m.slot,
+        recipeId,
+        customTitle: recipeId ? null : m.customTitle,
+        servings: m.servings,
+        leftover: m.leftover,
+      });
+      added++;
+    }
+    return added;
+  }
+  async renameTemplate(id: string, name: string) {
+    const cur = this.store.get('planTemplate', id);
+    if (!cur) throw new Error('not_found');
+    return this.store.write(
+      'planTemplate',
+      id,
+      validate(planTemplateDataSchema, { ...cur.data, name }),
+    );
+  }
+  deleteTemplate(id: string) {
+    return this.store.remove('planTemplate', id);
   }
   async moveMeal(id: string, date: string, slot: MealSlot) {
     const cur = this.store.get('mealPlanEntry', id);
@@ -404,6 +584,7 @@ export class Repos {
       note?: string | null;
       categoryKey?: string;
       recipeIds?: string[];
+      price?: number | null;
     },
   ) {
     const list = this.store.get('shoppingList', listId);
@@ -419,8 +600,39 @@ export class Repos {
       position: items.length ? Math.max(...items.map((i) => i.data.position)) + 1 : 0,
       note: p.note ?? null,
       recipeIds: p.recipeIds ?? [],
+      price:
+        p.price !== undefined
+          ? p.price
+          : this.estimatePrice(p.name, p.quantity ?? null, p.unit ?? null),
     });
     return this.store.write('shoppingItem', uuidv7(), data);
+  }
+  /** Last price paid for this product, remembered from earlier lists. */
+  knownPrice(name: string): LocalRecord<'price'> | null {
+    const key = ingredientKey(name);
+    return key ? this.store.get('price', priceId(key)) : null;
+  }
+  estimatePrice(name: string, quantity: number | null, unit: string | null): number | null {
+    const known = this.knownPrice(name);
+    return known ? estimateLinePrice({ quantity, unit }, known.data) : null;
+  }
+  /** Set the price of a line; it is remembered for the next lists. */
+  async setItemPrice(id: string, price: number | null) {
+    const cur = this.store.get('shoppingItem', id);
+    if (!cur) throw new Error('not_found');
+    await this.updateItem(id, { price });
+    const key = ingredientKey(cur.data.name);
+    if (price === null || !key) return;
+    await this.store.write(
+      'price',
+      priceId(key),
+      validate(priceDataSchema, {
+        name: cur.data.name,
+        price,
+        quantity: cur.data.quantity,
+        unit: cur.data.unit,
+      }),
+    );
   }
   async updateItem(id: string, patch: Partial<ShoppingItemData>) {
     const cur = this.store.get('shoppingItem', id);
@@ -460,7 +672,8 @@ export class Repos {
     end: string,
   ): Promise<{ added: number; updated: number }> {
     const planned = this.entries(start, end)
-      .filter((e) => e.data.recipeId)
+      // Leftovers were cooked with the first meal.
+      .filter((e) => e.data.recipeId && !e.data.leftover)
       .map((e) => ({ entry: e, recipe: this.store.get('recipe', e.data.recipeId!) }))
       .filter(
         (x): x is { entry: LocalRecord<'mealPlanEntry'>; recipe: Recipe } => x.recipe !== null,
@@ -498,10 +711,14 @@ export class Repos {
     let updated = 0;
     for (const p of planMergeIntoList(existing, lines)) {
       if (p.kind === 'update') {
+        const cur = this.store.get('shoppingItem', p.id);
         await this.updateItem(p.id, {
           quantity: p.quantity,
           unit: p.unit,
           recipeIds: p.recipeIds.slice(0, 50),
+          price: cur
+            ? (this.estimatePrice(cur.data.name, p.quantity, p.unit) ?? cur.data.price)
+            : null,
         });
         updated++;
       } else {

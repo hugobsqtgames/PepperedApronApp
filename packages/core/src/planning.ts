@@ -105,3 +105,50 @@ export function nextMeal<T extends PlanEntryLike>(entries: T[], now: Date): T | 
   );
   return upcoming[0] ?? null;
 }
+
+/** Where leftovers are eaten: the next day's lunch. */
+export function leftoverSlot(date: string): { date: string; slot: MealSlot } {
+  return { date: addDays(date, 1), slot: 'lunch' };
+}
+
+export interface TemplateMealLike {
+  day: number;
+  slot: MealSlot;
+  recipeId: string | null;
+  customTitle: string | null;
+  servings: number | null;
+  leftover: boolean;
+}
+
+/** The meals of a week, by day of the week, for a reusable plan. */
+export function templateFromWeek<
+  T extends {
+    date: string;
+    slot: MealSlot;
+    recipeId: string | null;
+    customTitle: string | null;
+    servings: number | null;
+    leftover: boolean;
+  },
+>(entries: T[], weekStart: string): TemplateMealLike[] {
+  const days = weekDates(weekStart);
+  return entries
+    .filter((e) => days.includes(e.date))
+    .map((e) => ({
+      day: days.indexOf(e.date),
+      slot: e.slot,
+      recipeId: e.recipeId,
+      customTitle: e.customTitle,
+      servings: e.servings,
+      leftover: e.leftover,
+    }))
+    .sort((a, b) => a.day - b.day || slotIndex(a.slot) - slotIndex(b.slot));
+}
+
+/** The dated meals a template gives for the week starting on `weekStart`. */
+export function mealsFromTemplate<T extends TemplateMealLike>(
+  meals: T[],
+  weekStart: string,
+): (Omit<T, 'day'> & { date: string })[] {
+  return meals.map(({ day, ...m }) => ({ ...m, date: addDays(weekStart, day) }));
+}

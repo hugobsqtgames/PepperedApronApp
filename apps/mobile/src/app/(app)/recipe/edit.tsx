@@ -12,8 +12,6 @@ import {
 import { router, useLocalSearchParams, useNavigation } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
-import { fetch as expoFetch } from 'expo/fetch';
-import { File, Paths } from 'expo-file-system';
 import {
   computeTotalMinutes,
   DIFFICULTIES,
@@ -40,9 +38,10 @@ import { useRepos } from '../../../hooks/runtime';
 import { errorMessage } from '../../../lib/errors';
 import { useLayout } from '../../../lib/layout';
 import { recipePhotoUri } from '../../../lib/media';
+import { noticeText, WARNING_NOTICES } from '../../../features/recipe/notices';
 import { draftStore, type EditorDraft } from '../../../services/drafts';
 import { haptic } from '../../../services/haptics';
-import { pickImage, preparePhoto, type PhotoSource } from '../../../services/photos';
+import { photoFromUrl, pickImage, preparePhoto, type PhotoSource } from '../../../services/photos';
 import { useTheme } from '../../../theme/ThemeProvider';
 import { radius, space } from '../../../theme/tokens';
 import {
@@ -65,15 +64,6 @@ type PhotoChange =
   | { kind: 'remove' }
   | { kind: 'local'; uri: string }
   | { kind: 'remote'; url: string };
-
-/** Import notices that ask the user to complete or fix something. */
-const WARNING_NOTICES = new Set<string>([
-  'minimal',
-  'instagram',
-  'listenPermission',
-  'listenLanguage',
-  'listenFailed',
-]);
 
 export default function RecipeEditor() {
   const {
@@ -99,6 +89,16 @@ export default function RecipeEditor() {
   );
 
   const [data, setData] = useState<RecipeData>(initial);
+  // An imported recipe that is already in the library (same link, or same title and ingredients).
+  const [duplicateOf] = useState(() => {
+    if (!draft) return null;
+    const m = repos.findDuplicate({
+      title: initial.title,
+      sourceUrl: initial.sourceUrl,
+      ingredientNames: initial.ingredients.map((i) => i.name),
+    });
+    return m ? repos.recipe(m.id) : null;
+  });
   const [ings, setIngs] = useState<IngRow[]>(() =>
     initial.ingredients.length
       ? toIngRows(initial.ingredients, locale)
@@ -238,6 +238,8 @@ export default function RecipeEditor() {
       ovenTemperatureC: numOrNull(times.oven),
       ingredients: fromIngRows(ings, locale),
       steps: fromStepRows(steps),
+      // Saved from the editor: the user has checked the recipe.
+      review: null,
     };
     if (!final.title.trim()) {
       setTitleError(t('errors.titleRequired'));
@@ -250,12 +252,8 @@ export default function RecipeEditor() {
       if (photo.kind === 'local') final.photoKey = await preparePhoto(photo.uri);
       else if (photo.kind === 'remove') final.photoKey = null;
       else if (photo.kind === 'remote') {
-        const res = await expoFetch(photo.url);
-        if (res.ok) {
-          const tmp = new File(Paths.cache, `${uuidv7()}.jpg`);
-          tmp.write(await res.bytes());
-          final.photoKey = await preparePhoto(tmp.uri);
-        }
+        const key = await photoFromUrl(photo.url);
+        if (key) final.photoKey = key;
       }
     } catch {
       toast(t('errors.photo_failed'), { tone: 'error' });
@@ -352,25 +350,23 @@ export default function RecipeEditor() {
                 color={WARNING_NOTICES.has(draft.notice) ? 'accent' : 'primary'}
               />
               <Text variant="callout" style={{ flex: 1 }}>
-                {draft.notice === 'full'
-                  ? t('import.full')
-                  : draft.notice === 'minimal'
-                    ? t('import.minimal')
-                    : draft.notice === 'partial'
-                      ? t('import.partial')
-                      : draft.notice === 'speech'
-                        ? t('import.speech')
-                        : draft.notice === 'instagram'
-                          ? t('import.instagramPrivate')
-                          : draft.notice === 'listenPermission'
-                            ? t('import.listenPermission')
-                            : draft.notice === 'listenLanguage'
-                              ? t('import.listenLanguage')
-                              : draft.notice === 'listenFailed'
-                                ? t('import.listenFailed')
-                                : t('editor.importedNotice')}
+                {noticeText(draft.notice, t)}
               </Text>
             </View>
+          ) : null}
+          {duplicateOf ? (
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => router.push(`/recipe/${duplicateOf.id}`)}
+              style={[styles.notice, { backgroundColor: colors.accentSoft }]}
+              testID="editor-duplicate"
+            >
+              <Icon name="copy-outline" size={20} color="accent" />
+              <Text variant="callout" style={{ flex: 1 }}>
+                {t('editor.duplicateOf', { title: duplicateOf.data.title })}
+              </Text>
+              <Icon name="chevron-forward" size={18} color="textSubtle" />
+            </Pressable>
           ) : null}
 
           <Pressable

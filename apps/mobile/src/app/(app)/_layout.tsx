@@ -5,25 +5,35 @@ import { useShareIntentContext } from 'expo-share-intent';
 import { useTranslation } from 'react-i18next';
 import { useRuntime } from '../../hooks/runtime';
 import { rescheduleReminders } from '../../services/notifications';
-import { shareInbox } from '../../services/shareInbox';
+import { sourcesFromShare } from '../../services/autoImport';
+import { importQueue } from '../../services/importQueue';
 import { publishWidgetData } from '../../services/widgets';
 import { useTheme } from '../../theme/ThemeProvider';
 
-/** Routes to the import screen whenever something is shared to PepperedApron. */
+/**
+ * Whatever is shared to PepperedApron (a TikTok or Instagram link, screenshots, a video, a text)
+ * is imported and saved on its own; the import screen shows the progress.
+ */
 function useShareIntentRouting() {
   const { hasShareIntent, shareIntent, resetShareIntent } = useShareIntentContext();
   useEffect(() => {
     if (!hasShareIntent) return;
-    const image = shareIntent.files?.find((f) => f.mimeType?.startsWith('image/'));
-    shareInbox.put({
+    const files = shareIntent.files ?? [];
+    const sources = sourcesFromShare({
       text: shareIntent.text ?? null,
       url: shareIntent.webUrl ?? null,
-      imageUri: image?.path ?? null,
       title: (shareIntent.meta?.title as string | undefined) ?? null,
-      receivedAt: Date.now(),
+      images: files.filter((f) => f.mimeType?.startsWith('image/')).map((f) => f.path),
+      videos: files.filter((f) => f.mimeType?.startsWith('video/')).map((f) => f.path),
     });
     resetShareIntent();
-    router.push('/import/shared');
+    if (!sources.length) return;
+    void importQueue
+      .add(
+        sources.map((source) => ({ source })),
+        { batch: sources.length > 1 },
+      )
+      .then((ids) => router.push({ pathname: '/import/queue', params: { ids: ids.join(',') } }));
   }, [hasShareIntent, shareIntent, resetShareIntent]);
 }
 
@@ -41,6 +51,11 @@ export default function AppLayout() {
   const { t } = useTranslation();
   useShareIntentRouting();
   useNotificationRouting();
+
+  // Imports interrupted when the app was closed resume on their own.
+  useEffect(() => {
+    if (rt.session) void importQueue.start();
+  }, [rt.session]);
 
   useEffect(() => {
     const s = rt.session;
@@ -100,7 +115,11 @@ export default function AppLayout() {
       <Stack.Screen name="import/link" options={{ presentation: 'modal' }} />
       <Stack.Screen name="import/text" options={{ presentation: 'modal' }} />
       <Stack.Screen name="import/photo" options={{ presentation: 'modal' }} />
-      <Stack.Screen name="import/shared" options={{ presentation: 'modal' }} />
+      <Stack.Screen name="import/queue" options={{ presentation: 'modal' }} />
+      <Stack.Screen name="import/instagram" options={{ presentation: 'modal' }} />
+      <Stack.Screen name="import/dictate" options={{ presentation: 'modal' }} />
+      <Stack.Screen name="tools/converter" options={{ ...sheet, sheetAllowedDetents: [0.75, 1] }} />
+      <Stack.Screen name="plan/templates" options={{ ...sheet, sheetAllowedDetents: [0.7, 1] }} />
       <Stack.Screen name="plan/pick" options={{ presentation: 'modal' }} />
       <Stack.Screen
         name="shopping/item/[id]"

@@ -3,9 +3,16 @@ import { Pressable, View } from 'react-native';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
-import { computeTotalMinutes, toIsoDate, type RecipeCategory } from '@pepperedapron/core';
+import {
+  computeTotalMinutes,
+  currentSeason,
+  recipeSeasons,
+  toIsoDate,
+  type RecipeCategory,
+} from '@pepperedapron/core';
 import { CategoryGrid } from '../../../features/home/CategoryGrid';
 import { RecipeCarousel } from '../../../features/home/Carousel';
+import { useImportQueue } from '../../../hooks/importQueue';
 import { useLive, useRepos, useRuntime, useSettings } from '../../../hooks/runtime';
 import { useLayout } from '../../../lib/layout';
 import { recipePhotoUri } from '../../../lib/media';
@@ -40,9 +47,14 @@ export default function Home() {
   const toast = useToast();
   const [refreshing, setRefreshing] = useState(false);
   const today = toIsoDate(new Date());
+  const season = currentSeason();
+  const queue = useImportQueue();
+  const importing = queue.jobs.filter(
+    (j) => j.status === 'pending' || j.status === 'running',
+  ).length;
 
   const data = useLive(
-    ['recipe', 'favorite', 'mealPlanEntry'],
+    ['recipe', 'favorite', 'mealPlanEntry', 'cookLog'],
     (r) => {
       const library = r.library();
       const favs = r.favoriteRecipes();
@@ -60,13 +72,15 @@ export default function Home() {
           })
           .slice(0, 12),
         recent: [...library].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)).slice(0, 12),
+        seasonal: library.filter((x) => recipeSeasons(x.data).includes(season)).slice(0, 12),
+        forgotten: r.forgottenRecipes(today).slice(0, 12),
         todayMeals: r
           .entries(today, today)
           .map((e) => ({ entry: e, recipe: e.data.recipeId ? r.recipe(e.data.recipeId) : null })),
         counts,
       };
     },
-    [today],
+    [today, season],
   );
 
   const random = () => {
@@ -122,6 +136,20 @@ export default function Home() {
       </View>
 
       <View style={{ gap: space.xxxl, marginTop: space.xl }}>
+        {importing ? (
+          <Card
+            onPress={() => router.push('/import/queue')}
+            accessibilityLabel={t('home.importsRunning', { count: importing })}
+          >
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.md }}>
+              <Icon name="cloud-download-outline" size={24} color="primary" />
+              <Text variant="bodyStrong" style={{ flex: 1 }}>
+                {t('home.importsRunning', { count: importing })}
+              </Text>
+              <Icon name="chevron-forward" size={18} color="textSubtle" />
+            </View>
+          </Card>
+        ) : null}
         {empty ? (
           <Card style={{ paddingVertical: space.lg }}>
             <EmptyState
@@ -253,6 +281,28 @@ export default function Home() {
                 onAction={() => router.push({ pathname: '/search', params: { maxMinutes: '30' } })}
               >
                 <RecipeCarousel recipes={data.quick} repos={repos} favorites={data.favoriteIds} />
+              </Section>
+            ) : null}
+            {data.seasonal.length ? (
+              <Section
+                title={`${t('home.seasonal')} · ${t(`seasons.${season}`)}`}
+                action={t('common.seeAll')}
+                onAction={() => router.push({ pathname: '/search', params: { season } })}
+              >
+                <RecipeCarousel
+                  recipes={data.seasonal}
+                  repos={repos}
+                  favorites={data.favoriteIds}
+                />
+              </Section>
+            ) : null}
+            {data.forgotten.length ? (
+              <Section title={t('home.forgotten')}>
+                <RecipeCarousel
+                  recipes={data.forgotten}
+                  repos={repos}
+                  favorites={data.favoriteIds}
+                />
               </Section>
             ) : null}
             <Section title={t('home.recent')}>

@@ -4,12 +4,14 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import {
+  DIET_TAGS,
   DIFFICULTIES,
   EMPTY_FILTERS,
   isActiveSearch,
   RECIPE_CATEGORIES,
   searchRecipes,
   SEASONS,
+  type DietTag,
   type Difficulty,
   type RecipeCategory,
   type SearchFilters,
@@ -39,7 +41,13 @@ export default function Search() {
   const { colors } = useTheme();
   const repos = useRepos();
   const layout = useLayout();
-  const params = useLocalSearchParams<{ category?: string; maxMinutes?: string; q?: string }>();
+  const params = useLocalSearchParams<{
+    category?: string;
+    maxMinutes?: string;
+    q?: string;
+    season?: string;
+  }>();
+  const [excludeInput, setExcludeInput] = useState('');
   const [mode, setMode] = useState<'search' | 'fridge'>('search');
   const [query, setQuery] = useState(params.q ?? '');
   const [debounced, setDebounced] = useState(query);
@@ -55,9 +63,13 @@ export default function Search() {
           ? [params.category as RecipeCategory]
           : f.categories,
       maxMinutes: params.maxMinutes ? Number(params.maxMinutes) || null : f.maxMinutes,
+      seasons:
+        params.season && (SEASONS as readonly string[]).includes(params.season)
+          ? [params.season as Season]
+          : f.seasons,
     }));
-    if (params.category || params.maxMinutes) setShowFilters(true);
-  }, [params.category, params.maxMinutes]);
+    if (params.category || params.maxMinutes || params.season) setShowFilters(true);
+  }, [params.category, params.maxMinutes, params.season]);
 
   useEffect(() => {
     const id = setTimeout(() => setDebounced(query), 150);
@@ -78,7 +90,10 @@ export default function Search() {
     [all.items, debounced, effective, active, mode],
   );
 
-  const toggle = <K extends 'categories' | 'seasons'>(key: K, v: SearchFilters[K][number]) =>
+  const toggle = <K extends 'categories' | 'seasons' | 'diets'>(
+    key: K,
+    v: SearchFilters[K][number],
+  ) =>
     setFilters((f) => {
       const cur = f[key] as string[];
       return { ...f, [key]: cur.includes(v) ? cur.filter((x) => x !== v) : [...cur, v] };
@@ -95,9 +110,19 @@ export default function Search() {
   const cols = layout.sidebar ? Math.max(2, layout.columns - 1) : layout.columns;
   const available = layout.sidebar ? layout.width - 260 : layout.width;
   const w = tileWidth(available, cols, space.md, layout.gutter);
+  const addExcluded = () => {
+    const v = excludeInput.trim();
+    if (!v) return;
+    setFilters((f) => ({ ...f, excluded: [...new Set([...f.excluded, v])] }));
+    setExcludeInput('');
+    haptic.selection();
+  };
+
   const filterCount =
     filters.categories.length +
     filters.seasons.length +
+    filters.diets.length +
+    filters.excluded.length +
     (filters.difficulty ? 1 : 0) +
     (filters.maxMinutes ? 1 : 0);
 
@@ -222,6 +247,59 @@ export default function Search() {
               />
             ))}
           </ChipRow>
+          <ChipRow>
+            {DIET_TAGS.map((d: DietTag) => (
+              <Chip
+                key={d}
+                icon="leaf-outline"
+                label={t(`diets.${d}`)}
+                selected={filters.diets.includes(d)}
+                onPress={() => toggle('diets', d)}
+              />
+            ))}
+          </ChipRow>
+          {filters.diets.length ? (
+            <Text variant="caption" color="textMuted" style={{ paddingHorizontal: layout.gutter }}>
+              {t('diets.hint')}
+            </Text>
+          ) : null}
+          <View style={{ paddingHorizontal: layout.gutter, gap: space.sm }}>
+            <View style={{ flexDirection: 'row', gap: space.sm }}>
+              <TextField
+                containerStyle={{ flex: 1 }}
+                icon="remove-circle-outline"
+                placeholder={t('search.excludePlaceholder')}
+                value={excludeInput}
+                onChangeText={setExcludeInput}
+                onSubmitEditing={addExcluded}
+                returnKeyType="done"
+                blurOnSubmit={false}
+                accessibilityLabel={t('search.excludeTitle')}
+                testID="exclude-input"
+              />
+              <IconButton
+                icon="add"
+                label={t('common.add')}
+                onPress={addExcluded}
+                variant="surface"
+                size={48}
+              />
+            </View>
+            {filters.excluded.length ? (
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space.sm }}>
+                {filters.excluded.map((x) => (
+                  <Chip
+                    key={x}
+                    label={`${t('search.excludeTitle')} ${x}  ✕`}
+                    selected
+                    onPress={() =>
+                      setFilters((f) => ({ ...f, excluded: f.excluded.filter((y) => y !== x) }))
+                    }
+                  />
+                ))}
+              </View>
+            ) : null}
+          </View>
           {filterCount ? (
             <Button
               title={t('search.clear')}

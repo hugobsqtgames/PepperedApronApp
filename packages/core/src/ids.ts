@@ -175,6 +175,8 @@ export const favoriteId = (recipeId: string) => uuidv5(`favorite:${recipeId}`);
 export const collectionItemId = (collectionId: string, recipeId: string) =>
   uuidv5(`collection-item:${collectionId}:${recipeId}`);
 export const shoppingCategoryId = (key: string) => uuidv5(`shopping-category:${key}`);
+/** One remembered price per product (same key as shopping merges: "Œufs" = "oeuf"). */
+export const priceId = (key: string) => uuidv5(`price:${key}`);
 /** The single settings record, shared by every device of the user. */
 export const SETTINGS_ID = uuidv5('settings');
 

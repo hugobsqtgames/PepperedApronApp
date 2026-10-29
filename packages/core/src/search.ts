@@ -1,3 +1,4 @@
+import type { DietTag } from './diet';
 import type { Difficulty, RecipeCategory, Season } from './enums';
 import { normalizeText, singularize, tokenize } from './text';
 
@@ -12,6 +13,8 @@ export interface SearchableRecipe {
   totalMinutes: number | null;
   ingredientNames: string[];
   updatedAt: string;
+  /** Automatic diet labels (see diet.ts). */
+  diets?: DietTag[];
 }
 
 export interface SearchFilters {
@@ -22,6 +25,9 @@ export interface SearchFilters {
   tags: string[];
   /** "What's in my fridge": ranks by coverage instead of filtering. */
   fridge: string[];
+  /** Ingredients to avoid ("champignons", "lait de coco"). */
+  excluded: string[];
+  diets: DietTag[];
 }
 
 export const EMPTY_FILTERS: SearchFilters = {
@@ -31,6 +37,8 @@ export const EMPTY_FILTERS: SearchFilters = {
   seasons: [],
   tags: [],
   fridge: [],
+  excluded: [],
+  diets: [],
 };
 
 export interface ParsedQuery {
@@ -555,6 +563,14 @@ function isStaple(name: string): boolean {
   return toks.length > 0 && toks.length <= 2 && toks.some((t) => STAPLES.has(t));
 }
 
+/** True if one ingredient (or the title) contains all the words of `words`. */
+function mentions(r: SearchableRecipe, words: string[]): boolean {
+  return [r.title, ...r.ingredientNames].some((name) => {
+    const toks = tokenize(name).map(singularize);
+    return words.every((w) => toks.some((t) => t === w || (w.length >= 4 && t.startsWith(w))));
+  });
+}
+
 export function searchRecipes<T extends SearchableRecipe>(
   recipes: T[],
   query: string,
@@ -567,6 +583,9 @@ export function searchRecipes<T extends SearchableRecipe>(
   const difficulty = filters.difficulty ?? pq.difficulty;
   const seasons = [...new Set([...filters.seasons, ...pq.seasons])];
   const fridge = filters.fridge.map((f) => tokenize(f).map(singularize)).filter((t) => t.length);
+  const excluded = (filters.excluded ?? [])
+    .map((f) => tokenize(f).map(singularize))
+    .filter((t) => t.length);
   const out: SearchResult<T>[] = [];
 
   for (const r of recipes) {
@@ -598,6 +617,8 @@ export function searchRecipes<T extends SearchableRecipe>(
     }
     if (!ok) continue;
     if (pq.excluded.some((x) => tokenMatch([...ix.title, ...ix.ingredients], x) >= 0.8)) continue;
+    if (excluded.some((x) => mentions(r, x))) continue;
+    if (filters.diets.length && !filters.diets.every((d) => r.diets?.includes(d))) continue;
 
     if (pq.categories.length) {
       const catHit = r.category !== null && pq.categories.includes(r.category);
@@ -647,6 +668,8 @@ export function isActiveSearch(query: string, filters: SearchFilters): boolean {
     filters.maxMinutes !== null ||
     filters.seasons.length > 0 ||
     filters.tags.length > 0 ||
-    filters.fridge.length > 0
+    filters.fridge.length > 0 ||
+    (filters.excluded?.length ?? 0) > 0 ||
+    (filters.diets?.length ?? 0) > 0
   );
 }

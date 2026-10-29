@@ -3,10 +3,11 @@ import { View } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { ImportUrlError } from '@pepperedapron/core';
+import { extractUrls, ImportUrlError } from '@pepperedapron/core';
 import { linkNotice, openDraft } from '../../../features/recipe/openDraft';
 import { errorMessage } from '../../../lib/errors';
 import { importLinkFull } from '../../../services/importer';
+import { importQueue } from '../../../services/importQueue';
 import { space } from '../../../theme/tokens';
 import { Button, IconButton, LoadingState, Screen, Text, TextField } from '../../../ui';
 
@@ -21,7 +22,18 @@ export default function ImportLink() {
     if (params.url) void run(params.url);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const urls = extractUrls(url);
+  /** Several links pasted at once: they are imported one after the other and saved. */
+  const runAll = async () => {
+    await importQueue.add(
+      urls.map((u) => ({ source: { kind: 'link' as const, url: u, text: null, title: null } })),
+      { batch: true },
+    );
+    router.replace('/import/queue');
+  };
+
   const run = async (raw: string) => {
+    if (extractUrls(raw).length > 1) return runAll();
     setError(null);
     setLoading('fetching');
     try {
@@ -57,6 +69,7 @@ export default function ImportLink() {
             autoCapitalize="none"
             autoCorrect={false}
             keyboardType="url"
+            multiline={urls.length > 1}
             returnKeyType="go"
             onSubmitEditing={() => void run(url)}
             error={error}
@@ -72,7 +85,9 @@ export default function ImportLink() {
               style={{ flex: 1 }}
             />
             <Button
-              title={t('import.fetch')}
+              title={
+                urls.length > 1 ? t('import.fetchAll', { count: urls.length }) : t('import.fetch')
+              }
               onPress={() => run(url)}
               style={{ flex: 1 }}
               disabled={!url.trim()}
@@ -81,6 +96,9 @@ export default function ImportLink() {
           </View>
           <Text variant="caption" color="textMuted">
             {t('add.shareTip')}
+          </Text>
+          <Text variant="caption" color="textMuted">
+            {t('import.severalLinksTip')}
           </Text>
         </View>
       )}

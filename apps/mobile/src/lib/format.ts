@@ -1,6 +1,8 @@
 import type { TFunction } from 'i18next';
 import {
   convertAmount,
+  cupsToGrams,
+  roundForCooking,
   formatAmount,
   getUnit,
   normalizeAmount,
@@ -19,13 +21,25 @@ export function formatIngredient(
   system: UnitSystem,
 ): { amount: string; name: string; note: string | null } {
   let a = scaleAmount({ quantity: i.quantity, quantityMax: i.quantityMax, unit: i.unit }, factor);
-  if (factor !== 1) a = normalizeAmount(a);
+  let approx = false;
+  if (factor !== 1) {
+    // Whole eggs, half onions, quarter spoons: rounded like a cook would.
+    const r = roundForCooking(a, i.name);
+    approx = r.changed;
+    a = normalizeAmount({ quantity: r.quantity, quantityMax: r.quantityMax, unit: r.unit });
+  }
+  // US recipes: cups of flour or sugar are shown in grams.
+  if (system === 'metric') a = cupsToGrams(a, i.name);
   a = convertAmount(a, system);
-  const amount = formatAmount(a, locale);
+  const amount = `${approx ? '≈ ' : ''}${formatAmount(a, locale)}`;
   const unit = getUnit(a.unit)
     ? unitLabel(a.unit, a.quantityMax ?? a.quantity, locale)
     : (a.unit ?? '');
-  return { amount: [amount, unit].filter(Boolean).join(' '), name: i.name, note: i.note };
+  return {
+    amount: a.quantity === null ? '' : [amount, unit].filter(Boolean).join(' '),
+    name: i.name,
+    note: i.note,
+  };
 }
 
 export function formatOven(c: number, system: UnitSystem): string {
@@ -76,4 +90,19 @@ export function formatRelativeTime(
   if (min < 60) return t('time.minutesAgo', { count: min });
   const time = new Date(iso).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
   return t('time.at', { time });
+}
+
+/** Plain-text shopping list, by aisle, for Messages, WhatsApp or Notes. */
+export function shoppingListAsText(
+  name: string,
+  groups: { title: string; items: { name: string; quantity: string; checked: boolean }[] }[],
+): string {
+  const lines = [name];
+  for (const g of groups) {
+    const open = g.items.filter((i) => !i.checked);
+    if (!open.length) continue;
+    lines.push('', g.title);
+    for (const i of open) lines.push(`☐ ${i.quantity ? `${i.quantity} ` : ''}${i.name}`);
+  }
+  return lines.join('\n');
 }

@@ -7,7 +7,7 @@ import {
   settingsDataSchema,
   shoppingItemDataSchema,
 } from './schemas';
-import { diffFields, ENTITY_SCHEMAS } from './sync';
+import { diffFields, ENTITY_ORDER, ENTITY_SCHEMAS, SYNC_ENTITIES } from './sync';
 
 export const validRecipe = () => ({
   title: '  Tarte  ',
@@ -143,7 +143,8 @@ describe('other entities', () => {
     expect(shoppingItemDataSchema.safeParse({ ...it, quantity: 0 }).success).toBe(false);
   });
   it('every entity has a schema', () => {
-    expect(Object.keys(ENTITY_SCHEMAS)).toHaveLength(9);
+    expect(Object.keys(ENTITY_SCHEMAS).sort()).toEqual([...SYNC_ENTITIES].sort());
+    expect([...ENTITY_ORDER].sort()).toEqual([...SYNC_ENTITIES].sort());
   });
 });
 
@@ -171,5 +172,51 @@ describe('diffFields', () => {
     expect(diffFields({ a: 1, b: [1] }, { a: 1, b: [2] })).toEqual(['b']);
     expect(diffFields(null, { a: 1 })).toEqual(['a']);
     expect(diffFields({ a: 1 }, {})).toEqual(['a']);
+  });
+});
+
+describe('fields added later', () => {
+  it('older recipes, meals, items and settings stay valid with defaults', () => {
+    const r = recipeDataSchema.parse(validRecipe());
+    expect(r.rating).toBeNull();
+    expect(r.personalNote).toBeNull();
+    expect(r.review).toBeNull();
+    expect(
+      mealPlanEntryDataSchema.parse({
+        date: '2026-10-29',
+        slot: 'dinner',
+        recipeId: null,
+        customTitle: 'Pizza',
+        servings: null,
+        position: 0,
+      }).leftover,
+    ).toBe(false);
+    expect(
+      settingsDataSchema.parse({ ...DEFAULT_SETTINGS, cookTextScale: undefined }).cookTextScale,
+    ).toBe(1);
+  });
+  it('rating is 1 to 5', () => {
+    expect(recipeDataSchema.safeParse({ ...validRecipe(), rating: 6 }).success).toBe(false);
+    expect(recipeDataSchema.safeParse({ ...validRecipe(), rating: 4 }).success).toBe(true);
+  });
+  it('new entities', () => {
+    expect(
+      ENTITY_SCHEMAS.cookLog.safeParse({ recipeId: uuidv7(), date: '2026-10-29' }).success,
+    ).toBe(true);
+    expect(
+      ENTITY_SCHEMAS.planTemplate.safeParse({
+        name: 'Semaine classique',
+        meals: [{ day: 0, slot: 'dinner', recipeId: null, customTitle: 'Soupe', servings: 2 }],
+      }).success,
+    ).toBe(true);
+    expect(
+      ENTITY_SCHEMAS.planTemplate.safeParse({
+        name: 'x',
+        meals: [{ day: 7, slot: 'dinner', recipeId: null, customTitle: 'a', servings: null }],
+      }).success,
+    ).toBe(false);
+    expect(
+      ENTITY_SCHEMAS.price.safeParse({ name: 'Lait', price: 1.2, quantity: 1, unit: 'l' }).success,
+    ).toBe(true);
   });
 });

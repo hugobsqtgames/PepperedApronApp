@@ -40,17 +40,26 @@ Les photos sont des fichiers `Documents/photos/<uuid>.jpg` ; la recette ne stock
 
 Liens : seul le schéma `pepperedapron://` est utilisé (widgets, Live Activities) ; voir `src/app/+native-intent.tsx`.
 
-## Extension de partage (import depuis TikTok, Instagram, Safari, Photos, Notes, Messages)
+## Extension de partage : « Partager → PepperedApron » fait tout
 
-`expo-share-intent` ajoute une extension iOS « PepperedApron » (texte, URL, page web, 1 image). L'extension transmet le contenu à l'app via l'App Group ; `(app)/_layout.tsx` l'oriente :
+`expo-share-intent` ajoute une extension iOS « PepperedApron » (texte, URL, page web, jusqu'à 10 images, 1 vidéo). L'extension transmet le contenu à l'app via l'App Group ; `(app)/_layout.tsx` le transforme en imports (`services/autoImport.ts → sourcesFromShare`) et les place dans la **file d'imports** (`services/importQueue.ts`). Chaque import est lu puis **enregistré directement** comme recette ; l'écran `import/queue` montre la progression puis ouvre la recette. Une recette enregistrée ainsi porte un bandeau « Importée automatiquement » (champ `review`) qui dit quoi vérifier, jusqu'à ce que l'utilisateur touche « C'est bon » ou la modifie.
 
-- URL → import de lien directement depuis l'appareil (`services/importer.ts` + `packages/core/src/parse/url.ts` : légende de la page publique TikTok / description YouTube, et si la recette n'est qu'expliquée à l'oral, ses sous-titres automatiques publiés par la plateforme (ingrédients cités et phrases d'action, transcription complète dans les notes, sans IA) ; Instagram : légende de la page publique, ou de la page d'intégration officielle `/p/<code>/embed/captioned/` si la première demande une connexion, conseil « capture d'écran → Depuis une photo » pour les comptes privés ; JSON-LD, OpenGraph ; message honnête si la plateforme ne donne pas accès au contenu ; hors ligne, le lien est gardé comme source) ;
+- URL → import de lien directement depuis l'appareil (`services/importer.ts` + `packages/core/src/parse/url.ts` : légende de la page publique TikTok / description YouTube, et si la recette n'est qu'expliquée à l'oral, ses sous-titres automatiques publiés par la plateforme (ingrédients cités et phrases d'action, transcription complète dans les notes, sans IA) ; Instagram : légende de la page publique, ou de la page d'intégration officielle `/p/<code>/embed/captioned/` si la première demande une connexion ; JSON-LD, OpenGraph). Plusieurs liens dans un texte → un import par lien.
 - texte → structuration déterministe (titre, ingrédients, étapes) ;
-- image → photo de la recette ou lecture du texte sur l'appareil (OCR Apple Vision / ML Kit).
+- images (1 à 10, ex. captures d'un carrousel) → texte de chaque image lu sur l'appareil (OCR Apple Vision), mis bout à bout en une seule recette ; une image presque sans texte devient la photo de la recette ;
+- vidéo (enregistrée depuis TikTok/Instagram dans Photos) → transcription sur l'appareil (voir plus bas).
 
-Reel Instagram dont la recette n'est que dite à l'oral : l'app télécharge la vidéo publique dans le cache, le module local `modules/video-speech` (Swift) en extrait le son en 16 kHz mono et le fait transcrire par la reconnaissance vocale d'Apple **sur l'appareil** (`requiresOnDeviceRecognition`), puis le fichier est supprimé. Seule l'autorisation « Reconnaissance vocale » est demandée (pas le micro). Les ingrédients et étapes sont tirés de la transcription par les mêmes règles que les sous-titres TikTok/YouTube.
+**Doublons** (`packages/core/src/duplicates.ts`) : même publication (lien normalisé : `instagram.com/reel/X?igsh=…` = `instagram.com/p/X`) ou même titre + mêmes ingrédients → rien n'est ajouté, la recette existante s'ouvre (« Ajouter quand même » possible). L'éditeur signale aussi un doublon pour les imports manuels.
 
-Tout est modifiable avant enregistrement.
+**File d'imports** : conservée dans la base locale (table `meta`, cet appareil seulement), elle reprend après fermeture de l'app ; un import à la fois ; hors ligne, rien n'est enregistré et l'import attend le réseau. Imports en masse (liste de liens, export Instagram) : 4 s entre deux publications Instagram ; si Instagram ne donne plus les légendes, la file fait une pause de 15 min au lieu d'enregistrer des liens vides (3 essais par publication). Les imports n'avancent que lorsque l'app est ouverte (iOS ne laisse pas tourner l'app en arrière-plan) : l'écran d'import garde l'écran allumé.
+
+**Enregistrements Instagram** (`import/instagram`) : l'utilisateur demande à Instagram l'export de ses « Enregistrés » (JSON), puis choisit le ZIP ; seuls les fichiers `saved*.json|html` sont décompressés (`fflate`, limite 150 Mo), les publications et leurs **collections** sont lues (`parse/links.ts → instagramSavedPosts`) et importées ; chaque collection Instagram devient une collection de l'app. Une par une : Partager → PepperedApron, puis « ◀ Instagram » pour la suivante.
+
+Reel Instagram dont la recette n'est que dite à l'oral, ou vidéo partagée : l'app télécharge la vidéo publique dans le cache (ou copie le fichier partagé), le module local `modules/video-speech` (Swift) en extrait le son en 16 kHz mono et le fait transcrire par la reconnaissance vocale d'Apple **sur l'appareil** (`requiresOnDeviceRecognition`), puis le fichier est supprimé. Les ingrédients et étapes sont tirés de la transcription par les mêmes règles que les sous-titres TikTok/YouTube.
+
+**Dictée** (`import/dictate`) : enregistrement au micro (`expo-audio`), puis même transcription sur l'appareil ; la première phrase donne le titre ; la recette s'ouvre dans l'éditeur. L'audio est supprimé.
+
+Depuis l'app (« + ») : lien(s) collé(s), texte, photo(s), dictée, enregistrements Instagram. Ces imports-là s'ouvrent dans l'éditeur avant enregistrement (sauf plusieurs liens, qui passent par la file).
 
 ## Widgets (iOS)
 
@@ -58,7 +67,20 @@ Tout est modifiable avant enregistrement.
 
 ## Mode cuisine, minuteurs, Live Activities
 
-Texte agrandi, écran maintenu allumé, navigation par étapes, ingrédients à portée, minuteurs multiples (heures de fin absolues : ils survivent à la navigation, à l'arrière-plan et au redémarrage). La fin d'un minuteur est une notification locale ; sur iPhone, le minuteur le plus proche s'affiche en **Live Activity** (écran verrouillé, Dynamic Island) via `expo-live-activity`.
+Texte agrandi et réglable (A−/A+, retenu dans les réglages), écran maintenu allumé, navigation par étapes, ingrédients à portée **pour le nombre de personnes choisi sur la fiche** (les quantités écrites dans les étapes suivent aussi : `scaleStepText`), minuteurs multiples et nommables (« + Minuteur » : durée puis nom ; heures de fin absolues : ils survivent à la navigation, à l'arrière-plan et au redémarrage). « Terminer » ajoute la recette à l'historique (une entrée par jour) et propose de la noter et d'ajouter une remarque.
+
+Fiche recette : nombre de personnes réglable, quantités recalculées et arrondies comme en cuisine (œufs entiers, demi-oignons, quarts de cuillère, « ≈ » quand l'arrondi se voit), « cups » de farine/sucre affichées en grammes en métrique, moule conseillé quand un moule est mentionné (surface proportionnelle), convertisseur (`tools/converter` : poids/volumes avec densités usuelles, °C/°F/thermostat), note (étoiles), « Mes remarques », historique « Cuisinée N fois », étiquettes automatiques (végétarien, vegan, sans gluten — déduites des ingrédients, `packages/core/src/diet.ts`) et saisons déduites des fruits et légumes (`seasonal.ts`) quand l'utilisateur n'en a pas choisi. La fin d'un minuteur est une notification locale ; sur iPhone, le minuteur le plus proche s'affiche en **Live Activity** (écran verrouillé, Dynamic Island) via `expo-live-activity`.
+
+## Planning et courses
+
+- **Semaines types** (`plan/templates`) : enregistrer la semaine affichée, puis l'ajouter ou la substituer à une autre semaine (entité `planTemplate`, synchronisée).
+- **Restes** : sur un repas, « Prévoir des restes pour demain midi » augmente les portions cuisinées et place un repas « Restes » au déjeuner du lendemain (`leftover: true`), exclu de la liste de courses.
+- **Liste de courses** : partage en texte (Messages, WhatsApp…) ; envoi vers une liste **Rappels** d'Apple (`expo-calendar`, autorisation Rappels uniquement, pas d'accès au calendrier) — une liste Rappels partagée avec la famille fait le lien sans compte ; les articles déjà présents ne sont pas dupliqués.
+- **Budget** : prix saisi sur un article, mémorisé par produit (entité `price`), et estimé proportionnellement pour les listes suivantes ; total et « dans le panier » en haut de la liste, dans la devise de l'appareil.
+
+## Découverte
+
+Accueil : « De saison » (saison courante), « Pas faites depuis longtemps » (cuisinées il y a plus de 60 jours), bandeau des imports en cours. Recherche : filtres végétarien / vegan / sans gluten et ingrédients à éviter (« Sans… champignons »), en plus de « sans X » dans la requête.
 
 ## Notifications
 
@@ -78,4 +100,4 @@ Tailles dynamiques respectées (plafonnées pour les grands titres), libellés V
 
 ## Dépendances natives à surveiller
 
-`react-native-cloud-storage` est isolé derrière `services/icloud.ts` (interface `CloudDrive` de `packages/client`). `expo-doctor` signale `expo-live-activity` comme peu maintenu et `expo-text-extractor` sans métadonnées. Les deux sont isolés derrière `services/timers.ts` et `services/ocr.ts` (échec silencieux : pas de Live Activity / message « reconnaissance indisponible »), donc remplaçables sans toucher aux écrans. `@bacons/apple-targets` est patché (`patches/`) pour cohabiter avec la cible Live Activity.
+`expo-audio` (dictée) et `expo-calendar` (Rappels) sont isolés dans `import/dictate.tsx` et `services/reminders.ts`. `react-native-cloud-storage` est isolé derrière `services/icloud.ts` (interface `CloudDrive` de `packages/client`). `expo-doctor` signale `expo-live-activity` comme peu maintenu et `expo-text-extractor` sans métadonnées. Les deux sont isolés derrière `services/timers.ts` et `services/ocr.ts` (échec silencieux : pas de Live Activity / message « reconnaissance indisponible »), donc remplaçables sans toucher aux écrans. `@bacons/apple-targets` est patché (`patches/`) pour cohabiter avec la cible Live Activity.

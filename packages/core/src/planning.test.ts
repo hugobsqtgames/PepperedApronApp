@@ -3,6 +3,9 @@ import {
   addDays,
   addMonths,
   emptyMainSlots,
+  leftoverSlot,
+  mealsFromTemplate,
+  templateFromWeek,
   monthGrid,
   nextMeal,
   nextPosition,
@@ -69,5 +72,50 @@ describe('timers', () => {
     expect(timerState(t, 100_000 + 25 * 60_000)).toBe('done');
     expect(remainingSeconds(t, 10 ** 12)).toBe(0);
     expect(pauseTimer(t, 10 ** 12)).toBe(t);
+  });
+});
+
+describe('leftovers and reusable weeks', () => {
+  it('leftovers go to the next day lunch', () => {
+    expect(leftoverSlot('2026-10-29')).toEqual({ date: '2026-10-30', slot: 'lunch' });
+  });
+  it('a week becomes a template and back', () => {
+    const meals = templateFromWeek(
+      [
+        {
+          date: '2026-10-28',
+          slot: 'dinner' as const,
+          recipeId: 'r1',
+          customTitle: null,
+          servings: 4,
+          leftover: false,
+        },
+        {
+          date: '2026-10-26',
+          slot: 'lunch' as const,
+          recipeId: null,
+          customTitle: 'Pizza',
+          servings: null,
+          leftover: false,
+        },
+        {
+          date: '2026-11-03',
+          slot: 'lunch' as const,
+          recipeId: null,
+          customTitle: 'Hors semaine',
+          servings: null,
+          leftover: false,
+        },
+      ],
+      '2026-10-26',
+    );
+    expect(meals.map((m) => [m.day, m.slot])).toEqual([
+      [0, 'lunch'],
+      [2, 'dinner'],
+    ]);
+    expect(mealsFromTemplate(meals, '2026-11-09').map((m) => m.date)).toEqual([
+      '2026-11-09',
+      '2026-11-11',
+    ]);
   });
 });

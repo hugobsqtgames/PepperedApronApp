@@ -1,11 +1,21 @@
 import { useRef, useState } from 'react';
-import { Alert, Pressable, SectionList, StyleSheet, TextInput, View } from 'react-native';
+import {
+  Alert,
+  Linking,
+  Pressable,
+  SectionList,
+  Share,
+  StyleSheet,
+  TextInput,
+  View,
+} from 'react-native';
 import { router } from 'expo-router';
 import ReanimatedSwipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import {
   addDays,
+  budgetSummary,
   formatShoppingQuantity,
   groupByCategory,
   startOfWeek,
@@ -16,8 +26,17 @@ import type { LocalRecord } from '@pepperedapron/client';
 import { useLive, useRepos } from '../../../hooks/runtime';
 import { aisleName } from '../../../lib/aisles';
 import { errorMessage } from '../../../lib/errors';
+import { shoppingListAsText } from '../../../lib/format';
+import { formatMoney } from '../../../lib/money';
 import { useLayout } from '../../../lib/layout';
 import { haptic } from '../../../services/haptics';
+import {
+  createRemindersList,
+  lastRemindersList,
+  remindersLists,
+  sendToReminders,
+  type RemindersList,
+} from '../../../services/reminders';
 import { useTheme } from '../../../theme/ThemeProvider';
 import { radius, space } from '../../../theme/tokens';
 import {
@@ -70,6 +89,84 @@ export default function Shopping() {
   );
   const remaining = items.filter((i) => !i.data.checked).length;
   const checkedCount = items.length - remaining;
+  const budget = budgetSummary(items.map((i) => i.data));
+  const locale = i18n.language as Locale;
+
+  /** Items still to buy, by aisle, as they appear on screen. */
+  const openGroups = () =>
+    groups.map((g) => ({
+      title: aisleName(g.key, custom, t),
+      items: g.items.map((i) => ({
+        name: i.data.name,
+        quantity: formatShoppingQuantity(i.data, locale),
+        checked: i.data.checked,
+      })),
+    }));
+
+  const shareText = () =>
+    void Share.share({
+      message: shoppingListAsText(list?.data.name ?? t('shopping.title'), openGroups()),
+    });
+
+  const toReminders = async () => {
+    try {
+      const lists = await remindersLists();
+      if (lists === 'denied') {
+        Alert.alert(t('reminders.denied'), undefined, [
+          { text: t('common.cancel'), style: 'cancel' },
+          { text: t('errors.openSettings'), onPress: () => void Linking.openSettings() },
+        ]);
+        return;
+      }
+      const send = async (target: RemindersList) => {
+        const n = await sendToReminders(
+          target.id,
+          openGroups().flatMap((g) =>
+            g.items
+              .filter((i) => !i.checked)
+              .map((i) => ({
+                title: i.quantity ? `${i.name} (${i.quantity})` : i.name,
+                notes: g.title,
+              })),
+          ),
+        );
+        haptic.success();
+        toast(t('reminders.sent', { count: n, list: target.title }));
+      };
+      const last = await lastRemindersList();
+      const options = [
+        ...lists
+          .sort((a, b) => Number(b.id === last) - Number(a.id === last))
+          .map((l) => ({
+            label: l.title,
+            icon: (l.id === last ? 'checkmark-circle-outline' : 'list-outline') as
+              'checkmark-circle-outline' | 'list-outline',
+            onPress: () => void send(l).catch((e) => toast(errorMessage(e, t), { tone: 'error' })),
+          })),
+        {
+          label: t('reminders.newList'),
+          icon: 'add-circle-outline' as const,
+          onPress: () =>
+            setTimeout(
+              () =>
+                prompt({
+                  title: t('reminders.newList'),
+                  initial: list?.data.name ?? t('shopping.defaultName'),
+                  maxLength: 80,
+                  onSubmit: (name) =>
+                    void createRemindersList(name)
+                      .then(send)
+                      .catch((e) => toast(errorMessage(e, t), { tone: 'error' })),
+                }),
+              350,
+            ),
+        },
+      ];
+      sheet({ title: t('reminders.pick'), message: t('reminders.pickHint'), options });
+    } catch (e) {
+      toast(errorMessage(e, t), { tone: 'error' });
+    }
+  };
 
   const add = async () => {
     const v = text.trim();
@@ -115,6 +212,20 @@ export default function Shopping() {
                 label: t('shopping.clearChecked'),
                 icon: 'checkmark-done-outline' as const,
                 onPress: () => void repos.clearChecked(list!.id),
+              },
+            ]
+          : []),
+        ...(remaining
+          ? [
+              {
+                label: t('shopping.shareList'),
+                icon: 'share-outline' as const,
+                onPress: shareText,
+              },
+              {
+                label: t('reminders.send'),
+                icon: 'notifications-outline' as const,
+                onPress: () => setTimeout(() => void toReminders(), 350),
               },
             ]
           : []),
@@ -176,7 +287,7 @@ export default function Shopping() {
     });
 
   const renderItem = (i: Item) => {
-    const qty = formatShoppingQuantity(i.data, i18n.language as Locale);
+    const qty = formatShoppingQuantity(i.data, locale);
     const del = () => {
       void repos.removeItem(i.id);
       toast(`${i.data.name} ✕`, {
@@ -267,6 +378,15 @@ export default function Shopping() {
               </Text>
             ) : null}
           </Pressable>
+          {i.data.price !== null ? (
+            <Text
+              variant="callout"
+              color="textMuted"
+              style={{ opacity: i.data.checked ? 0.5 : 1, fontVariant: ['tabular-nums'] }}
+            >
+              {formatMoney(i.data.price, locale)}
+            </Text>
+          ) : null}
         </View>
       </ReanimatedSwipeable>
     );
@@ -316,6 +436,24 @@ export default function Shopping() {
             label={t('shopping.remaining', { count: remaining })}
             tone={remaining ? 'primary' : 'accent'}
           />
+        ) : null}
+        {budget.total > 0 ? (
+          <Badge
+            icon="wallet-outline"
+            label={
+              budget.inCart > 0
+                ? t('budget.totalInCart', {
+                    total: formatMoney(budget.total, locale),
+                    cart: formatMoney(budget.inCart, locale),
+                  })
+                : t('budget.total', { total: formatMoney(budget.total, locale) })
+            }
+          />
+        ) : null}
+        {budget.total > 0 && budget.unpriced ? (
+          <Text variant="caption" color="textMuted">
+            {t('budget.unpriced', { count: budget.unpriced })}
+          </Text>
         ) : null}
       </View>
       <View style={[styles.addBar, { backgroundColor: colors.surface, borderColor: colors.line }]}>

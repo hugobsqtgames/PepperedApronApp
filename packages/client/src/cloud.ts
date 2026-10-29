@@ -1,3 +1,4 @@
+import { DATA_VERSION } from '@pepperedapron/core';
 import type { LocalStore, SyncRecord } from './store';
 
 /**
@@ -143,7 +144,9 @@ export class CloudSync {
 
   /** Merge every device file that changed since we last read it. */
   private async pull(): Promise<{ complete: boolean }> {
-    const seen = JSON.parse((await this.store.meta('cloud_seen')) ?? '{}') as Record<
+    // After an update that understands new fields, read every file again once.
+    const fresh = (await this.store.meta('cloud_data_version')) !== String(DATA_VERSION);
+    const seen = (fresh ? {} : JSON.parse((await this.store.meta('cloud_seen')) ?? '{}')) as Record<
       string,
       number
     >;
@@ -168,6 +171,7 @@ export class CloudSync {
       if (f.modifiedAt !== null) seen[f.name] = f.modifiedAt;
     }
     await this.store.setMeta('cloud_seen', JSON.stringify(seen));
+    if (fresh) await this.store.setMeta('cloud_data_version', String(DATA_VERSION));
     return { complete };
   }
 

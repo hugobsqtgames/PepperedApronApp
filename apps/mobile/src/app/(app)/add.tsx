@@ -5,7 +5,7 @@ import { useTheme } from '../../theme/ThemeProvider';
 import { radius, space } from '../../theme/tokens';
 import { Icon, Text, type IconName } from '../../ui';
 
-/** One sheet, four ways to add a recipe. The share extension tip teaches the TikTok/Instagram flow. */
+/** One sheet, every way to add a recipe. The share extension tip teaches the TikTok/Instagram flow. */
 export default function AddSheet() {
   const { t } = useTranslation();
   const { colors } = useTheme();
@@ -38,6 +38,20 @@ export default function AddSheet() {
         body: t('add.photoBody'),
         go: () => router.replace('/import/photo'),
         testID: 'add-photo',
+      },
+      {
+        icon: 'mic-outline',
+        title: t('add.dictate'),
+        body: t('add.dictateBody'),
+        go: () => router.replace('/import/dictate'),
+        testID: 'add-dictate',
+      },
+      {
+        icon: 'logo-instagram',
+        title: t('add.instagram'),
+        body: t('add.instagramBody'),
+        go: () => router.replace('/import/instagram'),
+        testID: 'add-instagram',
       },
     ];
   return (

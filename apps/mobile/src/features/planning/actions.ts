@@ -64,6 +64,30 @@ export function entryActions(
             },
           ]
         : []),
+      ...(!e.data.leftover
+        ? [
+            {
+              label: t('planning.leftovers'),
+              icon: 'repeat-outline' as const,
+              onPress: () =>
+                setTimeout(
+                  () =>
+                    show({
+                      title: t('planning.leftoversPick'),
+                      message: t('planning.leftoversHint'),
+                      options: [1, 2, 3, 4, 6].map((n) => ({
+                        label: t('planning.portions', { count: n }),
+                        onPress: () => {
+                          void repos.planLeftovers(e.id, n);
+                          haptic.success();
+                        },
+                      })),
+                    }),
+                  350,
+                ),
+            },
+          ]
+        : []),
       {
         label: t('planning.moveTo'),
         icon: 'swap-horizontal-outline',

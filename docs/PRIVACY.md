@@ -8,9 +8,11 @@ Principe : **l'éditeur ne détient aucune donnée des utilisateurs.** Pas de co
 |---|---|---|---|---|
 | Recettes, photos, favoris, collections, planning, listes, réglages | SQLite + `Documents/photos` sur l'appareil ; conteneur iCloud privé (si activé) ; sauvegarde iCloud de l'appareil (si activée) | l'utilisateur seul (et Apple/Google comme hébergeurs de ses sauvegardes) | — (aucun traitement par l'éditeur) | jusqu'à effacement par l'utilisateur |
 | Page web importée (adresse IP de l'appareil) | site importé, au moment de l'import | ce site | — (requête directe de l'appareil) | selon ce site |
+| Fichier d'export Instagram choisi par l'utilisateur | lu sur l'appareil (liens des publications enregistrées), non conservé | l'utilisateur seul | — | le temps de l'import |
+| Prix saisis dans les courses | base locale + iCloud privé | l'utilisateur seul | — | jusqu'à effacement |
 | E-mails envoyés au support | boîte de l'éditeur | éditeur | intérêt légitime (répondre) | 3 ans max |
 
-Aucune donnée de localisation, de contacts, de santé, ni de micro n'est collectée (l'app ne demande ni le micro ni la localisation ; l'écoute d'une vidéo importée passe par la reconnaissance vocale d'iOS, sur l'appareil). Les photos de recettes perdent leurs métadonnées EXIF (dont la position GPS). La reconnaissance de texte sur photo se fait sur l'appareil.
+Aucune donnée de localisation, de contacts, de santé, ni audio n'est collectée. Le micro n'est utilisé que si l'utilisateur dicte une recette : l'enregistrement est transcrit par la reconnaissance vocale d'iOS **sur l'appareil**, puis supprimé (de même pour l'écoute d'une vidéo importée). L'accès aux Rappels n'est demandé que si l'utilisateur envoie sa liste de courses vers l'app Rappels ; l'app y écrit les articles et lit seulement les rappels non terminés de la liste choisie (pour ne pas les dupliquer). Aucun accès au calendrier ni à la localisation. Les photos de recettes perdent leurs métadonnées EXIF (dont la position GPS). La reconnaissance de texte sur photo se fait sur l'appareil.
 
 ## Droits
 

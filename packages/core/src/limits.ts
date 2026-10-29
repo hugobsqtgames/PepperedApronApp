@@ -26,4 +26,8 @@ export const LIMITS = {
   customTitle: 200,
   firstName: 40,
   importText: 20000,
+  personalNote: 2000,
+  priceMax: 100000,
+  templateName: 80,
+  templateMeals: 60,
 } as const;

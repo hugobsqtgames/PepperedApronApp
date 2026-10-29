@@ -1,12 +1,14 @@
 import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
 import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
-import { File } from 'expo-file-system';
+import { fetch as expoFetch } from 'expo/fetch';
+import { File, Paths } from 'expo-file-system';
 import { uuidv7 } from '@pepperedapron/core';
 import { photosDir } from './icloud';
 
 export type PhotoSource = 'camera' | 'library' | 'files';
 export type PickResult = { uri: string } | { denied: true } | null;
+export type PickManyResult = { uris: string[] } | { denied: true } | null;
 
 const MAX_EDGE = 1600;
 
@@ -40,6 +42,25 @@ export async function pickImage(source: PhotoSource): Promise<PickResult> {
   return r.canceled || !r.assets[0] ? null : { uri: r.assets[0].uri };
 }
 
+/** Several pictures at once (screenshots of a carousel, pages of a book); up to `limit`. */
+export async function pickImages(source: PhotoSource, limit = 10): Promise<PickManyResult> {
+  if (source !== 'library') {
+    const one = await pickImage(source);
+    return one && 'uri' in one ? { uris: [one.uri] } : one;
+  }
+  const p = await ImagePicker.requestMediaLibraryPermissionsAsync();
+  if (!p.granted && p.accessPrivileges !== 'limited') return { denied: true };
+  const r = await ImagePicker.launchImageLibraryAsync({
+    mediaTypes: ['images'],
+    quality: 1,
+    exif: false,
+    allowsMultipleSelection: true,
+    selectionLimit: limit,
+    orderedSelection: true,
+  });
+  return r.canceled || !r.assets.length ? null : { uris: r.assets.map((a) => a.uri) };
+}
+
 /**
  * Resize (max 1600 px), re-encode as JPEG (strips EXIF/GPS) and keep it in the app's photo
  * folder. Returns the photo key (its file name), which recipes store. Huge or corrupt images throw.
@@ -57,6 +78,19 @@ export async function preparePhoto(uri: string): Promise<string> {
   const dir = photosDir();
   if (!dir.exists) dir.create({ intermediates: true });
   const key = `${uuidv7()}.jpg`;
-  new File(saved.uri).move(new File(dir, key));
+  await new File(saved.uri).move(new File(dir, key));
   return key;
+}
+
+/** Download a remote picture (found by an importer) into the app's photo folder. */
+export async function photoFromUrl(url: string): Promise<string | null> {
+  const res = await expoFetch(url);
+  if (!res.ok) return null;
+  const tmp = new File(Paths.cache, `${uuidv7()}.jpg`);
+  tmp.write(await res.bytes());
+  try {
+    return await preparePhoto(tmp.uri);
+  } finally {
+    if (tmp.exists) tmp.delete();
+  }
 }

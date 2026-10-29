@@ -62,3 +62,19 @@ export const NOTIFICATION_CATEGORIES = [
   'timers',
 ] as const;
 export type NotificationCategory = (typeof NOTIFICATION_CATEGORIES)[number];
+
+/** What the user should check in a recipe saved straight from the share sheet. */
+export const REVIEW_NOTICES = [
+  'full',
+  'partial',
+  'minimal',
+  'instagram',
+  'speech',
+  'listenPermission',
+  'listenLanguage',
+  'listenFailed',
+  'text',
+  'photo',
+  'dictation',
+] as const;
+export type ReviewNotice = (typeof REVIEW_NOTICES)[number];

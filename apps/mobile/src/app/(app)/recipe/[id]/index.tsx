@@ -1,9 +1,21 @@
 import { useState } from 'react';
-import { Alert, Share, StyleSheet, View } from 'react-native';
+import { Alert, Pressable, Share, StyleSheet, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
-import { computeTotalMinutes, formatMinutes, type Locale, type Step } from '@pepperedapron/core';
+import {
+  computeTotalMinutes,
+  detectSeasons,
+  dietTags,
+  findMoldSize,
+  formatMinutes,
+  scaleMold,
+  type Locale,
+  type MoldSize,
+  type Step,
+} from '@pepperedapron/core';
+import { noticeText, WARNING_NOTICES } from '../../../../features/recipe/notices';
+import { dayMonth } from '../../../../lib/dates';
 import {
   IngredientList,
   SourceLink,
@@ -23,15 +35,22 @@ import {
   Badge,
   Button,
   EmptyState,
+  Icon,
   IconButton,
   RecipePhoto,
   Screen,
   Section,
+  Stars,
   Stepper,
   Text,
   useActionSheet,
+  usePrompt,
   useToast,
 } from '../../../../ui';
+
+function moldLabel(m: MoldSize): string {
+  return m.shape === 'round' ? `Ø ${m.diameter} cm` : `${m.width} × ${m.length} cm`;
+}
 
 export default function RecipeDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -42,15 +61,17 @@ export default function RecipeDetail() {
   const insets = useSafeAreaInsets();
   const toast = useToast();
   const sheet = useActionSheet();
+  const prompt = usePrompt();
   const locale = i18n.language as Locale;
 
-  const { recipe, favorite, settings, collections } = useLive(
-    ['recipe', 'favorite', 'settings', 'collectionItem'],
+  const { recipe, favorite, settings, collections, cooked } = useLive(
+    ['recipe', 'favorite', 'settings', 'collectionItem', 'cookLog'],
     (r) => ({
       recipe: r.recipe(id),
       favorite: r.isFavorite(id),
       settings: r.settings(),
       collections: r.collectionsOf(id).length,
+      cooked: r.cookLogs(id),
     }),
     [id],
   );
@@ -75,6 +96,47 @@ export default function RecipeDetail() {
   const factor = current / d.servings;
   const total = computeTotalMinutes(d);
   const photo = recipePhotoUri(recipe);
+  const names = d.ingredients.map((i) => i.name);
+  const diets = dietTags(names);
+  const seasons = d.seasons.length ? d.seasons : detectSeasons(names);
+  const mold = findMoldSize([
+    d.yieldLabel,
+    ...d.ingredients.flatMap((i) => [i.name, i.note]),
+    ...d.steps.map((s) => s.text),
+    d.notes,
+    d.tips,
+    d.extraInfo,
+  ]);
+  const scaledMold = mold ? scaleMold(mold, factor) : null;
+
+  const editNote = () =>
+    prompt({
+      title: t('recipe.personalNote'),
+      message: t('recipe.personalNoteHint'),
+      initial: d.personalNote ?? '',
+      multiline: true,
+      maxLength: 2000,
+      allowEmpty: true,
+      onSubmit: (v) => void repos.setPersonalNote(recipe.id, v || null),
+    });
+
+  const cookedToday = async () => {
+    await repos.logCooked(recipe.id);
+    haptic.success();
+    toast(t('history.logged'));
+  };
+
+  const history = () =>
+    sheet({
+      title: t('history.title'),
+      message: t('history.removeHint'),
+      options: cooked.map((c) => ({
+        label: dayMonth(c.data.date, i18n.language),
+        icon: 'trash-outline' as const,
+        destructive: true,
+        onPress: () => void repos.removeCookLog(c.id),
+      })),
+    });
 
   const toggleFav = async () => {
     await repos.toggleFavorite(recipe.id);
@@ -173,14 +235,49 @@ export default function RecipeDetail() {
 
   const header = (
     <View style={{ gap: space.md }}>
+      {d.review ? (
+        <View
+          style={[
+            styles.review,
+            {
+              backgroundColor: WARNING_NOTICES.has(d.review)
+                ? colors.accentSoft
+                : colors.primarySoft,
+            },
+          ]}
+          testID="recipe-review"
+        >
+          <Text variant="bodyStrong">{t('recipe.reviewTitle')}</Text>
+          <Text variant="callout">{noticeText(d.review, t)}</Text>
+          <View style={{ flexDirection: 'row', gap: space.sm, flexWrap: 'wrap' }}>
+            <Button
+              title={t('recipe.edit')}
+              icon="create-outline"
+              size="sm"
+              onPress={() => router.push({ pathname: '/recipe/edit', params: { id: recipe.id } })}
+            />
+            <Button
+              title={t('recipe.reviewOk')}
+              icon="checkmark"
+              size="sm"
+              variant="secondary"
+              onPress={() => repos.dismissReview(recipe.id)}
+              testID="recipe-review-ok"
+            />
+          </View>
+        </View>
+      ) : null}
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space.sm }}>
         {total ? (
           <Badge icon="time-outline" label={formatMinutes(total, locale)} tone="primary" />
         ) : null}
         {d.difficulty ? <Badge label={t(`difficulty.${d.difficulty}`)} /> : null}
         {d.category ? <Badge label={t(`categories.${d.category}`)} /> : null}
-        {d.seasons.map((s) => (
+        {seasons.map((s) => (
           <Badge key={s} label={t(`seasons.${s}`)} tone="accent" />
+        ))}
+        {diets.map((x) => (
+          <Badge key={x} icon="leaf-outline" label={t(`diets.${x}`)} tone="primary" />
         ))}
         {d.ovenTemperatureC ? (
           <Badge
@@ -199,6 +296,23 @@ export default function RecipeDetail() {
           {meta.join('  ·  ')}
         </Text>
       ) : null}
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.md, flexWrap: 'wrap' }}>
+        <Stars value={d.rating} onChange={(v) => void repos.setRating(recipe.id, v)} />
+        {cooked.length ? (
+          <Text
+            variant="caption"
+            color="textMuted"
+            onPress={history}
+            accessibilityRole="button"
+            style={{ flexShrink: 1 }}
+          >
+            {t('history.summary', {
+              count: cooked.length,
+              date: dayMonth(cooked[0]!.data.date, i18n.language),
+            })}
+          </Text>
+        ) : null}
+      </View>
       <View style={{ flexDirection: 'row', gap: space.sm, flexWrap: 'wrap' }}>
         <IconButton
           icon={favorite ? 'heart' : 'heart-outline'}
@@ -246,18 +360,57 @@ export default function RecipeDetail() {
           {d.yieldLabel ?? t('recipe.people', { count: current })}
         </Text>
       </View>
+      {scaledMold && mold ? (
+        <View style={[styles.hint, { backgroundColor: colors.primarySoft }]}>
+          <Icon name="resize-outline" size={18} color="primary" />
+          <Text variant="callout" style={{ flex: 1 }}>
+            {t('recipe.moldHint', { size: moldLabel(scaledMold), original: moldLabel(mold) })}
+          </Text>
+        </View>
+      ) : null}
       <IngredientList ingredients={d.ingredients} factor={factor} system={settings.unitSystem} />
+      <Button
+        title={t('converter.open')}
+        icon="swap-horizontal-outline"
+        variant="ghost"
+        size="sm"
+        onPress={() => router.push('/tools/converter')}
+        style={{ alignSelf: 'flex-start' }}
+      />
     </Section>
   );
 
   const steps = (
     <Section title={t('recipe.steps')}>
-      <StepList steps={d.steps} onTimer={startTimer} />
+      <StepList steps={d.steps} onTimer={startTimer} factor={factor} />
     </Section>
   );
 
   const extras = (
     <View style={{ gap: space.md }}>
+      <Pressable
+        accessibilityRole="button"
+        onPress={editNote}
+        style={[styles.note, { borderColor: colors.line, backgroundColor: colors.surface }]}
+        testID="recipe-personal-note"
+      >
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.sm }}>
+          <Icon name="create-outline" size={18} color="primary" />
+          <Text variant="title3" style={{ flex: 1 }}>
+            {t('recipe.personalNote')}
+          </Text>
+        </View>
+        <Text variant="body" color={d.personalNote ? 'text' : 'textMuted'}>
+          {d.personalNote ?? t('recipe.personalNoteEmpty')}
+        </Text>
+      </Pressable>
+      <Button
+        title={t('history.cookedToday')}
+        icon="checkmark-done-outline"
+        variant="secondary"
+        onPress={cookedToday}
+        testID="recipe-cooked"
+      />
       <TextBlock title={t('recipe.tips')} text={d.tips} icon="bulb-outline" />
       <TextBlock title={t('recipe.notes')} text={d.notes} icon="document-text-outline" />
       <TextBlock title={t('recipe.info')} text={d.extraInfo} icon="information-circle-outline" />
@@ -336,7 +489,12 @@ export default function RecipeDetail() {
             icon="play"
             size="lg"
             full
-            onPress={() => router.push(`/recipe/${recipe.id}/cook`)}
+            onPress={() =>
+              router.push({
+                pathname: '/recipe/[id]/cook',
+                params: { id: recipe.id, servings: String(current) },
+              })
+            }
             style={{ maxWidth: 520, alignSelf: 'center', width: '100%' }}
             testID="start-cooking"
           />
@@ -348,6 +506,20 @@ export default function RecipeDetail() {
 
 const styles = StyleSheet.create({
   back: { position: 'absolute', left: space.lg },
+  review: { gap: space.sm, padding: space.lg, borderRadius: radius.xl },
+  hint: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.sm,
+    padding: space.md,
+    borderRadius: radius.lg,
+  },
+  note: {
+    gap: space.sm,
+    padding: space.lg,
+    borderRadius: radius.xl,
+    borderWidth: StyleSheet.hairlineWidth,
+  },
   cta: {
     paddingHorizontal: space.lg,
     paddingTop: space.md,

@@ -34,6 +34,8 @@ const bundleId = `app.pepperedapron${suffix}`;
 const appGroup = `group.${bundleId}`;
 /** Private iCloud container holding the user's synced data (see services/icloud.ts). */
 const iCloudContainer = `iCloud.${bundleId}`;
+const MICROPHONE_USAGE =
+  'PepperedApron records the recipe you dictate, then writes it down on your iPhone. Nothing is sent.';
 const siteUrl = process.env.SITE_URL ?? 'https://pepperedapron.app';
 const supportEmail = process.env.SUPPORT_EMAIL ?? 'support@pepperedapron.app';
 
@@ -72,7 +74,7 @@ const buildConfig = ({ config }: ConfigContext): ExpoConfig => ({
       CFBundleAllowMixedLocalizations: true,
       NSSupportsLiveActivities: true,
       NSSpeechRecognitionUsageDescription:
-        'PepperedApron listens to a recipe video you import, on your iPhone, to write down the ingredients and steps that are only said out loud. Nothing is sent.',
+        'PepperedApron listens to a recipe video you import, or the recipe you dictate, on your iPhone, to write down the ingredients and steps. Nothing is sent.',
     },
     privacyManifests: {
       NSPrivacyTracking: false,
@@ -127,7 +129,18 @@ const buildConfig = ({ config }: ConfigContext): ExpoConfig => ({
           'PepperedApron accesses your photos to illustrate your recipes or import a recipe from an image.',
         cameraPermission:
           'PepperedApron uses the camera to add a photo to your recipes or read a printed recipe.',
-        microphonePermission: false,
+        microphonePermission: MICROPHONE_USAGE,
+      },
+    ],
+    // Dictating a recipe (recorded, then transcribed on the device).
+    ['expo-audio', { microphonePermission: MICROPHONE_USAGE, enableBackgroundPlayback: false }],
+    // The shopping list can be sent to Apple Reminders (no calendar access).
+    [
+      'expo-calendar',
+      {
+        calendarPermission: false,
+        remindersPermission:
+          'PepperedApron adds your shopping list to the Reminders list you choose, so it can be shared with your family.',
       },
     ],
     'expo-notifications',
@@ -138,7 +151,10 @@ const buildConfig = ({ config }: ConfigContext): ExpoConfig => ({
           NSExtensionActivationSupportsText: true,
           NSExtensionActivationSupportsWebURLWithMaxCount: 1,
           NSExtensionActivationSupportsWebPageWithMaxCount: 1,
-          NSExtensionActivationSupportsImageWithMaxCount: 1,
+          // Several screenshots of one recipe (a carousel, pages of a book).
+          NSExtensionActivationSupportsImageWithMaxCount: 10,
+          // A video saved from TikTok or Instagram: its speech is transcribed on the device.
+          NSExtensionActivationSupportsMovieWithMaxCount: 1,
         },
         iosShareExtensionName: 'PepperedApron',
         iosAppGroupIdentifier: appGroup,

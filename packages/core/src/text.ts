@@ -15,8 +15,8 @@ export function normalizeText(s: string): string {
 /** Very small multilingual singularisation, good enough for matching ingredient names. */
 export function singularize(word: string): string {
   if (word.length <= 3) return word;
-  if (word.endsWith('aux') && word.length > 4) return word.slice(0, -3) + 'al';
   if (word.endsWith('eaux')) return word.slice(0, -1);
+  if (word.endsWith('aux') && word.length > 4) return word.slice(0, -3) + 'al';
   if (word.endsWith('ies') && word.length > 4) return word.slice(0, -3) + 'y';
   if (word.endsWith('oes')) return word.slice(0, -2);
   if (word.endsWith('ches') || word.endsWith('shes') || word.endsWith('xes'))

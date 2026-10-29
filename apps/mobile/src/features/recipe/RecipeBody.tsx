@@ -3,6 +3,7 @@ import { Linking, Pressable, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import {
   formatClock,
+  scaleStepText,
   type Ingredient,
   type Locale,
   type Step,
@@ -100,11 +101,14 @@ export function IngredientList({
 export function StepList({
   steps,
   onTimer,
+  factor = 1,
 }: {
   steps: Step[];
   onTimer?: (step: Step, index: number) => void;
+  /** Quantities written in the steps follow the chosen number of servings. */
+  factor?: number;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { colors } = useTheme();
   if (!steps.length) {
     return (
@@ -133,7 +137,7 @@ export function StepList({
                 </Text>
               </View>
               <View style={{ flex: 1, gap: space.sm }}>
-                <Text variant="body">{s.text}</Text>
+                <Text variant="body">{scaleStepText(s.text, factor, i18n.language as Locale)}</Text>
                 {s.timerSeconds && onTimer ? (
                   <Pressable
                     accessibilityRole="button"

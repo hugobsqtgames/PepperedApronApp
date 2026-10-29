@@ -1,4 +1,4 @@
-import type { RecipeData } from '@pepperedapron/core';
+import type { RecipeData, ReviewNotice } from '@pepperedapron/core';
 
 export interface EditorDraft {
   data: RecipeData;
@@ -6,18 +6,7 @@ export interface EditorDraft {
   imageUrl: string | null;
   /** Local image (shared photo, OCR source) to attach on save. */
   localImageUri: string | null;
-  notice:
-    | 'full'
-    | 'partial'
-    | 'minimal'
-    | 'instagram'
-    | 'speech'
-    | 'listenPermission'
-    | 'listenLanguage'
-    | 'listenFailed'
-    | 'text'
-    | 'photo'
-    | null;
+  notice: ReviewNotice | null;
 }
 
 const drafts = new Map<string, EditorDraft>();

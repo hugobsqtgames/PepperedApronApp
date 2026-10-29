@@ -1,5 +1,8 @@
 import { z } from 'zod';
 import {
+  cookLogDataSchema,
+  planTemplateDataSchema,
+  priceDataSchema,
   collectionDataSchema,
   collectionItemDataSchema,
   favoriteDataSchema,
@@ -21,6 +24,9 @@ export const SYNC_ENTITIES = [
   'shoppingItem',
   'shoppingCategory',
   'settings',
+  'cookLog',
+  'planTemplate',
+  'price',
 ] as const;
 export type SyncEntity = (typeof SYNC_ENTITIES)[number];
 
@@ -35,6 +41,9 @@ export const ENTITY_SCHEMAS: Record<SyncEntity, z.ZodType<Record<string, unknown
   shoppingItem: shoppingItemDataSchema,
   shoppingCategory: shoppingCategoryDataSchema,
   settings: settingsDataSchema,
+  cookLog: cookLogDataSchema,
+  planTemplate: planTemplateDataSchema,
+  price: priceDataSchema,
 };
 
 /** Order in which entities are applied when merging (parents before children). */
@@ -48,6 +57,9 @@ export const ENTITY_ORDER: SyncEntity[] = [
   'collectionItem',
   'mealPlanEntry',
   'shoppingItem',
+  'cookLog',
+  'planTemplate',
+  'price',
 ];
 
 /** Top-level fields that differ between two versions of a record. */
@@ -61,6 +73,9 @@ export function diffFields(
 }
 
 import type {
+  CookLogData,
+  PlanTemplateData,
+  PriceData,
   CollectionData,
   CollectionItemData,
   FavoriteData,
@@ -82,4 +97,14 @@ export interface EntityDataMap {
   shoppingItem: ShoppingItemData;
   shoppingCategory: ShoppingCategoryData;
   settings: SettingsData;
+  cookLog: CookLogData;
+  planTemplate: PlanTemplateData;
+  price: PriceData;
 }
+
+/**
+ * Version of the data format. Bumped when records gain fields, so devices re-read the files of
+ * the other devices once after an update (a file read by an older version may have had records
+ * it could not understand yet).
+ */
+export const DATA_VERSION = 2;

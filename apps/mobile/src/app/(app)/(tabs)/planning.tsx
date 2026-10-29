@@ -77,7 +77,7 @@ export default function Planning() {
     return (
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={`${info?.title}${e.data.servings ? `, ${t('common.servings', { count: e.data.servings })}` : ''}`}
+        accessibilityLabel={`${info?.title}${e.data.leftover ? `, ${t('planning.leftover')}` : ''}${e.data.servings ? `, ${t('common.servings', { count: e.data.servings })}` : ''}`}
         accessibilityHint={t('planning.moveTo')}
         onPress={() => entryActions(sheet, repos, t, i18n.language, e.id, weekStart)}
         onLongPress={() => info?.recipe && router.push(`/recipe/${info.recipe.id}`)}
@@ -99,9 +99,16 @@ export default function Planning() {
             emojiSize={16}
           />
         ) : null}
-        <Text variant="callout" numberOfLines={2} style={{ flex: 1 }}>
-          {info?.title}
-        </Text>
+        <View style={{ flex: 1 }}>
+          <Text variant="callout" numberOfLines={2}>
+            {info?.title}
+          </Text>
+          {e.data.leftover ? (
+            <Text variant="caption" color="accent" numberOfLines={1}>
+              ♻︎ {t('planning.leftover')}
+            </Text>
+          ) : null}
+        </View>
         {e.data.servings ? (
           <Text variant="caption" color="textMuted">
             ×{e.data.servings}
@@ -117,6 +124,14 @@ export default function Planning() {
         <Text variant="title1" style={{ flex: 1 }} accessibilityRole="header">
           {t('planning.title')}
         </Text>
+        <Button
+          title={t('planning.templates')}
+          icon="copy-outline"
+          variant="ghost"
+          size="sm"
+          onPress={() => router.push({ pathname: '/plan/templates', params: { weekStart } })}
+          testID="plan-templates"
+        />
         <Button
           title={t('planning.calendar')}
           icon="calendar-outline"
