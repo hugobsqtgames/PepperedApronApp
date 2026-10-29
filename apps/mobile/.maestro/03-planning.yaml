@@ -1,7 +1,7 @@
 appId: ${APP_ID}
 name: Plan a meal from a recipe and send the week to the shopping list
 ---
-- runFlow: subflows/sign-up.yaml
+- runFlow: subflows/first-launch.yaml
 - tapOn:
     id: tab-add
 - tapOn:

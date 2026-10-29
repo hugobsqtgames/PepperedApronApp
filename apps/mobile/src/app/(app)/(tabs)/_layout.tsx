@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { useLayout } from '../../../lib/layout';
 import { useTheme } from '../../../theme/ThemeProvider';
 import { radius, space } from '../../../theme/tokens';
-import { Icon, SyncIndicator, Text, type IconName } from '../../../ui';
+import { Icon, Text, type IconName } from '../../../ui';
 
 const TABS: {
   name: string;
@@ -194,7 +194,6 @@ export default function TabsLayout() {
             </Pressable>
             <View style={{ gap: 2 }}>{triggers(true)}</View>
             <View style={{ flex: 1 }} />
-            <SyncIndicator />
             <Pressable
               accessibilityRole="button"
               onPress={() => router.push('/profile')}

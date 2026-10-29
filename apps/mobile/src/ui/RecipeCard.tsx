@@ -41,14 +41,7 @@ function RecipeCardBase({
   const meta = [time, d.difficulty ? t(`difficulty.${d.difficulty}`) : null]
     .filter(Boolean)
     .join(' · ');
-  const label = [
-    d.title,
-    meta,
-    favorite ? t('recipe.favorite') : null,
-    recipe.state !== 'synced' ? t('sync.itemPending') : null,
-  ]
-    .filter(Boolean)
-    .join(', ');
+  const label = [d.title, meta, favorite ? t('recipe.favorite') : null].filter(Boolean).join(', ');
   const uri = recipePhotoUri(recipe);
 
   const heart = onToggleFavorite ? (
@@ -96,11 +89,6 @@ function RecipeCardBase({
             </Text>
           ) : null}
         </View>
-        {recipe.state === 'error' ? (
-          <Icon name="alert-circle" size={18} color="danger" />
-        ) : recipe.state === 'pending' ? (
-          <Icon name="cloud-upload-outline" size={16} color="textSubtle" />
-        ) : null}
         <Icon name="chevron-forward" size={18} color="textSubtle" />
       </Pressable>
     );
@@ -134,21 +122,6 @@ function RecipeCardBase({
           recyclingKey={recipe.id}
         />
         {heart}
-        {recipe.state !== 'synced' ? (
-          <View
-            style={[
-              styles.syncDot,
-              { backgroundColor: recipe.state === 'error' ? colors.danger : colors.surfaceRaised },
-            ]}
-            accessibilityElementsHidden
-          >
-            <Icon
-              name={recipe.state === 'error' ? 'alert' : 'cloud-upload-outline'}
-              size={12}
-              tint={recipe.state === 'error' ? '#fff' : colors.textMuted}
-            />
-          </View>
-        ) : null}
       </View>
       <View style={{ gap: 2, paddingHorizontal: 2 }}>
         <Text variant="bodyStrong" numberOfLines={2}>
@@ -174,16 +147,6 @@ const styles = StyleSheet.create({
     width: 34,
     height: 34,
     borderRadius: 17,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  syncDot: {
-    position: 'absolute',
-    top: space.sm,
-    left: space.sm,
-    width: 22,
-    height: 22,
-    borderRadius: 11,
     alignItems: 'center',
     justifyContent: 'center',
   },

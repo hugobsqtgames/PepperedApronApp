@@ -1,7 +1,7 @@
 import { ScrollView } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { LOCALES } from '@pepperedapron/core';
-import { useRepos, useRuntime, useSettings } from '../../../hooks/runtime';
+import { useRepos, useSettings } from '../../../hooks/runtime';
 import { LANGUAGE_NAMES, setLanguage, deviceLocale } from '../../../i18n';
 import { space } from '../../../theme/tokens';
 import { Group, ListRow } from '../../../ui';
@@ -9,13 +9,10 @@ import { Group, ListRow } from '../../../ui';
 export default function Language() {
   const { t } = useTranslation();
   const repos = useRepos();
-  const rt = useRuntime();
   const s = useSettings();
   const choose = async (l: (typeof LOCALES)[number] | null) => {
     await repos.updateSettings({ locale: l });
     setLanguage(l ?? deviceLocale());
-    // The server uses the locale for e-mails and push notifications.
-    void rt.api.updateMe({ locale: l ?? deviceLocale() }).catch(() => undefined);
   };
   return (
     <ScrollView

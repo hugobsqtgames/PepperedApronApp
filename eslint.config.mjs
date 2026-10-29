@@ -11,7 +11,6 @@ export default tseslint.config(
       '**/.expo/**',
       'apps/mobile/ios/**',
       'apps/mobile/android/**',
-      'apps/api/drizzle/**',
       '**/*.config.js',
       '**/babel.config.js',
       '**/metro.config.js',

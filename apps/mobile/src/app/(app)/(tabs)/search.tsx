@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { FlatList, Keyboard, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -18,7 +18,6 @@ import {
 import { AdSlot } from '../../../features/AdSlot';
 import { useLive, useRepos } from '../../../hooks/runtime';
 import { tileWidth, useLayout } from '../../../lib/layout';
-import { track } from '../../../services/analytics';
 import { haptic } from '../../../services/haptics';
 import { useTheme } from '../../../theme/ThemeProvider';
 import { space } from '../../../theme/tokens';
@@ -48,7 +47,6 @@ export default function Search() {
   const [filters, setFilters] = useState<SearchFilters>(EMPTY_FILTERS);
   const [fridgeInput, setFridgeInput] = useState('');
   const [showFilters, setShowFilters] = useState(false);
-  const tracked = useRef('');
 
   useEffect(() => {
     setFilters((f) => ({
@@ -80,13 +78,6 @@ export default function Search() {
     () => (active ? searchRecipes(all.items, mode === 'fridge' ? '' : debounced, effective) : []),
     [all.items, debounced, effective, active, mode],
   );
-
-  useEffect(() => {
-    if (active && debounced && debounced !== tracked.current) {
-      tracked.current = debounced;
-      track('search', { results: results.length });
-    }
-  }, [active, debounced, results.length]);
 
   const toggle = <K extends 'categories' | 'seasons'>(key: K, v: SearchFilters[K][number]) =>
     setFilters((f) => {
@@ -315,8 +306,8 @@ export default function Search() {
               emoji="🔍"
               title={t('search.noResultsTitle')}
               body={t('search.noResultsBody')}
-              action={query ? t('search.community') : undefined}
-              onAction={() => router.push({ pathname: '/community', params: { q: query } })}
+              action={t('search.addRecipe')}
+              onAction={() => router.push('/add')}
             />
           ) : mode === 'search' ? (
             <View style={{ paddingHorizontal: layout.gutter, gap: space.md }}>

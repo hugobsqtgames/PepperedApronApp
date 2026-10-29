@@ -1,18 +1,14 @@
-import type { Recipe } from '@pepperedapron/client';
-import { ENV } from '../services/env';
-import { runtime } from '../services/runtime';
+import { File } from 'expo-file-system';
+import { isPhotoKey, type Recipe } from '@pepperedapron/client';
+import { photosDir } from '../services/icloud';
 
-export function mediaBaseUrl(): string {
-  return (
-    runtime.config?.mediaBaseUrl ??
-    process.env.EXPO_PUBLIC_MEDIA_URL ??
-    `${ENV.apiUrl.replace(/\/+$/, '')}/v1/media`
-  ).replace(/\/+$/, '');
-}
-
-/** Local file while the upload is pending (offline), otherwise the CDN URL. */
-export function recipePhotoUri(r: Pick<Recipe, 'id' | 'data'>): string | null {
-  const local = runtime.session?.store.localPhoto(r.id);
-  if (local) return local.localUri;
-  return r.data.photoKey ? `${mediaBaseUrl()}/${r.data.photoKey}` : null;
+/**
+ * Local file of a recipe photo, or null when there is none or it has not arrived from iCloud
+ * yet (the recipe views re-render when it does).
+ */
+export function recipePhotoUri(r: Pick<Recipe, 'data'>): string | null {
+  const key = r.data.photoKey;
+  if (!isPhotoKey(key)) return null;
+  const f = new File(photosDir(), key);
+  return f.exists ? f.uri : null;
 }

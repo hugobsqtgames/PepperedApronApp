@@ -1,3 +1,4 @@
+import type { TFunction } from 'i18next';
 import {
   convertAmount,
   formatAmount,
@@ -61,4 +62,18 @@ export function recipeAsText(
   if (r.tips) lines.push('', `${labels.tips} : ${r.tips}`);
   if (r.sourceUrl) lines.push('', r.sourceUrl);
   return lines.join('\n');
+}
+
+/** "just now", "5 min ago", then the time of day ("at 14:05"). */
+export function formatRelativeTime(
+  iso: string,
+  t: TFunction,
+  locale?: string,
+  now: number = Date.now(),
+): string {
+  const min = Math.floor(Math.max(0, now - Date.parse(iso)) / 60_000);
+  if (min < 1) return t('time.justNow');
+  if (min < 60) return t('time.minutesAgo', { count: min });
+  const time = new Date(iso).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
+  return t('time.at', { time });
 }

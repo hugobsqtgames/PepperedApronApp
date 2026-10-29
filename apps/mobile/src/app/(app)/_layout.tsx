@@ -5,8 +5,7 @@ import { useShareIntentContext } from 'expo-share-intent';
 import { useTranslation } from 'react-i18next';
 import { useRuntime } from '../../hooks/runtime';
 import { initAds } from '../../services/ads';
-import { track } from '../../services/analytics';
-import { registerPushToken, rescheduleReminders } from '../../services/notifications';
+import { rescheduleReminders } from '../../services/notifications';
 import { shareInbox } from '../../services/shareInbox';
 import { publishWidgetData } from '../../services/widgets';
 import { useTheme } from '../../theme/ThemeProvider';
@@ -47,12 +46,7 @@ export default function AppLayout() {
   useEffect(() => {
     const s = rt.session;
     if (!s) return;
-    track('app_open');
-    // Consent is asked once, after onboarding, before any analytics or ad request.
-    if (s.repos.settings().analyticsConsent === null)
-      setTimeout(() => router.push('/consent'), 400);
-    else void initAds();
-    void registerPushToken();
+    void initAds();
     let pending: ReturnType<typeof setTimeout> | null = null;
     const refreshDerived = () => {
       if (pending) clearTimeout(pending);
@@ -71,7 +65,7 @@ export default function AppLayout() {
       )
         refreshDerived();
     });
-    const off2 = rt.onAfterSync(refreshDerived);
+    const off2 = rt.onRemoteChange(refreshDerived);
     return () => {
       off1();
       off2();
@@ -115,10 +109,6 @@ export default function AppLayout() {
         options={{ ...sheet, sheetAllowedDetents: [0.7, 1] }}
       />
       <Stack.Screen name="shopping/lists" options={{ ...sheet, sheetAllowedDetents: [0.6, 1] }} />
-      <Stack.Screen
-        name="consent"
-        options={{ ...sheet, sheetAllowedDetents: 'fitToContents', gestureEnabled: false }}
-      />
       <Stack.Screen name="collection/[id]" options={{ headerShown: true, title: '' }} />
       <Stack.Screen
         name="calendar"

@@ -24,11 +24,5 @@ export const LIMITS = {
   shoppingItems: 500,
   shoppingItemName: 200,
   customTitle: 200,
-  householdName: 80,
-  displayName: 80,
-  contactMessage: 5000,
-  reportDetails: 1000,
   importText: 20000,
-  passwordMin: 10,
-  passwordMax: 128,
 } as const;

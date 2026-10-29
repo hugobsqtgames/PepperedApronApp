@@ -3,18 +3,15 @@ import { View } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { emptyDraft } from '@pepperedapron/core';
-import { NetworkError } from '@pepperedapron/client';
+import { ImportUrlError } from '@pepperedapron/core';
 import { openDraft } from '../../../features/recipe/openDraft';
-import { useRuntime } from '../../../hooks/runtime';
 import { errorMessage } from '../../../lib/errors';
-import { track } from '../../../services/analytics';
+import { importLink } from '../../../services/importer';
 import { space } from '../../../theme/tokens';
 import { Button, IconButton, LoadingState, Screen, Text, TextField } from '../../../ui';
 
 export default function ImportLink() {
   const { t } = useTranslation();
-  const rt = useRuntime();
   const params = useLocalSearchParams<{ url?: string }>();
   const [url, setUrl] = useState(params.url ?? '');
   const [loading, setLoading] = useState(false);
@@ -25,24 +22,14 @@ export default function ImportLink() {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const run = async (raw: string) => {
-    const value = raw.trim().match(/https?:\/\/\S+/)?.[0];
-    if (!value) return setError(t('errors.fetch_invalid_url'));
     setError(null);
     setLoading(true);
-    track('import_url');
     try {
-      const res = await rt.api.importUrl(value);
+      // Offline or unreadable pages still open a draft keeping the link: nothing is lost.
+      const res = await importLink(raw);
       openDraft(res.draft, { notice: res.completeness });
     } catch (e) {
-      if (e instanceof NetworkError) {
-        // Offline: keep the link as the source so nothing is lost; the user completes the rest.
-        const d = emptyDraft();
-        d.sourceUrl = value;
-        d.source = new URL(value).hostname.replace(/^www\./, '');
-        openDraft(d, { notice: 'minimal' });
-      } else {
-        setError(errorMessage(e, t));
-      }
+      setError(e instanceof ImportUrlError ? t('errors.invalid_url') : errorMessage(e, t));
     } finally {
       setLoading(false);
     }

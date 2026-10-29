@@ -1,44 +1,32 @@
 import { useState } from 'react';
-import { ScrollView, View } from 'react-native';
+import { Linking, Platform, ScrollView, View } from 'react-native';
+import * as WebBrowser from 'expo-web-browser';
 import { useTranslation } from 'react-i18next';
-import { useRuntime } from '../../../hooks/runtime';
-import { errorMessage, isEmail } from '../../../lib/errors';
+import { ENV, sitePage } from '../../../services/env';
 import { space } from '../../../theme/tokens';
-import { Button, Card, Text, TextField, useToast } from '../../../ui';
+import { Button, Card, Text, useToast } from '../../../ui';
 
-const FAQ = [1, 2, 3, 4] as const;
+const FAQ = [1, 2, 3, 4, 5] as const;
 
 export default function Help() {
-  const { t } = useTranslation();
-  const rt = useRuntime();
+  const { t, i18n } = useTranslation();
   const toast = useToast();
   const [open, setOpen] = useState<number | null>(null);
-  const [email, setEmail] = useState(
-    rt.user?.email.endsWith('.invalid') ? '' : (rt.user?.email ?? ''),
-  );
-  const [subject, setSubject] = useState('');
-  const [message, setMessage] = useState('');
-  const [sent, setSent] = useState(false);
-  const send = async () => {
-    if (email && !isEmail(email)) return toast(t('errors.invalidEmail'), { tone: 'error' });
+
+  /** No server: messages go through the user's own mail app, with what support needs to help. */
+  const write = async () => {
+    const body = `\n\n—\nPepperedApron ${ENV.appVersion} · ${Platform.OS} ${Platform.Version}`;
+    const url = `mailto:${ENV.supportEmail}?subject=${encodeURIComponent('PepperedApron')}&body=${encodeURIComponent(body)}`;
     try {
-      await rt.api.contact({
-        email: email.trim() || null,
-        subject: subject.trim(),
-        message: message.trim(),
-      });
-      setSent(true);
-      setSubject('');
-      setMessage('');
-      toast(t('contact.sent'));
-    } catch (e) {
-      toast(errorMessage(e, t), { tone: 'error' });
+      await Linking.openURL(url);
+    } catch {
+      toast(t('contact.noMailApp', { email: ENV.supportEmail }), { tone: 'error' });
     }
   };
+
   return (
     <ScrollView
       contentInsetAdjustmentBehavior="automatic"
-      keyboardShouldPersistTaps="handled"
       contentContainerStyle={{
         padding: space.lg,
         gap: space.xl,
@@ -66,32 +54,14 @@ export default function Help() {
       </View>
       <View style={{ gap: space.md }}>
         <Text variant="title2">{t('contact.title')}</Text>
-        <TextField
-          label={t('contact.email')}
-          value={email}
-          onChangeText={setEmail}
-          autoCapitalize="none"
-          keyboardType="email-address"
-        />
-        <TextField
-          label={t('contact.subject')}
-          value={subject}
-          onChangeText={setSubject}
-          maxLength={120}
-        />
-        <TextField
-          label={t('contact.message')}
-          value={message}
-          onChangeText={setMessage}
-          multiline
-          maxLength={5000}
-        />
+        <Text color="textMuted">{t('contact.body', { email: ENV.supportEmail })}</Text>
+        <Button title={t('contact.write')} icon="mail-outline" onPress={() => void write()} />
         <Button
-          title={t('contact.send')}
-          onPress={send}
-          disabled={!subject.trim() || !message.trim()}
+          title={t('contact.website')}
+          variant="secondary"
+          icon="globe-outline"
+          onPress={() => void WebBrowser.openBrowserAsync(sitePage('support', i18n.language))}
         />
-        {sent ? <Text color="primary">{t('contact.sent')}</Text> : null}
       </View>
     </ScrollView>
   );

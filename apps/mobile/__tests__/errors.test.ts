@@ -1,5 +1,5 @@
-import { ApiError, NetworkError } from '@pepperedapron/client';
-import { errorMessage, isEmail } from '../src/lib/errors';
+import { ImportFormatError, ValidationError } from '@pepperedapron/client';
+import { errorMessage } from '../src/lib/errors';
 
 const t = ((key: string) => key) as never;
 
@@ -9,25 +9,20 @@ describe('errorMessage', () => {
     expect(errorMessage('boom', t)).toBe('errors.generic');
   });
 
-  it('maps transport and HTTP failures to friendly keys', () => {
-    expect(errorMessage(new NetworkError('offline'), t)).toBe('errors.network');
-    expect(errorMessage(new ApiError(503, 'internal', 'x'), t)).toBe('errors.server_unavailable');
-    expect(errorMessage(new ApiError(429, 'rate_limited', 'x'), t)).toBe('errors.rate_limited');
-    expect(errorMessage(new ApiError(401, 'invalid_credentials', 'x'), t)).toBe(
-      'errors.invalid_credentials',
+  it('maps validation, backup and storage failures to friendly keys', () => {
+    expect(errorMessage(new ValidationError([{ path: 'title', code: 'too_small' }]), t)).toBe(
+      'errors.titleRequired',
     );
-    expect(errorMessage(new ApiError(404, 'something_else', 'x'), t)).toBe('errors.not_found');
-  });
-});
-
-describe('isEmail', () => {
-  it.each([
-    ['chef@example.com', true],
-    ['  chef@example.fr ', true],
-    ['chef@example', false],
-    ['chef example.com', false],
-    ['', false],
-  ])('%s → %s', (input, expected) => {
-    expect(isEmail(input)).toBe(expected);
+    expect(errorMessage(new ValidationError([{ path: 'servings', code: 'too_big' }]), t)).toBe(
+      'errors.servingsInvalid',
+    );
+    expect(errorMessage(new ValidationError([{ path: 'x', code: 'y' }]), t)).toBe(
+      'errors.invalidField',
+    );
+    expect(errorMessage(new ImportFormatError(), t)).toBe('settings.importInvalid');
+    expect(errorMessage(new Error('not_found'), t)).toBe('errors.not_found');
+    expect(errorMessage(new Error('database or disk is full (SQLITE_FULL)'), t)).toBe(
+      'errors.storageFull',
+    );
   });
 });

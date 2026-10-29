@@ -31,12 +31,7 @@ export default function ShoppingLists() {
               key={l.id}
               icon={l.id === active ? 'checkmark-circle' : 'list-outline'}
               title={`${l.data.emoji ? `${l.data.emoji} ` : ''}${l.data.name}`}
-              subtitle={[
-                t('shopping.remaining', { count: counts.get(l.id) ?? 0 }),
-                l.data.householdId ? t('shopping.shared') : null,
-              ]
-                .filter(Boolean)
-                .join(' · ')}
+              subtitle={t('shopping.remaining', { count: counts.get(l.id) ?? 0 })}
               right={
                 l.id === active ? (
                   <Text variant="micro" color="primary">

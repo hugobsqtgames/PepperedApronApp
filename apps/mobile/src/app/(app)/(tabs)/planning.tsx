@@ -18,7 +18,6 @@ import { dayLong, dayMonth, dayShort } from '../../../lib/dates';
 import { errorMessage } from '../../../lib/errors';
 import { useLayout } from '../../../lib/layout';
 import { recipePhotoUri } from '../../../lib/media';
-import { track } from '../../../services/analytics';
 import { haptic } from '../../../services/haptics';
 import { scheduleShoppingReady } from '../../../services/notifications';
 import { useTheme } from '../../../theme/ThemeProvider';
@@ -63,7 +62,6 @@ export default function Planning() {
       const r = await repos.addPlanToList(list.id, weekStart, end);
       if (r.added + r.updated === 0) return toast(t('planning.toShoppingEmpty'), { tone: 'info' });
       haptic.success();
-      track('shopping_generated', { items: r.added + r.updated });
       void scheduleShoppingReady(repos, r.added + r.updated);
       toast(
         t('planning.toShoppingDone', { list: list.data.name, added: r.added, updated: r.updated }),
@@ -108,9 +106,6 @@ export default function Planning() {
           <Text variant="caption" color="textMuted">
             ×{e.data.servings}
           </Text>
-        ) : null}
-        {e.state !== 'synced' ? (
-          <Icon name="cloud-upload-outline" size={12} color="textSubtle" />
         ) : null}
       </Pressable>
     );

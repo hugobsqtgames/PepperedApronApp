@@ -3,7 +3,7 @@ import * as DocumentPicker from 'expo-document-picker';
 import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
 import { File } from 'expo-file-system';
 import { uuidv7 } from '@pepperedapron/core';
-import { photosDir, runtime } from './runtime';
+import { photosDir } from './icloud';
 
 export type PhotoSource = 'camera' | 'library' | 'files';
 export type PickResult = { uri: string } | { denied: true } | null;
@@ -41,12 +41,10 @@ export async function pickImage(source: PhotoSource): Promise<PickResult> {
 }
 
 /**
- * Resize (max 1600 px), re-encode as JPEG (strips EXIF/GPS) and keep a durable local copy so the
- * photo shows instantly and can be uploaded later when offline. Huge or corrupt images throw.
+ * Resize (max 1600 px), re-encode as JPEG (strips EXIF/GPS) and keep it in the app's photo
+ * folder. Returns the photo key (its file name), which recipes store. Huge or corrupt images throw.
  */
-export async function preparePhoto(
-  uri: string,
-): Promise<{ uri: string; size: number; contentType: 'image/jpeg' }> {
+export async function preparePhoto(uri: string): Promise<string> {
   const ctx = ImageManipulator.manipulate(uri);
   const probe = await ctx.renderAsync();
   const { width, height } = probe;
@@ -58,45 +56,7 @@ export async function preparePhoto(
   const saved = await img.saveAsync({ format: SaveFormat.JPEG, compress: 0.78 });
   const dir = photosDir();
   if (!dir.exists) dir.create({ intermediates: true });
-  const dest = new File(dir, `${uuidv7()}.jpg`);
-  new File(saved.uri).move(dest);
-  return { uri: dest.uri, size: dest.size ?? 0, contentType: 'image/jpeg' };
-}
-
-/** Attach a photo to a recipe: shown immediately, uploaded in the background. */
-export async function attachPhoto(recipeId: string, uri: string) {
-  const s = runtime.session;
-  if (!s) return;
-  const prepared = await preparePhoto(uri);
-  const previous = s.store.localPhoto(recipeId);
-  await s.store.queuePhoto({
-    localUri: prepared.uri,
-    recipeId,
-    contentType: prepared.contentType,
-    size: prepared.size,
-  });
-  if (previous) {
-    try {
-      new File(previous.localUri).delete();
-    } catch {
-      /* already gone */
-    }
-  }
-  runtime.scheduleSync(200);
-}
-
-export async function removePhoto(recipeId: string) {
-  const s = runtime.session;
-  if (!s) return;
-  const local = s.store.localPhoto(recipeId);
-  if (local) {
-    await s.store.dropPhoto(recipeId);
-    try {
-      new File(local.localUri).delete();
-    } catch {
-      /* already gone */
-    }
-  }
-  const r = s.repos.recipe(recipeId);
-  if (r?.data.photoKey) await s.repos.updateRecipe(recipeId, { photoKey: null });
+  const key = `${uuidv7()}.jpg`;
+  new File(saved.uri).move(new File(dir, key));
+  return key;
 }

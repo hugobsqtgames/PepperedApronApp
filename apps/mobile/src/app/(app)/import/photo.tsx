@@ -4,7 +4,6 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { emptyDraft } from '@pepperedapron/core';
 import { openDraft, openTextDraft } from '../../../features/recipe/openDraft';
-import { track } from '../../../services/analytics';
 import { ocrSupported, readTextFromImage } from '../../../services/ocr';
 import { pickImage, type PhotoSource } from '../../../services/photos';
 import { radius, space } from '../../../theme/tokens';
@@ -40,7 +39,6 @@ export default function ImportPhoto() {
   };
 
   const usePhoto = () => {
-    track('import_image', { ocr: false });
     openDraft(emptyDraft(), { notice: 'photo', localImageUri: uri });
   };
 
@@ -53,7 +51,6 @@ export default function ImportPhoto() {
         toast(t('import.noText'), { tone: 'info' });
         return;
       }
-      track('import_image', { ocr: true });
       openTextDraft(text, {}, 'text', uri);
     } catch {
       toast(t('import.ocrUnavailable'), { tone: 'error' });

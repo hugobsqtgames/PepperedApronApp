@@ -40,11 +40,3 @@ export async function openSqliteDriver(
     close: () => db.closeAsync(),
   };
 }
-
-export async function deleteDatabase(name: string) {
-  try {
-    await SQLite.deleteDatabaseAsync(name);
-  } catch {
-    // Already gone.
-  }
-}

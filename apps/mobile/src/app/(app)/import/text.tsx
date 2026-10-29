@@ -4,7 +4,6 @@ import * as Clipboard from 'expo-clipboard';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { openTextDraft } from '../../../features/recipe/openDraft';
-import { track } from '../../../services/analytics';
 import { space } from '../../../theme/tokens';
 import { Button, IconButton, Screen, Text, TextField } from '../../../ui';
 
@@ -41,7 +40,6 @@ export default function ImportText() {
             title={t('import.analyze')}
             disabled={!text.trim()}
             onPress={() => {
-              track('import_text');
               openTextDraft(text);
             }}
             style={{ flex: 1 }}

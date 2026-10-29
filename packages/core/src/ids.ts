@@ -2,7 +2,7 @@
  * Identifier helpers. IDs are generated on the device so records can be created offline.
  * - uuidv7: time-ordered random ids for new records.
  * - uuidv5: deterministic ids for "natural key" rows (favorites, collection items, default
- *   shopping categories) so two offline devices never create duplicates.
+ *   shopping categories, settings) so two devices never create duplicates.
  * Pure JS (no node:crypto) so it runs in React Native.
  */
 
@@ -171,11 +171,11 @@ export function isUuid(v: unknown): v is string {
   return typeof v === 'string' && UUID_RE.test(v);
 }
 
-export const favoriteId = (userId: string, recipeId: string) =>
-  uuidv5(`favorite:${userId}:${recipeId}`);
+export const favoriteId = (recipeId: string) => uuidv5(`favorite:${recipeId}`);
 export const collectionItemId = (collectionId: string, recipeId: string) =>
   uuidv5(`collection-item:${collectionId}:${recipeId}`);
-export const shoppingCategoryId = (userId: string, key: string) =>
-  uuidv5(`shopping-category:${userId}:${key}`);
+export const shoppingCategoryId = (key: string) => uuidv5(`shopping-category:${key}`);
+/** The single settings record, shared by every device of the user. */
+export const SETTINGS_ID = uuidv5('settings');
 
 export { sha1 as _sha1ForTests };

@@ -1,6 +1,5 @@
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
-import Constants from 'expo-constants';
 import {
   addDays,
   emptyMainSlots,
@@ -178,17 +177,4 @@ export async function scheduleShoppingReady(repos: Repos, count: number, now = n
       channelId: 'reminders',
     },
   });
-}
-
-/** Push token (used only for household events). Requires an EAS project id. */
-export async function registerPushToken() {
-  const projectId = (Constants.expoConfig?.extra as { eas?: { projectId?: string } } | undefined)
-    ?.eas?.projectId;
-  if (!projectId || !(await notificationsAllowed()) || !runtime.household) return;
-  try {
-    const { data } = await Notifications.getExpoPushTokenAsync({ projectId });
-    await runtime.api.setPushToken(data, Platform.OS === 'ios' ? 'ios' : 'android');
-  } catch {
-    /* retried on next launch */
-  }
 }

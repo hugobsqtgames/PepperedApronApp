@@ -3,7 +3,6 @@ import { ScrollView, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useLive, useRepos } from '../../../../hooks/runtime';
-import { track } from '../../../../services/analytics';
 import { haptic } from '../../../../services/haptics';
 import { space } from '../../../../theme/tokens';
 import { Button, Group, ListRow, Text, TextField } from '../../../../ui';
@@ -22,7 +21,6 @@ export default function RecipeCollections() {
     if (!name.trim()) return;
     const c = await repos.createCollection(name.trim());
     await repos.setInCollection(c.id, id, true);
-    track('collection_created');
     haptic.success();
     setName('');
   };

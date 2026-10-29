@@ -10,6 +10,7 @@ import {
   planMergeIntoList,
   recipeDataSchema,
   settingsDataSchema,
+  SETTINGS_ID,
   SHOPPING_CATEGORIES,
   shoppingCategoryId,
   shoppingItemDataSchema,
@@ -71,11 +72,8 @@ export const emptyRecipe = (servings = 4): RecipeData => ({
   source: null,
   sourceUrl: null,
   tags: [],
-  visibility: 'private',
   ingredients: [],
   steps: [],
-  originRecipeId: null,
-  householdId: null,
 });
 
 /** Turn an import draft into editable recipe data (the user reviews everything). */
@@ -109,75 +107,61 @@ export function recipeFromDraft(d: RecipeDraft, defaultServings = 4): RecipeData
 }
 
 export class Repos {
-  constructor(
-    private readonly store: LocalStore,
-    private readonly userId: () => string,
-    /** Household to share lists and planning with by default (null when not in a household). */
-    private readonly householdId: () => string | null = () => null,
-  ) {}
+  constructor(private readonly store: LocalStore) {}
 
   // ================================================================== settings
   settings(): SettingsData {
-    const r = this.store.get('settings', this.userId());
+    const r = this.store.get('settings', SETTINGS_ID);
     return { ...DEFAULT_SETTINGS, ...(r?.data ?? {}) };
   }
   async updateSettings(patch: Partial<SettingsData>): Promise<SettingsData> {
     const next = validate(settingsDataSchema, { ...this.settings(), ...patch });
-    await this.store.write('settings', this.userId(), next, this.userId());
+    await this.store.write('settings', SETTINGS_ID, next);
     return next;
   }
 
   // ================================================================== recipes
-  /** Everything searchable: library + favorited public recipes (read-only). */
   recipes(): Recipe[] {
     return this.store.all('recipe');
   }
-  /** Library = own + household recipes (favorited public recipes of others are excluded). */
+  /** All recipes, most recently changed first. */
   library(): Recipe[] {
-    const me = this.userId();
-    const hh = this.householdId();
-    return this.store
-      .all('recipe')
-      .filter((r) => r.ownerId === me || (hh !== null && r.data.householdId === hh))
-      .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+    return this.recipes().sort((a, b) => b.hlc.localeCompare(a.hlc));
   }
   recipe(id: string): Recipe | null {
     return this.store.get('recipe', id);
   }
-  canEdit(r: Recipe): boolean {
-    const hh = this.householdId();
-    return (
-      r.ownerId === this.userId() ||
-      r.ownerId === null ||
-      (hh !== null && r.data.householdId === hh)
-    );
-  }
   async createRecipe(input: RecipeInput): Promise<Recipe> {
     const data = validate(recipeDataSchema, input);
-    return this.store.write('recipe', uuidv7(), data, this.userId());
+    return this.store.write('recipe', uuidv7(), data);
   }
   async updateRecipe(id: string, patch: Partial<RecipeInput>): Promise<Recipe> {
     const cur = this.store.get('recipe', id);
     if (!cur) throw new Error('not_found');
     const data = validate(recipeDataSchema, { ...cur.data, ...patch });
-    return this.store.write('recipe', id, data, cur.ownerId);
+    return this.store.write('recipe', id, data);
   }
-  deleteRecipe(id: string) {
-    // Local cascade mirrors the server so the UI is consistent while offline.
-    for (const f of this.store.all('favorite').filter((x) => x.data.recipeId === id))
-      void this.store.remove('favorite', f.id);
-    for (const c of this.store.all('collectionItem').filter((x) => x.data.recipeId === id))
-      void this.store.remove('collectionItem', c.id);
+  /** Deletes the recipe and its favorite/collection entries; planned meals keep its title. */
+  async deleteRecipe(id: string) {
     const title = this.store.get('recipe', id)?.data.title ?? '';
     for (const e of this.store.all('mealPlanEntry').filter((x) => x.data.recipeId === id)) {
-      void this.store.write(
-        'mealPlanEntry',
-        e.id,
-        { ...e.data, recipeId: null, customTitle: title.slice(0, 200) || '—' },
-        e.ownerId,
-      );
+      await this.store.write('mealPlanEntry', e.id, {
+        ...e.data,
+        recipeId: null,
+        customTitle: title.slice(0, 200) || '—',
+      });
     }
-    return this.store.remove('recipe', id);
+    await this.store.removeMany([
+      ...this.store
+        .all('favorite')
+        .filter((x) => x.data.recipeId === id)
+        .map((f) => ({ entity: 'favorite' as const, id: f.id })),
+      ...this.store
+        .all('collectionItem')
+        .filter((x) => x.data.recipeId === id)
+        .map((c) => ({ entity: 'collectionItem' as const, id: c.id })),
+      { entity: 'recipe', id },
+    ]);
   }
   async duplicateRecipe(id: string, suffix: string): Promise<Recipe> {
     const cur = this.store.get('recipe', id);
@@ -185,10 +169,6 @@ export class Repos {
     return this.createRecipe({
       ...cur.data,
       title: `${cur.data.title} ${suffix}`.slice(0, 200),
-      photoKey: cur.ownerId === this.userId() ? cur.data.photoKey : null,
-      visibility: 'private',
-      householdId: null,
-      originRecipeId: null,
       ingredients: cur.data.ingredients.map((i) => ({ ...i, id: uuidv7() })),
       steps: cur.data.steps.map((s) => ({ ...s, id: uuidv7() })),
     });
@@ -215,24 +195,23 @@ export class Repos {
 
   // ================================================================== favorites
   isFavorite(recipeId: string): boolean {
-    return this.store.get('favorite', favoriteId(this.userId(), recipeId)) !== null;
+    return this.store.get('favorite', favoriteId(recipeId)) !== null;
   }
   favoriteRecipes(): Recipe[] {
     return this.store
       .all('favorite')
-      .filter((f) => f.ownerId === this.userId() || f.ownerId === null)
-      .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
+      .sort((a, b) => b.hlc.localeCompare(a.hlc))
       .map((f) => this.store.get('recipe', f.data.recipeId))
       .filter((r): r is Recipe => r !== null);
   }
   /** Returns the new state. Deterministic ids make rapid double taps harmless. */
   async toggleFavorite(recipeId: string): Promise<boolean> {
-    const id = favoriteId(this.userId(), recipeId);
+    const id = favoriteId(recipeId);
     if (this.store.get('favorite', id)) {
       await this.store.remove('favorite', id);
       return false;
     }
-    await this.store.write('favorite', id, { recipeId, householdId: null }, this.userId());
+    await this.store.write('favorite', id, { recipeId });
     return true;
   }
 
@@ -265,9 +244,8 @@ export class Repos {
       name,
       emoji,
       position,
-      householdId: null,
     });
-    return this.store.write('collection', uuidv7(), data, this.userId());
+    return this.store.write('collection', uuidv7(), data);
   }
   async updateCollection(id: string, patch: Partial<CollectionData>) {
     const cur = this.store.get('collection', id);
@@ -276,13 +254,16 @@ export class Repos {
       'collection',
       id,
       validate(collectionDataSchema, { ...cur.data, ...patch }),
-      cur.ownerId,
     );
   }
   deleteCollection(id: string) {
-    for (const i of this.store.all('collectionItem').filter((x) => x.data.collectionId === id))
-      void this.store.remove('collectionItem', i.id);
-    return this.store.remove('collection', id);
+    return this.store.removeMany([
+      ...this.store
+        .all('collectionItem')
+        .filter((x) => x.data.collectionId === id)
+        .map((i) => ({ entity: 'collectionItem' as const, id: i.id })),
+      { entity: 'collection', id },
+    ]);
   }
   async setInCollection(collectionId: string, recipeId: string, inside: boolean) {
     const id = collectionItemId(collectionId, recipeId);
@@ -291,13 +272,7 @@ export class Repos {
     const position = this.store
       .all('collectionItem')
       .filter((i) => i.data.collectionId === collectionId).length;
-    const col = this.store.get('collection', collectionId);
-    await this.store.write(
-      'collectionItem',
-      id,
-      { collectionId, recipeId, position },
-      col?.ownerId ?? this.userId(),
-    );
+    await this.store.write('collectionItem', id, { collectionId, recipeId, position });
   }
 
   // ================================================================== meal plan
@@ -326,9 +301,8 @@ export class Repos {
       customTitle: p.customTitle ?? null,
       servings: p.servings ?? null,
       position: nextPosition(all, p.date, p.slot),
-      householdId: this.householdId(),
     });
-    return this.store.write('mealPlanEntry', uuidv7(), data, this.userId());
+    return this.store.write('mealPlanEntry', uuidv7(), data);
   }
   async moveMeal(id: string, date: string, slot: MealSlot) {
     const cur = this.store.get('mealPlanEntry', id);
@@ -346,7 +320,6 @@ export class Repos {
         slot,
         position: nextPosition(all, date, slot),
       }),
-      cur.ownerId,
     );
   }
   async updateMeal(id: string, patch: Partial<MealPlanEntryData>) {
@@ -356,7 +329,6 @@ export class Repos {
       'mealPlanEntry',
       id,
       validate(mealPlanEntryDataSchema, { ...cur.data, ...patch }),
-      cur.ownerId,
     );
   }
   removeMeal(id: string) {
@@ -368,7 +340,7 @@ export class Repos {
     return this.store
       .all('shoppingList')
       .filter((l) => !l.data.archived)
-      .sort((a, b) => a.updatedAt.localeCompare(b.updatedAt));
+      .sort((a, b) => a.id.localeCompare(b.id));
   }
   activeList(): LocalRecord<'shoppingList'> | null {
     const id = this.settings().activeShoppingListId;
@@ -380,9 +352,8 @@ export class Repos {
       name,
       emoji,
       archived: false,
-      householdId: this.householdId(),
     });
-    const rec = await this.store.write('shoppingList', uuidv7(), data, this.userId());
+    const rec = await this.store.write('shoppingList', uuidv7(), data);
     if (makeActive) await this.updateSettings({ activeShoppingListId: rec.id });
     return rec;
   }
@@ -397,12 +368,13 @@ export class Repos {
       'shoppingList',
       id,
       validate(shoppingListDataSchema, { ...cur.data, ...patch }),
-      cur.ownerId,
     );
   }
   async deleteList(id: string) {
-    for (const i of this.items(id)) void this.store.remove('shoppingItem', i.id);
-    await this.store.remove('shoppingList', id);
+    await this.store.removeMany([
+      ...this.items(id).map((i) => ({ entity: 'shoppingItem' as const, id: i.id })),
+      { entity: 'shoppingList', id },
+    ]);
     if (this.settings().activeShoppingListId === id)
       await this.updateSettings({ activeShoppingListId: this.lists()[0]?.id ?? null });
   }
@@ -448,7 +420,7 @@ export class Repos {
       note: p.note ?? null,
       recipeIds: p.recipeIds ?? [],
     });
-    return this.store.write('shoppingItem', uuidv7(), data, list.ownerId);
+    return this.store.write('shoppingItem', uuidv7(), data);
   }
   async updateItem(id: string, patch: Partial<ShoppingItemData>) {
     const cur = this.store.get('shoppingItem', id);
@@ -457,7 +429,6 @@ export class Repos {
       'shoppingItem',
       id,
       validate(shoppingItemDataSchema, { ...cur.data, ...patch }),
-      cur.ownerId,
     );
   }
   toggleItem(id: string) {
@@ -469,8 +440,12 @@ export class Repos {
     return this.store.remove('shoppingItem', id);
   }
   async clearChecked(listId: string) {
-    for (const i of this.items(listId).filter((x) => x.data.checked))
-      await this.store.remove('shoppingItem', i.id);
+    await this.store.remove(
+      'shoppingItem',
+      ...this.items(listId)
+        .filter((x) => x.data.checked)
+        .map((i) => i.id),
+    );
   }
   async moveItemToList(id: string, listId: string) {
     const cur = this.store.get('shoppingItem', id);
@@ -546,9 +521,7 @@ export class Repos {
   // ---------------------------------------------------------------- aisles
   /** Aisle order for the user's store, plus custom aisles. */
   categories(): { key: string; name: string | null; custom: boolean; hidden: boolean }[] {
-    const rows = this.store
-      .all('shoppingCategory')
-      .filter((c) => c.ownerId === this.userId() || c.ownerId === null);
+    const rows = this.store.all('shoppingCategory');
     const byKey = new Map(rows.map((r) => [r.data.key, r.data]));
     const custom = rows.filter(
       (r) => !(SHOPPING_CATEGORIES as readonly string[]).includes(r.data.key),
@@ -577,44 +550,37 @@ export class Repos {
     return this.categories().map((c) => c.key);
   }
   async setCategoryOrder(keys: string[]) {
-    const me = this.userId();
     const existing = new Map(this.store.all('shoppingCategory').map((c) => [c.data.key, c]));
     for (let i = 0; i < keys.length; i++) {
       const key = keys[i]!;
       const cur = existing.get(key);
-      const id = cur?.id ?? shoppingCategoryId(me, key);
-      await this.store.write(
-        'shoppingCategory',
-        id,
-        { key, name: cur?.data.name ?? null, position: i, hidden: cur?.data.hidden ?? false },
-        me,
-      );
+      const id = cur?.id ?? shoppingCategoryId(key);
+      await this.store.write('shoppingCategory', id, {
+        key,
+        name: cur?.data.name ?? null,
+        position: i,
+        hidden: cur?.data.hidden ?? false,
+      });
     }
   }
   async createCategory(name: string) {
     const id = uuidv7();
     const position = this.categories().length;
-    await this.store.write(
-      'shoppingCategory',
-      id,
-      { key: id, name: name.trim().slice(0, 60), position, hidden: false },
-      this.userId(),
-    );
+    await this.store.write('shoppingCategory', id, {
+      key: id,
+      name: name.trim().slice(0, 60),
+      position,
+      hidden: false,
+    });
     return id;
   }
   async renameCategory(key: string, name: string | null) {
     const cur = this.store.all('shoppingCategory').find((c) => c.data.key === key);
-    const me = this.userId();
-    await this.store.write(
-      'shoppingCategory',
-      cur?.id ?? shoppingCategoryId(me, key),
-      {
-        key,
-        name: name?.trim().slice(0, 60) || null,
-        position: cur?.data.position ?? this.categoryOrder().indexOf(key),
-        hidden: cur?.data.hidden ?? false,
-      },
-      me,
-    );
+    await this.store.write('shoppingCategory', cur?.id ?? shoppingCategoryId(key), {
+      key,
+      name: name?.trim().slice(0, 60) || null,
+      position: cur?.data.position ?? this.categoryOrder().indexOf(key),
+      hidden: cur?.data.hidden ?? false,
+    });
   }
 }

@@ -7,7 +7,6 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
-  Switch,
   View,
 } from 'react-native';
 import { router, useLocalSearchParams, useNavigation } from 'expo-router';
@@ -37,14 +36,13 @@ import {
   type IngRow,
   type StepRow,
 } from '../../../features/recipe/editorModel';
-import { useRepos, useRuntime } from '../../../hooks/runtime';
+import { useRepos } from '../../../hooks/runtime';
 import { errorMessage } from '../../../lib/errors';
 import { useLayout } from '../../../lib/layout';
 import { recipePhotoUri } from '../../../lib/media';
-import { track } from '../../../services/analytics';
 import { draftStore, type EditorDraft } from '../../../services/drafts';
 import { haptic } from '../../../services/haptics';
-import { attachPhoto, pickImage, removePhoto, type PhotoSource } from '../../../services/photos';
+import { pickImage, preparePhoto, type PhotoSource } from '../../../services/photos';
 import { useTheme } from '../../../theme/ThemeProvider';
 import { radius, space } from '../../../theme/tokens';
 import {
@@ -77,7 +75,6 @@ export default function RecipeEditor() {
   const { t, i18n } = useTranslation();
   const locale = i18n.language as Locale;
   const { colors } = useTheme();
-  const rt = useRuntime();
   const repos = useRepos();
   const layout = useLayout();
   const toast = useToast();
@@ -239,30 +236,28 @@ export default function RecipeEditor() {
       haptic.error();
       return;
     }
+    // The photo is stored first so the recipe is written once; a photo failure never loses it.
+    try {
+      if (photo.kind === 'local') final.photoKey = await preparePhoto(photo.uri);
+      else if (photo.kind === 'remove') final.photoKey = null;
+      else if (photo.kind === 'remote') {
+        const res = await expoFetch(photo.url);
+        if (res.ok) {
+          const tmp = new File(Paths.cache, `${uuidv7()}.jpg`);
+          tmp.write(await res.bytes());
+          final.photoKey = await preparePhoto(tmp.uri);
+        }
+      }
+    } catch {
+      toast(t('errors.photo_failed'), { tone: 'error' });
+    }
     try {
       const rec = existing
         ? await repos.updateRecipe(existing.id, final)
         : await repos.createRecipe(final);
-      if (!existing) track('recipe_created', { source: draft?.notice ?? 'blank' });
       saved.current = true;
-      // Photo work happens after the recipe exists; failures never lose the recipe.
-      try {
-        if (photo.kind === 'local') await attachPhoto(rec.id, photo.uri);
-        else if (photo.kind === 'remove') await removePhoto(rec.id);
-        else if (photo.kind === 'remote') {
-          const res = await expoFetch(photo.url);
-          if (res.ok) {
-            const tmp = new File(Paths.cache, `${uuidv7()}.jpg`);
-            tmp.write(await res.bytes());
-            await attachPhoto(rec.id, tmp.uri);
-          }
-        }
-      } catch {
-        toast(t('errors.upload_failed'), { tone: 'error' });
-      }
       haptic.success();
       toast(t('editor.saved'));
-      rt.scheduleSync(300);
       if (existing) router.back();
       else router.replace(`/recipe/${rec.id}`);
     } catch (e) {
@@ -812,40 +807,6 @@ export default function RecipeEditor() {
                   </View>
                 </View>,
               )}
-              {!existing || existing.ownerId === rt.user?.id
-                ? section(
-                    t('recipe.visibility'),
-                    <View style={{ gap: space.md }}>
-                      {rt.household ? (
-                        <View style={styles.switchRow}>
-                          <Text style={{ flex: 1 }}>{t('recipe.shareHousehold')}</Text>
-                          <Switch
-                            value={data.householdId !== null}
-                            onValueChange={(v) =>
-                              patch({ householdId: v ? rt.household!.id : null })
-                            }
-                            trackColor={{ true: colors.primary, false: colors.line }}
-                            accessibilityLabel={t('recipe.shareHousehold')}
-                          />
-                        </View>
-                      ) : null}
-                      <View style={styles.switchRow}>
-                        <View style={{ flex: 1, gap: 2 }}>
-                          <Text>{t('recipe.makePublic')}</Text>
-                          <Text variant="caption" color="textMuted">
-                            {t('recipe.makePublicBody')}
-                          </Text>
-                        </View>
-                        <Switch
-                          value={data.visibility === 'public'}
-                          onValueChange={(v) => patch({ visibility: v ? 'public' : 'private' })}
-                          trackColor={{ true: colors.primary, false: colors.line }}
-                          accessibilityLabel={t('recipe.makePublic')}
-                        />
-                      </View>
-                    </View>,
-                  )
-                : null}
             </>
           ) : (
             <Button
@@ -896,5 +857,4 @@ const styles = StyleSheet.create({
   },
   grid2: { flexDirection: 'row', flexWrap: 'wrap', gap: space.md },
   wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
-  switchRow: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 48 },
 });

@@ -9,5 +9,4 @@ export * from './RecipeCard';
 export * from './Toast';
 export * from './ActionSheet';
 export * from './Screen';
-export * from './SyncIndicator';
 export * from './Prompt';

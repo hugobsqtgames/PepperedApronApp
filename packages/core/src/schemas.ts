@@ -9,7 +9,6 @@ import {
   SEASONS,
   THEMES,
   UNIT_SYSTEMS,
-  VISIBILITIES,
 } from './enums';
 import { LIMITS } from './limits';
 
@@ -82,25 +81,19 @@ export const recipeDataSchema = z
       .array(tag)
       .max(LIMITS.tags)
       .transform((t) => [...new Set(t.map((x) => x.toLowerCase()))]),
-    visibility: z.enum(VISIBILITIES),
     ingredients: z.array(ingredientSchema).max(LIMITS.ingredients),
     steps: z.array(stepSchema).max(LIMITS.steps),
-    originRecipeId: uuid().nullable(),
-    householdId: uuid().nullable(),
   })
   .strict();
 export type RecipeData = z.infer<typeof recipeDataSchema>;
 export type RecipeInput = z.input<typeof recipeDataSchema>;
 
-export const favoriteDataSchema = z
-  .object({ recipeId: uuid(), householdId: uuid().nullable() })
-  .strict();
+export const favoriteDataSchema = z.object({ recipeId: uuid() }).strict();
 export const collectionDataSchema = z
   .object({
     name: reqText(LIMITS.collectionName),
     emoji: z.string().max(16).nullable(),
     position: z.number().int().min(0).max(100000),
-    householdId: uuid().nullable(),
   })
   .strict();
 export const collectionItemDataSchema = z
@@ -115,7 +108,6 @@ export const mealPlanEntryDataSchema = z
     customTitle: optText(LIMITS.customTitle),
     servings: z.number().int().min(1).max(LIMITS.servingsMax).nullable(),
     position: z.number().int().min(0).max(1000),
-    householdId: uuid().nullable(),
   })
   .strict()
   .refine((d) => d.recipeId !== null || d.customTitle !== null, {
@@ -127,7 +119,6 @@ export const shoppingListDataSchema = z
     name: reqText(LIMITS.listName),
     emoji: z.string().max(16).nullable(),
     archived: z.boolean(),
-    householdId: uuid().nullable(),
   })
   .strict();
 
@@ -170,7 +161,6 @@ export const settingsDataSchema = z
     notifications: notificationPrefsSchema,
     dinnerReminderTime: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/),
     hapticsEnabled: z.boolean(),
-    analyticsConsent: z.boolean().nullable(),
     defaultServings: z.number().int().min(1).max(LIMITS.servingsMax),
     onboardingDone: z.boolean(),
   })
@@ -187,27 +177,12 @@ export const DEFAULT_SETTINGS: SettingsData = {
     shoppingReady: true,
     planningNudge: true,
     timers: true,
-    household: true,
   },
   dinnerReminderTime: '17:30',
   hapticsEnabled: true,
-  analyticsConsent: null,
   defaultServings: 4,
   onboardingDone: false,
 };
-
-// ---------- auth / account ----------
-export const emailSchema = z.string().trim().toLowerCase().pipe(z.email().max(254));
-export const passwordSchema = z.string().min(LIMITS.passwordMin).max(LIMITS.passwordMax);
-export const displayNameSchema = reqText(LIMITS.displayName);
-
-export const contactSchema = z
-  .object({
-    email: emailSchema.nullable(),
-    subject: reqText(120),
-    message: reqText(LIMITS.contactMessage),
-  })
-  .strict();
 
 export type FavoriteData = z.infer<typeof favoriteDataSchema>;
 export type CollectionData = z.infer<typeof collectionDataSchema>;

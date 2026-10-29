@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { uuidv7 } from './ids';
 import { mealPlanEntryDataSchema, recipeDataSchema, shoppingItemDataSchema } from './schemas';
-import { diffFields, ENTITY_SCHEMAS, mergeChangedFields, pushRequestSchema } from './sync';
+import { diffFields, ENTITY_SCHEMAS } from './sync';
 
 export const validRecipe = () => ({
   title: '  Tarte  ',
@@ -24,7 +24,6 @@ export const validRecipe = () => ({
   source: null,
   sourceUrl: null,
   tags: ['Rapide', 'rapide'],
-  visibility: 'private',
   ingredients: [
     {
       id: uuidv7(),
@@ -37,8 +36,6 @@ export const validRecipe = () => ({
     },
   ],
   steps: [{ id: uuidv7(), group: null, text: 'Cuire', timerSeconds: 600, timerLabel: null }],
-  originRecipeId: null,
-  householdId: null,
 });
 
 describe('recipe validation', () => {
@@ -114,7 +111,6 @@ describe('other entities', () => {
       customTitle: null,
       servings: null,
       position: 0,
-      householdId: null,
     };
     expect(mealPlanEntryDataSchema.safeParse(base).success).toBe(false);
     expect(mealPlanEntryDataSchema.safeParse({ ...base, customTitle: 'Restes' }).success).toBe(
@@ -145,38 +141,10 @@ describe('other entities', () => {
   });
 });
 
-describe('sync merge', () => {
-  it('applies only changed fields on stale base', () => {
-    const server = { title: 'A (server)', servings: 4, notes: 'server note' };
-    const client = { title: 'A', servings: 6, notes: 'server note' };
-    expect(mergeChangedFields(server, client, ['servings'])).toEqual({
-      title: 'A (server)',
-      servings: 6,
-      notes: 'server note',
-    });
-    expect(mergeChangedFields(server, client, null)).toEqual(client);
-    expect(mergeChangedFields(server, client, ['nope'])).toEqual(server);
-  });
-  it('diffFields', () => {
+describe('diffFields', () => {
+  it('lists changed top-level fields', () => {
     expect(diffFields({ a: 1, b: [1] }, { a: 1, b: [2] })).toEqual(['b']);
     expect(diffFields(null, { a: 1 })).toEqual(['a']);
-  });
-  it('push request limits', () => {
-    expect(pushRequestSchema.safeParse({ ops: [] }).success).toBe(false);
-    expect(
-      pushRequestSchema.safeParse({
-        ops: [
-          {
-            opId: 'x',
-            entity: 'recipe',
-            id: uuidv7(),
-            op: 'upsert',
-            baseVersion: null,
-            changedFields: null,
-            data: {},
-          },
-        ],
-      }).success,
-    ).toBe(false);
+    expect(diffFields({ a: 1 }, {})).toEqual(['a']);
   });
 });

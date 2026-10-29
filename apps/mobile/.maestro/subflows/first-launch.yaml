@@ -1,0 +1,12 @@
+appId: ${APP_ID}
+---
+# No account: a fresh install goes from the welcome slides straight into the app.
+- launchApp:
+    clearState: true
+    clearKeychain: true
+- tapOn:
+    id: onboarding-skip
+- tapOn:
+    id: onboarding-start
+- assertVisible:
+    id: home-empty

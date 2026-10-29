@@ -1,5 +1,5 @@
 import type { ConfigContext, ExpoConfig } from 'expo/config';
-import { withEntitlementsPlist, type ConfigPlugin } from 'expo/config-plugins';
+import { withEntitlementsPlist, withInfoPlist, type ConfigPlugin } from 'expo/config-plugins';
 
 /** Several plugins add the same App Group; keep the entitlement list unique. */
 const withUniqueAppGroups: ConfigPlugin = (c) =>
@@ -10,17 +10,32 @@ const withUniqueAppGroups: ConfigPlugin = (c) =>
   });
 
 /**
- * One codebase, three environments. APP_VARIANT selects bundle ids, names and endpoints so that
- * development, staging and production builds can live side by side on a device.
+ * The sync files live in the hidden part of the iCloud container: no empty "PepperedApron"
+ * folder should appear in the user's iCloud Drive (react-native-cloud-storage makes it public).
+ */
+const withPrivateICloudContainer: ConfigPlugin = (c) =>
+  withInfoPlist(c, (m) => {
+    const containers = m.modResults.NSUbiquitousContainers as
+      Record<string, Record<string, unknown>> | undefined;
+    for (const v of Object.values(containers ?? {}))
+      v.NSUbiquitousContainerIsDocumentScopePublic = false;
+    return m;
+  });
+
+/**
+ * One codebase, three environments. APP_VARIANT selects bundle ids, names and iCloud containers
+ * so that development, staging and production builds can live side by side on a device (each
+ * with its own data).
  */
 type Variant = 'development' | 'staging' | 'production';
 const variant = (process.env.APP_VARIANT ?? 'development') as Variant;
 const suffix = variant === 'production' ? '' : `.${variant === 'development' ? 'dev' : 'staging'}`;
 const bundleId = `app.pepperedapron${suffix}`;
-const webDomain =
-  process.env.WEB_DOMAIN ??
-  (variant === 'production' ? 'pepperedapron.app' : `${variant}.pepperedapron.app`);
 const appGroup = `group.${bundleId}`;
+/** Private iCloud container holding the user's synced data (see services/icloud.ts). */
+const iCloudContainer = `iCloud.${bundleId}`;
+const siteUrl = process.env.SITE_URL ?? 'https://pepperedapron.app';
+const supportEmail = process.env.SUPPORT_EMAIL ?? 'support@pepperedapron.app';
 
 // Google's official test ad units are used unless real ids are provided (never ship test ids).
 if (
@@ -58,40 +73,23 @@ const buildConfig = ({ config }: ConfigContext): ExpoConfig => ({
     appleTeamId: process.env.APPLE_TEAM_ID,
     supportsTablet: true,
     requireFullScreen: false,
-    usesAppleSignIn: true,
     icon: {
       light: './assets/icon.png',
       dark: './assets/icon-dark.png',
       tinted: './assets/icon-tinted.png',
     },
-    associatedDomains: [`applinks:${webDomain}`, `webcredentials:${webDomain}`],
     entitlements: { 'com.apple.security.application-groups': [appGroup] },
     infoPlist: {
       ITSAppUsesNonExemptEncryption: false,
       CFBundleAllowMixedLocalizations: true,
       NSSupportsLiveActivities: true,
-      UIBackgroundModes: ['remote-notification'],
     },
     privacyManifests: {
       NSPrivacyTracking: false,
-      // Must match the App Store privacy labels (docs/PRIVACY.md). Ads SDKs ship their own manifests.
-      NSPrivacyCollectedDataTypes: [
-        ...(
-          [
-            ['EmailAddress', 'AppFunctionality'],
-            ['Name', 'AppFunctionality'],
-            ['PhotosorVideos', 'AppFunctionality'],
-            ['OtherUserContent', 'AppFunctionality'],
-            ['ProductInteraction', 'Analytics'],
-            ['CrashData', 'AppFunctionality'],
-          ] as const
-        ).map(([type, purpose]) => ({
-          NSPrivacyCollectedDataType: `NSPrivacyCollectedDataType${type}`,
-          NSPrivacyCollectedDataTypeLinked: true,
-          NSPrivacyCollectedDataTypeTracking: false,
-          NSPrivacyCollectedDataTypePurposes: [`NSPrivacyCollectedDataTypePurpose${purpose}`],
-        })),
-      ],
+      // Nothing is collected by PepperedApron: data stays on the device and in the user's own
+      // iCloud. Must match the App Store privacy labels (docs/PRIVACY.md); the ads SDK ships its
+      // own manifest for what it collects.
+      NSPrivacyCollectedDataTypes: [],
       NSPrivacyAccessedAPITypes: [
         {
           NSPrivacyAccessedAPIType: 'NSPrivacyAccessedAPICategoryUserDefaults',
@@ -121,6 +119,8 @@ const buildConfig = ({ config }: ConfigContext): ExpoConfig => ({
       monochromeImage: './assets/android-icon-monochrome.png',
     },
     predictiveBackGestureEnabled: true,
+    // The local database and photos are included in the user's Google device backup.
+    allowBackup: true,
     permissions: [
       'android.permission.CAMERA',
       'android.permission.POST_NOTIFICATIONS',
@@ -130,27 +130,19 @@ const buildConfig = ({ config }: ConfigContext): ExpoConfig => ({
       'android.permission.RECORD_AUDIO',
       'android.permission.ACCESS_FINE_LOCATION',
     ],
-    intentFilters: [
-      {
-        action: 'VIEW',
-        autoVerify: true,
-        data: [
-          { scheme: 'https', host: webDomain, pathPrefix: '/r/' },
-          { scheme: 'https', host: webDomain, pathPrefix: '/p/' },
-          { scheme: 'https', host: webDomain, pathPrefix: '/join/' },
-          { scheme: 'https', host: webDomain, pathPrefix: '/auth/' },
-        ],
-        category: ['BROWSABLE', 'DEFAULT'],
-      },
-    ],
   },
   plugins: [
     'expo-router',
     'expo-sqlite',
-    'expo-secure-store',
     'expo-localization',
-    'expo-apple-authentication',
     'expo-web-browser',
+    [
+      'react-native-cloud-storage',
+      {
+        iCloudContainerIdentifier: iCloudContainer,
+        iCloudContainerEnvironment: variant === 'development' ? 'Development' : 'Production',
+      },
+    ],
     [
       'expo-splash-screen',
       {
@@ -199,24 +191,16 @@ const buildConfig = ({ config }: ConfigContext): ExpoConfig => ({
     // Order matters: apple-targets must create the widget target before expo-live-activity adds its own.
     '@bacons/apple-targets',
     'expo-live-activity',
-    ...(process.env.SENTRY_ORG && process.env.SENTRY_PROJECT
-      ? ([
-          [
-            '@sentry/react-native',
-            { organization: process.env.SENTRY_ORG, project: process.env.SENTRY_PROJECT },
-          ],
-        ] as [string, unknown][])
-      : []),
   ],
   experiments: { typedRoutes: true },
   extra: {
     variant,
-    apiUrl: process.env.EXPO_PUBLIC_API_URL,
-    webDomain,
+    siteUrl,
+    supportEmail,
     appGroup,
     eas: { projectId: process.env.EAS_PROJECT_ID },
   },
 });
 
 export default (ctx: ConfigContext): ExpoConfig =>
-  withUniqueAppGroups(buildConfig(ctx)) as ExpoConfig;
+  withPrivateICloudContainer(withUniqueAppGroups(buildConfig(ctx))) as ExpoConfig;

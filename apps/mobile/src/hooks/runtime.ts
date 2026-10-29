@@ -1,14 +1,14 @@
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import type { SyncEntity } from '@pepperedapron/core';
-import type { Repos, SyncSnapshot } from '@pepperedapron/client';
-import { runtime, type UserSession } from '../services/runtime';
+import type { CloudSnapshot, Repos } from '@pepperedapron/client';
+import { runtime, type Session } from '../services/runtime';
 
 let runtimeVersion = 0;
 runtime.subscribe(() => {
   runtimeVersion++;
 });
 
-/** Re-render when runtime state (auth, household, config) changes. */
+/** Re-render when runtime state (boot, iCloud preference) changes. */
 export function useRuntime() {
   useSyncExternalStore(
     (cb) => runtime.subscribe(cb),
@@ -17,7 +17,7 @@ export function useRuntime() {
   return runtime;
 }
 
-export function useSession(): UserSession {
+export function useSession(): Session {
   const rt = useRuntime();
   if (!rt.session) throw new Error('No active session');
   return rt.session;
@@ -57,11 +57,14 @@ export function useLive<T>(
   return value;
 }
 
-export function useSyncStatus(): SyncSnapshot {
-  const session = useSession();
+const NO_CLOUD: CloudSnapshot = { status: 'off', lastSyncedAt: null };
+
+/** iCloud sync state ('off' on Android or when the user turned it off). */
+export function useCloudStatus(): CloudSnapshot {
+  const cloud = useSession().cloud;
   return useSyncExternalStore(
-    (cb) => session.sync.subscribe(cb),
-    () => session.sync.snapshot,
+    (cb) => cloud?.subscribe(cb) ?? (() => undefined),
+    () => cloud?.snapshot ?? NO_CLOUD,
   );
 }
 

@@ -14,7 +14,6 @@ import {
 import { useLive, useRepos } from '../../../hooks/runtime';
 import { dayLong } from '../../../lib/dates';
 import { errorMessage } from '../../../lib/errors';
-import { track } from '../../../services/analytics';
 import { haptic } from '../../../services/haptics';
 import { useTheme } from '../../../theme/ThemeProvider';
 import { space } from '../../../theme/tokens';
@@ -77,7 +76,6 @@ export default function PickMeal() {
 
   const done = () => {
     haptic.success();
-    track('meal_planned');
     router.back();
   };
 

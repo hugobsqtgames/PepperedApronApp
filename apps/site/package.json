@@ -1,0 +1,11 @@
+{
+  "name": "@pepperedapron/site",
+  "version": "2.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Static website: privacy policy, terms, legal notice and help (no server).",
+  "scripts": {
+    "build": "node src/build.mjs",
+    "test": "node --test src/build.test.mjs"
+  }
+}

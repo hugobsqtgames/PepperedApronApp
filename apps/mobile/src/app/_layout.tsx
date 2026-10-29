@@ -1,5 +1,7 @@
 import '../i18n';
 import { useEffect, useState } from 'react';
+import { View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useFonts } from 'expo-font';
@@ -12,9 +14,7 @@ import { resolveLocale, setLanguage } from '../i18n';
 import { useRuntime } from '../hooks/runtime';
 import { ThemeProvider, useTheme } from '../theme/ThemeProvider';
 import { ActionSheetProvider, PromptProvider, ToastProvider } from '../ui';
-import { UpdateRequired } from '../features/UpdateRequired';
-import { compareVersions } from '../lib/version';
-import { ENV } from '../services/env';
+import { ErrorState } from '../ui/States';
 import type { SettingsData } from '@pepperedapron/core';
 
 void SplashScreen.preventAutoHideAsync();
@@ -37,29 +37,35 @@ function useUserSettings(): SettingsData | null {
   return s;
 }
 
-function Navigator() {
+/** The local database could not be opened (disk full, corrupted file…): never a blank screen. */
+function StartupError() {
   const rt = useRuntime();
+  const { t } = useTranslation();
+  const { colors } = useTheme();
+  return (
+    <View style={{ flex: 1, justifyContent: 'center', backgroundColor: colors.background }}>
+      <ErrorState message={t('errors.storage')} onRetry={() => void rt.boot()} />
+    </View>
+  );
+}
+
+function Navigator({ onboarded }: { onboarded: boolean }) {
   const { colors, dark } = useTheme();
   useEffect(() => {
     void SystemUI.setBackgroundColorAsync(colors.background);
   }, [colors.background]);
-  if (rt.config && compareVersions(ENV.appVersion, rt.config.minAppVersion) < 0) {
-    return <UpdateRequired config={rt.config} />;
-  }
   return (
     <>
       <StatusBar style={dark ? 'light' : 'dark'} />
       <Stack
         screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }}
       >
-        <Stack.Protected guard={rt.status === 'signedOut'}>
-          <Stack.Screen name="(auth)" />
+        <Stack.Protected guard={!onboarded}>
+          <Stack.Screen name="onboarding" />
         </Stack.Protected>
-        <Stack.Protected guard={rt.status === 'ready'}>
+        <Stack.Protected guard={onboarded}>
           <Stack.Screen name="(app)" />
         </Stack.Protected>
-        <Stack.Screen name="reset-password" options={{ presentation: 'modal' }} />
-        <Stack.Screen name="verify-email" options={{ presentation: 'modal' }} />
       </Stack>
     </>
   );
@@ -95,7 +101,11 @@ export default function RootLayout() {
             <ToastProvider>
               <ActionSheetProvider>
                 <PromptProvider>
-                  <Navigator />
+                  {rt.status === 'failed' ? (
+                    <StartupError />
+                  ) : (
+                    <Navigator onboarded={settings?.onboardingDone === true} />
+                  )}
                 </PromptProvider>
               </ActionSheetProvider>
             </ToastProvider>

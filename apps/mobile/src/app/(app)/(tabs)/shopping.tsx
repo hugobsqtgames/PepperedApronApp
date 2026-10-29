@@ -17,7 +17,6 @@ import { useLive, useRepos } from '../../../hooks/runtime';
 import { aisleName } from '../../../lib/aisles';
 import { errorMessage } from '../../../lib/errors';
 import { useLayout } from '../../../lib/layout';
-import { track } from '../../../services/analytics';
 import { haptic } from '../../../services/haptics';
 import { useTheme } from '../../../theme/ThemeProvider';
 import { radius, space } from '../../../theme/tokens';
@@ -88,7 +87,6 @@ export default function Shopping() {
 
   const toggle = async (i: Item) => {
     haptic.selection();
-    if (!i.data.checked) track('shopping_item_checked');
     await repos.toggleItem(i.id);
     if (!i.data.checked && remaining === 1) haptic.success();
   };
@@ -99,7 +97,6 @@ export default function Shopping() {
     const r = await repos.addPlanToList(l.id, ws, addDays(ws, 6));
     if (r.added + r.updated === 0) return toast(t('planning.toShoppingEmpty'), { tone: 'info' });
     haptic.success();
-    track('shopping_generated', { items: r.added + r.updated });
     toast(t('planning.toShoppingDone', { list: l.data.name, added: r.added, updated: r.updated }));
   };
 
@@ -270,9 +267,6 @@ export default function Shopping() {
               </Text>
             ) : null}
           </Pressable>
-          {i.state !== 'synced' ? (
-            <Icon name="cloud-upload-outline" size={14} color="textSubtle" />
-          ) : null}
         </View>
       </ReanimatedSwipeable>
     );
@@ -322,9 +316,6 @@ export default function Shopping() {
             label={t('shopping.remaining', { count: remaining })}
             tone={remaining ? 'primary' : 'accent'}
           />
-        ) : null}
-        {list?.data.householdId ? (
-          <Badge icon="people-outline" label={t('shopping.shared')} />
         ) : null}
       </View>
       <View style={[styles.addBar, { backgroundColor: colors.surface, borderColor: colors.line }]}>

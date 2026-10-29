@@ -1,9 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { computeTotalMinutes, toIsoDate, type RecipeCategory } from '@pepperedapron/core';
-import type { PublicRecipeCard } from '@pepperedapron/client';
 import { AdSlot } from '../../../features/AdSlot';
 import { CategoryGrid } from '../../../features/home/CategoryGrid';
 import { RecipeCarousel } from '../../../features/home/Carousel';
@@ -14,7 +13,6 @@ import { haptic } from '../../../services/haptics';
 import { useTheme } from '../../../theme/ThemeProvider';
 import { radius, space } from '../../../theme/tokens';
 import {
-  Button,
   Card,
   EmptyState,
   Icon,
@@ -22,7 +20,6 @@ import {
   RecipePhoto,
   Screen,
   Section,
-  SyncIndicator,
   Text,
   useToast,
 } from '../../../ui';
@@ -70,14 +67,6 @@ export default function Home() {
     [today],
   );
 
-  const [community, setCommunity] = useState<PublicRecipeCard[]>([]);
-  useEffect(() => {
-    rt.api
-      .publicRecipes({ sort: 'popular', limit: 10 })
-      .then((r) => setCommunity(r.items))
-      .catch(() => setCommunity([]));
-  }, [rt.api]);
-
   const random = () => {
     const r = repos.randomRecipe();
     if (!r) return toast(t('home.randomEmpty'), { tone: 'info' });
@@ -85,18 +74,21 @@ export default function Home() {
     router.push(`/recipe/${r.id}`);
   };
 
+  /** Pull to refresh fetches what the user's other devices put in iCloud. */
   const refresh = async () => {
     setRefreshing(true);
-    rt.syncNow();
-    await rt.session?.sync.sync();
+    await rt.syncNow();
     setRefreshing(false);
   };
 
-  const name = rt.user?.displayName?.split(' ')[0] ?? '';
   const empty = data.library.length === 0;
 
   return (
-    <Screen refreshing={refreshing} onRefresh={refresh} testID="home">
+    <Screen
+      refreshing={refreshing}
+      onRefresh={rt.session?.cloud ? refresh : undefined}
+      testID="home"
+    >
       <View
         style={{
           flexDirection: 'row',
@@ -107,7 +99,7 @@ export default function Home() {
       >
         <View style={{ flex: 1, gap: space.xs }}>
           <Text variant="callout" color="textMuted">
-            {t(greetingKey(), { name })}
+            {t(greetingKey())}
           </Text>
           <Text variant="hero" accessibilityRole="header">
             {t('home.question')}
@@ -129,10 +121,6 @@ export default function Home() {
             testID="open-profile"
           />
         ) : null}
-      </View>
-      <View style={{ gap: space.sm, marginTop: space.md }}>
-        <SyncIndicator />
-        {rt.user && !rt.user.emailVerified && rt.user.hasPassword ? <VerifyBanner /> : null}
       </View>
 
       <View style={{ gap: space.xxxl, marginTop: space.xl }}>
@@ -279,89 +267,7 @@ export default function Home() {
         <Section title={t('home.categories')}>
           <CategoryGrid counts={data.counts} />
         </Section>
-
-        {community.length ? (
-          <Section
-            title={t('home.community')}
-            action={t('common.seeAll')}
-            onAction={() => router.push('/community')}
-          >
-            <View style={{ gap: space.sm }}>
-              {community.slice(0, 5).map((c) => (
-                <Card
-                  key={c.id}
-                  padded={false}
-                  onPress={() => router.push(`/community/${c.id}`)}
-                  accessibilityLabel={c.title}
-                >
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      gap: space.md,
-                      padding: space.md,
-                      alignItems: 'center',
-                    }}
-                  >
-                    <RecipePhoto
-                      uri={c.photoUrl}
-                      category={(c.category as RecipeCategory) ?? null}
-                      radius={radius.md}
-                      style={{ width: 64, height: 64 }}
-                      emojiSize={26}
-                    />
-                    <View style={{ flex: 1, gap: 2 }}>
-                      <Text variant="bodyStrong" numberOfLines={2}>
-                        {c.title}
-                      </Text>
-                      <Text variant="caption" color="textMuted" numberOfLines={1}>
-                        {t('recipe.byAuthor', { name: c.authorName })} ·{' '}
-                        {t('community.saves', { count: c.saveCount })}
-                      </Text>
-                    </View>
-                  </View>
-                </Card>
-              ))}
-            </View>
-          </Section>
-        ) : null}
       </View>
     </Screen>
-  );
-}
-
-function VerifyBanner() {
-  const { t } = useTranslation();
-  const { colors } = useTheme();
-  const rt = useRuntime();
-  const toast = useToast();
-  return (
-    <View
-      style={{
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: space.md,
-        padding: space.md,
-        borderRadius: radius.lg,
-        backgroundColor: colors.accentSoft,
-      }}
-    >
-      <Icon name="mail-unread-outline" size={20} color="accent" />
-      <Text variant="callout" style={{ flex: 1 }}>
-        {t('auth.verifyBanner')}
-      </Text>
-      <Button
-        title={t('auth.resend')}
-        variant="ghost"
-        size="sm"
-        onPress={async () => {
-          try {
-            await rt.api.resendVerification();
-            toast(t('auth.resent'));
-          } catch {
-            toast(t('errors.network'), { tone: 'error' });
-          }
-        }}
-      />
-    </View>
   );
 }

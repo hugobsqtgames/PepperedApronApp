@@ -16,7 +16,6 @@ import { formatClock, timerState, type KitchenTimer } from '@pepperedapron/core'
 import { IngredientList } from '../../../../features/recipe/RecipeBody';
 import { useLive } from '../../../../hooks/runtime';
 import { useLayout } from '../../../../lib/layout';
-import { track } from '../../../../services/analytics';
 import { haptic } from '../../../../services/haptics';
 import { timers } from '../../../../services/timers';
 import { useTheme } from '../../../../theme/ThemeProvider';
@@ -51,10 +50,6 @@ export default function CookMode() {
   const list = useRef<FlatList>(null);
   const running = useTimers();
 
-  useEffect(() => {
-    track('cook_mode_started');
-  }, []);
-
   if (!recipe) {
     return (
       <View style={{ flex: 1, backgroundColor: colors.background, paddingTop: insets.top }}>
@@ -80,7 +75,6 @@ export default function CookMode() {
   };
   const finish = () => {
     haptic.success();
-    track('cook_mode_finished');
     setDone(true);
   };
 
@@ -189,7 +183,6 @@ export default function CookMode() {
                     variant="accent"
                     size="lg"
                     onPress={() => {
-                      track('timer_started');
                       void timers.start({
                         label:
                           item.timerLabel ??

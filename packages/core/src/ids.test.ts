@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { _sha1ForTests, favoriteId, isUuid, uuidv5, uuidv7 } from './ids';
+import {
+  _sha1ForTests,
+  collectionItemId,
+  favoriteId,
+  isUuid,
+  shoppingCategoryId,
+  uuidv5,
+  uuidv7,
+} from './ids';
 
 const hex = (b: Uint8Array) => [...b].map((x) => x.toString(16).padStart(2, '0')).join('');
 const enc = (s: string) => new Uint8Array([...Buffer.from(s, 'utf8')]);
@@ -30,10 +38,11 @@ describe('ids', () => {
     expect(ids[0]![14]).toBe('7');
   });
   it('deterministic natural-key ids never collide across entities', () => {
-    const u = uuidv7();
+    const c = uuidv7();
     const r = uuidv7();
-    expect(favoriteId(u, r)).toBe(favoriteId(u, r));
-    expect(favoriteId(u, r)).not.toBe(favoriteId(r, u));
+    expect(favoriteId(r)).toBe(favoriteId(r));
+    expect(collectionItemId(c, r)).not.toBe(collectionItemId(r, c));
+    expect(new Set([favoriteId(r), collectionItemId(c, r), shoppingCategoryId(r)]).size).toBe(3);
   });
   it('isUuid rejects garbage', () => {
     expect(isUuid('1')).toBe(false);

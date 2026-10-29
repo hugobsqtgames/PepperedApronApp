@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Alert, Share, StyleSheet, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -10,12 +10,11 @@ import {
   StepList,
   TextBlock,
 } from '../../../../features/recipe/RecipeBody';
-import { useLive, useRepos, useRuntime } from '../../../../hooks/runtime';
+import { useLive, useRepos } from '../../../../hooks/runtime';
 import { errorMessage } from '../../../../lib/errors';
 import { formatOven, recipeAsText } from '../../../../lib/format';
 import { useLayout } from '../../../../lib/layout';
 import { recipePhotoUri } from '../../../../lib/media';
-import { track } from '../../../../services/analytics';
 import { haptic } from '../../../../services/haptics';
 import { timers } from '../../../../services/timers';
 import { useTheme } from '../../../../theme/ThemeProvider';
@@ -38,7 +37,6 @@ export default function RecipeDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { t, i18n } = useTranslation();
   const { colors } = useTheme();
-  const rt = useRuntime();
   const repos = useRepos();
   const layout = useLayout();
   const insets = useSafeAreaInsets();
@@ -57,9 +55,6 @@ export default function RecipeDetail() {
     [id],
   );
   const [servings, setServings] = useState<number | null>(null);
-  useEffect(() => {
-    if (recipe) track('recipe_viewed');
-  }, [recipe?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!recipe) {
     return (
@@ -76,17 +71,14 @@ export default function RecipeDetail() {
   }
 
   const d = recipe.data;
-  const editable = repos.canEdit(recipe);
-  const mine = recipe.ownerId === rt.user?.id;
   const current = servings ?? d.servings;
   const factor = current / d.servings;
   const total = computeTotalMinutes(d);
   const photo = recipePhotoUri(recipe);
 
   const toggleFav = async () => {
-    const now = await repos.toggleFavorite(recipe.id);
+    await repos.toggleFavorite(recipe.id);
     haptic.light();
-    if (now) track('favorite_added');
   };
 
   const addToShopping = async () => {
@@ -102,81 +94,31 @@ export default function RecipeDetail() {
     }
   };
 
+  /** Plain text: readable in any app (Messages, WhatsApp, Notes…), no account needed. */
   const share = () =>
-    sheet({
-      title: t('recipe.share'),
-      options: [
+    void Share.share({
+      message: recipeAsText(
+        d,
         {
-          label: t('recipe.shareLink'),
-          icon: 'link-outline',
-          onPress: async () => {
-            try {
-              const { url } = await rt.api.shareRecipe(recipe.id);
-              track('recipe_shared', { kind: 'link' });
-              await Share.share({
-                message: `${t('recipe.shareMessage', { title: d.title })}\n${url}`,
-                url,
-              });
-            } catch (e) {
-              toast(errorMessage(e, t), { tone: 'error' });
-            }
-          },
+          ingredients: t('recipe.ingredients'),
+          steps: t('recipe.steps'),
+          tips: t('recipe.tips'),
+          servings: t('common.servings', { count: d.servings }),
         },
-        {
-          label: t('recipe.shareText'),
-          icon: 'document-text-outline',
-          onPress: () => {
-            track('recipe_shared', { kind: 'text' });
-            void Share.share({
-              message: recipeAsText(
-                d,
-                {
-                  ingredients: t('recipe.ingredients'),
-                  steps: t('recipe.steps'),
-                  tips: t('recipe.tips'),
-                  servings: t('common.servings', { count: d.servings }),
-                },
-                locale,
-                settings.unitSystem,
-              ),
-            });
-          },
-        },
-      ],
+        locale,
+        settings.unitSystem,
+      ),
     });
-
-  const setVisibility = (visibility: 'public' | 'private') => {
-    const apply = async () => {
-      try {
-        await repos.updateRecipe(recipe.id, { visibility });
-        if (visibility === 'public') track('recipe_published');
-        haptic.success();
-      } catch (e) {
-        toast(errorMessage(e, t), { tone: 'error' });
-      }
-    };
-    if (visibility === 'private') return void apply();
-    if (rt.user && !rt.user.emailVerified && rt.user.providers.length === 0)
-      return toast(t('errors.publish_requires_verified_email'), { tone: 'error' });
-    Alert.alert(t('recipe.makePublic'), t('recipe.makePublicBody'), [
-      { text: t('common.cancel'), style: 'cancel' },
-      { text: t('common.confirm'), onPress: () => void apply() },
-    ]);
-  };
 
   const more = () =>
     sheet({
       title: d.title,
       options: [
-        ...(editable
-          ? [
-              {
-                label: t('recipe.edit'),
-                icon: 'create-outline' as const,
-                onPress: () => router.push({ pathname: '/recipe/edit', params: { id: recipe.id } }),
-              },
-            ]
-          : []),
+        {
+          label: t('recipe.edit'),
+          icon: 'create-outline' as const,
+          onPress: () => router.push({ pathname: '/recipe/edit', params: { id: recipe.id } }),
+        },
         {
           label: t('favorites.addTo'),
           icon: 'albums-outline' as const,
@@ -190,91 +132,30 @@ export default function RecipeDetail() {
             router.push(`/recipe/${copy.id}`);
           },
         },
-        ...(mine
-          ? [
-              d.visibility === 'public'
-                ? {
-                    label: t('recipe.makePrivate'),
-                    icon: 'lock-closed-outline' as const,
-                    onPress: () => setVisibility('private'),
-                  }
-                : {
-                    label: t('recipe.makePublic'),
-                    icon: 'globe-outline' as const,
-                    onPress: () => setVisibility('public'),
-                  },
-              ...(rt.household
-                ? [
-                    {
-                      label: d.householdId
-                        ? `✓ ${t('recipe.shareHousehold')}`
-                        : t('recipe.shareHousehold'),
-                      icon: 'people-outline' as const,
-                      onPress: () =>
-                        void repos.updateRecipe(recipe.id, {
-                          householdId: d.householdId ? null : rt.household!.id,
-                        }),
-                    },
-                  ]
-                : []),
-            ]
-          : []),
-        ...(!editable && d.visibility === 'public'
-          ? [
+        {
+          label: t('recipe.delete'),
+          icon: 'trash-outline' as const,
+          destructive: true,
+          onPress: () =>
+            Alert.alert(t('recipe.deleteConfirm', { title: d.title }), t('recipe.deleteBody'), [
+              { text: t('common.cancel'), style: 'cancel' },
               {
-                label: t('recipe.saveToLibrary'),
-                icon: 'download-outline' as const,
+                text: t('common.delete'),
+                style: 'destructive',
                 onPress: async () => {
-                  try {
-                    const { record } = await rt.api.savePublicRecipe(recipe.id);
-                    rt.syncNow();
-                    toast(t('recipe.savedToLibrary'));
-                    router.replace(`/recipe/${record.id}`);
-                  } catch (e) {
-                    toast(errorMessage(e, t), { tone: 'error' });
-                  }
+                  await repos.deleteRecipe(recipe.id);
+                  haptic.warning();
+                  toast(t('recipe.deleted'));
+                  router.back();
                 },
               },
-              {
-                label: t('recipe.report'),
-                icon: 'flag-outline' as const,
-                onPress: () => router.push(`/community/${recipe.id}?report=1`),
-              },
-            ]
-          : []),
-        ...(editable && mine
-          ? [
-              {
-                label: t('recipe.delete'),
-                icon: 'trash-outline' as const,
-                destructive: true,
-                onPress: () =>
-                  Alert.alert(
-                    t('recipe.deleteConfirm', { title: d.title }),
-                    t('recipe.deleteBody'),
-                    [
-                      { text: t('common.cancel'), style: 'cancel' },
-                      {
-                        text: t('common.delete'),
-                        style: 'destructive',
-                        onPress: async () => {
-                          await repos.deleteRecipe(recipe.id);
-                          haptic.warning();
-                          toast(t('recipe.deleted'));
-                          router.back();
-                        },
-                      },
-                    ],
-                  ),
-              },
-            ]
-          : []),
+            ]),
+        },
       ],
     });
 
   const startTimer = (s: Step, i: number) => {
     if (!s.timerSeconds) return;
-    track('timer_started');
     void timers.start({
       label: s.timerLabel ?? `${d.title} — ${t('recipe.stepN', { n: i + 1 })}`,
       seconds: s.timerSeconds,
@@ -307,13 +188,6 @@ export default function RecipeDetail() {
             label={t('recipe.oven', { temp: formatOven(d.ovenTemperatureC, settings.unitSystem) })}
           />
         ) : null}
-        {d.visibility === 'public' ? (
-          <Badge icon="globe-outline" label={t('recipe.public')} tone="primary" />
-        ) : null}
-        {d.householdId ? <Badge icon="people-outline" label={t('household.title')} /> : null}
-        {!mine && !d.householdId ? (
-          <Badge icon="globe-outline" label={t('community.title')} tone="accent" />
-        ) : null}
         {collections ? <Badge icon="albums-outline" label={String(collections)} /> : null}
       </View>
       <Text variant="hero" accessibilityRole="header" testID="recipe-title">
@@ -323,14 +197,6 @@ export default function RecipeDetail() {
       {meta.length ? (
         <Text variant="callout" color="textMuted">
           {meta.join('  ·  ')}
-        </Text>
-      ) : null}
-      {recipe.state === 'error' ? (
-        <Text variant="callout" color="danger">
-          {t('sync.itemError')}:{' '}
-          {recipe.error?.startsWith('publish')
-            ? t('errors.publish_requires_verified_email')
-            : t('errors.invalidField')}
         </Text>
       ) : null}
       <View style={{ flexDirection: 'row', gap: space.sm, flexWrap: 'wrap' }}>

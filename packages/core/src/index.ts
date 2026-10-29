@@ -15,3 +15,4 @@ export * from './parse/draft';
 export * from './parse/ingredient';
 export * from './parse/text';
 export * from './parse/jsonld';
+export * from './parse/url';

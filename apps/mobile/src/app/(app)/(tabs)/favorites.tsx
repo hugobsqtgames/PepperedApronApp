@@ -6,7 +6,6 @@ import { useTranslation } from 'react-i18next';
 import { useLive, useRepos } from '../../../hooks/runtime';
 import { tileWidth, useLayout } from '../../../lib/layout';
 import { recipePhotoUri } from '../../../lib/media';
-import { track } from '../../../services/analytics';
 import { haptic } from '../../../services/haptics';
 import { useTheme } from '../../../theme/ThemeProvider';
 import { radius, space } from '../../../theme/tokens';
@@ -44,7 +43,6 @@ export default function Favorites() {
   const createCollection = async () => {
     if (!newName.trim()) return;
     await repos.createCollection(newName.trim());
-    track('collection_created');
     haptic.success();
     setNewName('');
   };

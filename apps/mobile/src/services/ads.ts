@@ -1,11 +1,10 @@
 import { Platform } from 'react-native';
 import { ENV } from './env';
-import { runtime } from './runtime';
 
 /**
  * Advertising behind a small interface so the ad network can be replaced. Rules (product):
  * banners only in natural places (home feed, search results), never in cook mode, editors,
- * onboarding or checkout-like flows; no interstitials unless remote config enables them.
+ * onboarding or checkout-like flows; no interstitials.
  */
 export interface AdsState {
   ready: boolean;
@@ -25,8 +24,9 @@ export function subscribeAds(l: (s: AdsState) => void) {
   };
 }
 
+/** Test ads outside production; in production, only when real ad units are configured. */
 export function adsEnabled() {
-  return runtime.config?.ads.enabled ?? false;
+  return bannerUnitId('test') !== null;
 }
 
 /** UMP consent (GDPR) first, then SDK initialisation. Safe to call several times. */
