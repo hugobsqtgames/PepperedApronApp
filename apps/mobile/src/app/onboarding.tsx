@@ -2,6 +2,8 @@ import { useRef, useState } from 'react';
 import {
   FlatList,
   Image,
+  KeyboardAvoidingView,
+  Platform,
   StyleSheet,
   View,
   useWindowDimensions,
@@ -13,7 +15,7 @@ import { useRepos } from '../hooks/runtime';
 import { ONBOARDING_PHOTOS } from '../lib/categories';
 import { useTheme } from '../theme/ThemeProvider';
 import { radius, space } from '../theme/tokens';
-import { Button, Text } from '../ui';
+import { Button, Text, TextField } from '../ui';
 
 const SLIDES = [
   { key: 's1', photo: ONBOARDING_PHOTOS.recipes },
@@ -22,7 +24,7 @@ const SLIDES = [
   { key: 's4', photo: ONBOARDING_PHOTOS.import },
 ] as const;
 
-/** Four short slides — recipes, planning, shopping, import — then straight into the app. */
+/** Four short slides — recipes, planning, shopping, import — then the first name, then the app. */
 export default function Welcome() {
   const { t } = useTranslation();
   const repos = useRepos();
@@ -34,9 +36,62 @@ export default function Welcome() {
     if (viewableItems[0]?.index != null) setIndex(viewableItems[0].index);
   }).current;
   const last = index === SLIDES.length - 1;
+  const [askName, setAskName] = useState(false);
+  const [name, setName] = useState('');
   // The app then opens and asks for ad consent once (Google's form, only where required).
-  const start = () => repos.updateSettings({ onboardingDone: true });
+  const start = (firstName: string | null) =>
+    repos.updateSettings({ firstName, onboardingDone: true });
   const photoH = Math.min(height * 0.5, 520);
+
+  if (askName) {
+    return (
+      <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          style={styles.nameWrap}
+        >
+          <View style={{ gap: space.lg, width: '100%', maxWidth: 480 }}>
+            <Text style={{ fontSize: 48, lineHeight: 58 }} maxFontSizeMultiplier={1}>
+              👋
+            </Text>
+            <Text variant="hero" accessibilityRole="header">
+              {t('onboarding.nameTitle')}
+            </Text>
+            <Text variant="body" color="textMuted">
+              {t('onboarding.nameBody')}
+            </Text>
+            <TextField
+              value={name}
+              onChangeText={setName}
+              placeholder={t('onboarding.namePlaceholder')}
+              accessibilityLabel={t('onboarding.nameTitle')}
+              autoFocus
+              autoCapitalize="words"
+              autoComplete="given-name"
+              textContentType="givenName"
+              returnKeyType="done"
+              maxLength={40}
+              onSubmitEditing={() => name.trim() && void start(name)}
+              testID="onboarding-name"
+            />
+            <Button
+              title={t('onboarding.start')}
+              size="lg"
+              disabled={!name.trim()}
+              onPress={() => start(name)}
+              testID="onboarding-name-submit"
+            />
+            <Button
+              title={t('common.skip')}
+              variant="ghost"
+              onPress={() => start(null)}
+              testID="onboarding-name-skip"
+            />
+          </View>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }} edges={['bottom']}>
@@ -103,9 +158,9 @@ export default function Welcome() {
         {last ? (
           <View style={{ gap: space.sm, width: '100%', maxWidth: 480 }}>
             <Button
-              title={t('onboarding.start')}
+              title={t('common.continue')}
               size="lg"
-              onPress={start}
+              onPress={() => setAskName(true)}
               testID="onboarding-start"
             />
           </View>
@@ -139,5 +194,6 @@ const styles = StyleSheet.create({
     paddingBottom: space.lg,
   },
   dots: { flexDirection: 'row', gap: 6 },
+  nameWrap: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: space.xxl },
   dot: { height: 8, borderRadius: 4 },
 });

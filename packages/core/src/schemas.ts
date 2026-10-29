@@ -163,6 +163,8 @@ export const settingsDataSchema = z
     hapticsEnabled: z.boolean(),
     defaultServings: z.number().int().min(1).max(LIMITS.servingsMax),
     onboardingDone: z.boolean(),
+    /** Used to greet the user; optional (older data has no such field). */
+    firstName: optText(LIMITS.firstName).default(null),
   })
   .strict();
 export type SettingsData = z.infer<typeof settingsDataSchema>;
@@ -182,6 +184,7 @@ export const DEFAULT_SETTINGS: SettingsData = {
   hapticsEnabled: true,
   defaultServings: 4,
   onboardingDone: false,
+  firstName: null,
 };
 
 export type FavoriteData = z.infer<typeof favoriteDataSchema>;

@@ -24,5 +24,6 @@ export const LIMITS = {
   shoppingItems: 500,
   shoppingItemName: 200,
   customTitle: 200,
+  firstName: 40,
   importText: 20000,
 } as const;

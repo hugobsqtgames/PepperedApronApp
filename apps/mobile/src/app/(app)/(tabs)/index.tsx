@@ -2,11 +2,12 @@ import { useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import { computeTotalMinutes, toIsoDate, type RecipeCategory } from '@pepperedapron/core';
 import { AdSlot } from '../../../features/AdSlot';
 import { CategoryGrid } from '../../../features/home/CategoryGrid';
 import { RecipeCarousel } from '../../../features/home/Carousel';
-import { useLive, useRepos, useRuntime } from '../../../hooks/runtime';
+import { useLive, useRepos, useRuntime, useSettings } from '../../../hooks/runtime';
 import { useLayout } from '../../../lib/layout';
 import { recipePhotoUri } from '../../../lib/media';
 import { haptic } from '../../../services/haptics';
@@ -24,9 +25,10 @@ import {
   useToast,
 } from '../../../ui';
 
-function greetingKey(d = new Date()) {
+function greeting(t: TFunction, firstName: string | null, d = new Date()) {
   const h = d.getHours();
-  return h < 12 ? 'home.morning' : h < 18 ? 'home.afternoon' : 'home.evening';
+  const part = h < 12 ? 'morning' : h < 18 ? 'afternoon' : 'evening';
+  return firstName ? t(`home.${part}Name`, { name: firstName }) : t(`home.${part}`);
 }
 
 export default function Home() {
@@ -34,6 +36,7 @@ export default function Home() {
   const { colors } = useTheme();
   const rt = useRuntime();
   const repos = useRepos();
+  const settings = useSettings();
   const layout = useLayout();
   const toast = useToast();
   const [refreshing, setRefreshing] = useState(false);
@@ -99,7 +102,7 @@ export default function Home() {
       >
         <View style={{ flex: 1, gap: space.xs }}>
           <Text variant="callout" color="textMuted">
-            {t(greetingKey())}
+            {greeting(t, settings.firstName)}
           </Text>
           <Text variant="hero" accessibilityRole="header">
             {t('home.question')}

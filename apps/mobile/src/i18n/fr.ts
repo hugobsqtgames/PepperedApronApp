@@ -64,6 +64,9 @@ const fr = {
     s4Title: 'Importez depuis n’importe où',
     s4Body: 'TikTok, Instagram, un site, une photo ou un texte : Partager → PepperedApron.',
     start: 'Commencer',
+    nameTitle: 'Comment vous appelez-vous ?',
+    nameBody: 'Juste votre prénom, pour vous saluer. Il reste sur votre appareil.',
+    namePlaceholder: 'Votre prénom',
   },
   tabs: {
     home: 'Accueil',
@@ -93,6 +96,9 @@ const fr = {
       'Ajoutez votre première recette, ou importez-la depuis un lien, une photo ou un texte.',
     addFirst: '+ Ajouter une recette',
     importLink: 'Importer depuis un lien',
+    morningName: 'Bonjour {{name}} 👋',
+    afternoonName: 'Bonjour {{name}} 👋',
+    eveningName: 'Bonsoir {{name}} 👋',
   },
   categories: {
     breakfast: 'Petit-déjeuner',
@@ -403,6 +409,8 @@ const fr = {
     about: 'À propos',
     version: 'Version {{version}}',
     emptyMine: 'Vous n’avez pas encore créé de recette.',
+    firstName: 'Prénom',
+    firstNameEmpty: 'Ajouter',
   },
   settings: {
     notifMealReminder: 'Rappel du repas',

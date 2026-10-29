@@ -2,18 +2,29 @@ import { Image, ScrollView, View } from 'react-native';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { cloudStatusIcon, cloudStatusText } from '../../../features/CloudStatus';
-import { useCloudStatus, useLive } from '../../../hooks/runtime';
+import { useCloudStatus, useLive, useRepos, useSettings } from '../../../hooks/runtime';
 import { ENV } from '../../../services/env';
 import { CLOUD_SUPPORTED } from '../../../services/runtime';
 import { useTheme } from '../../../theme/ThemeProvider';
 import { space } from '../../../theme/tokens';
-import { Group, ListRow, Text } from '../../../ui';
+import { Group, ListRow, Text, usePrompt } from '../../../ui';
 
 /** Settings. No account: everything lives on this device (and in the user's own iCloud). */
 export default function Settings() {
   const { t, i18n } = useTranslation();
   const { dark } = useTheme();
   const cloud = useCloudStatus();
+  const repos = useRepos();
+  const settings = useSettings();
+  const prompt = usePrompt();
+  const editName = () =>
+    prompt({
+      title: t('profile.firstName'),
+      initial: settings.firstName ?? '',
+      placeholder: t('onboarding.namePlaceholder'),
+      maxLength: 40,
+      onSubmit: (v) => void repos.updateSettings({ firstName: v }),
+    });
   const stats = useLive(['recipe', 'favorite', 'collection'], (r) => ({
     recipes: r.recipes().length,
     favorites: r.favoriteRecipes().length,
@@ -32,6 +43,15 @@ export default function Settings() {
         alignSelf: 'center',
       }}
     >
+      <Group>
+        <ListRow
+          icon="person-outline"
+          title={t('profile.firstName')}
+          value={settings.firstName ?? t('profile.firstNameEmpty')}
+          onPress={editName}
+          testID="edit-first-name"
+        />
+      </Group>
       <Group>
         <ListRow
           icon={cloudStatusIcon(cloud)}

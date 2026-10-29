@@ -1,6 +1,6 @@
 appId: ${APP_ID}
 ---
-# No account: a fresh install goes from the welcome slides straight into the app.
+# No account: a fresh install shows the welcome slides, asks the first name, then opens the app.
 - launchApp:
     clearState: true
     clearKeychain: true
@@ -8,5 +8,11 @@ appId: ${APP_ID}
     id: onboarding-skip
 - tapOn:
     id: onboarding-start
+- tapOn:
+    id: onboarding-name
+- inputText: Camille
+- tapOn:
+    id: onboarding-name-submit
 - assertVisible:
     id: home-empty
+- assertVisible: '.*Camille.*'

@@ -67,6 +67,9 @@ const it: Translations = {
     s4Title: 'Importa da ovunque',
     s4Body: 'TikTok, Instagram, un sito, una foto o un testo: Condividi → PepperedApron.',
     start: 'Inizia',
+    nameTitle: 'Come ti chiami?',
+    nameBody: 'Solo il tuo nome, per salutarti. Resta sul tuo dispositivo.',
+    namePlaceholder: 'Il tuo nome',
   },
   tabs: {
     home: 'Home',
@@ -95,6 +98,9 @@ const it: Translations = {
     emptyBody: 'Aggiungi la tua prima ricetta o importala da un link, una foto o un testo.',
     addFirst: '+ Aggiungi una ricetta',
     importLink: 'Importa da un link',
+    morningName: 'Buongiorno {{name}} 👋',
+    afternoonName: 'Buon pomeriggio {{name}} 👋',
+    eveningName: 'Buonasera {{name}} 👋',
   },
   categories: {
     breakfast: 'Colazione',
@@ -406,6 +412,8 @@ const it: Translations = {
     about: 'Informazioni',
     version: 'Versione {{version}}',
     emptyMine: 'Non hai ancora creato nessuna ricetta.',
+    firstName: 'Nome',
+    firstNameEmpty: 'Aggiungi',
   },
   settings: {
     notifMealReminder: 'Promemoria del pasto',

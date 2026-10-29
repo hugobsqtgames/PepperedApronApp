@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { uuidv7 } from './ids';
-import { mealPlanEntryDataSchema, recipeDataSchema, shoppingItemDataSchema } from './schemas';
+import {
+  DEFAULT_SETTINGS,
+  mealPlanEntryDataSchema,
+  recipeDataSchema,
+  settingsDataSchema,
+  shoppingItemDataSchema,
+} from './schemas';
 import { diffFields, ENTITY_SCHEMAS } from './sync';
 
 export const validRecipe = () => ({
@@ -138,6 +144,22 @@ describe('other entities', () => {
   });
   it('every entity has a schema', () => {
     expect(Object.keys(ENTITY_SCHEMAS)).toHaveLength(9);
+  });
+});
+
+describe('settings', () => {
+  it('first name is trimmed, optional and accepted from older data without it', () => {
+    const { firstName: _omit, ...older } = DEFAULT_SETTINGS;
+    expect(settingsDataSchema.parse(older).firstName).toBeNull();
+    expect(
+      settingsDataSchema.parse({ ...DEFAULT_SETTINGS, firstName: '  Camille ' }).firstName,
+    ).toBe('Camille');
+    expect(
+      settingsDataSchema.parse({ ...DEFAULT_SETTINGS, firstName: '   ' }).firstName,
+    ).toBeNull();
+    expect(
+      settingsDataSchema.safeParse({ ...DEFAULT_SETTINGS, firstName: 'x'.repeat(41) }).success,
+    ).toBe(false);
   });
 });
 
