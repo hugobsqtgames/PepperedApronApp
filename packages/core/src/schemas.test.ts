@@ -157,6 +157,9 @@ describe('settings', () => {
     expect(
       settingsDataSchema.parse({ ...DEFAULT_SETTINGS, firstName: '   ' }).firstName,
     ).toBeNull();
+    // A language that is no longer offered falls back to the device language.
+    expect(settingsDataSchema.parse({ ...DEFAULT_SETTINGS, locale: 'de' }).locale).toBeNull();
+    expect(settingsDataSchema.parse({ ...DEFAULT_SETTINGS, locale: 'en' }).locale).toBe('en');
     expect(
       settingsDataSchema.safeParse({ ...DEFAULT_SETTINGS, firstName: 'x'.repeat(41) }).success,
     ).toBe(false);

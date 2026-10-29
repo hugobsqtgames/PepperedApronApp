@@ -111,7 +111,8 @@ describe('normalize & convert', () => {
   });
   it('labels units per locale with plural', () => {
     expect(unitLabel('clove', 2, 'fr')).toBe('gousses');
-    expect(unitLabel('tbsp', 1, 'de')).toBe('EL');
+    expect(unitLabel('tbsp', 1, 'en')).toBe('tbsp');
+    expect(unitLabel('cup', 2, 'fr')).toBe('tasses');
     expect(unitLabel('custom', 1, 'fr')).toBe('custom');
   });
 });

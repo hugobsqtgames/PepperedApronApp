@@ -23,7 +23,7 @@
 ```
 apps/
   mobile/      Expo Router (iOS, iPadOS) + cibles natives (targets/) + module local video-speech (modules/)
-  site/        générateur du site statique (pages légales + aide, 5 langues)
+  site/        générateur du site statique (pages légales + aide, français et anglais)
 packages/
   core/        Domaine pur TS : schémas zod, quantités/unités/fractions, mise à l'échelle,
                parseurs (ligne d'ingrédient, texte libre, JSON-LD), import de liens,

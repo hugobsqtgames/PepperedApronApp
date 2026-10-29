@@ -1,6 +1,6 @@
 /**
  * Builds the static website (no server, no cookies): home, help, privacy policy, terms and legal
- * notice in the five app languages. The app links to /<lang>/<page>.
+ * notice in French and English. The app links to /<lang>/<page>.
  *
  *   node src/build.mjs [--out dist] [--production]
  *
@@ -74,10 +74,8 @@ export function render(lang, pageName, p) {
       )}<div class="card"><p>${esc(f.contact)} <a href="mailto:${p.email}">${p.email}</a></p></div>`;
     return page({ title: f.title, lang, body, nav: nav(lang, 'support'), description: f.intro });
   }
-  const docLang = LEGAL[lang] ? lang : 'en';
-  const doc = LEGAL[docLang][pageName](p);
-  const notice = docLang !== lang ? `<p class="muted">${esc(u.englishOnly)}</p>` : '';
-  return page({ title: doc.title, lang, body: notice + doc.html, nav: nav(lang, pageName) });
+  const doc = LEGAL[lang][pageName](p);
+  return page({ title: doc.title, lang, body: doc.html, nav: nav(lang, pageName) });
 }
 
 export function build(out, env = process.env, production = false) {

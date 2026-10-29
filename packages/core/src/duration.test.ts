@@ -42,7 +42,8 @@ describe('durations', () => {
   it('formats', () => {
     expect(formatMinutes(90, 'fr')).toBe('1 h 30');
     expect(formatMinutes(60, 'en')).toBe('1 h');
-    expect(formatMinutes(45, 'de')).toBe('45 min');
+    expect(formatMinutes(45, 'en')).toBe('45 min');
+    expect(formatMinutes(75, 'en')).toBe('1 h 15 min');
     expect(formatMinutes(null, 'fr')).toBe('');
     expect(formatClock(65)).toBe('01:05');
     expect(formatClock(3725)).toBe('1:02:05');

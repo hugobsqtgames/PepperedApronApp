@@ -28,14 +28,11 @@ test('publisher details are escaped and the policy describes a no-account app', 
   assert.match(fr, /ni compte, ni serveur, ni publicité/);
   assert.doesNotMatch(fr, /AdMob/);
   assert.match(
-    fs.readFileSync(path.join(out, 'de/support/index.html'), 'utf8'),
+    fs.readFileSync(path.join(out, 'en/support/index.html'), 'utf8'),
     /help@example\.com/,
   );
-  // Languages without a translated legal text show the English one with a notice.
-  assert.match(
-    fs.readFileSync(path.join(out, 'es/terms/index.html'), 'utf8'),
-    /solo está disponible/,
-  );
+  // Only French and English are published.
+  assert.ok(!fs.existsSync(path.join(out, 'de')));
 });
 
 test('a production build refuses to publish without the legal details', () => {

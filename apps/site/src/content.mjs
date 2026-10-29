@@ -1,6 +1,5 @@
 /**
- * Texts of the website. Legal documents exist in French (reference version) and English; the
- * other languages show the English version with a notice. Have them reviewed by a lawyer before
+ * Texts of the website, in French (reference version for legal documents) and English. Have them reviewed by a lawyer before
  * publication. `p` = publisher details (see build.mjs).
  */
 const UPDATED = '2026-10-29';
@@ -21,7 +20,6 @@ export const UI = {
       'Aucun compte : vos données restent sur votre appareil et dans votre iCloud.',
     ],
     free: 'Gratuit, sans publicité, sans abonnement.',
-    englishOnly: '',
   },
   en: {
     home: 'Home',
@@ -38,59 +36,6 @@ export const UI = {
       'No account: your data stays on your device and in your iCloud.',
     ],
     free: 'Free, with no ads and no subscription.',
-    englishOnly: '',
-  },
-  es: {
-    home: 'Inicio',
-    support: 'Ayuda',
-    privacy: 'Privacidad',
-    terms: 'Condiciones de uso',
-    legal: 'Aviso legal',
-    tagline:
-      'Tus recetas, tu planificación de comidas y tus listas de la compra, en un solo lugar.',
-    features: [
-      'Todas tus recetas, con o sin foto, ordenadas y fáciles de encontrar.',
-      'Importa desde una web, TikTok, Instagram, una foto o un texto, sin inteligencia artificial.',
-      'Planificación semanal y lista de la compra generada automáticamente, ordenada por pasillos.',
-      'Modo cocina con temporizadores, widgets y Live Activities.',
-      'Sin cuenta: tus datos se quedan en tu dispositivo y en tu iCloud.',
-    ],
-    free: 'Gratis, sin publicidad y sin suscripción.',
-    englishOnly: 'Este documento solo está disponible en inglés y francés.',
-  },
-  de: {
-    home: 'Start',
-    support: 'Hilfe',
-    privacy: 'Datenschutz',
-    terms: 'Nutzungsbedingungen',
-    legal: 'Impressum',
-    tagline: 'Deine Rezepte, dein Wochenplan und deine Einkaufslisten an einem Ort.',
-    features: [
-      'Alle deine Rezepte, mit oder ohne Foto, geordnet und schnell gefunden.',
-      'Import von einer Website, TikTok, Instagram, einem Foto oder einem Text – ohne künstliche Intelligenz.',
-      'Wochenplan und automatisch erstellte Einkaufsliste, nach Gängen sortiert.',
-      'Kochmodus mit Timern, Widgets und Live Activities.',
-      'Kein Konto: Deine Daten bleiben auf deinem Gerät und in deiner iCloud.',
-    ],
-    free: 'Kostenlos, ohne Werbung und ohne Abo.',
-    englishOnly: 'Dieses Dokument ist nur auf Englisch und Französisch verfügbar.',
-  },
-  it: {
-    home: 'Home',
-    support: 'Aiuto',
-    privacy: 'Privacy',
-    terms: 'Condizioni d’uso',
-    legal: 'Note legali',
-    tagline: 'Le tue ricette, il planning dei pasti e le liste della spesa, in un unico posto.',
-    features: [
-      'Tutte le tue ricette, con o senza foto, ordinate e facili da trovare.',
-      'Importa da un sito, TikTok, Instagram, una foto o un testo, senza intelligenza artificiale.',
-      'Planning settimanale e lista della spesa generata automaticamente, divisa per reparti.',
-      'Modalità cucina con timer, widget e Live Activities.',
-      'Nessun account: i tuoi dati restano sul dispositivo e nel tuo iCloud.',
-    ],
-    free: 'Gratuita, senza pubblicità e senza abbonamento.',
-    englishOnly: 'Questo documento è disponibile solo in inglese e francese.',
   },
 };
 
@@ -156,102 +101,6 @@ export const FAQ = {
       [
         'How do I delete my data?',
         'Settings → My data → Delete all my data. Deleting the app also erases the data on the device; iCloud data is managed in Settings → [your name] → iCloud.',
-      ],
-    ],
-  },
-  es: {
-    title: 'Ayuda y soporte',
-    intro: 'Respuestas a las preguntas más frecuentes sobre PepperedApron.',
-    contact: '¿Otra pregunta, un error, una idea? Escríbenos:',
-    qa: [
-      ['¿Hay que crear una cuenta?', 'No. Abre la app y empieza: no hay cuenta ni contraseña.'],
-      [
-        '¿Dónde se guardan mis recetas?',
-        'En tu dispositivo. En iPhone y iPad también se sincronizan en tu iCloud privado (Ajustes → Mis datos). Nadie más tiene acceso, ni siquiera nosotros.',
-      ],
-      [
-        '¿Cómo recupero mis recetas en un teléfono nuevo?',
-        'En iPhone y iPad, deja activada la sincronización con iCloud y usa la misma cuenta de Apple: todo vuelve automáticamente. Sin iCloud: Ajustes → Mis datos → Exportar y luego Importar en el nuevo dispositivo.',
-      ],
-      [
-        '¿Puedo usar la app sin conexión?',
-        'Sí. Solo la importación desde un enlace y la sincronización con iCloud necesitan internet.',
-      ],
-      [
-        '¿Cómo importo desde TikTok o Instagram?',
-        'En TikTok o Instagram, toca Compartir y luego PepperedApron. Recuperamos el enlace, la descripción y la imagen cuando la plataforma los hace públicos; tú completas el resto.',
-      ],
-      ['¿La app es de pago?', 'No. PepperedApron es gratuita, sin publicidad y sin suscripción.'],
-      [
-        '¿Cómo borro mis datos?',
-        'Ajustes → Mis datos → Borrar todos mis datos. Eliminar la app también borra los datos del dispositivo; los datos de iCloud se gestionan en Ajustes → [tu nombre] → iCloud.',
-      ],
-    ],
-  },
-  de: {
-    title: 'Hilfe & Support',
-    intro: 'Antworten auf die häufigsten Fragen zu PepperedApron.',
-    contact: 'Noch eine Frage, ein Fehler, eine Idee? Schreib uns:',
-    qa: [
-      [
-        'Brauche ich ein Konto?',
-        'Nein. Öffne die App und leg los: Es gibt weder Konto noch Passwort.',
-      ],
-      [
-        'Wo werden meine Rezepte gespeichert?',
-        'Auf deinem Gerät. Auf iPhone und iPad werden sie zusätzlich in deiner privaten iCloud synchronisiert (Einstellungen → Meine Daten). Niemand sonst hat Zugriff, auch wir nicht.',
-      ],
-      [
-        'Wie bekomme ich meine Rezepte auf ein neues Telefon?',
-        'Lass auf iPhone und iPad die iCloud-Synchronisierung aktiviert und nutze denselben Apple Account: Alles kommt automatisch zurück. Ohne iCloud: Einstellungen → Meine Daten → Exportieren, dann auf dem neuen Gerät Importieren.',
-      ],
-      [
-        'Kann ich die App offline nutzen?',
-        'Ja. Nur der Import über einen Link und die iCloud-Synchronisierung brauchen Internet.',
-      ],
-      [
-        'Wie importiere ich aus TikTok oder Instagram?',
-        'Tippe in TikTok oder Instagram auf Teilen und dann auf PepperedApron. Wir übernehmen Link, Beschreibung und Bild, sofern die Plattform sie öffentlich macht; den Rest ergänzt du.',
-      ],
-      [
-        'Ist die App kostenpflichtig?',
-        'Nein. PepperedApron ist kostenlos, ohne Werbung und ohne Abo.',
-      ],
-      [
-        'Wie lösche ich meine Daten?',
-        'Einstellungen → Meine Daten → Alle meine Daten löschen. Das Löschen der App entfernt auch die Daten auf dem Gerät; iCloud-Daten verwaltest du unter Einstellungen → [dein Name] → iCloud.',
-      ],
-    ],
-  },
-  it: {
-    title: 'Aiuto e assistenza',
-    intro: 'Le risposte alle domande più frequenti su PepperedApron.',
-    contact: 'Un’altra domanda, un bug, un’idea? Scrivici:',
-    qa: [
-      ['Serve un account?', 'No. Apri l’app e inizia: non ci sono account né password.'],
-      [
-        'Dove sono salvate le mie ricette?',
-        'Sul tuo dispositivo. Su iPhone e iPad sono anche sincronizzate nel tuo iCloud privato (Impostazioni → I miei dati). Nessun altro può accedervi, nemmeno noi.',
-      ],
-      [
-        'Come ritrovo le ricette su un nuovo telefono?',
-        'Su iPhone e iPad lascia attiva la sincronizzazione iCloud e usa lo stesso Apple Account: tutto torna automaticamente. Senza iCloud: Impostazioni → I miei dati → Esporta, poi Importa sul nuovo dispositivo.',
-      ],
-      [
-        'Posso usare l’app offline?',
-        'Sì. Solo l’importazione da un link e la sincronizzazione iCloud richiedono internet.',
-      ],
-      [
-        'Come importo da TikTok o Instagram?',
-        'In TikTok o Instagram tocca Condividi e poi PepperedApron. Recuperiamo link, descrizione e immagine quando la piattaforma li rende pubblici; il resto lo completi tu.',
-      ],
-      [
-        'L’app è a pagamento?',
-        'No. PepperedApron è gratuita, senza pubblicità e senza abbonamento.',
-      ],
-      [
-        'Come cancello i miei dati?',
-        'Impostazioni → I miei dati → Cancella tutti i miei dati. Eliminare l’app cancella anche i dati del dispositivo; i dati iCloud si gestiscono in Impostazioni → [il tuo nome] → iCloud.',
       ],
     ],
   },

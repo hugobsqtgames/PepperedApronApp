@@ -1,8 +1,0 @@
-{
-  "ios": {
-    "CFBundleDisplayName": "PepperedApron",
-    "NSCameraUsageDescription": "PepperedApron nutzt die Kamera, um deinen Rezepten ein Foto hinzuzufügen oder ein gedrucktes Rezept zu lesen.",
-    "NSPhotoLibraryUsageDescription": "PepperedApron greift auf deine Fotos zu, um Rezepte zu bebildern oder ein Rezept aus einem Bild zu importieren.",
-    "NSSpeechRecognitionUsageDescription": "PepperedApron hört sich das importierte Rezeptvideo auf deinem iPhone an, um Zutaten und Schritte aufzuschreiben, die nur gesprochen werden. Es wird nichts gesendet."
-  }
-}

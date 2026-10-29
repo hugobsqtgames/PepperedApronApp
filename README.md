@@ -6,7 +6,7 @@ Recettes, planning de repas et listes de courses — pour iPhone et iPad.
 | Dossier | Contenu |
 |---|---|
 | `apps/mobile` | Application Expo / React Native pour iOS et iPadOS + cibles natives (widgets, extension de partage, Live Activity) et module d'écoute des vidéos (widgets, extension de partage, Live Activity) |
-| `apps/site` | Site statique (politique de confidentialité, conditions, mentions légales, aide) en 5 langues, publié avec GitHub Pages |
+| `apps/site` | Site statique (politique de confidentialité, conditions, mentions légales, aide) en français et anglais, publié avec GitHub Pages |
 | `packages/core` | Domaine pur TypeScript : schémas, quantités/unités/fractions, parseurs de recettes, import de liens, recherche, rayons, planning |
 | `packages/client` | Couche données : base SQLite locale, horloge hybride, synchronisation iCloud, export/import, repositories |
 | `tools/brand` | Génération du logo, de l'icône, du splash et des visuels de store |
@@ -41,6 +41,6 @@ pnpm verify          # lint + typecheck + tests
 - [Installation](docs/INSTALLATION.md) · [Variables d'environnement](docs/ENVIRONMENT.md)
 - [Application mobile : structure, iCloud, extension de partage, widgets, Live Activities, pub](docs/MOBILE.md)
 - [Tests](docs/TESTING.md)
-- [Builds et publication App Store](docs/RELEASE.md) · [Fiches store (5 langues)](docs/store/)
+- [Builds et publication App Store](docs/RELEASE.md) · [Fiche App Store (fr, en)](docs/store/)
 - [Exploitation : site, suivi des plantages, support, mises à jour](docs/OPERATIONS.md)
 - [Données personnelles et RGPD](docs/PRIVACY.md) · [Identité visuelle](docs/brand/) · [Crédits photos](docs/brand/PHOTO_CREDITS.md)

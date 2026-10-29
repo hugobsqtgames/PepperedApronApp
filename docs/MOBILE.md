@@ -6,7 +6,7 @@ Expo SDK 57 · React Native 0.86 (nouvelle architecture) · Expo Router · TypeS
 app.config.ts           configuration native (variantes, permissions, plugins, cibles)
 eas.json                profils de build EAS
 assets/                 icônes (clair/sombre/teinté), splash, polices Fraunces, photos
-locales/native/         textes système traduits (permissions, nom de l'app) en 5 langues
+locales/native/         textes système traduits (permissions, nom de l'app) en français et anglais
 targets/widgets/        extension WidgetKit (Swift)
 src/
   app/                  écrans (routes Expo Router)
@@ -17,7 +17,7 @@ src/
   features/             blocs d'écran réutilisables (carte recette, grille de catégories, pub…)
   ui/                   design system (Text, Button, Card, Chip, Sheet, Toast, Prompt, états vides…)
   theme/                jetons de design, thèmes clair/sombre
-  i18n/                 fr (source), en, es, de, it — clés typées
+  i18n/                 fr (source), en — clés typées
   hooks/                accès au runtime (données réactives, état iCloud)
   services/             runtime, SQLite, iCloud, import de liens, photos, OCR, notifications,
                         minuteurs, widgets, pub, boîte de réception du partage
@@ -74,7 +74,7 @@ Tailles dynamiques respectées (plafonnées pour les grands titres), libellés V
 
 ## Internationalisation
 
-`src/i18n/fr.ts` est la source et définit le type des clés ; `en`, `es`, `de`, `it` doivent avoir exactement les mêmes clés et variables (test `__tests__/i18n.test.ts`). Pluriels i18next (`_one`/`_other`). Textes système iOS (autorisations, nom de l'app) dans `locales/native/`. Unités : métrique par défaut, impérial disponible (conversion à l'affichage uniquement).
+`src/i18n/fr.ts` est la source et définit le type des clés ; `en` doit avoir exactement les mêmes clés et variables (test `__tests__/i18n.test.ts`). Pluriels i18next (`_one`/`_other`). Textes système iOS (autorisations, nom de l'app) dans `locales/native/`. Unités : métrique par défaut, impérial disponible (conversion à l'affichage uniquement).
 
 ## Dépendances natives à surveiller
 

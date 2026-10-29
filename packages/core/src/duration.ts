@@ -55,10 +55,9 @@ export function formatMinutes(total: number | null | undefined, locale: Locale):
   if (total === null || total === undefined || !(total >= 0)) return '';
   const h = Math.floor(total / 60);
   const m = Math.round(total % 60);
-  const hl = locale === 'de' ? 'Std.' : 'h';
   if (h === 0) return `${m} min`;
-  if (m === 0) return `${h} ${hl}`;
-  return locale === 'fr' ? `${h} h ${String(m).padStart(2, '0')}` : `${h} ${hl} ${m} min`;
+  if (m === 0) return `${h} h`;
+  return locale === 'fr' ? `${h} h ${String(m).padStart(2, '0')}` : `${h} h ${m} min`;
 }
 
 /** mm:ss or h:mm:ss for timers. */

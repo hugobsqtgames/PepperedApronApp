@@ -55,9 +55,6 @@ const buildConfig = ({ config }: ConfigContext): ExpoConfig => ({
   locales: {
     fr: './locales/native/fr.json',
     en: './locales/native/en.json',
-    es: './locales/native/es.json',
-    de: './locales/native/de.json',
-    it: './locales/native/it.json',
   },
   ios: {
     bundleIdentifier: bundleId,

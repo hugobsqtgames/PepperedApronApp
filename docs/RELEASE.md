@@ -39,7 +39,7 @@ Build local (Mac) : `APP_VARIANT=production npx expo prebuild --clean && npx exp
 2. Ajouter `"ios": { "ascAppId": "<id numérique>" }` sous `submit.production` dans `eas.json` pour la soumission non interactive.
 3. `eas build -p ios --profile production --auto-submit` → TestFlight.
 4. TestFlight : tests internes, puis groupe externe (revue bêta) — [checklist](#checklist-avant-soumission).
-5. Fiche : textes des 5 langues, captures iPhone 6,9″ et iPad 13″, URL d'assistance `https://pepperedapron.app/fr/support/`, confidentialité `https://pepperedapron.app/fr/privacy/`, catégorie, classification (4+).
+5. Fiche : textes en français et en anglais, captures iPhone 6,9″ et iPad 13″, URL d'assistance `https://pepperedapron.app/fr/support/`, confidentialité `https://pepperedapron.app/fr/privacy/`, catégorie, classification (4+).
 6. **Confidentialité de l'app** (étiquettes) : voir [PRIVACY.md](PRIVACY.md#étiquettes-app-store). Doit correspondre au manifeste `NSPrivacyCollectedDataTypes` d'`app.config.ts`.
 7. Informations pour la revue : aucun compte nécessaire ; notes (import, synchro iCloud, aucune publicité, effacement des données dans Réglages → Mes données).
 8. Soumettre ; publication manuelle ou progressive (*phased release*, 7 jours).
@@ -49,7 +49,7 @@ Build local (Mac) : `APP_VARIANT=production npx expo prebuild --clean && npx exp
 - Version sémantique dans `app.config.ts` (`version`).
 - Format des données : toute évolution du schéma doit rester lisible par l'ancienne version, ou passer au format `pepperedapron-sync/2` (les anciennes versions ignorent alors ces fichiers au lieu de les mal interpréter ; prévoir la migration locale dans `LocalStore.migrate`).
 - Pas de mise à jour OTA configurée : chaque changement passe par un build et la revue des stores. (Ajouter `expo-updates` plus tard permettrait des correctifs JavaScript rapides ; `runtimeVersion` est déjà défini sur la version de l'app.)
-- Notes de version : dans les 5 langues, courtes, orientées bénéfice.
+- Notes de version : en français et en anglais, courtes, orientées bénéfice.
 
 ## Checklist avant soumission
 
@@ -62,4 +62,4 @@ Build local (Mac) : `APP_VARIANT=production npx expo prebuild --clean && npx exp
 - [ ] Partage depuis TikTok, Instagram, YouTube, Safari, Photos, Notes, Messages, app fermée et ouverte ; Reel Instagram dont la recette n'est que dite à l'oral (écoute de la vidéo).
 - [ ] Widgets (4), Live Activity d'un minuteur, notifications (rappel, liste prête, planning, fin de minuteur).
 - [ ] Réglages → Mes données : export, import, effacement de toutes les données (propagé à l'autre appareil).
-- [ ] Captures et textes à jour dans les 5 langues ; pages `support`, `privacy`, `terms`, `legal` en ligne avec les vraies mentions.
+- [ ] Captures et textes à jour en français et en anglais ; pages `support`, `privacy`, `terms`, `legal` en ligne avec les vraies mentions.

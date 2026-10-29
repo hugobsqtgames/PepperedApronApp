@@ -155,7 +155,8 @@ export const notificationPrefsSchema = z.object(
 export const settingsDataSchema = z
   .object({
     theme: z.enum(THEMES),
-    locale: z.enum(LOCALES).nullable(),
+    // A language no longer offered (older data) falls back to the device language.
+    locale: z.enum(LOCALES).nullable().catch(null),
     unitSystem: z.enum(UNIT_SYSTEMS),
     activeShoppingListId: uuid().nullable(),
     notifications: notificationPrefsSchema,

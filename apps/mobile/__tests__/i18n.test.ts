@@ -1,8 +1,5 @@
 import fr from '../src/i18n/fr';
 import en from '../src/i18n/en';
-import es from '../src/i18n/es';
-import de from '../src/i18n/de';
-import itCatalogue from '../src/i18n/it';
 
 type Tree = { [k: string]: unknown };
 
@@ -20,7 +17,7 @@ function flatten(obj: Tree, prefix = ''): Map<string, unknown> {
 const placeholders = (s: string) => [...s.matchAll(/{{\s*(\w+)\s*}}/g)].map((m) => m[1]).sort();
 
 const source = flatten(fr as unknown as Tree);
-const catalogues = { en, es, de, it: itCatalogue };
+const catalogues = { en };
 
 describe.each(Object.entries(catalogues))('%s catalogue', (_name, cat) => {
   const flat = flatten(cat as unknown as Tree);

@@ -49,7 +49,7 @@ export type ShoppingCategoryKey = (typeof SHOPPING_CATEGORIES)[number];
 export const THEMES = ['light', 'dark', 'system'] as const;
 export type ThemePreference = (typeof THEMES)[number];
 
-export const LOCALES = ['fr', 'en', 'es', 'de', 'it'] as const;
+export const LOCALES = ['fr', 'en'] as const;
 export type Locale = (typeof LOCALES)[number];
 
 export const UNIT_SYSTEMS = ['metric', 'imperial'] as const;

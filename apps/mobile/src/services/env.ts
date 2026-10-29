@@ -16,8 +16,8 @@ export const ENV = {
   appVersion: Constants.expoConfig?.version ?? '2.0.0',
 };
 
-/** A page of the website, in the user's language when available (fr, en, es, de, it). */
+/** A page of the website, in French or English. */
 export function sitePage(page: 'support' | 'privacy' | 'terms' | 'legal', language: string) {
   const l = language.slice(0, 2);
-  return `${ENV.siteUrl}/${['fr', 'en', 'es', 'de', 'it'].includes(l) ? l : 'en'}/${page}`;
+  return `${ENV.siteUrl}/${l === 'fr' ? 'fr' : 'en'}/${page}`;
 }

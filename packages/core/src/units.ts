@@ -19,9 +19,6 @@ export interface UnitDef {
 const same = (s: string, p = s): Record<Locale, [string, string]> => ({
   fr: [s, p],
   en: [s, p],
-  es: [s, p],
-  de: [s, p],
-  it: [s, p],
 });
 
 export const UNITS: UnitDef[] = [
@@ -195,9 +192,6 @@ export const UNITS: UnitDef[] = [
     labels: {
       fr: ['c. à café', 'c. à café'],
       en: ['tsp', 'tsp'],
-      es: ['cdta', 'cdtas'],
-      de: ['TL', 'TL'],
-      it: ['cucchiaino', 'cucchiaini'],
     },
   },
   {
@@ -238,9 +232,6 @@ export const UNITS: UnitDef[] = [
     labels: {
       fr: ['c. à soupe', 'c. à soupe'],
       en: ['tbsp', 'tbsp'],
-      es: ['cda', 'cdas'],
-      de: ['EL', 'EL'],
-      it: ['cucchiaio', 'cucchiai'],
     },
   },
   {
@@ -253,9 +244,6 @@ export const UNITS: UnitDef[] = [
     labels: {
       fr: ['tasse', 'tasses'],
       en: ['cup', 'cups'],
-      es: ['taza', 'tazas'],
-      de: ['Tasse', 'Tassen'],
-      it: ['tazza', 'tazze'],
     },
   },
   {
@@ -331,9 +319,6 @@ export const UNITS: UnitDef[] = [
     labels: {
       fr: ['pincée', 'pincées'],
       en: ['pinch', 'pinches'],
-      es: ['pizca', 'pizcas'],
-      de: ['Prise', 'Prisen'],
-      it: ['pizzico', 'pizzichi'],
     },
   },
   {
@@ -357,9 +342,6 @@ export const UNITS: UnitDef[] = [
     labels: {
       fr: ['gousse', 'gousses'],
       en: ['clove', 'cloves'],
-      es: ['diente', 'dientes'],
-      de: ['Zehe', 'Zehen'],
-      it: ['spicchio', 'spicchi'],
     },
   },
   {
@@ -385,9 +367,6 @@ export const UNITS: UnitDef[] = [
     labels: {
       fr: ['tranche', 'tranches'],
       en: ['slice', 'slices'],
-      es: ['rebanada', 'rebanadas'],
-      de: ['Scheibe', 'Scheiben'],
-      it: ['fetta', 'fette'],
     },
   },
   {
@@ -417,9 +396,6 @@ export const UNITS: UnitDef[] = [
     labels: {
       fr: ['boîte', 'boîtes'],
       en: ['can', 'cans'],
-      es: ['lata', 'latas'],
-      de: ['Dose', 'Dosen'],
-      it: ['barattolo', 'barattoli'],
     },
   },
   {
@@ -454,9 +430,6 @@ export const UNITS: UnitDef[] = [
     labels: {
       fr: ['sachet', 'sachets'],
       en: ['packet', 'packets'],
-      es: ['sobre', 'sobres'],
-      de: ['Päckchen', 'Päckchen'],
-      it: ['bustina', 'bustine'],
     },
   },
   {
@@ -483,9 +456,6 @@ export const UNITS: UnitDef[] = [
     labels: {
       fr: ['botte', 'bottes'],
       en: ['bunch', 'bunches'],
-      es: ['manojo', 'manojos'],
-      de: ['Bund', 'Bund'],
-      it: ['mazzo', 'mazzi'],
     },
   },
   {
@@ -514,9 +484,6 @@ export const UNITS: UnitDef[] = [
     labels: {
       fr: ['brin', 'brins'],
       en: ['sprig', 'sprigs'],
-      es: ['ramita', 'ramitas'],
-      de: ['Zweig', 'Zweige'],
-      it: ['rametto', 'rametti'],
     },
   },
   {
@@ -539,9 +506,6 @@ export const UNITS: UnitDef[] = [
     labels: {
       fr: ['poignée', 'poignées'],
       en: ['handful', 'handfuls'],
-      es: ['puñado', 'puñados'],
-      de: ['Handvoll', 'Handvoll'],
-      it: ['manciata', 'manciate'],
     },
   },
   {
@@ -554,9 +518,6 @@ export const UNITS: UnitDef[] = [
     labels: {
       fr: ['goutte', 'gouttes'],
       en: ['drop', 'drops'],
-      es: ['gota', 'gotas'],
-      de: ['Tropfen', 'Tropfen'],
-      it: ['goccia', 'gocce'],
     },
   },
   {
@@ -580,9 +541,6 @@ export const UNITS: UnitDef[] = [
     labels: {
       fr: ['feuille', 'feuilles'],
       en: ['leaf', 'leaves'],
-      es: ['hoja', 'hojas'],
-      de: ['Blatt', 'Blätter'],
-      it: ['foglia', 'foglie'],
     },
   },
   {
@@ -611,9 +569,6 @@ export const UNITS: UnitDef[] = [
     labels: {
       fr: ['pièce', 'pièces'],
       en: ['piece', 'pieces'],
-      es: ['pieza', 'piezas'],
-      de: ['Stück', 'Stück'],
-      it: ['pezzo', 'pezzi'],
     },
   },
 ];
