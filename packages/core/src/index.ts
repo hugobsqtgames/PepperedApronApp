@@ -16,3 +16,4 @@ export * from './parse/ingredient';
 export * from './parse/text';
 export * from './parse/jsonld';
 export * from './parse/url';
+export * from './parse/social';

@@ -103,9 +103,17 @@ const STEP_PREFIX =
 const GROUP_RE =
   /^(?:pour (?:la |le |les |l'|l’)?|for the |para (?:el |la |los |las )?|fur (?:den |die |das )?|per (?:il |la |lo |i |le )?)(.{2,50}?)\s*[:：]?$/i;
 
+/** "Ingrédients pour 2 personnes :", "Ingredients (serves 4):", "Zutaten für 6 Stück:" */
+const HEADER_WITH_YIELD =
+  /^(ingredients?|ingredientes|zutaten|ingredienti|liste des ingredients)\s+(?:pour|for|para|fur|per)\b[^:：]{0,50}[:：]$/;
+
+const SIGN_OFF = /^(?:bon appetit|enjoy|buen provecho|guten appetit|buon appetito)\b/;
+const NUMBERED_SENTENCE = /^\s*\d{1,2}\s*[.)]\s*\p{L}[^\n]{20,}/u;
+
 function detectHeader(line: string): Section | null {
   const n = normalizeText(line).replace(/^[#*_\s\p{Extended_Pictographic}️]+|[*_\s]+$/gu, '');
   for (const [section, re] of HEADERS) if (re.test(n)) return section;
+  if (HEADER_WITH_YIELD.test(n)) return 'ingredients';
   return null;
 }
 
@@ -167,6 +175,16 @@ export function parseRecipeText(input: string): RecipeDraft {
     if (!raw) continue;
     const header = detectHeader(raw);
     if (header) {
+      // "Ingrédients pour 2 personnes :" also gives the servings.
+      if (draft.servings === null)
+        for (const re of SERVINGS_RES) {
+          const m = normalizeText(raw).match(re);
+          const n = m ? Number(m[1]) : NaN;
+          if (n >= 1 && n <= 100) {
+            draft.servings = n;
+            break;
+          }
+        }
       section = header;
       group = null;
       sawHeader = true;
@@ -215,6 +233,9 @@ export function parseRecipeText(input: string): RecipeDraft {
     }
     if (consumed && section !== 'steps') continue;
 
+    if (section === 'ingredients' && SIGN_OFF.test(normalizeText(raw))) continue;
+    // Numbered sentences after the ingredients are the method, even without a header.
+    if (section === 'ingredients' && NUMBERED_SENTENCE.test(raw)) section = 'steps';
     if (section === 'ingredients') {
       const g = raw.match(GROUP_RE);
       if (g && !/\d/.test(raw) && raw.length < 60 && /[:：]$/.test(raw.trim()) === true) {

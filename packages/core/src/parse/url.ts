@@ -1,5 +1,12 @@
 import { emptyDraft, type RecipeDraft } from './draft';
 import { parseHtmlMeta, parseJsonLdRecipe } from './jsonld';
+import {
+  captionTitle,
+  instagramCaption,
+  tiktokCaption,
+  unflattenCaption,
+  youtubeDescription,
+} from './social';
 import { parseRecipeText } from './text';
 
 export type ImportPlatform = 'tiktok' | 'instagram' | 'youtube' | 'facebook' | 'pinterest' | 'web';
@@ -52,8 +59,9 @@ export function detectPlatform(url: URL): ImportPlatform {
   return 'web';
 }
 
-function mergeCaption(draft: RecipeDraft, caption: string | null) {
-  if (!caption) return;
+function mergeCaption(draft: RecipeDraft, raw: string | null) {
+  if (!raw?.trim()) return;
+  const caption = unflattenCaption(raw.trim());
   const parsed = parseRecipeText(caption);
   draft.ingredients = parsed.ingredients;
   draft.steps = parsed.steps;
@@ -83,33 +91,8 @@ export async function importFromUrl(fetchPage: FetchPage, raw: string): Promise<
       ? url.hostname.replace(/^www\./, '')
       : platform[0]!.toUpperCase() + platform.slice(1);
 
-  const oembed =
-    platform === 'tiktok'
-      ? `https://www.tiktok.com/oembed?url=${encodeURIComponent(url.toString())}`
-      : platform === 'youtube'
-        ? `https://www.youtube.com/oembed?format=json&url=${encodeURIComponent(url.toString())}`
-        : null;
-  if (oembed) {
-    try {
-      const r = await fetchPage(oembed, { accept: 'application/json' });
-      if (r.status === 200) {
-        const j = JSON.parse(r.body) as {
-          title?: string;
-          author_name?: string;
-          thumbnail_url?: string;
-        };
-        draft.author = j.author_name ?? null;
-        draft.imageUrl =
-          j.thumbnail_url && /^https:\/\//.test(j.thumbnail_url) ? j.thumbnail_url : null;
-        mergeCaption(draft, j.title ?? null);
-        if (!draft.title && j.title) draft.title = j.title.split('\n')[0]!.slice(0, 120);
-        return { draft, platform, completeness: j.title ? 'partial' : 'minimal' };
-      }
-    } catch {
-      // Unreachable or not JSON: fall through to a link-only draft.
-    }
-    return { draft, platform, completeness: 'minimal' };
-  }
+  if (platform === 'tiktok' || platform === 'youtube')
+    return importVideo(fetchPage, url, platform, draft);
 
   let page: FetchedPage;
   try {
@@ -136,7 +119,8 @@ export async function importFromUrl(fetchPage: FetchPage, raw: string): Promise<
   draft.author = meta.author;
   if (meta.siteName && platform === 'web') draft.source = meta.siteName.slice(0, 100);
   if (meta.description) {
-    if (platform === 'instagram' || platform === 'facebook' || platform === 'pinterest')
+    if (platform === 'instagram') mergeCaption(draft, instagramCaption(meta.description));
+    else if (platform === 'facebook' || platform === 'pinterest')
       mergeCaption(draft, meta.description);
     else draft.description = meta.description.slice(0, 2000);
   }
@@ -144,5 +128,67 @@ export async function importFromUrl(fetchPage: FetchPage, raw: string): Promise<
     draft,
     platform,
     completeness: draft.ingredients.length || draft.title ? 'partial' : 'minimal',
+  };
+}
+
+async function getText(fetchPage: FetchPage, url: string, accept?: string): Promise<string | null> {
+  try {
+    const r = await fetchPage(url, accept ? { accept } : undefined);
+    return r.status === 200 ? r.body : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * TikTok and YouTube: the caption/description (where creators write the recipe) comes from the
+ * public video page; the oEmbed endpoint gives the title, author and thumbnail as a fallback.
+ */
+async function importVideo(
+  fetchPage: FetchPage,
+  url: URL,
+  platform: 'tiktok' | 'youtube',
+  draft: RecipeDraft,
+): Promise<ImportResult> {
+  const oembedUrl =
+    platform === 'tiktok'
+      ? `https://www.tiktok.com/oembed?url=${encodeURIComponent(url.toString())}`
+      : `https://www.youtube.com/oembed?format=json&url=${encodeURIComponent(url.toString())}`;
+  const [pageHtml, oembedBody] = await Promise.all([
+    getText(fetchPage, url.toString(), 'text/html,application/xhtml+xml'),
+    getText(fetchPage, oembedUrl, 'application/json'),
+  ]);
+  let oembed: { title?: string; author_name?: string; thumbnail_url?: string } = {};
+  try {
+    if (oembedBody) oembed = JSON.parse(oembedBody) as typeof oembed;
+  } catch {
+    // Not JSON: ignore.
+  }
+  let caption: string | null = null;
+  let author = oembed.author_name ?? null;
+  let image = oembed.thumbnail_url ?? null;
+  if (pageHtml && platform === 'tiktok') {
+    const tt = tiktokCaption(pageHtml);
+    caption = tt?.caption ?? null;
+    author ??= tt?.author ?? null;
+    image ??= tt?.image ?? null;
+  }
+  if (pageHtml && platform === 'youtube') caption = youtubeDescription(pageHtml);
+  // TikTok's oEmbed title is the caption itself; YouTube's is the video title.
+  if (!caption && platform === 'tiktok') caption = oembed.title ?? null;
+
+  draft.author = author;
+  draft.imageUrl = image && /^https:\/\//.test(image) ? image : null;
+  mergeCaption(draft, caption);
+  // The parser's title guess is unreliable on captions: use the video title or first sentence.
+  draft.title =
+    (platform === 'youtube' && oembed.title ? oembed.title.slice(0, 200) : null) ??
+    (caption ? captionTitle(caption) : null) ??
+    draft.title;
+  const found = draft.ingredients.length > 0 || draft.steps.length > 0;
+  return {
+    draft,
+    platform,
+    completeness: found ? 'partial' : draft.title ? 'partial' : 'minimal',
   };
 }
