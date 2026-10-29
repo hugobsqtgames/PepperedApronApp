@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
   captionTitle,
+  guessLanguage,
   instagramCaption,
+  instagramVideoUrl,
   tiktokCaption,
   unflattenCaption,
   youtubeDescription,
@@ -199,5 +201,52 @@ describe('importing an Instagram post', () => {
       completeness: 'minimal',
       draft: { sourceUrl: url },
     });
+  });
+});
+
+describe('reels whose recipe is only said out loud', () => {
+  it('finds the public video link in the post page and in the embed page', () => {
+    expect(
+      instagramVideoUrl(
+        'x"video_versions":[{"type":101,"url":"https:\\/\\/scontent.cdninstagram.com\\/v.mp4?a=1&b=2"}]y',
+      ),
+    ).toBe('https://scontent.cdninstagram.com/v.mp4?a=1&b=2');
+    expect(
+      instagramVideoUrl(
+        '{\\"video_url\\":\\"https:\\\\\\/\\\\\\/scontent.cdninstagram.com\\\\\\/v.mp4?x=1\\\\u0026y=2\\",',
+      ),
+    ).toBe('https://scontent.cdninstagram.com/v.mp4?x=1&y=2');
+    expect(instagramVideoUrl('<html>no video</html>')).toBeNull();
+  });
+
+  it('guesses the language to listen in', () => {
+    expect(guessLanguage('Les pâtes de ma grand-mère avec une sauce pour vous')).toBe('fr');
+    expect(guessLanguage('The best pasta with a creamy sauce for you and the family')).toBe('en');
+    expect(guessLanguage('La pasta della nonna con il sugo e che bontà per tutti')).toBe('it');
+    expect(guessLanguage('🍝🍝')).toBeNull();
+  });
+
+  it('a reel without the recipe in its caption gives the video to listen to', async () => {
+    const url = 'https://www.instagram.com/reel/DAbc123xyz/';
+    const page =
+      '<meta property="og:description" content="12 likes, 1 comments - chef le 1 mai 2026: &quot;Mes pâtes préférées de la semaine, regardez bien la vidéo pour tout savoir&quot;.">' +
+      '"video_versions":[{"type":101,"url":"https:\\/\\/scontent.cdninstagram.com\\/r.mp4"}]';
+    const r = await importFromUrl(fake({ [url]: { body: page } }), url);
+    expect(r).toMatchObject({
+      videoUrl: 'https://scontent.cdninstagram.com/r.mp4',
+      language: 'fr',
+      draft: {
+        title: 'Mes pâtes préférées de la semaine, regardez bien la vidéo pour tout savoir',
+      },
+    });
+    // With the recipe in the caption, there is nothing to listen to.
+    const CAPTION_WITH_RECIPE =
+      '…: &quot;Crêpes&#10;- 250 g de farine&#10;- 3 oeufs&#10;- 50 cl de lait&quot;.';
+    const r2 = await importFromUrl(
+      fake({ [url]: { body: page.replace(/: &quot;.*&quot;\./, CAPTION_WITH_RECIPE.slice(1)) } }),
+      url,
+    );
+    expect(r2.draft.ingredients).toHaveLength(3);
+    expect(r2.videoUrl).toBeUndefined();
   });
 });

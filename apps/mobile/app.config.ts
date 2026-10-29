@@ -1,5 +1,10 @@
 import type { ConfigContext, ExpoConfig } from 'expo/config';
-import { withEntitlementsPlist, withInfoPlist, type ConfigPlugin } from 'expo/config-plugins';
+import {
+  withAndroidManifest,
+  withEntitlementsPlist,
+  withInfoPlist,
+  type ConfigPlugin,
+} from 'expo/config-plugins';
 
 /** Several plugins add the same App Group; keep the entitlement list unique. */
 const withUniqueAppGroups: ConfigPlugin = (c) =>
@@ -19,6 +24,20 @@ const withPrivateICloudContainer: ConfigPlugin = (c) =>
       Record<string, Record<string, unknown>> | undefined;
     for (const v of Object.values(containers ?? {}))
       v.NSUbiquitousContainerIsDocumentScopePublic = false;
+    return m;
+  });
+
+/**
+ * Android's speech recognizer needs RECORD_AUDIO even to transcribe a file (imported videos), but
+ * expo-image-picker blocks it when its microphone option is off. Applied around the config (before
+ * `plugins` are registered), so this manifest change runs after the picker's.
+ */
+const withSpeechRecognitionPermission: ConfigPlugin = (c) =>
+  withAndroidManifest(c, (m) => {
+    const name = 'android.permission.RECORD_AUDIO';
+    const manifest = m.modResults.manifest;
+    const perms = (manifest['uses-permission'] ?? []).filter((p) => p.$['android:name'] !== name);
+    manifest['uses-permission'] = [...perms, { $: { 'android:name': name } }];
     return m;
   });
 
@@ -72,6 +91,8 @@ const buildConfig = ({ config }: ConfigContext): ExpoConfig => ({
       ITSAppUsesNonExemptEncryption: false,
       CFBundleAllowMixedLocalizations: true,
       NSSupportsLiveActivities: true,
+      NSSpeechRecognitionUsageDescription:
+        'PepperedApron listens to a recipe video you import, on your iPhone, to write down the ingredients and steps that are only said out loud. Nothing is sent.',
     },
     privacyManifests: {
       NSPrivacyTracking: false,
@@ -114,10 +135,7 @@ const buildConfig = ({ config }: ConfigContext): ExpoConfig => ({
       'android.permission.POST_NOTIFICATIONS',
       'android.permission.SCHEDULE_EXACT_ALARM',
     ],
-    blockedPermissions: [
-      'android.permission.RECORD_AUDIO',
-      'android.permission.ACCESS_FINE_LOCATION',
-    ],
+    blockedPermissions: ['android.permission.ACCESS_FINE_LOCATION'],
   },
   plugins: [
     'expo-router',
@@ -180,4 +198,6 @@ const buildConfig = ({ config }: ConfigContext): ExpoConfig => ({
 });
 
 export default (ctx: ConfigContext): ExpoConfig =>
-  withPrivateICloudContainer(withUniqueAppGroups(buildConfig(ctx))) as ExpoConfig;
+  withSpeechRecognitionPermission(
+    withPrivateICloudContainer(withUniqueAppGroups(buildConfig(ctx))),
+  ) as ExpoConfig;

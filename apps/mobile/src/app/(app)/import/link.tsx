@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { ImportUrlError } from '@pepperedapron/core';
 import { linkNotice, openDraft } from '../../../features/recipe/openDraft';
 import { errorMessage } from '../../../lib/errors';
-import { importLink } from '../../../services/importer';
+import { importLinkFull } from '../../../services/importer';
 import { space } from '../../../theme/tokens';
 import { Button, IconButton, LoadingState, Screen, Text, TextField } from '../../../ui';
 
@@ -14,7 +14,7 @@ export default function ImportLink() {
   const { t } = useTranslation();
   const params = useLocalSearchParams<{ url?: string }>();
   const [url, setUrl] = useState(params.url ?? '');
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState<'fetching' | 'listening' | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -23,15 +23,15 @@ export default function ImportLink() {
 
   const run = async (raw: string) => {
     setError(null);
-    setLoading(true);
+    setLoading('fetching');
     try {
       // Offline or unreadable pages still open a draft keeping the link: nothing is lost.
-      const res = await importLink(raw);
-      openDraft(res.draft, { notice: linkNotice(res) });
+      const { result, listenError } = await importLinkFull(raw, () => setLoading('listening'));
+      openDraft(result.draft, { notice: linkNotice(result, listenError) });
     } catch (e) {
       setError(e instanceof ImportUrlError ? t('errors.invalid_url') : errorMessage(e, t));
     } finally {
-      setLoading(false);
+      setLoading(null);
     }
   };
 
@@ -44,7 +44,9 @@ export default function ImportLink() {
         <IconButton icon="close" label={t('common.close')} onPress={() => router.back()} />
       </View>
       {loading ? (
-        <LoadingState label={t('import.fetching')} />
+        <LoadingState
+          label={loading === 'listening' ? t('import.listening') : t('import.fetching')}
+        />
       ) : (
         <View style={{ gap: space.lg, marginTop: space.xl }}>
           <TextField

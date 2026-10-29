@@ -3,6 +3,7 @@ import { parseRecipeText, type ImportResult, type RecipeDraft } from '@peppereda
 import { recipeFromDraft } from '@pepperedapron/client';
 import { runtime } from '../../services/runtime';
 import { draftStore, type EditorDraft } from '../../services/drafts';
+import type { VideoListenError } from '../../services/importer';
 
 /** Open the editor pre-filled with an import result. Nothing is saved until the user confirms. */
 export function openDraft(
@@ -37,8 +38,14 @@ export function openTextDraft(
 }
 
 /** Notice shown in the editor for a link import. */
-export function linkNotice(res: ImportResult): EditorDraft['notice'] {
+export function linkNotice(
+  res: ImportResult,
+  listenError: VideoListenError | null = null,
+): EditorDraft['notice'] {
   if (res.fromSpeech) return 'speech';
+  if (listenError === 'permission') return 'listenPermission';
+  if (listenError === 'language') return 'listenLanguage';
+  if (listenError) return 'listenFailed';
   if (res.platform === 'instagram' && res.completeness === 'minimal') return 'instagram';
   return res.completeness;
 }

@@ -6,7 +6,18 @@ export interface EditorDraft {
   imageUrl: string | null;
   /** Local image (shared photo, OCR source) to attach on save. */
   localImageUri: string | null;
-  notice: 'full' | 'partial' | 'minimal' | 'instagram' | 'speech' | 'text' | 'photo' | null;
+  notice:
+    | 'full'
+    | 'partial'
+    | 'minimal'
+    | 'instagram'
+    | 'speech'
+    | 'listenPermission'
+    | 'listenLanguage'
+    | 'listenFailed'
+    | 'text'
+    | 'photo'
+    | null;
 }
 
 const drafts = new Map<string, EditorDraft>();

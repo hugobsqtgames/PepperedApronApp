@@ -2,6 +2,7 @@
   "ios": {
     "CFBundleDisplayName": "PepperedApron",
     "NSCameraUsageDescription": "PepperedApron usa la cámara para añadir una foto a tus recetas o leer una receta impresa.",
-    "NSPhotoLibraryUsageDescription": "PepperedApron accede a tus fotos para ilustrar tus recetas o importar una receta desde una imagen."
+    "NSPhotoLibraryUsageDescription": "PepperedApron accede a tus fotos para ilustrar tus recetas o importar una receta desde una imagen.",
+    "NSSpeechRecognitionUsageDescription": "PepperedApron escucha el vídeo de receta que importas, en tu iPhone, para anotar los ingredientes y pasos que solo se dicen en voz alta. No se envía nada."
   }
 }

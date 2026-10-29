@@ -315,6 +315,13 @@ const en: Translations = {
       'Part of this recipe comes from what is said in the video (automatic subtitles): check the ingredients, quantities and steps. The full transcript is in the notes.',
     instagramPrivate:
       'Instagram doesn’t give access to this post’s caption (private account?). The link is saved. Tip: take a screenshot of the caption, then “+” → “From a photo”: the text is read automatically.',
+    listening: 'Listening to the video… (on your phone)',
+    listenPermission:
+      'The recipe is explained out loud in the video, but speech recognition isn’t allowed. Allow it in the phone’s Settings (PepperedApron), then import the link again.',
+    listenLanguage:
+      'The recipe is explained out loud, but offline speech recognition for this language isn’t installed on the phone yet. On Android, its download has just been requested: try again in a few minutes. On iPhone: Settings → General → Keyboard → turn on Dictation.',
+    listenFailed:
+      'The recipe is explained out loud, but the phone couldn’t listen to the video (Android 13 or later). Tip: take a screenshot of the caption or recipe, then “+” → “From a photo”.',
   },
   cook: {
     step: 'Step {{n}} of {{total}}',

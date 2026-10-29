@@ -320,6 +320,13 @@ const de: Translations = {
       'Ein Teil des Rezepts stammt aus dem, was im Video gesagt wird (automatische Untertitel): Prüfe Zutaten, Mengen und Schritte. Das vollständige Transkript steht in den Notizen.',
     instagramPrivate:
       'Instagram gibt keinen Zugriff auf die Beschreibung dieses Beitrags (privates Konto?). Der Link ist gespeichert. Tipp: Mach einen Screenshot der Beschreibung, dann „+“ → „Aus einem Foto“: Der Text wird automatisch gelesen.',
+    listening: 'Video wird angehört … (auf deinem Telefon)',
+    listenPermission:
+      'Das Rezept wird im Video nur gesprochen, aber die Spracherkennung ist nicht erlaubt. Erlaube sie in den Einstellungen des Telefons (PepperedApron) und importiere den Link erneut.',
+    listenLanguage:
+      'Das Rezept wird nur gesprochen, aber die Offline-Spracherkennung für diese Sprache ist noch nicht installiert. Unter Android wurde der Download gerade angefordert: Versuch es in ein paar Minuten erneut. Auf dem iPhone: Einstellungen → Allgemein → Tastatur → Diktierfunktion aktivieren.',
+    listenFailed:
+      'Das Rezept wird nur gesprochen, aber das Telefon konnte das Video nicht anhören (ab Android 13). Tipp: Mach einen Screenshot der Beschreibung oder des Rezepts, dann „+“ → „Aus einem Foto“.',
   },
   cook: {
     step: 'Schritt {{n}} von {{total}}',

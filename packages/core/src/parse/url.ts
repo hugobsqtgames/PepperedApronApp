@@ -2,8 +2,10 @@ import { emptyDraft, type RecipeDraft } from './draft';
 import { parseHtmlMeta, parseJsonLdRecipe } from './jsonld';
 import {
   captionTitle,
+  guessLanguage,
   instagramCaption,
   instagramEmbedCaption,
+  instagramVideoUrl,
   tiktokCaption,
   unflattenCaption,
   youtubeDescription,
@@ -22,6 +24,13 @@ export interface ImportResult {
   completeness: 'full' | 'partial' | 'minimal';
   /** Part of the recipe comes from what is said in the video (automatic subtitles). */
   fromSpeech?: boolean;
+  /**
+   * Instagram reel without the recipe in its caption: link of the public video, so the app can
+   * listen to it on the device (speech recognition) and complete the recipe.
+   */
+  videoUrl?: string;
+  /** Language of the caption, to listen to the video in the right language. */
+  language?: 'fr' | 'en' | 'es' | 'de' | 'it' | null;
 }
 
 export interface FetchedPage {
@@ -155,8 +164,10 @@ async function importInstagram(
 ): Promise<ImportResult> {
   const code = instagramShortcode(url);
   let caption: string | null = null;
+  let videoUrl: string | null = null;
   const pageHtml = await getText(fetchPage, url.toString(), 'text/html,application/xhtml+xml');
   if (pageHtml) {
+    videoUrl = instagramVideoUrl(pageHtml);
     const meta = parseHtmlMeta(pageHtml);
     draft.imageUrl = meta.image;
     // A real caption is quoted after "N likes, N comments - user on date:"; a login page is not.
@@ -170,6 +181,7 @@ async function importInstagram(
       'text/html',
     );
     const fromEmbed = embed ? instagramEmbedCaption(embed) : null;
+    videoUrl ??= embed ? instagramVideoUrl(embed) : null;
     if (fromEmbed) {
       caption = fromEmbed.caption;
       draft.author = fromEmbed.author;
@@ -180,11 +192,15 @@ async function importInstagram(
     mergeCaption(draft, caption);
     draft.title = captionTitle(caption) ?? draft.title;
   }
+  const hasRecipe = draft.ingredients.length > 0 || draft.steps.length > 0;
   return {
     draft,
     platform: 'instagram',
-    completeness:
-      draft.ingredients.length || draft.steps.length || draft.title ? 'partial' : 'minimal',
+    completeness: hasRecipe || draft.title ? 'partial' : 'minimal',
+    // Recipe only said out loud: the app can listen to the public video on the device.
+    ...(videoUrl && !hasRecipe
+      ? { videoUrl, language: caption ? guessLanguage(caption) : null }
+      : {}),
   };
 }
 

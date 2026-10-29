@@ -315,6 +315,13 @@ const fr = {
       'Une partie de la recette vient de ce qui est dit dans la vidéo (sous-titres automatiques) : vérifiez les ingrédients, les quantités et les étapes. La transcription complète est dans les notes.',
     instagramPrivate:
       'Instagram ne donne pas accès à la légende de cette publication (compte privé ?). Le lien est enregistré. Astuce : faites une capture d’écran de la légende, puis « + » → « Depuis une photo » : le texte sera lu automatiquement.',
+    listening: 'Écoute de la vidéo… (sur votre téléphone)',
+    listenPermission:
+      'La recette est expliquée à l’oral dans la vidéo, mais la reconnaissance vocale n’est pas autorisée. Autorisez-la dans les Réglages du téléphone (PepperedApron), puis importez à nouveau le lien.',
+    listenLanguage:
+      'La recette est expliquée à l’oral, mais la reconnaissance vocale hors ligne de cette langue n’est pas encore installée sur le téléphone. Sur Android, son téléchargement vient d’être demandé : réessayez dans quelques minutes. Sur iPhone : Réglages → Général → Clavier → activez la Dictée.',
+    listenFailed:
+      'La recette est expliquée à l’oral, mais le téléphone n’a pas pu écouter la vidéo (Android 13 minimum). Astuce : faites une capture d’écran de la légende ou de la recette, puis « + » → « Depuis une photo ».',
   },
   cook: {
     step: 'Étape {{n}} / {{total}}',

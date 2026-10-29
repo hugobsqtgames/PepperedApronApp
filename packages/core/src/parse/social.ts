@@ -236,3 +236,69 @@ function decodeEntities(s: string): string {
     .replace(/&nbsp;/g, ' ')
     .replace(/&amp;/g, '&');
 }
+
+/** Direct link of a public Instagram video (reel), found in the post or embed page. */
+export function instagramVideoUrl(html: string): string | null {
+  const key = '"video_versions":';
+  const at = html.indexOf(key);
+  if (at >= 0) {
+    const versions = (jsonArrayAt(html, at + key.length) ?? []) as { url?: string }[];
+    const url = versions.find((v) => v.url && /^https:\/\//.test(v.url))?.url;
+    if (url) return url;
+  }
+  // Embed page: the data is a JSON string inside a script, so it is escaped once more
+  // (\"video_url\":\"https:\\\/\\\/…\").
+  const marker = '\\"video_url\\":\\"';
+  const start = html.indexOf(marker);
+  if (start >= 0) {
+    const from = start + marker.length;
+    const end = html.indexOf('\\"', from);
+    const url = html
+      .slice(from, end)
+      .replace(/\\+\//g, '/')
+      .replace(/\\+u([0-9a-fA-F]{4})/g, (_, h: string) => String.fromCharCode(parseInt(h, 16)));
+    if (end > from && /^https:\/\/[^\s"\\]+$/.test(url)) return url;
+  }
+  return null;
+}
+
+const STOPWORDS: Record<'fr' | 'en' | 'es' | 'de' | 'it', string[]> = {
+  fr: [
+    'le',
+    'la',
+    'les',
+    'et',
+    'de',
+    'des',
+    'du',
+    'un',
+    'une',
+    'pour',
+    'avec',
+    'dans',
+    'est',
+    'je',
+    'vous',
+  ],
+  en: ['the', 'and', 'of', 'to', 'with', 'for', 'in', 'is', 'you', 'it', 'this', 'then'],
+  es: ['el', 'los', 'las', 'y', 'con', 'para', 'del', 'una', 'es', 'que', 'por', 'se'],
+  de: ['der', 'die', 'das', 'und', 'mit', 'für', 'ein', 'eine', 'ist', 'den', 'dem', 'zu'],
+  it: ['il', 'lo', 'gli', 'e', 'con', 'per', 'della', 'una', 'è', 'che', 'del', 'di'],
+};
+
+/** Most likely language of a caption (fr, en, es, de, it), or null when it is too short to tell. */
+export function guessLanguage(text: string): 'fr' | 'en' | 'es' | 'de' | 'it' | null {
+  const words = text.toLowerCase().match(/[\p{L}]+/gu) ?? [];
+  if (words.length < 5) return null;
+  let best: 'fr' | 'en' | 'es' | 'de' | 'it' | null = null;
+  let bestScore = 0;
+  for (const [lang, list] of Object.entries(STOPWORDS) as [keyof typeof STOPWORDS, string[]][]) {
+    const set = new Set(list);
+    const score = words.filter((w) => set.has(w)).length;
+    if (score > bestScore) {
+      best = lang;
+      bestScore = score;
+    }
+  }
+  return bestScore >= 2 ? best : null;
+}

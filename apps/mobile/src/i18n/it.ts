@@ -318,6 +318,13 @@ const it: Translations = {
       'Parte della ricetta deriva da ciò che viene detto nel video (sottotitoli automatici): controlla ingredienti, quantità e passaggi. La trascrizione completa è nelle note.',
     instagramPrivate:
       'Instagram non dà accesso alla didascalia di questo post (account privato?). Il link è salvato. Consiglio: fai uno screenshot della didascalia, poi «+» → «Da una foto»: il testo verrà letto automaticamente.',
+    listening: 'Ascolto del video… (sul tuo telefono)',
+    listenPermission:
+      'La ricetta è spiegata a voce nel video, ma il riconoscimento vocale non è consentito. Attivalo nelle Impostazioni del telefono (PepperedApron), poi importa di nuovo il link.',
+    listenLanguage:
+      'La ricetta è spiegata a voce, ma il riconoscimento vocale offline di questa lingua non è ancora installato sul telefono. Su Android è stato appena richiesto il download: riprova tra qualche minuto. Su iPhone: Impostazioni → Generali → Tastiera → attiva la Dettatura.',
+    listenFailed:
+      'La ricetta è spiegata a voce, ma il telefono non è riuscito ad ascoltare il video (Android 13 o successivo). Consiglio: fai uno screenshot della didascalia o della ricetta, poi «+» → «Da una foto».',
   },
   cook: {
     step: 'Passaggio {{n}} di {{total}}',

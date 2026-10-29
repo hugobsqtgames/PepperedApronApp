@@ -66,6 +66,15 @@ type PhotoChange =
   | { kind: 'local'; uri: string }
   | { kind: 'remote'; url: string };
 
+/** Import notices that ask the user to complete or fix something. */
+const WARNING_NOTICES = new Set<string>([
+  'minimal',
+  'instagram',
+  'listenPermission',
+  'listenLanguage',
+  'listenFailed',
+]);
+
 export default function RecipeEditor() {
   const {
     id,
@@ -331,19 +340,16 @@ export default function RecipeEditor() {
               style={[
                 styles.notice,
                 {
-                  backgroundColor:
-                    draft.notice === 'minimal' || draft.notice === 'instagram'
-                      ? colors.accentSoft
-                      : colors.primarySoft,
+                  backgroundColor: WARNING_NOTICES.has(draft.notice)
+                    ? colors.accentSoft
+                    : colors.primarySoft,
                 },
               ]}
             >
               <Icon
                 name="information-circle-outline"
                 size={20}
-                color={
-                  draft.notice === 'minimal' || draft.notice === 'instagram' ? 'accent' : 'primary'
-                }
+                color={WARNING_NOTICES.has(draft.notice) ? 'accent' : 'primary'}
               />
               <Text variant="callout" style={{ flex: 1 }}>
                 {draft.notice === 'full'
@@ -356,7 +362,13 @@ export default function RecipeEditor() {
                         ? t('import.speech')
                         : draft.notice === 'instagram'
                           ? t('import.instagramPrivate')
-                          : t('editor.importedNotice')}
+                          : draft.notice === 'listenPermission'
+                            ? t('import.listenPermission')
+                            : draft.notice === 'listenLanguage'
+                              ? t('import.listenLanguage')
+                              : draft.notice === 'listenFailed'
+                                ? t('import.listenFailed')
+                                : t('editor.importedNotice')}
               </Text>
             </View>
           ) : null}

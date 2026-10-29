@@ -4,7 +4,7 @@ import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { emptyDraft } from '@pepperedapron/core';
 import { linkNotice, openDraft, openTextDraft } from '../../../features/recipe/openDraft';
-import { importLink } from '../../../services/importer';
+import { importLinkFull } from '../../../services/importer';
 import { shareInbox, type SharedPayload } from '../../../services/shareInbox';
 import { EmptyState, LoadingState, Screen } from '../../../ui';
 
@@ -18,6 +18,7 @@ import { EmptyState, LoadingState, Screen } from '../../../ui';
 export default function SharedImport() {
   const { t } = useTranslation();
   const [payload] = useState<SharedPayload | null>(() => shareInbox.take());
+  const [listening, setListening] = useState(false);
 
   useEffect(() => {
     if (!payload) return;
@@ -28,7 +29,9 @@ export default function SharedImport() {
       }
       if (payload.url) {
         try {
-          const res = await importLink(payload.url);
+          const { result: res, listenError } = await importLinkFull(payload.url, () =>
+            setListening(true),
+          );
           // Text shared alongside the link (captions) complements what the page exposes.
           if (
             payload.text &&
@@ -46,7 +49,7 @@ export default function SharedImport() {
               res.completeness,
             );
           } else {
-            openDraft(res.draft, { notice: linkNotice(res) });
+            openDraft(res.draft, { notice: linkNotice(res, listenError) });
           }
         } catch {
           // Not a usable link: keep what was shared so the user can complete it.
@@ -72,7 +75,7 @@ export default function SharedImport() {
     <Screen scroll={false} edges={['top', 'bottom']}>
       <View style={{ flex: 1, justifyContent: 'center' }}>
         {payload ? (
-          <LoadingState label={t('import.received')} />
+          <LoadingState label={listening ? t('import.listening') : t('import.received')} />
         ) : (
           <EmptyState
             emoji="📥"
