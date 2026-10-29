@@ -1,7 +1,6 @@
 import { ScrollView, View } from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
 import { useTranslation } from 'react-i18next';
-import { adsEnabled, showPrivacyOptions } from '../../../services/ads';
 import { sitePage } from '../../../services/env';
 import { CLOUD_SUPPORTED } from '../../../services/runtime';
 import { space } from '../../../theme/tokens';
@@ -30,16 +29,6 @@ export default function Privacy() {
           </Text>
         </View>
       </Card>
-      {adsEnabled() ? (
-        <Group>
-          <ListRow
-            icon="megaphone-outline"
-            title={t('settings.ads')}
-            subtitle={t('settings.adsBody')}
-            onPress={() => void showPrivacyOptions()}
-          />
-        </Group>
-      ) : null}
       <Group>
         <ListRow
           icon="document-text-outline"

@@ -433,8 +433,6 @@ const en: Translations = {
     unitsMetric: 'Metric (g, ml, °C)',
     unitsImperial: 'Imperial (oz, cups, °F)',
     defaultServings: 'Default servings',
-    ads: 'Ad choices',
-    adsBody: 'Manage your consent for personalized ads.',
     privacyPolicy: 'Privacy policy',
     terms: 'Terms of use',
     legalNotice: 'Legal notice',
@@ -445,9 +443,9 @@ const en: Translations = {
     deleteWord: 'DELETE',
     privacyTitle: 'Your data stays with you',
     privacyBody:
-      'No account, no server: your recipes, lists and meal plan are stored on this device and in your private iCloud, if you turn it on. We never receive any of your data. Only ads (Google AdMob) follow your consent choices.',
+      'No account, no server, no ads: your recipes, lists and meal plan are stored on this device and in your private iCloud, if you turn it on. We never receive any of your data.',
     privacyBodyAndroid:
-      'No account, no server: your recipes, lists and meal plan are stored on this phone. We never receive any of your data. Only ads (Google AdMob) follow your consent choices.',
+      'No account, no server, no ads: your recipes, lists and meal plan are stored on this phone. We never receive any of your data.',
     backup: 'Backup',
     import: 'Import a backup',
     importBody:
@@ -472,7 +470,7 @@ const en: Translations = {
     q3: 'How do I import from TikTok or Instagram?',
     a3: 'In the app, tap Share then PepperedApron. We get the link, caption and image when the platform makes them available.',
     q4: 'Is the app free?',
-    a4: 'Yes. PepperedApron is free, funded by discreet advertising. No subscription.',
+    a4: 'No. PepperedApron is free, with no ads and no subscription.',
     body: 'A question, a bug, an idea? Write to us at {{email}}; we answer every message.',
     write: 'Send an e-mail',
     website: 'Online help',
@@ -519,7 +517,6 @@ const en: Translations = {
     minutesAgo_other: '{{count}} min ago',
     at: 'at {{time}}',
   },
-  ads: { label: 'Advertisement' },
 };
 
 export default en;

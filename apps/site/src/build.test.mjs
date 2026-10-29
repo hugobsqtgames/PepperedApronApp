@@ -25,7 +25,8 @@ test('every page the app links to exists in every language', () => {
 test('publisher details are escaped and the policy describes a no-account app', () => {
   const fr = fs.readFileSync(path.join(out, 'fr/privacy/index.html'), 'utf8');
   assert.match(fr, /Chef &#38; Co &#60;SAS&#62;/);
-  assert.match(fr, /ni compte, ni serveur/);
+  assert.match(fr, /ni compte, ni serveur, ni publicité/);
+  assert.doesNotMatch(fr, /AdMob/);
   assert.match(
     fs.readFileSync(path.join(out, 'de/support/index.html'), 'utf8'),
     /help@example\.com/,

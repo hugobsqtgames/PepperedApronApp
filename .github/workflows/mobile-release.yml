@@ -1,7 +1,7 @@
 name: Mobile build & submit
 
 # Cloud builds with EAS. Requires the EXPO_TOKEN repository secret; the other build secrets
-# (AdMob ids, OAuth client ids, Sentry…) live in EAS environment variables, not in GitHub.
+# (Apple team, EAS project…) live in EAS environment variables, not in GitHub.
 on:
   workflow_dispatch:
     inputs:

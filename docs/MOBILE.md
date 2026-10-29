@@ -56,7 +56,7 @@ Tout est modifiable avant enregistrement.
 
 ## Mode cuisine, minuteurs, Live Activities
 
-Texte agrandi, écran maintenu allumé, navigation par étapes, ingrédients à portée, minuteurs multiples (heures de fin absolues : ils survivent à la navigation, à l'arrière-plan et au redémarrage). La fin d'un minuteur est une notification locale ; sur iPhone, le minuteur le plus proche s'affiche en **Live Activity** (écran verrouillé, Dynamic Island) via `expo-live-activity`. Aucune publicité en mode cuisine.
+Texte agrandi, écran maintenu allumé, navigation par étapes, ingrédients à portée, minuteurs multiples (heures de fin absolues : ils survivent à la navigation, à l'arrière-plan et au redémarrage). La fin d'un minuteur est une notification locale ; sur iPhone, le minuteur le plus proche s'affiche en **Live Activity** (écran verrouillé, Dynamic Island) via `expo-live-activity`.
 
 ## Notifications
 
@@ -64,7 +64,7 @@ Uniquement locales (aucun serveur) : rappel de repas (au plus une fois par jour,
 
 ## Publicité
 
-`react-native-google-mobile-ads` derrière `services/ads.ts` (régie remplaçable). Formulaire de consentement UMP (Google) à la fin de l'onboarding, avant toute initialisation, qui affiche aussi la demande ATT sur iOS si le message IDFA est activé dans AdMob ; identifiants de test hors production ; en production, aucune publicité sans bloc d'annonce configuré. Jamais en mode cuisine, jamais d'interstitiel au lancement, jamais pendant la saisie. Libellé « Publicité » visible.
+Aucune : pas de régie, pas d'analytics, pas de SDK de suivi.
 
 ## Accessibilité et confort
 

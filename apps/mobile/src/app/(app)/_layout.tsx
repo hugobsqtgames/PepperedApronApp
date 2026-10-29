@@ -4,7 +4,6 @@ import * as Notifications from 'expo-notifications';
 import { useShareIntentContext } from 'expo-share-intent';
 import { useTranslation } from 'react-i18next';
 import { useRuntime } from '../../hooks/runtime';
-import { initAds } from '../../services/ads';
 import { rescheduleReminders } from '../../services/notifications';
 import { shareInbox } from '../../services/shareInbox';
 import { publishWidgetData } from '../../services/widgets';
@@ -46,7 +45,6 @@ export default function AppLayout() {
   useEffect(() => {
     const s = rt.session;
     if (!s) return;
-    void initAds();
     let pending: ReturnType<typeof setTimeout> | null = null;
     const refreshDerived = () => {
       if (pending) clearTimeout(pending);

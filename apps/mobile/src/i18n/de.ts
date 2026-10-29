@@ -438,8 +438,6 @@ const de: Translations = {
     unitsMetric: 'Metrisch (g, ml, °C)',
     unitsImperial: 'Imperial (oz, Cups, °F)',
     defaultServings: 'Standard-Portionen',
-    ads: 'Werbeoptionen',
-    adsBody: 'Verwalte deine Einwilligung zu personalisierter Werbung.',
     privacyPolicy: 'Datenschutzerklärung',
     terms: 'Nutzungsbedingungen',
     legalNotice: 'Impressum',
@@ -450,9 +448,9 @@ const de: Translations = {
     deleteWord: 'LÖSCHEN',
     privacyTitle: 'Deine Daten bleiben bei dir',
     privacyBody:
-      'Kein Konto, kein Server: Deine Rezepte, Listen und dein Wochenplan werden auf diesem Gerät und – wenn du es aktivierst – in deiner privaten iCloud gespeichert. Wir erhalten keine deiner Daten. Nur die Werbung (Google AdMob) richtet sich nach deinen Einwilligungen.',
+      'Kein Konto, kein Server, keine Werbung: Deine Rezepte, Listen und dein Wochenplan werden auf diesem Gerät und – wenn du es aktivierst – in deiner privaten iCloud gespeichert. Wir erhalten keine deiner Daten.',
     privacyBodyAndroid:
-      'Kein Konto, kein Server: Deine Rezepte, Listen und dein Wochenplan werden auf diesem Telefon gespeichert. Wir erhalten keine deiner Daten. Nur die Werbung (Google AdMob) richtet sich nach deinen Einwilligungen.',
+      'Kein Konto, kein Server, keine Werbung: Deine Rezepte, Listen und dein Wochenplan werden auf diesem Telefon gespeichert. Wir erhalten keine deiner Daten.',
     backup: 'Sicherung',
     import: 'Sicherung importieren',
     importBody:
@@ -477,7 +475,7 @@ const de: Translations = {
     q3: 'Wie importiere ich aus TikTok oder Instagram?',
     a3: 'Tippe in der App auf Teilen und dann auf PepperedApron. Wir übernehmen Link, Beschreibung und Bild, sofern die Plattform sie zugänglich macht.',
     q4: 'Ist die App kostenpflichtig?',
-    a4: 'Nein. PepperedApron ist kostenlos und wird durch dezente Werbung finanziert. Kein Abo.',
+    a4: 'Nein. PepperedApron ist kostenlos, ohne Werbung und ohne Abo.',
     body: 'Eine Frage, ein Fehler, eine Idee? Schreib uns an {{email}} – wir beantworten jede Nachricht.',
     write: 'E-Mail schreiben',
     website: 'Online-Hilfe',
@@ -525,7 +523,6 @@ const de: Translations = {
     minutesAgo_other: 'vor {{count}} Min.',
     at: 'um {{time}}',
   },
-  ads: { label: 'Werbung' },
 };
 
 export default de;

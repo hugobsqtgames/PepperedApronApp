@@ -1,7 +1,7 @@
 # PepperedApron
 
 Recettes, planning de repas et listes de courses — iPhone, iPad, puis Android.
-**Sans compte ni serveur** : tout est enregistré sur l'appareil et, sur iPhone/iPad, synchronisé dans l'iCloud privé de l'utilisateur. Hors ligne d'abord, sans IA générative.
+**Sans compte ni serveur** : tout est enregistré sur l'appareil et, sur iPhone/iPad, synchronisé dans l'iCloud privé de l'utilisateur. Hors ligne d'abord, sans publicité, sans IA générative.
 
 | Dossier | Contenu |
 |---|---|
@@ -23,7 +23,7 @@ npx expo run:ios        # Mac : build de développement + simulateur ou iPhone b
 npx expo run:android    # émulateur ou téléphone Android branché (débogage USB)
 ```
 
-Aucun serveur, aucune base à installer, aucune variable obligatoire. L'app utilise des modules natifs (iCloud, extension de partage, widgets, publicité, OCR) : **Expo Go ne suffit pas**, il faut un build de développement (voir [INSTALLATION](docs/INSTALLATION.md)). Ensuite, `npx expo start` suffit pour recharger le code.
+Aucun serveur, aucune base à installer, aucune variable obligatoire. L'app utilise des modules natifs (iCloud, extension de partage, widgets, OCR) : **Expo Go ne suffit pas**, il faut un build de développement (voir [INSTALLATION](docs/INSTALLATION.md)). Ensuite, `npx expo start` suffit pour recharger le code.
 
 ## Vérifications
 

@@ -37,17 +37,6 @@ const iCloudContainer = `iCloud.${bundleId}`;
 const siteUrl = process.env.SITE_URL ?? 'https://pepperedapron.app';
 const supportEmail = process.env.SUPPORT_EMAIL ?? 'support@pepperedapron.app';
 
-// Google's official test ad units are used unless real ids are provided (never ship test ids).
-if (
-  variant === 'production' &&
-  (!process.env.ADMOB_IOS_APP_ID || !process.env.ADMOB_ANDROID_APP_ID)
-) {
-  throw new Error('Production builds require ADMOB_IOS_APP_ID and ADMOB_ANDROID_APP_ID.');
-}
-const ADMOB_IOS_APP_ID = process.env.ADMOB_IOS_APP_ID ?? 'ca-app-pub-3940256099942544~1458002511';
-const ADMOB_ANDROID_APP_ID =
-  process.env.ADMOB_ANDROID_APP_ID ?? 'ca-app-pub-3940256099942544~3347511713';
-
 const buildConfig = ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
   name:
@@ -86,9 +75,8 @@ const buildConfig = ({ config }: ConfigContext): ExpoConfig => ({
     },
     privacyManifests: {
       NSPrivacyTracking: false,
-      // Nothing is collected by PepperedApron: data stays on the device and in the user's own
-      // iCloud. Must match the App Store privacy labels (docs/PRIVACY.md); the ads SDK ships its
-      // own manifest for what it collects.
+      // Nothing is collected: data stays on the device and in the user's own iCloud, and the app
+      // contains no ads or analytics SDK. Must match the App Store privacy labels (docs/PRIVACY.md).
       NSPrivacyCollectedDataTypes: [],
       NSPrivacyAccessedAPITypes: [
         {
@@ -175,17 +163,6 @@ const buildConfig = ({ config }: ConfigContext): ExpoConfig => ({
         iosShareExtensionName: 'PepperedApron',
         iosAppGroupIdentifier: appGroup,
         androidIntentFilters: ['text/*', 'image/*'],
-      },
-    ],
-    [
-      'react-native-google-mobile-ads',
-      {
-        iosAppId: ADMOB_IOS_APP_ID,
-        androidAppId: ADMOB_ANDROID_APP_ID,
-        // Nothing is initialised before the user's consent choice (UMP).
-        delayAppMeasurementInit: true,
-        userTrackingUsageDescription:
-          'Allowing tracking shows more relevant ads. PepperedApron stays free either way.',
       },
     ],
     // Order matters: apple-targets must create the widget target before expo-live-activity adds its own.

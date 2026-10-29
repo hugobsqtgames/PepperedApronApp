@@ -436,8 +436,6 @@ const it: Translations = {
     unitsMetric: 'Metrico (g, ml, °C)',
     unitsImperial: 'Imperiale (oz, cup, °F)',
     defaultServings: 'Porzioni predefinite',
-    ads: 'Opzioni pubblicitarie',
-    adsBody: 'Gestisci il consenso alla pubblicità personalizzata.',
     privacyPolicy: 'Informativa sulla privacy',
     terms: 'Condizioni d’uso',
     legalNotice: 'Note legali',
@@ -448,9 +446,9 @@ const it: Translations = {
     deleteWord: 'ELIMINA',
     privacyTitle: 'I tuoi dati restano tuoi',
     privacyBody:
-      'Nessun account, nessun server: ricette, liste e planning sono salvati su questo dispositivo e nel tuo iCloud privato, se lo attivi. Non riceviamo nessuno dei tuoi dati. Solo la pubblicità (Google AdMob) segue le tue scelte di consenso.',
+      'Nessun account, nessun server, nessuna pubblicità: ricette, liste e planning sono salvati su questo dispositivo e nel tuo iCloud privato, se lo attivi. Non riceviamo nessuno dei tuoi dati.',
     privacyBodyAndroid:
-      'Nessun account, nessun server: ricette, liste e planning sono salvati su questo telefono. Non riceviamo nessuno dei tuoi dati. Solo la pubblicità (Google AdMob) segue le tue scelte di consenso.',
+      'Nessun account, nessun server, nessuna pubblicità: ricette, liste e planning sono salvati su questo telefono. Non riceviamo nessuno dei tuoi dati.',
     backup: 'Backup',
     import: 'Importa un backup',
     importBody:
@@ -475,7 +473,7 @@ const it: Translations = {
     q3: 'Come importo da TikTok o Instagram?',
     a3: 'Nell’app, tocca Condividi e poi PepperedApron. Recuperiamo link, descrizione e immagine quando la piattaforma li rende accessibili.',
     q4: 'L’app è a pagamento?',
-    a4: 'No. PepperedApron è gratuita ed è finanziata da pubblicità discreta. Nessun abbonamento.',
+    a4: 'No. PepperedApron è gratuita, senza pubblicità e senza abbonamento.',
     body: 'Una domanda, un bug, un’idea? Scrivici a {{email}}: rispondiamo a ogni messaggio.',
     write: 'Scrivi un’e-mail',
     website: 'Aiuto online',
@@ -523,7 +521,6 @@ const it: Translations = {
     minutesAgo_other: '{{count}} min fa',
     at: 'alle {{time}}',
   },
-  ads: { label: 'Pubblicità' },
 };
 
 export default it;

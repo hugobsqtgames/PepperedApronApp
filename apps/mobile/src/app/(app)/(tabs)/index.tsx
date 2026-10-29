@@ -4,7 +4,6 @@ import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 import { computeTotalMinutes, toIsoDate, type RecipeCategory } from '@pepperedapron/core';
-import { AdSlot } from '../../../features/AdSlot';
 import { CategoryGrid } from '../../../features/home/CategoryGrid';
 import { RecipeCarousel } from '../../../features/home/Carousel';
 import { useLive, useRepos, useRuntime, useSettings } from '../../../hooks/runtime';
@@ -260,7 +259,6 @@ export default function Home() {
                 <RecipeCarousel recipes={data.quick} repos={repos} favorites={data.favoriteIds} />
               </Section>
             ) : null}
-            <AdSlot placement="home" />
             <Section title={t('home.recent')}>
               <RecipeCarousel recipes={data.recent} repos={repos} favorites={data.favoriteIds} />
             </Section>

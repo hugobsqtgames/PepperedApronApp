@@ -34,4 +34,4 @@ Les scénarios s'appuient sur des `testID` stables (pas sur les textes traduits)
 
 ## Vérifications manuelles avant publication
 
-Checklist dans [RELEASE.md](RELEASE.md#checklist-avant-soumission) : appareils réels (iPhone petit et grand écran, iPad en portrait/paysage/Split View, Android), synchro iCloud entre iPhone et iPad, VoiceOver/TalkBack, grande taille de texte, mode sombre, mode avion, extension de partage depuis TikTok/Instagram/Safari/Photos, widgets, Live Activity, notifications, publicité avec consentement refusé.
+Checklist dans [RELEASE.md](RELEASE.md#checklist-avant-soumission) : appareils réels (iPhone petit et grand écran, iPad en portrait/paysage/Split View, Android), synchro iCloud entre iPhone et iPad, VoiceOver/TalkBack, grande taille de texte, mode sombre, mode avion, extension de partage depuis TikTok/Instagram/Safari/Photos, widgets, Live Activity, notifications.

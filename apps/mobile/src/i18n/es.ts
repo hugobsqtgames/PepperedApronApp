@@ -433,8 +433,6 @@ const es: Translations = {
     unitsMetric: 'Métrico (g, ml, °C)',
     unitsImperial: 'Imperial (oz, tazas, °F)',
     defaultServings: 'Raciones por defecto',
-    ads: 'Opciones de publicidad',
-    adsBody: 'Gestiona tu consentimiento para la publicidad personalizada.',
     privacyPolicy: 'Política de privacidad',
     terms: 'Condiciones de uso',
     legalNotice: 'Aviso legal',
@@ -445,9 +443,9 @@ const es: Translations = {
     deleteWord: 'ELIMINAR',
     privacyTitle: 'Tus datos se quedan contigo',
     privacyBody:
-      'Sin cuenta ni servidor: tus recetas, listas y planificación se guardan en este dispositivo y en tu iCloud privado, si lo activas. Nunca recibimos tus datos. Solo la publicidad (Google AdMob) sigue tus opciones de consentimiento.',
+      'Sin cuenta, sin servidor y sin publicidad: tus recetas, listas y planificación se guardan en este dispositivo y en tu iCloud privado, si lo activas. Nunca recibimos tus datos.',
     privacyBodyAndroid:
-      'Sin cuenta ni servidor: tus recetas, listas y planificación se guardan en este teléfono. Nunca recibimos tus datos. Solo la publicidad (Google AdMob) sigue tus opciones de consentimiento.',
+      'Sin cuenta, sin servidor y sin publicidad: tus recetas, listas y planificación se guardan en este teléfono. Nunca recibimos tus datos.',
     backup: 'Copia de seguridad',
     import: 'Importar una copia',
     importBody: 'Añade las recetas de un archivo exportado desde PepperedApron, sin borrar nada.',
@@ -471,7 +469,7 @@ const es: Translations = {
     q3: '¿Cómo importo desde TikTok o Instagram?',
     a3: 'En la app, toca Compartir y luego PepperedApron. Recuperamos el enlace, la descripción y la imagen cuando la plataforma los hace accesibles.',
     q4: '¿La app es de pago?',
-    a4: 'No. PepperedApron es gratuita y se financia con publicidad discreta. Sin suscripción.',
+    a4: 'No. PepperedApron es gratuita, sin publicidad y sin suscripción.',
     body: '¿Una pregunta, un error, una idea? Escríbenos a {{email}}; respondemos a todos los mensajes.',
     write: 'Enviar un correo',
     website: 'Ayuda en línea',
@@ -519,7 +517,6 @@ const es: Translations = {
     minutesAgo_other: 'hace {{count}} min',
     at: 'a las {{time}}',
   },
-  ads: { label: 'Publicidad' },
 };
 
 export default es;

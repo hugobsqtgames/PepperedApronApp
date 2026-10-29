@@ -38,7 +38,6 @@ export default function Welcome() {
   const last = index === SLIDES.length - 1;
   const [askName, setAskName] = useState(false);
   const [name, setName] = useState('');
-  // The app then opens and asks for ad consent once (Google's form, only where required).
   const start = (firstName: string | null) =>
     repos.updateSettings({ firstName, onboardingDone: true });
   const photoH = Math.min(height * 0.5, 520);

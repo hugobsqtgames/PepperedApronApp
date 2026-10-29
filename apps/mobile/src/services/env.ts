@@ -14,10 +14,6 @@ export const ENV = {
   supportEmail: extra.supportEmail ?? 'support@pepperedapron.app',
   appGroup: extra.appGroup ?? 'group.app.pepperedapron.dev',
   appVersion: Constants.expoConfig?.version ?? '2.0.0',
-  admob: {
-    iosBanner: process.env.EXPO_PUBLIC_ADMOB_IOS_BANNER,
-    androidBanner: process.env.EXPO_PUBLIC_ADMOB_ANDROID_BANNER,
-  },
 };
 
 /** A page of the website, in the user's language when available (fr, en, es, de, it). */

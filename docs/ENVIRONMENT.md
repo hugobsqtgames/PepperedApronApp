@@ -13,10 +13,8 @@ Lues au moment du build par `app.config.ts`. Les variables `EXPO_PUBLIC_*` sont 
 | `EAS_PROJECT_ID` | projet EAS (builds) |
 | `SITE_URL` | site public (défaut `https://pepperedapron.app`) : l'app y ouvre l'aide et les pages légales |
 | `SUPPORT_EMAIL` | adresse affichée dans Aide (défaut `support@pepperedapron.app`) |
-| `ADMOB_IOS_APP_ID`, `ADMOB_ANDROID_APP_ID` | identifiants d'application AdMob ; **obligatoires** pour un build de production, identifiants de test Google sinon |
-| `EXPO_PUBLIC_ADMOB_IOS_BANNER`, `EXPO_PUBLIC_ADMOB_ANDROID_BANNER` | blocs d'annonces ; en production, absents = aucune publicité |
 
-Pour les builds EAS, ces valeurs se définissent dans les **environnements EAS** (`development`, `preview`, `production`) : `eas env:create --environment production --name ADMOB_IOS_APP_ID --value … --visibility plaintext`. Le seul secret côté GitHub est `EXPO_TOKEN`.
+Pour les builds EAS, ces valeurs se définissent dans les **environnements EAS** (`development`, `preview`, `production`) : `eas env:create --environment production --name APPLE_TEAM_ID --value … --visibility plaintext`. Le seul secret côté GitHub est `EXPO_TOKEN`.
 
 ## Site (`apps/site`)
 
@@ -38,4 +36,3 @@ Le build de production (`--production`) **échoue** si l'une des quatre premièr
 |---|---|---|---|
 | App | `app.pepperedapron.dev` | `app.pepperedapron.staging` | `app.pepperedapron` |
 | Conteneur iCloud | `iCloud.app.pepperedapron.dev` (environnement Development) | `iCloud.app.pepperedapron.staging` | `iCloud.app.pepperedapron` |
-| Publicité | identifiants de test Google | identifiants de test Google | vrais identifiants |

@@ -15,7 +15,6 @@ import {
   type SearchFilters,
   type Season,
 } from '@pepperedapron/core';
-import { AdSlot } from '../../../features/AdSlot';
 import { useLive, useRepos } from '../../../hooks/runtime';
 import { tileWidth, useLayout } from '../../../lib/layout';
 import { haptic } from '../../../services/haptics';
@@ -96,13 +95,6 @@ export default function Search() {
   const cols = layout.sidebar ? Math.max(2, layout.columns - 1) : layout.columns;
   const available = layout.sidebar ? layout.width - 260 : layout.width;
   const w = tileWidth(available, cols, space.md, layout.gutter);
-  const rows = useMemo(() => {
-    const items: ({ kind: 'recipe'; r: (typeof results)[number] } | { kind: 'ad' })[] = results.map(
-      (r) => ({ kind: 'recipe' as const, r }),
-    );
-    if (items.length > 8) items.splice(8, 0, { kind: 'ad' });
-    return items;
-  }, [results]);
   const filterCount =
     filters.categories.length +
     filters.seasons.length +
@@ -258,9 +250,9 @@ export default function Search() {
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.background }}>
       <FlatList
         key={cols}
-        data={rows}
+        data={results}
         numColumns={cols}
-        keyExtractor={(item, i) => (item.kind === 'ad' ? `ad-${i}` : item.r.recipe.id)}
+        keyExtractor={(item) => item.recipe.id}
         ListHeaderComponent={header}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
@@ -269,37 +261,31 @@ export default function Search() {
           cols > 1 ? { gap: space.md, paddingHorizontal: layout.gutter } : undefined
         }
         contentContainerStyle={{ gap: space.lg, paddingBottom: space.huge * 2 }}
-        renderItem={({ item }) =>
-          item.kind === 'ad' ? (
-            <View style={{ width: layout.width - layout.gutter * 2 - (layout.sidebar ? 260 : 0) }}>
-              <AdSlot placement="search" />
-            </View>
-          ) : (
-            <View style={{ width: w, gap: 4 }}>
-              <RecipeCard
-                recipe={item.r.recipe.record}
-                width={w}
-                favorite={all.favs.has(item.r.recipe.id)}
-                onToggleFavorite={() => {
-                  haptic.light();
-                  void repos.toggleFavorite(item.r.recipe.id);
-                }}
-                onPress={() => router.push(`/recipe/${item.r.recipe.id}`)}
-              />
-              {mode === 'fridge' ? (
-                <Text
-                  variant="caption"
-                  color={item.r.missing.length ? 'accent' : 'primary'}
-                  numberOfLines={2}
-                >
-                  {item.r.missing.length
-                    ? t('search.missing', { list: item.r.missing.slice(0, 4).join(', ') })
-                    : t('search.haveAll')}
-                </Text>
-              ) : null}
-            </View>
-          )
-        }
+        renderItem={({ item }) => (
+          <View style={{ width: w, gap: 4 }}>
+            <RecipeCard
+              recipe={item.recipe.record}
+              width={w}
+              favorite={all.favs.has(item.recipe.id)}
+              onToggleFavorite={() => {
+                haptic.light();
+                void repos.toggleFavorite(item.recipe.id);
+              }}
+              onPress={() => router.push(`/recipe/${item.recipe.id}`)}
+            />
+            {mode === 'fridge' ? (
+              <Text
+                variant="caption"
+                color={item.missing.length ? 'accent' : 'primary'}
+                numberOfLines={2}
+              >
+                {item.missing.length
+                  ? t('search.missing', { list: item.missing.slice(0, 4).join(', ') })
+                  : t('search.haveAll')}
+              </Text>
+            ) : null}
+          </View>
+        )}
         ListEmptyComponent={
           active ? (
             <EmptyState

@@ -20,7 +20,7 @@ export const UI = {
       'Mode cuisine avec minuteurs, widgets et Live Activities.',
       'Aucun compte : vos données restent sur votre appareil et dans votre iCloud.',
     ],
-    free: 'Gratuit, financé par une publicité discrète, jamais pendant que vous cuisinez.',
+    free: 'Gratuit, sans publicité, sans abonnement.',
     englishOnly: '',
   },
   en: {
@@ -37,7 +37,7 @@ export const UI = {
       'Cook mode with timers, widgets and Live Activities.',
       'No account: your data stays on your device and in your iCloud.',
     ],
-    free: 'Free, funded by unobtrusive ads, never while you cook.',
+    free: 'Free, with no ads and no subscription.',
     englishOnly: '',
   },
   es: {
@@ -55,7 +55,7 @@ export const UI = {
       'Modo cocina con temporizadores, widgets y Live Activities.',
       'Sin cuenta: tus datos se quedan en tu dispositivo y en tu iCloud.',
     ],
-    free: 'Gratis, financiada con publicidad discreta, nunca mientras cocinas.',
+    free: 'Gratis, sin publicidad y sin suscripción.',
     englishOnly: 'Este documento solo está disponible en inglés y francés.',
   },
   de: {
@@ -72,7 +72,7 @@ export const UI = {
       'Kochmodus mit Timern, Widgets und Live Activities.',
       'Kein Konto: Deine Daten bleiben auf deinem Gerät und in deiner iCloud.',
     ],
-    free: 'Kostenlos, finanziert durch dezente Werbung – nie beim Kochen.',
+    free: 'Kostenlos, ohne Werbung und ohne Abo.',
     englishOnly: 'Dieses Dokument ist nur auf Englisch und Französisch verfügbar.',
   },
   it: {
@@ -89,7 +89,7 @@ export const UI = {
       'Modalità cucina con timer, widget e Live Activities.',
       'Nessun account: i tuoi dati restano sul dispositivo e nel tuo iCloud.',
     ],
-    free: 'Gratuita, finanziata da pubblicità discreta, mai mentre cucini.',
+    free: 'Gratuita, senza pubblicità e senza abbonamento.',
     englishOnly: 'Questo documento è disponibile solo in inglese e francese.',
   },
 };
@@ -122,7 +122,7 @@ export const FAQ = {
       ],
       [
         'L’app est-elle payante ?',
-        'Non. PepperedApron est gratuite et financée par une publicité discrète, jamais affichée en mode cuisine. Aucun abonnement.',
+        'Non. PepperedApron est gratuite, sans publicité et sans abonnement.',
       ],
       [
         'Comment effacer mes données ?',
@@ -152,10 +152,7 @@ export const FAQ = {
         'How do I import from TikTok or Instagram?',
         'In TikTok or Instagram, tap Share, then PepperedApron. We fetch the link, description and image when the platform makes them public; you complete the rest.',
       ],
-      [
-        'Is the app paid?',
-        'No. PepperedApron is free and funded by unobtrusive ads, never shown in cook mode. No subscription.',
-      ],
+      ['Is the app paid?', 'No. PepperedApron is free, with no ads and no subscription.'],
       [
         'How do I delete my data?',
         'Settings → My data → Delete all my data. Deleting the app also erases the data on the device; iCloud data is managed in Settings → [your name] → iCloud.',
@@ -184,10 +181,7 @@ export const FAQ = {
         '¿Cómo importo desde TikTok o Instagram?',
         'En TikTok o Instagram, toca Compartir y luego PepperedApron. Recuperamos el enlace, la descripción y la imagen cuando la plataforma los hace públicos; tú completas el resto.',
       ],
-      [
-        '¿La app es de pago?',
-        'No. PepperedApron es gratuita y se financia con publicidad discreta, nunca en el modo cocina. Sin suscripción.',
-      ],
+      ['¿La app es de pago?', 'No. PepperedApron es gratuita, sin publicidad y sin suscripción.'],
       [
         '¿Cómo borro mis datos?',
         'Ajustes → Mis datos → Borrar todos mis datos. Eliminar la app también borra los datos del dispositivo; los datos de iCloud se gestionan en Ajustes → [tu nombre] → iCloud.',
@@ -221,7 +215,7 @@ export const FAQ = {
       ],
       [
         'Ist die App kostenpflichtig?',
-        'Nein. PepperedApron ist kostenlos und wird durch dezente Werbung finanziert, nie im Kochmodus. Kein Abo.',
+        'Nein. PepperedApron ist kostenlos, ohne Werbung und ohne Abo.',
       ],
       [
         'Wie lösche ich meine Daten?',
@@ -253,7 +247,7 @@ export const FAQ = {
       ],
       [
         'L’app è a pagamento?',
-        'No. PepperedApron è gratuita ed è finanziata da pubblicità discreta, mai in modalità cucina. Nessun abbonamento.',
+        'No. PepperedApron è gratuita, senza pubblicità e senza abbonamento.',
       ],
       [
         'Come cancello i miei dati?',
@@ -274,24 +268,22 @@ export const LEGAL = {
     terms: (p) => ({
       title: "Conditions d'utilisation",
       html: `<h1>Conditions générales d'utilisation</h1><p class="muted">Mise à jour : ${UPDATED}</p><div class="card">
-<h2>1. Objet</h2><p>PepperedApron est une application gratuite permettant d'organiser ses recettes, de planifier ses repas et de gérer ses listes de courses. Elle est financée par de la publicité. Aucun compte n'est nécessaire.</p>
+<h2>1. Objet</h2><p>PepperedApron est une application gratuite permettant d'organiser ses recettes, de planifier ses repas et de gérer ses listes de courses. Elle ne contient aucune publicité. Aucun compte n'est nécessaire.</p>
 <h2>2. Vos données</h2><p>Vos contenus sont enregistrés uniquement sur votre appareil et, si vous activez la synchronisation, dans votre iCloud, service fourni par Apple selon ses propres conditions. L'éditeur n'y a pas accès et ne peut pas les restaurer : pensez à garder iCloud activé ou à exporter régulièrement une sauvegarde (Réglages → Mes données).</p>
 <h2>3. Contenus</h2><p>Vous restez propriétaire des recettes et photos que vous ajoutez. Les contenus importés depuis d'autres services restent soumis aux droits de leurs auteurs : ils sont destinés à votre usage personnel.</p>
 <h2>4. Responsabilité</h2><p>Vérifiez les allergènes, temps de cuisson et températures des recettes. L'application est fournie « en l'état », sans garantie de disponibilité ; l'éditeur ne saurait être tenu responsable d'une perte de données stockées sur votre appareil ou votre iCloud.</p>
-<h2>5. Publicité</h2><p>Des bannières publicitaires (Google AdMob) sont affichées hors du mode cuisine, selon vos choix de consentement, modifiables dans Réglages → Confidentialité.</p>
-<h2>6. Droit applicable</h2><p>Droit français. Contact : ${mail(p)}.</p></div>`,
+<h2>5. Droit applicable</h2><p>Droit français. Contact : ${mail(p)}.</p></div>`,
     }),
     privacy: (p) => ({
       title: 'Politique de confidentialité',
       html: `<h1>Politique de confidentialité</h1><p class="muted">Mise à jour : ${UPDATED}</p><div class="card">
-<h2>En bref</h2><p>PepperedApron n'a ni compte, ni serveur. Vos recettes, photos, listes, planning et réglages restent sur votre appareil et, si vous l'activez, dans votre iCloud privé. L'éditeur ne reçoit, ne stocke et ne vend aucune de ces données.</p>
+<h2>En bref</h2><p>PepperedApron n'a ni compte, ni serveur, ni publicité, ni mesure d'audience. Vos recettes, photos, listes, planning et réglages restent sur votre appareil et, si vous l'activez, dans votre iCloud privé. L'éditeur ne reçoit, ne stocke et ne vend aucune de ces données.</p>
 <h2>Responsable de traitement</h2><p>${p.publisher}, ${p.address} — ${mail(p)}</p>
 <h2>Données sur votre appareil et dans iCloud</h2><p>Vos contenus sont stockés localement. Sur iPhone et iPad, la synchronisation iCloud (activée par défaut, désactivable dans Réglages → Mes données) les copie dans le conteneur privé de l'app dans votre compte iCloud, géré par Apple (voir la politique de confidentialité d'Apple). L'éditeur n'y a pas accès. Sur Android, les données peuvent être incluses dans la sauvegarde Google de votre appareil si vous l'avez activée.</p>
 <h2>Import depuis un lien</h2><p>Lorsque vous importez une recette depuis un lien, l'app contacte directement le site concerné (ou le service oEmbed de TikTok ou YouTube), comme le ferait un navigateur. Ce site reçoit alors votre adresse IP selon sa propre politique.</p>
 <h2>Photos et texte</h2><p>L'appareil photo et la photothèque ne sont utilisés que lorsque vous le demandez. La lecture du texte d'une photo se fait sur l'appareil ; rien n'est envoyé.</p>
-<h2>Publicité</h2><p>La régie Google AdMob peut traiter des identifiants publicitaires et des informations techniques sur l'appareil selon vos choix de consentement (formulaire de consentement de Google et, sur iOS, autorisation de suivi). Base légale : votre consentement, modifiable à tout moment dans Réglages → Confidentialité → Choix publicitaires.</p>
 <h2>Nous contacter</h2><p>Si vous nous écrivez par e-mail, nous utilisons votre adresse et votre message uniquement pour vous répondre, et les conservons au plus 3 ans.</p>
-<h2>Vos droits</h2><p>Vos contenus sont sous votre contrôle : export et suppression dans Réglages → Mes données. Pour toute question ou pour exercer vos droits d'accès, de rectification, d'effacement, d'opposition et de retrait du consentement : ${mail(p)}. Réclamation possible auprès de la CNIL (cnil.fr).</p>
+<h2>Vos droits</h2><p>Vos contenus sont sous votre contrôle : export et suppression dans Réglages → Mes données. Pour toute question ou pour exercer vos droits d'accès, de rectification, d'effacement, et d'opposition : ${mail(p)}. Réclamation possible auprès de la CNIL (cnil.fr).</p>
 <h2>Enfants</h2><p>L'application ne collecte sciemment aucune donnée personnelle d'enfants.</p>
 <h2>Ce site</h2><p>Ce site n'utilise ni cookie ni traceur.</p></div>`,
     }),
@@ -304,24 +296,22 @@ export const LEGAL = {
     terms: (p) => ({
       title: 'Terms of use',
       html: `<h1>Terms of use</h1><p class="muted">Updated: ${UPDATED}</p><div class="card">
-<h2>1. Service</h2><p>PepperedApron is a free, ad-supported app to organise recipes, plan meals and manage shopping lists. No account is needed.</p>
+<h2>1. Service</h2><p>PepperedApron is a free app, without ads, to organise recipes, plan meals and manage shopping lists. No account is needed.</p>
 <h2>2. Your data</h2><p>Your content is stored only on your device and, if you turn on sync, in your iCloud, a service provided by Apple under its own terms. The publisher has no access to it and cannot restore it: keep iCloud on or export a backup regularly (Settings → My data).</p>
 <h2>3. Content</h2><p>You keep ownership of the recipes and photos you add. Content imported from other services remains subject to its authors' rights and is meant for your personal use.</p>
 <h2>4. Liability</h2><p>Check allergens, cooking times and temperatures. The app is provided "as is", without any availability guarantee; the publisher cannot be held liable for the loss of data stored on your device or in your iCloud.</p>
-<h2>5. Advertising</h2><p>Banner ads (Google AdMob) are shown outside cook mode, according to your consent choices, which you can change in Settings → Privacy.</p>
-<h2>6. Governing law</h2><p>French law. Contact: ${mail(p)}.</p></div>`,
+<h2>5. Governing law</h2><p>French law. Contact: ${mail(p)}.</p></div>`,
     }),
     privacy: (p) => ({
       title: 'Privacy policy',
       html: `<h1>Privacy policy</h1><p class="muted">Updated: ${UPDATED}</p><div class="card">
-<h2>In short</h2><p>PepperedApron has no account and no server. Your recipes, photos, lists, meal plan and settings stay on your device and, if you turn it on, in your private iCloud. The publisher never receives, stores or sells any of this data.</p>
+<h2>In short</h2><p>PepperedApron has no account, no server, no ads and no analytics. Your recipes, photos, lists, meal plan and settings stay on your device and, if you turn it on, in your private iCloud. The publisher never receives, stores or sells any of this data.</p>
 <h2>Controller</h2><p>${p.publisher}, ${p.address} — ${mail(p)}</p>
 <h2>Data on your device and in iCloud</h2><p>Your content is stored locally. On iPhone and iPad, iCloud sync (on by default, can be turned off in Settings → My data) copies it to the app's private container in your iCloud account, operated by Apple (see Apple's privacy policy). The publisher has no access to it. On Android, the data may be included in your device's Google backup if you turned it on.</p>
 <h2>Importing from a link</h2><p>When you import a recipe from a link, the app contacts that website (or the TikTok or YouTube oEmbed service) directly, like a browser would. That website then receives your IP address under its own policy.</p>
 <h2>Photos and text</h2><p>The camera and photo library are only used when you ask. Reading the text of a photo happens on the device; nothing is sent.</p>
-<h2>Advertising</h2><p>Google AdMob may process advertising identifiers and technical device information according to your consent choices (Google's consent form and, on iOS, tracking permission). Legal basis: your consent, which you can change at any time in Settings → Privacy → Ad choices.</p>
 <h2>Contacting us</h2><p>If you e-mail us, we use your address and message only to answer you and keep them for at most 3 years.</p>
-<h2>Your rights</h2><p>Your content is under your control: export and deletion in Settings → My data. For any question, or to exercise your rights of access, rectification, erasure, objection and withdrawal of consent: ${mail(p)}. You may lodge a complaint with your data protection authority.</p>
+<h2>Your rights</h2><p>Your content is under your control: export and deletion in Settings → My data. For any question, or to exercise your rights of access, rectification, erasure, and objection: ${mail(p)}. You may lodge a complaint with your data protection authority.</p>
 <h2>Children</h2><p>The app does not knowingly collect personal data from children.</p>
 <h2>This website</h2><p>This website uses no cookies or trackers.</p></div>`,
     }),

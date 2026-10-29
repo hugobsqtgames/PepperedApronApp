@@ -433,8 +433,6 @@ const fr = {
     unitsMetric: 'Métrique (g, ml, °C)',
     unitsImperial: 'Impérial (oz, cups, °F)',
     defaultServings: 'Portions par défaut',
-    ads: 'Choix publicitaires',
-    adsBody: 'Gérez votre consentement pour la publicité personnalisée.',
     privacyPolicy: 'Politique de confidentialité',
     terms: 'Conditions d’utilisation',
     legalNotice: 'Mentions légales',
@@ -445,9 +443,9 @@ const fr = {
     deleteWord: 'SUPPRIMER',
     privacyTitle: 'Vos données restent chez vous',
     privacyBody:
-      'Pas de compte, pas de serveur : vos recettes, listes et votre planning sont enregistrés sur cet appareil et dans votre iCloud privé, si vous l’activez. Nous ne recevons aucune de vos données. Seule la publicité (Google AdMob) suit vos choix de consentement.',
+      'Pas de compte, pas de serveur, pas de publicité : vos recettes, listes et votre planning sont enregistrés sur cet appareil et dans votre iCloud privé, si vous l’activez. Nous ne recevons aucune de vos données.',
     privacyBodyAndroid:
-      'Pas de compte, pas de serveur : vos recettes, listes et votre planning sont enregistrés sur ce téléphone. Nous ne recevons aucune de vos données. Seule la publicité (Google AdMob) suit vos choix de consentement.',
+      'Pas de compte, pas de serveur, pas de publicité : vos recettes, listes et votre planning sont enregistrés sur ce téléphone. Nous ne recevons aucune de vos données.',
     backup: 'Sauvegarde',
     import: 'Importer une sauvegarde',
     importBody: 'Ajoute les recettes d’un fichier exporté depuis PepperedApron, sans rien effacer.',
@@ -471,7 +469,7 @@ const fr = {
     q3: 'Comment importer depuis TikTok ou Instagram ?',
     a3: 'Dans l’app, touchez Partager puis PepperedApron. Nous récupérons le lien, la légende et l’image quand la plateforme les rend accessibles.',
     q4: 'L’app est-elle payante ?',
-    a4: 'Non. PepperedApron est gratuite, financée par une publicité discrète. Aucun abonnement.',
+    a4: 'Non. PepperedApron est gratuite, sans publicité et sans abonnement.',
     body: 'Une question, un bug, une idée ? Écrivez-nous à {{email}}, nous répondons à chaque message.',
     write: 'Écrire un e-mail',
     website: 'Aide en ligne',
@@ -519,7 +517,6 @@ const fr = {
     minutesAgo_other: 'il y a {{count}} min',
     at: 'à {{time}}',
   },
-  ads: { label: 'Publicité' },
 };
 
 export default fr;

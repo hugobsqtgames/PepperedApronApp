@@ -12,7 +12,7 @@
 | Photos | Fichiers JPEG dans `Documents/photos` (1600 px, EXIF supprimé), copiés dans iCloud | Simples, sauvegardés, partagés entre recettes dupliquées. |
 | Import de liens | **Sur l'appareil** : oEmbed (TikTok, YouTube), schema.org/JSON-LD, OpenGraph | Aucun intermédiaire ; le site importé voit l'appareil comme un navigateur. |
 | Notifications | **Locales uniquement** (rappels de repas, planning, minuteurs) | Aucun serveur de push. |
-| Pub | Google AdMob (`react-native-google-mobile-ads`) + UMP (consentement RGPD) derrière `services/ads.ts` | Régie remplaçable. |
+| Publicité, analytics | **Aucune** | Aucun SDK tiers qui collecte des données : rien n'est envoyé à personne. |
 | OCR | Sur l'appareil (`expo-text-extractor` : Apple Vision / ML Kit) | Gratuit, privé, hors ligne. |
 | Site (confidentialité, aide) | HTML statique généré (`apps/site`), GitHub Pages | URL exigées par les stores, zéro coût, aucun cookie. |
 | CI/CD | GitHub Actions + EAS Build/Submit | |
@@ -67,7 +67,7 @@ Résumé (détails dans [SYNC.md](SYNC.md)) : chaque modification reçoit un hor
 
 ## 6. Environnements
 
-`development`, `staging`, `production` : identifiant d'app (`app.pepperedapron.dev`, `.staging`, sans suffixe), nom affiché, App Group et **conteneur iCloud distincts** (`iCloud.<bundleId>`) — les données de test ne se mélangent jamais aux vraies. Identifiants AdMob de test hors production.
+`development`, `staging`, `production` : identifiant d'app (`app.pepperedapron.dev`, `.staging`, sans suffixe), nom affiché, App Group et **conteneur iCloud distincts** (`iCloud.<bundleId>`) — les données de test ne se mélangent jamais aux vraies.
 
 ## 7. Coûts
 
