@@ -199,3 +199,40 @@ export function captionTitle(caption: string): string | null {
     .trim();
   return out ? out.slice(0, 120) : null;
 }
+
+/** Caption of Instagram's public embed page (`/p/<code>/embed/captioned/`). */
+export function instagramEmbedCaption(
+  html: string,
+): { caption: string; author: string | null; image: string | null } | null {
+  const block = html.match(/<div class="Caption">([\s\S]*?)<\/div>/)?.[1];
+  if (!block) return null;
+  const author = block.match(/class="CaptionUsername"[^>]*>([^<]+)</)?.[1]?.trim() ?? null;
+  const text = decodeEntities(
+    block
+      .replace(/<a class="CaptionUsername"[\s\S]*?<\/a>/, '')
+      .replace(/<br\s*\/?>/gi, '\n')
+      .replace(/<[^>]+>/g, ''),
+  )
+    .split('\n')
+    .map((l) => l.trim())
+    .join('\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+  const img = html.match(/<img[^>]+class="EmbeddedMediaImage"[^>]+src="([^"]+)"/)?.[1];
+  const image = img ? decodeEntities(img) : null;
+  return text
+    ? { caption: text, author, image: image && /^https:\/\//.test(image) ? image : null }
+    : null;
+}
+
+function decodeEntities(s: string): string {
+  return s
+    .replace(/&#x([0-9a-f]+);/gi, (_, h: string) => String.fromCodePoint(parseInt(h, 16)))
+    .replace(/&#(\d+);/g, (_, d: string) => String.fromCodePoint(Number(d)))
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'")
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&');
+}

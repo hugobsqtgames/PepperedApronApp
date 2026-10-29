@@ -313,6 +313,8 @@ const en: Translations = {
     received: 'Received from Share',
     speech:
       'Part of this recipe comes from what is said in the video (automatic subtitles): check the ingredients, quantities and steps. The full transcript is in the notes.',
+    instagramPrivate:
+      'Instagram doesn’t give access to this post’s caption (private account?). The link is saved. Tip: take a screenshot of the caption, then “+” → “From a photo”: the text is read automatically.',
   },
   cook: {
     step: 'Step {{n}} of {{total}}',

@@ -190,16 +190,13 @@ export function parseHtmlMeta(html: string): {
   const head = html.slice(0, 300_000);
   const meta = (names: string[]): string | null => {
     for (const n of names) {
-      const re1 = new RegExp(
-        `<meta[^>]+(?:property|name)\\s*=\\s*["']${n}["'][^>]*content\\s*=\\s*["']([^"']*)["']`,
-        'i',
-      );
-      const re2 = new RegExp(
-        `<meta[^>]+content\\s*=\\s*["']([^"']*)["'][^>]*(?:property|name)\\s*=\\s*["']${n}["']`,
-        'i',
-      );
+      // Quote-aware: a caption in content="…" may contain apostrophes ("l'huile").
+      const value = `content\\s*=\\s*(?:"([^"]*)"|'([^']*)')`;
+      const re1 = new RegExp(`<meta[^>]+(?:property|name)\\s*=\\s*["']${n}["'][^>]*${value}`, 'i');
+      const re2 = new RegExp(`<meta[^>]+${value}[^>]*(?:property|name)\\s*=\\s*["']${n}["']`, 'i');
       const m = head.match(re1) ?? head.match(re2);
-      if (m?.[1]) return decodeHtmlEntities(m[1]).trim() || null;
+      const v = m?.[1] ?? m?.[2];
+      if (v) return decodeHtmlEntities(v).trim() || null;
     }
     return null;
   };

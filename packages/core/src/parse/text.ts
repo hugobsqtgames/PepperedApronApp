@@ -308,8 +308,20 @@ export function parseRecipeText(input: string): RecipeDraft {
   if (!sawHeader) {
     // No headers at all: classify free lines heuristically.
     const rest: string[] = [];
+    let prevIngredient = false;
     for (const l of freeLines) {
       const ing = parseIngredientLine(l);
+      const bullet = /^\s*[-–—•*·▪◦●✓✔]\s*\S/.test(l);
+      // A quantity written as a word ("Une quiche dorée…") is too ambiguous without a header;
+      // a bulleted line next to other ingredients is one even without quantity ("* sel, poivre").
+      const isIngredient: boolean =
+        ing !== null &&
+        l.length <= 80 &&
+        !looksLikeStep(l) &&
+        (bullet
+          ? ing.quantity !== null || prevIngredient
+          : ing.quantity !== null && /^\s*[\d½¼¾⅓⅔⅛]/.test(l));
+      prevIngredient = isIngredient;
       if (
         STEP_PREFIX.test(l) &&
         /^\s*(?:\d{1,2}\s*[.)]|etape|step|paso|schritt|passo)/i.test(normalizeText(l))
@@ -322,8 +334,8 @@ export function parseRecipeText(input: string): RecipeDraft {
             timerSeconds: parseTimerSeconds(t),
             timerLabel: null,
           });
-      } else if (ing && ing.quantity !== null && l.length <= 80 && !looksLikeStep(l)) {
-        draft.ingredients.push({ group: null, ...ing });
+      } else if (isIngredient) {
+        draft.ingredients.push({ group: null, ...ing! });
       } else if (looksLikeStep(l) && draft.ingredients.length > 0) {
         draft.steps.push({
           group: null,

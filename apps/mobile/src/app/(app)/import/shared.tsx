@@ -3,7 +3,7 @@ import { View } from 'react-native';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { emptyDraft } from '@pepperedapron/core';
-import { openDraft, openTextDraft } from '../../../features/recipe/openDraft';
+import { linkNotice, openDraft, openTextDraft } from '../../../features/recipe/openDraft';
 import { importLink } from '../../../services/importer';
 import { shareInbox, type SharedPayload } from '../../../services/shareInbox';
 import { EmptyState, LoadingState, Screen } from '../../../ui';
@@ -46,7 +46,7 @@ export default function SharedImport() {
               res.completeness,
             );
           } else {
-            openDraft(res.draft, { notice: res.fromSpeech ? 'speech' : res.completeness });
+            openDraft(res.draft, { notice: linkNotice(res) });
           }
         } catch {
           // Not a usable link: keep what was shared so the user can complete it.

@@ -332,14 +332,18 @@ export default function RecipeEditor() {
                 styles.notice,
                 {
                   backgroundColor:
-                    draft.notice === 'minimal' ? colors.accentSoft : colors.primarySoft,
+                    draft.notice === 'minimal' || draft.notice === 'instagram'
+                      ? colors.accentSoft
+                      : colors.primarySoft,
                 },
               ]}
             >
               <Icon
                 name="information-circle-outline"
                 size={20}
-                color={draft.notice === 'minimal' ? 'accent' : 'primary'}
+                color={
+                  draft.notice === 'minimal' || draft.notice === 'instagram' ? 'accent' : 'primary'
+                }
               />
               <Text variant="callout" style={{ flex: 1 }}>
                 {draft.notice === 'full'
@@ -350,7 +354,9 @@ export default function RecipeEditor() {
                       ? t('import.partial')
                       : draft.notice === 'speech'
                         ? t('import.speech')
-                        : t('editor.importedNotice')}
+                        : draft.notice === 'instagram'
+                          ? t('import.instagramPrivate')
+                          : t('editor.importedNotice')}
               </Text>
             </View>
           ) : null}

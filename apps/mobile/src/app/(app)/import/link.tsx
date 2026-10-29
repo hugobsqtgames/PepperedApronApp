@@ -4,7 +4,7 @@ import * as Clipboard from 'expo-clipboard';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { ImportUrlError } from '@pepperedapron/core';
-import { openDraft } from '../../../features/recipe/openDraft';
+import { linkNotice, openDraft } from '../../../features/recipe/openDraft';
 import { errorMessage } from '../../../lib/errors';
 import { importLink } from '../../../services/importer';
 import { space } from '../../../theme/tokens';
@@ -27,7 +27,7 @@ export default function ImportLink() {
     try {
       // Offline or unreadable pages still open a draft keeping the link: nothing is lost.
       const res = await importLink(raw);
-      openDraft(res.draft, { notice: res.fromSpeech ? 'speech' : res.completeness });
+      openDraft(res.draft, { notice: linkNotice(res) });
     } catch (e) {
       setError(e instanceof ImportUrlError ? t('errors.invalid_url') : errorMessage(e, t));
     } finally {

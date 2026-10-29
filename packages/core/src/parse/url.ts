@@ -3,6 +3,7 @@ import { parseHtmlMeta, parseJsonLdRecipe } from './jsonld';
 import {
   captionTitle,
   instagramCaption,
+  instagramEmbedCaption,
   tiktokCaption,
   unflattenCaption,
   youtubeDescription,
@@ -69,7 +70,10 @@ function mergeCaption(draft: RecipeDraft, raw: string | null) {
   const caption = unflattenCaption(raw.trim());
   const parsed = parseRecipeText(caption);
   draft.ingredients = parsed.ingredients;
-  draft.steps = parsed.steps;
+  // "Full recipe on www.…" / "link in bio" lines are not steps (they stay in the notes).
+  draft.steps = parsed.steps.filter(
+    (st) => !/https?:\/\/|www\.|\blink in bio\b|\blien en bio\b/i.test(st.text),
+  );
   draft.tags = parsed.tags;
   draft.servings ??= parsed.servings;
   draft.prepMinutes ??= parsed.prepMinutes;
@@ -98,6 +102,7 @@ export async function importFromUrl(fetchPage: FetchPage, raw: string): Promise<
 
   if (platform === 'tiktok' || platform === 'youtube')
     return importVideo(fetchPage, url, platform, draft);
+  if (platform === 'instagram') return importInstagram(fetchPage, url, draft);
 
   let page: FetchedPage;
   try {
@@ -124,15 +129,62 @@ export async function importFromUrl(fetchPage: FetchPage, raw: string): Promise<
   draft.author = meta.author;
   if (meta.siteName && platform === 'web') draft.source = meta.siteName.slice(0, 100);
   if (meta.description) {
-    if (platform === 'instagram') mergeCaption(draft, instagramCaption(meta.description));
-    else if (platform === 'facebook' || platform === 'pinterest')
-      mergeCaption(draft, meta.description);
+    if (platform === 'facebook' || platform === 'pinterest') mergeCaption(draft, meta.description);
     else draft.description = meta.description.slice(0, 2000);
   }
   return {
     draft,
     platform,
     completeness: draft.ingredients.length || draft.title ? 'partial' : 'minimal',
+  };
+}
+
+/** Post code of an Instagram link (/p/…, /reel/…, /reels/…, /tv/…, with or without a username). */
+export function instagramShortcode(url: URL): string | null {
+  return url.pathname.match(/\/(?:p|reels?|tv)\/([A-Za-z0-9_-]{5,40})/)?.[1] ?? null;
+}
+
+/**
+ * Instagram: the caption (where the recipe is written) comes from the public post page, or else
+ * from the embed page Instagram provides for websites. Nothing behind a login is read.
+ */
+async function importInstagram(
+  fetchPage: FetchPage,
+  url: URL,
+  draft: RecipeDraft,
+): Promise<ImportResult> {
+  const code = instagramShortcode(url);
+  let caption: string | null = null;
+  const pageHtml = await getText(fetchPage, url.toString(), 'text/html,application/xhtml+xml');
+  if (pageHtml) {
+    const meta = parseHtmlMeta(pageHtml);
+    draft.imageUrl = meta.image;
+    // A real caption is quoted after "N likes, N comments - user on date:"; a login page is not.
+    if (meta.description && /:\s*["“]/.test(meta.description))
+      caption = instagramCaption(meta.description);
+  }
+  if (!caption && code) {
+    const embed = await getText(
+      fetchPage,
+      `https://www.instagram.com/p/${code}/embed/captioned/`,
+      'text/html',
+    );
+    const fromEmbed = embed ? instagramEmbedCaption(embed) : null;
+    if (fromEmbed) {
+      caption = fromEmbed.caption;
+      draft.author = fromEmbed.author;
+      draft.imageUrl ??= fromEmbed.image;
+    }
+  }
+  if (caption) {
+    mergeCaption(draft, caption);
+    draft.title = captionTitle(caption) ?? draft.title;
+  }
+  return {
+    draft,
+    platform: 'instagram',
+    completeness:
+      draft.ingredients.length || draft.steps.length || draft.title ? 'partial' : 'minimal',
   };
 }
 

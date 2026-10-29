@@ -316,6 +316,8 @@ const it: Translations = {
     received: 'Ricevuto da Condividi',
     speech:
       'Parte della ricetta deriva da ciò che viene detto nel video (sottotitoli automatici): controlla ingredienti, quantità e passaggi. La trascrizione completa è nelle note.',
+    instagramPrivate:
+      'Instagram non dà accesso alla didascalia di questo post (account privato?). Il link è salvato. Consiglio: fai uno screenshot della didascalia, poi «+» → «Da una foto»: il testo verrà letto automaticamente.',
   },
   cook: {
     step: 'Passaggio {{n}} di {{total}}',

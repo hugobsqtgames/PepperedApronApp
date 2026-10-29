@@ -313,6 +313,8 @@ const es: Translations = {
     received: 'Recibido desde Compartir',
     speech:
       'Parte de la receta viene de lo que se dice en el vídeo (subtítulos automáticos): revisa los ingredientes, las cantidades y los pasos. La transcripción completa está en las notas.',
+    instagramPrivate:
+      'Instagram no da acceso a la descripción de esta publicación (¿cuenta privada?). El enlace se ha guardado. Consejo: haz una captura de pantalla de la descripción y luego «+» → «Desde una foto»: el texto se leerá automáticamente.',
   },
   cook: {
     step: 'Paso {{n}} de {{total}}',

@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { parseRecipeText, type RecipeDraft } from '@pepperedapron/core';
+import { parseRecipeText, type ImportResult, type RecipeDraft } from '@pepperedapron/core';
 import { recipeFromDraft } from '@pepperedapron/client';
 import { runtime } from '../../services/runtime';
 import { draftStore, type EditorDraft } from '../../services/drafts';
@@ -34,4 +34,11 @@ export function openTextDraft(
     } as RecipeDraft,
     { notice, localImageUri },
   );
+}
+
+/** Notice shown in the editor for a link import. */
+export function linkNotice(res: ImportResult): EditorDraft['notice'] {
+  if (res.fromSpeech) return 'speech';
+  if (res.platform === 'instagram' && res.completeness === 'minimal') return 'instagram';
+  return res.completeness;
 }

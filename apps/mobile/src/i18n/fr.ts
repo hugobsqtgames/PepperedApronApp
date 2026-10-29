@@ -313,6 +313,8 @@ const fr = {
     received: 'Reçu depuis le partage',
     speech:
       'Une partie de la recette vient de ce qui est dit dans la vidéo (sous-titres automatiques) : vérifiez les ingrédients, les quantités et les étapes. La transcription complète est dans les notes.',
+    instagramPrivate:
+      'Instagram ne donne pas accès à la légende de cette publication (compte privé ?). Le lien est enregistré. Astuce : faites une capture d’écran de la légende, puis « + » → « Depuis une photo » : le texte sera lu automatiquement.',
   },
   cook: {
     step: 'Étape {{n}} / {{total}}',

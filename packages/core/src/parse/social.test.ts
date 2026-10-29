@@ -147,3 +147,57 @@ describe('importing a video link', () => {
     });
   });
 });
+
+describe('importing an Instagram post', () => {
+  const CAPTION =
+    "🥧 Quiche sans pâte\n\nPour un moule de 24 cm (l'idéal)\n* 3 oeufs\n* 120 g de farine\n* 50 cl de lait\n* sel, poivre, muscade\n\nMélangez tout, versez dans le moule et enfournez à 180° pendant 45 min 😋\n\n📊 Pour 8 parts\n👩🏻‍💻 La recette imprimable sur www.example.fr\n#quiche #recette";
+  const url = 'https://www.instagram.com/reel/DAbc123xyz/?igsh=abc';
+  const esc = (t: string) => t.replace(/"/g, '&quot;').replace(/\n/g, '&#10;');
+
+  it('reads the caption from the public post page', async () => {
+    const page = `<meta property="og:image" content="https://scontent.cdninstagram.com/a.jpg"><meta property="og:description" content="54 likes, 0 comments - chef le November 12, 2024: &quot;${esc(CAPTION)}&quot;.">`;
+    const r = await importFromUrl(fake({ [url]: { body: page } }), url);
+    expect(r.draft).toMatchObject({
+      title: 'Quiche sans pâte',
+      ovenTemperatureC: 180,
+      imageUrl: 'https://scontent.cdninstagram.com/a.jpg',
+    });
+    expect(r.draft.ingredients.map((i) => i.name)).toEqual([
+      'oeufs',
+      'farine',
+      'lait',
+      'sel, poivre, muscade',
+    ]);
+    expect(r.draft.steps.map((s) => s.text)).toEqual([
+      'Mélangez tout, versez dans le moule et enfournez à 180° pendant 45 min 😋',
+    ]);
+  });
+
+  it('falls back to the embed page when the post page asks to log in', async () => {
+    const embed = `<div class="Caption"><a class="CaptionUsername" href="x">chef</a><br /><br />${CAPTION.replace(/\n/g, '<br />')}<div class="CaptionComments"></div></div><img class="EmbeddedMediaImage" src="https://scontent.cdninstagram.com/b.jpg?x=1&amp;y=2">`;
+    const r = await importFromUrl(
+      fake({
+        [url]: {
+          body: '<meta property="og:description" content="Create an account or log in to Instagram">',
+        },
+        'https://www.instagram.com/p/DAbc123xyz/embed/captioned/': { body: embed },
+      }),
+      url,
+    );
+    expect(r.draft).toMatchObject({
+      title: 'Quiche sans pâte',
+      author: 'chef',
+      imageUrl: 'https://scontent.cdninstagram.com/b.jpg?x=1&y=2',
+    });
+    expect(r.draft.ingredients).toHaveLength(4);
+  });
+
+  it('a private post keeps the link and says so', async () => {
+    const r = await importFromUrl(fake({}), url);
+    expect(r).toMatchObject({
+      platform: 'instagram',
+      completeness: 'minimal',
+      draft: { sourceUrl: url },
+    });
+  });
+});
