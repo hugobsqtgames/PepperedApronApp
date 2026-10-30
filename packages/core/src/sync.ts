@@ -70,6 +70,21 @@ export const ENTITY_ORDER: SyncEntity[] = [
   'smartCollection',
 ];
 
+/**
+ * Records that only make sense with their parent: when the parent is deleted on one device while
+ * another device adds a child (favorites a recipe, ticks an item of a list…), the child is
+ * removed after the merge, the same way on every device.
+ */
+export const ENTITY_PARENTS: Partial<Record<SyncEntity, [field: string, parent: SyncEntity][]>> = {
+  favorite: [['recipeId', 'recipe']],
+  collectionItem: [
+    ['recipeId', 'recipe'],
+    ['collectionId', 'collection'],
+  ],
+  cookLog: [['recipeId', 'recipe']],
+  shoppingItem: [['listId', 'shoppingList']],
+};
+
 /** Top-level fields that differ between two versions of a record. */
 export function diffFields(
   before: Record<string, unknown> | null,

@@ -6,6 +6,9 @@ import UniformTypeIdentifiers
 /// Recipes in Spotlight (indexed on the device only, never sent to Apple's servers:
 /// `isEligibleForSearch` stays on-device for CSSearchableItem) and Handoff of the recipe or the
 /// cook mode being shown, to continue on the user's other iPhone or iPad.
+/// "<bundle id>." — activity types are declared per variant in NSUserActivityTypes (app.config.ts).
+private func activityPrefix() -> String { "\(Bundle.main.bundleIdentifier ?? "app.pepperedapron")." }
+
 public class IosIntegrationModule: Module {
   private var activity: NSUserActivity?
 
@@ -47,7 +50,7 @@ public class IosIntegrationModule: Module {
     // Handoff: what is on screen now (type = "recipe" or "cook").
     Function("setActivity") { (type: String, title: String, url: String) in
       DispatchQueue.main.async {
-        let a = NSUserActivity(activityType: "app.pepperedapron.\(type)")
+        let a = NSUserActivity(activityType: "\(activityPrefix())\(type)")
         a.title = title
         a.userInfo = ["url": url]
         a.isEligibleForHandoff = true
@@ -81,7 +84,7 @@ public class IosIntegrationAppDelegate: ExpoAppDelegateSubscriber {
       let id = userActivity.userInfo?[CSSearchableItemActivityIdentifier] as? String
     {
       link = "pepperedapron://recipe/\(id)"
-    } else if userActivity.activityType.hasPrefix("app.pepperedapron.") {
+    } else if userActivity.activityType.hasPrefix(activityPrefix()) {
       link = userActivity.userInfo?["url"] as? String
     }
     guard let link, let url = URL(string: link), url.scheme == "pepperedapron" else { return false }

@@ -270,13 +270,16 @@ export class ImportFormatError extends Error {
 
 /** Restore an export (or merge it into existing data: the latest version of each item wins). */
 export async function importData(store: LocalStore, json: string): Promise<number> {
-  let parsed: { format?: unknown; records?: unknown };
+  let parsed: { format?: unknown; records?: unknown } | null;
   try {
     parsed = JSON.parse(json) as typeof parsed;
   } catch {
     throw new ImportFormatError();
   }
+  // A file holding only `null`, a number or a string is not a backup either.
   if (
+    !parsed ||
+    typeof parsed !== 'object' ||
     (parsed.format !== EXPORT_FORMAT && parsed.format !== SYNC_FORMAT) ||
     !Array.isArray(parsed.records)
   )

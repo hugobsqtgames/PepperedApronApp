@@ -307,3 +307,40 @@ describe('export and import (backup, moving to a phone without iCloud)', () => {
       await expect(importData(iphone.store, bad)).rejects.toBeInstanceOf(ImportFormatError);
   });
 });
+
+describe('regressions found by the fuzz tests', () => {
+  it('a recipe deleted on one device while favorited on the other leaves no orphan', async () => {
+    const r = await iphone.repos.createRecipe(recipe('Clafoutis'));
+    const col = await iphone.repos.createCollection('Desserts');
+    await syncAll(iphone, ipad);
+    await iphone.repos.deleteRecipe(r.id);
+    await iphone.repos.deleteCollection(col.id);
+    time.advance();
+    // Meanwhile, offline on the iPad:
+    await ipad.repos.toggleFavorite(r.id);
+    await ipad.repos.logCooked(r.id, '2026-10-30');
+    await ipad.repos.setInCollection(col.id, r.id, true);
+    await syncAll(iphone, ipad);
+    await syncAll(iphone, ipad);
+    for (const d of [iphone, ipad]) {
+      expect(d.store.all('favorite')).toEqual([]);
+      expect(d.store.all('cookLog')).toEqual([]);
+      expect(d.store.all('collectionItem')).toEqual([]);
+    }
+  });
+
+  it('a list deleted on one device while an item is added on the other leaves no orphan item', async () => {
+    const l = await iphone.repos.createList('Courses');
+    await syncAll(iphone, ipad);
+    await iphone.repos.deleteList(l.id);
+    await ipad.repos.addItemText(l.id, '2 kg de pommes');
+    await syncAll(iphone, ipad);
+    await syncAll(iphone, ipad);
+    for (const d of [iphone, ipad]) expect(d.store.all('shoppingItem')).toEqual([]);
+  });
+
+  it('a backup file that is only null, a number or a string is refused cleanly', async () => {
+    for (const bad of ['null', '42', '"x"', 'true'])
+      await expect(importData(iphone.store, bad)).rejects.toBeInstanceOf(ImportFormatError);
+  });
+});

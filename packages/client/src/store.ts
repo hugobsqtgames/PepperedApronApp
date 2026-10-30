@@ -1,6 +1,7 @@
 import {
   diffFields,
   ENTITY_ORDER,
+  ENTITY_PARENTS,
   ENTITY_SCHEMAS,
   SYNC_ENTITIES,
   uuidv7,
@@ -80,6 +81,7 @@ export class LocalStore {
     const s = new LocalStore(db);
     await s.migrate();
     await s.load(now);
+    await s.repairOrphans();
     return s;
   }
 
@@ -271,6 +273,38 @@ export class LocalStore {
     });
   }
 
+  /** Children whose parent was deleted (see ENTITY_PARENTS). */
+  private orphans(): { entity: SyncEntity; id: string }[] {
+    const out: { entity: SyncEntity; id: string }[] = [];
+    for (const [entity, parents] of Object.entries(ENTITY_PARENTS) as [
+      SyncEntity,
+      [string, SyncEntity][],
+    ][])
+      for (const rec of this.all(entity))
+        for (const [field, parent] of parents) {
+          const pid = (rec.data as Record<string, unknown>)[field];
+          // Only a known deletion counts: a parent not received yet may still arrive.
+          if (
+            typeof pid === 'string' &&
+            !this.get(parent, pid) &&
+            this.clocks.has(key(parent, pid))
+          ) {
+            out.push({ entity, id: rec.id });
+            break;
+          }
+        }
+    return out;
+  }
+
+  private tombstone(entity: SyncEntity, id: string): SyncRecord {
+    return { entity, id, hlc: this.clock.tick(), deleted: true, data: null };
+  }
+
+  /** Clean children left by an older version (before the merge removed them). */
+  repairOrphans(): Promise<void> {
+    return this.removeMany(this.orphans());
+  }
+
   /** "Delete all my data": every record becomes a tombstone, on every synced device. */
   removeAll(keep: SyncEntity[] = []): Promise<void> {
     const items: { entity: SyncEntity; id: string }[] = [];
@@ -314,14 +348,17 @@ export class LocalStore {
         })
         .sort((a, b) => ENTITY_ORDER.indexOf(a.entity) - ENTITY_ORDER.indexOf(b.entity));
       if (!incoming.length) return 0;
+      let orphans: { entity: SyncEntity; id: string }[] = [];
       await this.db.transaction(async () => {
         for (const r of incoming) {
           this.clock.receive(r.hlc);
           await this.persist(r);
         }
+        orphans = this.orphans();
+        for (const o of orphans) await this.persist(this.tombstone(o.entity, o.id));
         await this.bump();
       });
-      this.emit(incoming.map((r) => r.entity));
+      this.emit([...incoming, ...orphans].map((r) => r.entity));
       return incoming.length;
     });
   }

@@ -16,9 +16,12 @@ export type StepRow =
   | { kind: 'group'; key: string; name: string }
   | { kind: 'step'; key: string; text: string; timerMin: string; source: Step | null };
 
-/** Human-readable line for an ingredient ("200 g farine (tamisée)") used by the one-line editor. */
+/**
+ * Human-readable line for an ingredient ("200 g farine (tamisée)") used by the one-line editor.
+ * The exact stored quantity is shown: editing the line must not round it.
+ */
 export function ingredientToLine(i: Ingredient, locale: Locale): string {
-  const amount = formatAmount(i, locale);
+  const amount = formatAmount(i, locale, { exact: true });
   const unit = i.unit
     ? getUnit(i.unit)
       ? unitLabel(i.unit, i.quantityMax ?? i.quantity, locale)

@@ -82,3 +82,30 @@ describe('helpers', () => {
     expect(numOrNull('douze')).toBeNull();
   });
 });
+
+describe('regression: the editor never rounds a stored quantity', () => {
+  it('432 cl stays 432 cl, 0.33 cup stays 0.33 once the line is edited', () => {
+    const ing = (quantity: number, unit: string, name: string) => ({
+      id: 'x',
+      group: null,
+      name,
+      quantity,
+      quantityMax: null,
+      unit,
+      note: null,
+    });
+    for (const i of [
+      ing(432, 'cl', 'lait'),
+      ing(0.33, 'cup', 'sucre'),
+      ing(1.5, 'tbsp', 'huile'),
+    ]) {
+      const line = ingredientToLine(i, 'fr');
+      // The user adds a note to the line: the quantity must not move.
+      const [row] = fromIngRows(
+        [{ kind: 'ing', key: 'x', text: `${line} (bio)`, source: i }],
+        'fr',
+      );
+      expect(row!.quantity).toBeCloseTo(i.quantity, 6);
+    }
+  });
+});

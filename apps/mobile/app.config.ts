@@ -23,6 +23,29 @@ const withPrivateICloudContainer: ConfigPlugin = (c) =>
   });
 
 /**
+ * Only local notifications are used (no server, no push): the push entitlement that
+ * expo-notifications adds is removed, so the App ID needs no Push capability.
+ */
+const withoutPushEntitlement: ConfigPlugin = (c) =>
+  withEntitlementsPlist(c, (m) => {
+    delete m.modResults['aps-environment'];
+    return m;
+  });
+
+/**
+ * The development client looks for the developer's computer on the local network. Production
+ * builds never do: they must not declare (nor ask for) local network access.
+ */
+const withoutDevNetworkInProduction: ConfigPlugin = (c) =>
+  withInfoPlist(c, (m) => {
+    if (process.env.APP_VARIANT === 'production') {
+      delete m.modResults.NSLocalNetworkUsageDescription;
+      delete m.modResults.NSBonjourServices;
+    }
+    return m;
+  });
+
+/**
  * One codebase, three environments. APP_VARIANT selects bundle ids, names and iCloud containers
  * so that development, staging and production builds can live side by side on a device (each
  * with its own data).
@@ -74,7 +97,8 @@ const buildConfig = ({ config }: ConfigContext): ExpoConfig => ({
       CFBundleAllowMixedLocalizations: true,
       NSSupportsLiveActivities: true,
       // Handoff: the recipe or the cook mode continues on the user's other device.
-      NSUserActivityTypes: ['app.pepperedapron.recipe', 'app.pepperedapron.cook'],
+      // Per variant, so a development build never picks up the App Store app's activities.
+      NSUserActivityTypes: [`${bundleId}.recipe`, `${bundleId}.cook`],
       NSSpeechRecognitionUsageDescription:
         'PepperedApron listens to a recipe video you import, the recipe you dictate, or your voice commands in cook mode, on your iPhone. Nothing is sent.',
     },
@@ -179,4 +203,6 @@ const buildConfig = ({ config }: ConfigContext): ExpoConfig => ({
 });
 
 export default (ctx: ConfigContext): ExpoConfig =>
-  withPrivateICloudContainer(withUniqueAppGroups(buildConfig(ctx))) as ExpoConfig;
+  withoutDevNetworkInProduction(
+    withoutPushEntitlement(withPrivateICloudContainer(withUniqueAppGroups(buildConfig(ctx)))),
+  ) as ExpoConfig;

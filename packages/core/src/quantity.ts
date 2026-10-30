@@ -177,10 +177,29 @@ export function convertAmount<T extends AmountLike>(a: T, target: UnitSystem): T
   return to(getUnit('cup')!);
 }
 
-export function formatAmount(a: AmountLike, locale: Locale): string {
+/**
+ * The stored number itself, for editing: no kitchen rounding (432 stays 432, not 430), a
+ * fraction only when it is exactly that fraction.
+ */
+function formatExact(v: number, locale: Locale, fractions: boolean): string {
+  if (fractions) {
+    const whole = Math.floor(v);
+    const frac = v - whole;
+    const f = NICE_FRACTIONS.find((x) => Math.abs(x[0] - frac) < 1e-6);
+    if (f && frac > 1e-6) return whole > 0 ? `${whole} ${f[1]}` : f[1];
+  }
+  return numberFormat(locale, 3).format(v);
+}
+
+export function formatAmount(
+  a: AmountLike,
+  locale: Locale,
+  opts: { exact?: boolean } = {},
+): string {
   if (a.quantity === null) return '';
   const u = getUnit(a.unit);
   const fractions = u ? u.fractions : true;
-  const q = formatNumber(a.quantity, locale, fractions);
-  return a.quantityMax !== null ? `${q}–${formatNumber(a.quantityMax, locale, fractions)}` : q;
+  const fmt = opts.exact ? formatExact : formatNumber;
+  const q = fmt(a.quantity, locale, fractions);
+  return a.quantityMax !== null ? `${q}–${fmt(a.quantityMax, locale, fractions)}` : q;
 }
