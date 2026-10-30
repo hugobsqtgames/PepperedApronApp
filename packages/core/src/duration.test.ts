@@ -76,3 +76,12 @@ describe('durations', () => {
     ).toBeNull();
   });
 });
+
+describe('regression: long runs of digits', () => {
+  it('50 000 digits are read in linear time (took 30 s before)', () => {
+    const t = performance.now();
+    expect(parseDurationText('9'.repeat(50_000))).toBeNull();
+    expect(parseTimerSeconds(`${'9'.repeat(50_000)} min`)).toBeGreaterThan(0);
+    expect(performance.now() - t).toBeLessThan(200);
+  });
+});
