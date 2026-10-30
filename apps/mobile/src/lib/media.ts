@@ -12,3 +12,10 @@ export function recipePhotoUri(r: Pick<Recipe, 'data'>): string | null {
   const f = new File(photosDir(), key);
   return f.exists ? f.uri : null;
 }
+
+/** Local file of any photo key (recipe photo, "my result" photo), or null. */
+export function photoUri(key: string | null): string | null {
+  if (!isPhotoKey(key)) return null;
+  const f = new File(photosDir(), key);
+  return f.exists ? f.uri : null;
+}

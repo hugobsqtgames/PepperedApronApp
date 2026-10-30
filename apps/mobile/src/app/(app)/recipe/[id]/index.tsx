@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Alert, Pressable, Share, StyleSheet, View } from 'react-native';
+import { Alert, Pressable, ScrollView, Share, StyleSheet, View } from 'react-native';
+import { Image } from 'expo-image';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -26,7 +27,10 @@ import { useLive, useRepos } from '../../../../hooks/runtime';
 import { errorMessage } from '../../../../lib/errors';
 import { formatOven, recipeAsText } from '../../../../lib/format';
 import { useLayout } from '../../../../lib/layout';
-import { recipePhotoUri } from '../../../../lib/media';
+import { photoUri, recipePhotoUri } from '../../../../lib/media';
+import { printRecipes, shareRecipesPdf } from '../../../../lib/print';
+import { ShareModal } from '../../../../features/share/ShareModal';
+import { pickImage, preparePhoto, type PhotoSource } from '../../../../services/photos';
 import { haptic } from '../../../../services/haptics';
 import { timers } from '../../../../services/timers';
 import { useTheme } from '../../../../theme/ThemeProvider';
@@ -76,6 +80,7 @@ export default function RecipeDetail() {
     [id],
   );
   const [servings, setServings] = useState<number | null>(null);
+  const [shareMode, setShareMode] = useState<'card' | 'qr' | null>(null);
 
   if (!recipe) {
     return (
@@ -108,6 +113,11 @@ export default function RecipeDetail() {
     d.extraInfo,
   ]);
   const scaledMold = mold ? scaleMold(mold, factor) : null;
+  // Another copy of this recipe in the library (same link, or same title and ingredients).
+  const duplicate = repos.findDuplicate(
+    { title: d.title, sourceUrl: d.sourceUrl, ingredientNames: names },
+    recipe.id,
+  );
 
   const editNote = () =>
     prompt({
@@ -156,8 +166,67 @@ export default function RecipeDetail() {
     }
   };
 
-  /** Plain text: readable in any app (Messages, WhatsApp, Notes…), no account needed. */
+  /** "My result": a photo of the dish as it came out, on today's entry of the history. */
+  const addResultPhoto = (source: PhotoSource) => async () => {
+    try {
+      const r = await pickImage(source);
+      if (!r || 'denied' in r) {
+        if (r)
+          toast(t(source === 'camera' ? 'errors.cameraPermission' : 'errors.photoPermission'), {
+            tone: 'error',
+          });
+        return;
+      }
+      const key = await preparePhoto(r.uri);
+      const log = await repos.logCooked(recipe.id);
+      await repos.setCookPhoto(log.id, key);
+      haptic.success();
+    } catch (e) {
+      toast(errorMessage(e, t), { tone: 'error' });
+    }
+  };
+  const resultPhoto = () =>
+    sheet({
+      title: t('history.resultPhoto'),
+      message: t('history.resultPhotoHint'),
+      options: [
+        {
+          label: t('editor.takePhoto'),
+          icon: 'camera-outline',
+          onPress: () => void addResultPhoto('camera')(),
+        },
+        {
+          label: t('editor.chooseLibrary'),
+          icon: 'images-outline',
+          onPress: () => void addResultPhoto('library')(),
+        },
+      ],
+    });
+  const results = cooked.filter((c) => c.data.photoKey);
+
+  /** Several ways to share: text for any app, an image, a QR code, paper or PDF. */
   const share = () =>
+    sheet({
+      title: t('recipe.share'),
+      options: [
+        { label: t('share.asText'), icon: 'chatbubble-outline', onPress: shareText },
+        { label: t('share.asImage'), icon: 'image-outline', onPress: () => setShareMode('card') },
+        { label: t('share.asQr'), icon: 'qr-code-outline', onPress: () => setShareMode('qr') },
+        {
+          label: t('share.print'),
+          icon: 'print-outline',
+          onPress: () => void printRecipes([recipe], settings.unitSystem).catch(() => undefined),
+        },
+        {
+          label: t('share.pdf'),
+          icon: 'document-outline',
+          onPress: () => void shareRecipesPdf([recipe], settings.unitSystem).catch(() => undefined),
+        },
+      ],
+    });
+
+  /** Plain text: readable in any app (Messages, WhatsApp, Notes…), no account needed. */
+  const shareText = () =>
     void Share.share({
       message: recipeAsText(
         d,
@@ -186,6 +255,19 @@ export default function RecipeDetail() {
           icon: 'albums-outline' as const,
           onPress: () => router.push(`/recipe/${recipe.id}/collections`),
         },
+        ...(duplicate
+          ? [
+              {
+                label: t('merge.action'),
+                icon: 'git-merge-outline' as const,
+                onPress: () =>
+                  router.push({
+                    pathname: '/recipe/merge',
+                    params: { keep: recipe.id, drop: duplicate.id },
+                  }),
+              },
+            ]
+          : []),
         {
           label: t('recipe.duplicate'),
           icon: 'copy-outline' as const,
@@ -409,13 +491,75 @@ export default function RecipeDetail() {
           {d.personalNote ?? t('recipe.personalNoteEmpty')}
         </Text>
       </Pressable>
-      <Button
-        title={t('history.cookedToday')}
-        icon="checkmark-done-outline"
-        variant="secondary"
-        onPress={cookedToday}
-        testID="recipe-cooked"
-      />
+      <View style={{ flexDirection: 'row', gap: space.sm }}>
+        <Button
+          title={t('history.cookedToday')}
+          icon="checkmark-done-outline"
+          variant="secondary"
+          onPress={cookedToday}
+          style={{ flex: 1 }}
+          testID="recipe-cooked"
+        />
+        <IconButton icon="camera-outline" label={t('history.resultPhoto')} onPress={resultPhoto} />
+      </View>
+      {results.length ? (
+        <View style={{ gap: space.sm }}>
+          <Text variant="caption" color="textMuted" weight="600">
+            {t('history.results')}
+          </Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            <View style={{ flexDirection: 'row', gap: space.sm }}>
+              {results.map((c) => {
+                const uri = photoUri(c.data.photoKey);
+                return (
+                  <Pressable
+                    key={c.id}
+                    accessibilityRole="button"
+                    accessibilityLabel={t('history.resultOn', {
+                      date: dayMonth(c.data.date, i18n.language),
+                    })}
+                    onLongPress={() =>
+                      sheet({
+                        title: dayMonth(c.data.date, i18n.language),
+                        options: [
+                          {
+                            label: t('editor.removePhoto'),
+                            icon: 'trash-outline',
+                            destructive: true,
+                            onPress: () => void repos.setCookPhoto(c.id, null),
+                          },
+                        ],
+                      })
+                    }
+                    style={{ gap: 4 }}
+                  >
+                    {uri ? (
+                      <Image
+                        source={{ uri }}
+                        style={{ width: 112, height: 112, borderRadius: radius.lg }}
+                        contentFit="cover"
+                        accessibilityIgnoresInvertColors
+                      />
+                    ) : (
+                      <View
+                        style={{
+                          width: 112,
+                          height: 112,
+                          borderRadius: radius.lg,
+                          backgroundColor: colors.surfaceMuted,
+                        }}
+                      />
+                    )}
+                    <Text variant="caption" color="textMuted">
+                      {dayMonth(c.data.date, i18n.language)}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </ScrollView>
+        </View>
+      ) : null}
       <TextBlock title={t('recipe.tips')} text={d.tips} icon="bulb-outline" />
       <TextBlock title={t('recipe.notes')} text={d.notes} icon="document-text-outline" />
       <TextBlock title={t('recipe.info')} text={d.extraInfo} icon="information-circle-outline" />
@@ -470,6 +614,12 @@ export default function RecipeDetail() {
           )}
         </View>
       </Screen>
+      <ShareModal
+        recipe={recipe}
+        mode={shareMode}
+        system={settings.unitSystem}
+        onClose={() => setShareMode(null)}
+      />
       <View style={[styles.back, { top: insets.top + space.sm }]}>
         <IconButton
           icon="chevron-back"

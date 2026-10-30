@@ -28,10 +28,21 @@ export default function Favorites() {
   const sheet = useActionSheet();
   const [tab, setTab] = useState<'favorites' | 'collections'>('favorites');
   const [newName, setNewName] = useState('');
-  const data = useLive(['favorite', 'recipe', 'collection', 'collectionItem'], (r) => ({
-    favorites: r.favoriteRecipes(),
-    collections: r.collections().map((c) => ({ c, recipes: r.collectionRecipes(c.id) })),
-  }));
+  const data = useLive(
+    ['favorite', 'recipe', 'collection', 'collectionItem', 'smartCollection', 'cookLog'],
+    (r) => ({
+      favorites: r.favoriteRecipes(),
+      // Smart collections first: they fill themselves from their rules.
+      collections: [
+        ...r.smartCollections().map((c) => ({
+          c: { id: c.id, data: { name: c.data.name, emoji: c.data.emoji } },
+          recipes: r.smartCollectionRecipes(c.id),
+          smart: true,
+        })),
+        ...r.collections().map((c) => ({ c, recipes: r.collectionRecipes(c.id), smart: false })),
+      ],
+    }),
+  );
   const cols = layout.sidebar ? Math.max(2, layout.columns - 1) : layout.columns;
   const w = tileWidth(
     layout.sidebar ? layout.width - 260 : layout.width,
@@ -85,6 +96,15 @@ export default function Favorites() {
             disabled={!newName.trim()}
           />
         </View>
+      ) : null}
+      {tab === 'collections' ? (
+        <Button
+          title={t('smart.newTitle')}
+          icon="sparkles-outline"
+          variant="secondary"
+          onPress={() => router.push('/collection/smart')}
+          testID="new-smart-collection"
+        />
       ) : null}
     </View>
   );
@@ -144,31 +164,38 @@ export default function Favorites() {
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={`${item.c.data.name}, ${t('common.recipes', { count: item.recipes.length })}`}
-            onPress={() => router.push(`/collection/${item.c.id}`)}
-            onLongPress={() =>
-              sheet({
-                title: item.c.data.name,
-                options: [
-                  {
-                    label: t('favorites.deleteCollection'),
-                    icon: 'trash-outline',
-                    destructive: true,
-                    onPress: () =>
-                      Alert.alert(
-                        t('favorites.deleteCollection'),
-                        t('favorites.deleteCollectionBody'),
-                        [
-                          { text: t('common.cancel'), style: 'cancel' },
-                          {
-                            text: t('common.delete'),
-                            style: 'destructive',
-                            onPress: () => void repos.deleteCollection(item.c.id),
-                          },
-                        ],
-                      ),
-                  },
-                ],
+            onPress={() =>
+              router.push({
+                pathname: '/collection/[id]',
+                params: item.smart ? { id: item.c.id, smart: '1' } : { id: item.c.id },
               })
+            }
+            onLongPress={() =>
+              item.smart
+                ? router.push({ pathname: '/collection/smart', params: { id: item.c.id } })
+                : sheet({
+                    title: item.c.data.name,
+                    options: [
+                      {
+                        label: t('favorites.deleteCollection'),
+                        icon: 'trash-outline',
+                        destructive: true,
+                        onPress: () =>
+                          Alert.alert(
+                            t('favorites.deleteCollection'),
+                            t('favorites.deleteCollectionBody'),
+                            [
+                              { text: t('common.cancel'), style: 'cancel' },
+                              {
+                                text: t('common.delete'),
+                                style: 'destructive',
+                                onPress: () => void repos.deleteCollection(item.c.id),
+                              },
+                            ],
+                          ),
+                      },
+                    ],
+                  })
             }
             style={{ width: w, gap: space.sm }}
           >

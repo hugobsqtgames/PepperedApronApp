@@ -14,6 +14,7 @@ import {
   shoppingItemDataSchema,
   shoppingListDataSchema,
 } from './schemas';
+import { smartCollectionDataSchema, type SmartCollectionData } from './smart';
 
 export const SYNC_ENTITIES = [
   'recipe',
@@ -29,6 +30,7 @@ export const SYNC_ENTITIES = [
   'planTemplate',
   'price',
   'pantryItem',
+  'smartCollection',
 ] as const;
 export type SyncEntity = (typeof SYNC_ENTITIES)[number];
 
@@ -47,6 +49,7 @@ export const ENTITY_SCHEMAS: Record<SyncEntity, z.ZodType<Record<string, unknown
   planTemplate: planTemplateDataSchema,
   price: priceDataSchema,
   pantryItem: pantryItemDataSchema,
+  smartCollection: smartCollectionDataSchema,
 };
 
 /** Order in which entities are applied when merging (parents before children). */
@@ -64,6 +67,7 @@ export const ENTITY_ORDER: SyncEntity[] = [
   'planTemplate',
   'price',
   'pantryItem',
+  'smartCollection',
 ];
 
 /** Top-level fields that differ between two versions of a record. */
@@ -106,6 +110,7 @@ export interface EntityDataMap {
   planTemplate: PlanTemplateData;
   price: PriceData;
   pantryItem: PantryItemData;
+  smartCollection: SmartCollectionData;
 }
 
 /**

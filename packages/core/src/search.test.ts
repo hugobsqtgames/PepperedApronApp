@@ -108,6 +108,16 @@ describe('parseSearchQuery', () => {
 });
 
 describe('searchRecipes', () => {
+  it('searches the notes too, after the title and ingredients', () => {
+    const list = [
+      R({ title: 'Gâteau de mamie', notes: 'Recette de Lucie, mettre moins de sucre' }),
+      R({ title: 'Tarte de Lucie' }),
+    ];
+    expect(searchRecipes(list, 'lucie').map((r) => r.recipe.title)).toEqual([
+      'Tarte de Lucie',
+      'Gâteau de mamie',
+    ]);
+  });
   it('"poulet rapide" finds the quick chicken only', () => {
     expect(ids('poulet rapide')).toEqual(['Wok de poulet express']);
   });

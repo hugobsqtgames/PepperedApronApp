@@ -2,6 +2,9 @@ import {
   addDays,
   categorizeIngredient,
   deductPantry,
+  matchesSmartRules,
+  smartCollectionDataSchema,
+  type SmartCollectionData,
   pantryItemDataSchema,
   weekSummary,
   type PantryItemData,
@@ -253,6 +256,7 @@ export class Repos {
       ingredientNames: r.data.ingredients.map((i) => i.name),
       updatedAt: r.updatedAt,
       diets: dietTags(r.data.ingredients.map((i) => i.name)),
+      notes: [r.data.notes, r.data.personalNote, r.data.tips].filter(Boolean).join(' '),
       record: r,
     }));
   }
@@ -284,8 +288,16 @@ export class Repos {
   }
   /** One entry per recipe and day: tapping twice the same evening is harmless. */
   async logCooked(recipeId: string, date: string = toIsoDate(new Date())) {
-    const data = validate(cookLogDataSchema, { recipeId, date });
-    return this.store.write('cookLog', uuidv5(`cook-log:${recipeId}:${date}`), data);
+    const id = uuidv5(`cook-log:${recipeId}:${date}`);
+    const photoKey = this.store.get('cookLog', id)?.data.photoKey ?? null;
+    const data = validate(cookLogDataSchema, { recipeId, date, photoKey });
+    return this.store.write('cookLog', id, data);
+  }
+  /** "My result": the photo of the dish as it came out that day. */
+  async setCookPhoto(id: string, photoKey: string | null) {
+    const cur = this.store.get('cookLog', id);
+    if (!cur) throw new Error('not_found');
+    return this.store.write('cookLog', id, validate(cookLogDataSchema, { ...cur.data, photoKey }));
   }
   removeCookLog(id: string) {
     return this.store.remove('cookLog', id);
@@ -743,6 +755,82 @@ export class Repos {
       }
     }
     return { added, updated, skipped: skipped.length };
+  }
+
+  // ---------------------------------------------------------------- smart collections
+  smartCollections(): LocalRecord<'smartCollection'>[] {
+    return this.store.all('smartCollection').sort((a, b) => a.data.name.localeCompare(b.data.name));
+  }
+  async saveSmartCollection(id: string | null, input: SmartCollectionData) {
+    const data = validate(smartCollectionDataSchema, input);
+    return this.store.write('smartCollection', id ?? uuidv7(), data);
+  }
+  deleteSmartCollection(id: string) {
+    return this.store.remove('smartCollection', id);
+  }
+  /** Recipes meeting a smart collection's rules, most recently changed first. */
+  smartCollectionRecipes(id: string, today: string = toIsoDate(new Date())): Recipe[] {
+    const sc = this.store.get('smartCollection', id);
+    return sc ? this.previewSmartCollection(sc.data, today) : [];
+  }
+  /** Recipes some rules would select (the editor's live count). */
+  previewSmartCollection(
+    sc: Pick<SmartCollectionData, 'rules'>,
+    today: string = toIsoDate(new Date()),
+  ): Recipe[] {
+    const stats = this.cookStats();
+    return this.library()
+      .filter((r) =>
+        matchesSmartRules(
+          {
+            diets: dietTags(r.data.ingredients.map((i) => i.name)),
+            totalMinutes: computeTotalMinutes(r.data),
+            category: r.data.category,
+            seasons: recipeSeasons(r.data),
+            rating: r.data.rating,
+            lastCooked: stats.get(r.id)?.last ?? null,
+          },
+          sc.rules,
+          today,
+        ),
+      )
+      .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+  }
+
+  // ---------------------------------------------------------------- duplicates
+  /**
+   * Merge two copies of a recipe: `keep` gets the fields chosen by the user (`data`), and
+   * everything that pointed to `drop` (favorite, collections, history, planning, templates,
+   * shopping lines) now points to `keep`. Then `drop` is deleted.
+   */
+  async mergeRecipes(keepId: string, dropId: string, data: RecipeInput) {
+    if (keepId === dropId) throw new Error('same_recipe');
+    if (!this.store.get('recipe', keepId) || !this.store.get('recipe', dropId))
+      throw new Error('not_found');
+    await this.updateRecipe(keepId, data);
+    if (this.isFavorite(dropId) && !this.isFavorite(keepId)) await this.toggleFavorite(keepId);
+    for (const ci of this.store.all('collectionItem').filter((x) => x.data.recipeId === dropId))
+      await this.setInCollection(ci.data.collectionId, keepId, true);
+    for (const c of this.store.all('cookLog').filter((x) => x.data.recipeId === dropId)) {
+      const log = await this.logCooked(keepId, c.data.date);
+      if (c.data.photoKey && !log.data.photoKey) await this.setCookPhoto(log.id, c.data.photoKey);
+    }
+    for (const e of this.store.all('mealPlanEntry').filter((x) => x.data.recipeId === dropId))
+      await this.store.write('mealPlanEntry', e.id, { ...e.data, recipeId: keepId });
+    for (const tp of this.store.all('planTemplate'))
+      if (tp.data.meals.some((m) => m.recipeId === dropId))
+        await this.store.write('planTemplate', tp.id, {
+          ...tp.data,
+          meals: tp.data.meals.map((m) => (m.recipeId === dropId ? { ...m, recipeId: keepId } : m)),
+        });
+    for (const it of this.store.all('shoppingItem'))
+      if (it.data.recipeIds.includes(dropId))
+        await this.store.write('shoppingItem', it.id, {
+          ...it.data,
+          recipeIds: [...new Set(it.data.recipeIds.map((r) => (r === dropId ? keepId : r)))],
+        });
+    await this.deleteRecipe(dropId);
+    return this.recipe(keepId)!;
   }
 
   // ---------------------------------------------------------------- pantry

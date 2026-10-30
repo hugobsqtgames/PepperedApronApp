@@ -15,6 +15,8 @@ export interface SearchableRecipe {
   updatedAt: string;
   /** Automatic diet labels (see diet.ts). */
   diets?: DietTag[];
+  /** Notes, personal note and tips: searched too, with a low weight. */
+  notes?: string;
 }
 
 export interface SearchFilters {
@@ -493,6 +495,7 @@ interface Indexed {
   ingredients: string[];
   tags: string[];
   body: string[];
+  notes: string[];
   all: string;
 }
 
@@ -501,11 +504,13 @@ function index(r: SearchableRecipe): Indexed {
   const ingredients = r.ingredientNames.flatMap((n) => tokenize(n).map(singularize));
   const tags = r.tags.flatMap((t) => tokenize(t).map(singularize));
   const body = tokenize(r.description ?? '').map(singularize);
+  const notes = tokenize(r.notes ?? '').map(singularize);
   return {
     title,
     ingredients,
     tags,
     body,
+    notes,
     all: normalizeText([r.title, r.description ?? '', ...r.tags, ...r.ingredientNames].join(' ')),
   };
 }
@@ -608,7 +613,8 @@ export function searchRecipes<T extends SearchableRecipe>(
         tokenMatch(ix.title, term) * 5 +
         tokenMatch(ix.ingredients, term) * 3 +
         tokenMatch(ix.tags, term) * 3 +
-        tokenMatch(ix.body, term) * 1;
+        tokenMatch(ix.body, term) * 1 +
+        tokenMatch(ix.notes, term) * 0.5;
       if (s === 0) {
         ok = false;
         break;

@@ -30,13 +30,13 @@ Repères : modèle de données `packages/core/src/schemas.ts` (champs ajoutés a
 - [x] **Bilan de la semaine** : dans Planning, repas planifiés/cuisinés, budget des courses, part végétarienne, recettes les plus cuisinées.
 
 ## Lot 5 — Organisation et partage (29, 31, 32, 34, 35, 43, 45)
-- [ ] **Recherche dans les notes et remarques** (`notes`, `personalNote`, `tips`) avec un poids faible.
-- [ ] **Collections intelligentes** : règles (régime, durée max, catégorie, saison, note min, « pas faite depuis N jours ») ; entité `smartCollection` synchronisée ; affichées avec les collections.
-- [ ] **Fusionner deux doublons** : depuis le bandeau de doublon ou « … » → choisir quoi garder champ par champ ; favoris, collections, historique et planning reportés.
-- [ ] **Photo « mon résultat »** dans l'historique (`cookLog.photoKey`, synchronisée comme les autres photos, nettoyage des orphelins à étendre).
-- [ ] **Impression / PDF** : `expo-print`, une recette ou une collection en livret (charte : Fraunces, crème/vert).
-- [ ] **Carte-image** : partage d'une image (photo, titre, temps, ingrédients) en plus du texte (`react-native-view-shot`).
-- [ ] **QR code** : la recette compressée dans un lien `pepperedapron://r/<données>` (sans serveur ; si trop longue : ingrédients + étapes seulement), scanné par l'appareil photo → import.
+- [x] **Recherche dans les notes et remarques** (`notes`, `personalNote`, `tips`) avec un poids faible.
+- [x] **Collections intelligentes** : règles (régime, durée max, catégorie, saison, note min, « pas faite depuis N jours ») ; entité `smartCollection` synchronisée ; affichées avec les collections.
+- [x] **Fusionner deux doublons** : depuis le bandeau de doublon ou « … » → choisir quoi garder champ par champ ; favoris, collections, historique et planning reportés.
+- [x] **Photo « mon résultat »** dans l'historique (`cookLog.photoKey`, synchronisée comme les autres photos, nettoyage des orphelins à étendre).
+- [x] **Impression / PDF** : `expo-print`, une recette ou une collection en livret (charte : Fraunces, crème/vert).
+- [x] **Carte-image** : partage d'une image (photo, titre, temps, ingrédients) en plus du texte (`react-native-view-shot`).
+- [x] **QR code** : la recette compressée dans un lien `pepperedapron://r/<données>` (sans serveur ; si trop longue : ingrédients + étapes seulement), scanné par l'appareil photo → import.
 
 ## Lot 6 — Intégration iOS (36, 37, 38, 39, 41)
 - [ ] **Raccourcis Siri / App Intents** : « Qu'est-ce qu'on mange ce soir ? » (lit l'instantané des widgets dans l'App Group), « Ajoute … aux courses » (écrit une demande dans l'App Group, appliquée au lancement suivant), « Recette au hasard ».

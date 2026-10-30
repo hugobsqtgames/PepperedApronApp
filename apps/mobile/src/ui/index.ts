@@ -11,3 +11,4 @@ export * from './ActionSheet';
 export * from './Screen';
 export * from './Prompt';
 export * from './Stars';
+export * from './QrCode';

@@ -130,6 +130,8 @@ export default function AppLayout() {
       <Stack.Screen name="import/queue" options={{ presentation: 'modal' }} />
       <Stack.Screen name="whats-new" options={{ presentation: 'modal' }} />
       <Stack.Screen name="pantry" options={{ presentation: 'modal' }} />
+      <Stack.Screen name="recipe/merge" options={{ presentation: 'modal' }} />
+      <Stack.Screen name="collection/smart" options={{ presentation: 'modal' }} />
       <Stack.Screen name="import/instagram" options={{ presentation: 'modal' }} />
       <Stack.Screen name="import/dictate" options={{ presentation: 'modal' }} />
       <Stack.Screen name="tools/converter" options={{ ...sheet, sheetAllowedDetents: [0.75, 1] }} />

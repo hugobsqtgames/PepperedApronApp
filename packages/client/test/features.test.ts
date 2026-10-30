@@ -177,3 +177,58 @@ describe('pantry', () => {
     expect(s).toMatchObject({ planned: 1, cooked: 1, vegetarianShare: 1, budget: null });
   });
 });
+
+describe('smart collections and merging duplicates', () => {
+  it('lists the recipes meeting the rules', async () => {
+    const { repos } = await open();
+    const soup = await repos.createRecipe({
+      ...emptyRecipe(4),
+      title: 'Soupe',
+      category: 'soup',
+      prepMinutes: 10,
+      cookMinutes: 15,
+      ingredients: [ing('potimarron', 1, 'kg')],
+    });
+    await repos.createRecipe({
+      ...emptyRecipe(4),
+      title: 'Poulet',
+      prepMinutes: 10,
+      cookMinutes: 60,
+      ingredients: [ing('poulet', 1, 'kg')],
+    });
+    const sc = await repos.saveSmartCollection(null, {
+      name: 'Végé rapide',
+      emoji: '⚡',
+      rules: {
+        diet: 'vegetarian',
+        maxMinutes: 30,
+        categories: [],
+        season: null,
+        minRating: null,
+        notCookedDays: null,
+      },
+    });
+    expect(repos.smartCollectionRecipes(sc.id).map((r) => r.id)).toEqual([soup.id]);
+  });
+
+  it('merges two copies and keeps everything that pointed to them', async () => {
+    const { repos } = await open();
+    const a = await repos.createRecipe({ ...emptyRecipe(4), title: 'Crêpes' });
+    const b = await repos.createRecipe({ ...emptyRecipe(4), title: 'Crêpes de mamie' });
+    await repos.toggleFavorite(b.id);
+    const col = await repos.createCollection('Desserts');
+    await repos.setInCollection(col.id, b.id, true);
+    const log = await repos.logCooked(b.id, '2026-10-01');
+    await repos.setCookPhoto(log.id, 'p-123.jpg');
+    await repos.planMeal({ date: '2026-11-02', slot: 'dinner', recipeId: b.id });
+    const merged = await repos.mergeRecipes(a.id, b.id, { ...a.data, title: b.data.title });
+    expect(merged.data.title).toBe('Crêpes de mamie');
+    expect(repos.recipe(b.id)).toBeNull();
+    expect(repos.isFavorite(a.id)).toBe(true);
+    expect(repos.collectionRecipes(col.id).map((r) => r.id)).toEqual([a.id]);
+    expect(repos.cookLogs(a.id).map((c) => [c.data.date, c.data.photoKey])).toEqual([
+      ['2026-10-01', 'p-123.jpg'],
+    ]);
+    expect(repos.entries('2026-11-02', '2026-11-02')[0]!.data.recipeId).toBe(a.id);
+  });
+});

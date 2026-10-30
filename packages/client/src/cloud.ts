@@ -230,6 +230,7 @@ export class CloudSync {
 export function referencedPhotos(store: LocalStore): Set<string> {
   const keys = new Set<string>();
   for (const r of store.all('recipe')) if (isPhotoKey(r.data.photoKey)) keys.add(r.data.photoKey);
+  for (const c of store.all('cookLog')) if (isPhotoKey(c.data.photoKey)) keys.add(c.data.photoKey);
   return keys;
 }
 

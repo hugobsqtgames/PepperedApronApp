@@ -209,7 +209,14 @@ export const DEFAULT_SETTINGS: SettingsData = {
 };
 
 /** One time a recipe was cooked (cooking history). */
-export const cookLogDataSchema = z.object({ recipeId: uuid(), date: isoDate }).strict();
+export const cookLogDataSchema = z
+  .object({
+    recipeId: uuid(),
+    date: isoDate,
+    /** "My result": a photo of the dish as the user made it (synced like recipe photos). */
+    photoKey: z.string().max(200).nullable().default(null),
+  })
+  .strict();
 
 export const planTemplateMealSchema = z
   .object({
