@@ -162,6 +162,44 @@ try {
       'com.apple.appintents-extension',
     'App Intents extension point',
   );
+
+  // Xcode's "Bundle React Native code and images" phase, run as on the build server: without
+  // the package manager's shims (a dependency only reachable through them broke the EAS build).
+  // Hermes compilation is skipped: hermesc ships with the pods.
+  const phase = pbx
+    .match(/shellScript = "((?:[^"\\]|\\.)*react-native-xcode\.sh(?:[^"\\]|\\.)*)";/)?.[1]
+    ?.replace(/\\n/g, '\n')
+    .replace(/\\"/g, '"')
+    .replace(/\\\\/g, '\\');
+  check(Boolean(phase), 'Xcode bundle phase present');
+  if (phase && process.env.QA_SKIP_BUNDLE !== '1') {
+    const out = fs.mkdtempSync(path.join(ios, 'build-'));
+    fs.mkdirSync(path.join(out, 'App.app'));
+    const env = { ...process.env, APP_VARIANT: variant, USE_HERMES: 'false' };
+    delete env.NODE_PATH;
+    let bundled = false;
+    try {
+      execFileSync('bash', ['-c', phase], {
+        cwd: ios,
+        stdio: 'pipe',
+        env: {
+          ...env,
+          NODE_BINARY: process.execPath,
+          SRCROOT: ios,
+          PROJECT_DIR: ios,
+          CONFIGURATION: 'Release',
+          PLATFORM_NAME: 'iphoneos',
+          CONFIGURATION_BUILD_DIR: out,
+          UNLOCALIZED_RESOURCES_FOLDER_PATH: 'App.app',
+          DERIVED_FILE_DIR: out,
+        },
+      });
+      bundled = fs.statSync(path.join(out, 'main.jsbundle')).size > 1_000_000;
+    } catch (e) {
+      console.error(String(e.stdout ?? '').slice(-2000), String(e.stderr ?? '').slice(-2000));
+    }
+    check(bundled, 'Xcode bundle phase builds the JavaScript bundle');
+  }
 } finally {
   fs.rmSync(ios, { recursive: true, force: true });
 }
