@@ -1,9 +1,10 @@
 // Renders preview.html to the App Store Preview video and the iPhone screenshots.
 //   node preview/render.mjs video [store|marketing]   → out/app-preview-<mode>.mp4 (886×1920, 30 fps)
 //   node preview/render.mjs stills                    → out/screenshot-<n>.png (1320×2868)
+//   node preview/render.mjs sound                     → (re)put the soundtrack on rendered videos
 // Frames are captured one by one (no real-time playback), so the result is identical on every run.
 import { chromium } from 'playwright-core';
-import { spawn } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -55,11 +56,9 @@ async function video(mode) {
       String(FPS),
       '-i',
       '-',
-      // Apple requires an audio track: silent stereo (replace with music in a video editor if wanted).
-      '-f',
-      'lavfi',
+      // Synthesised soundtrack timed on the same timeline (sound.mjs).
       '-i',
-      'anullsrc=channel_layout=stereo:sample_rate=48000',
+      soundtrack(),
       '-map',
       '0:v',
       '-map',
@@ -83,10 +82,7 @@ async function video(mode) {
       'slow',
       '-r',
       String(FPS),
-      '-c:a',
-      'aac',
-      '-b:a',
-      '256k',
+      ...AUDIO,
       '-movflags',
       '+faststart',
       file,
@@ -105,6 +101,41 @@ async function video(mode) {
   console.info(`\n${file}`);
 }
 
+// Mobile loudness (-16 LUFS, peaks under -1 dBTP), AAC stereo 256 kb/s as Apple asks.
+const AUDIO = [
+  '-af',
+  'loudnorm=I=-16:TP=-1.5:LRA=11',
+  '-c:a',
+  'aac',
+  '-b:a',
+  '256k',
+  '-ar',
+  '48000',
+];
+
+function soundtrack() {
+  const wav = path.join(outDir, 'soundtrack.wav');
+  const r = spawnSync('node', [path.join(here, 'sound.mjs'), wav], { stdio: 'inherit' });
+  if (r.status !== 0) throw new Error('sound.mjs failed');
+  return wav;
+}
+
+/** Put the soundtrack on videos already rendered (the picture is copied, not re-encoded). */
+function sound() {
+  const wav = soundtrack();
+  for (const mode of ['store', 'marketing']) {
+    const file = path.join(outDir, `app-preview-${mode}.mp4`);
+    if (!fs.existsSync(file)) continue;
+    const tmp = file.replace(/\.mp4$/, '.tmp.mp4');
+    const args = ['-y', '-loglevel', 'error', '-i', file, '-i', wav, '-map', '0:v', '-map', '1:a'];
+    args.push('-c:v', 'copy', ...AUDIO, '-shortest', '-movflags', '+faststart', tmp);
+    if (spawnSync('ffmpeg', args, { stdio: 'inherit' }).status !== 0)
+      throw new Error('ffmpeg failed');
+    fs.renameSync(tmp, file);
+    console.info(file);
+  }
+}
+
 async function stills() {
   const { browser, page } = await open('still=0', 1320, 2868);
   const n = await page.evaluate(() => window.STILLS);
@@ -120,4 +151,5 @@ async function stills() {
 
 const [cmd = 'video', mode = 'store'] = process.argv.slice(2);
 if (cmd === 'stills') await stills();
+else if (cmd === 'sound') sound();
 else await video(mode);

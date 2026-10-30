@@ -6,7 +6,8 @@
     "render": "node render.mjs",
     "preview:video": "node preview/render.mjs video store",
     "preview:video:marketing": "node preview/render.mjs video marketing",
-    "preview:stills": "node preview/render.mjs stills"
+    "preview:stills": "node preview/render.mjs stills",
+    "preview:sound": "node preview/render.mjs sound"
   },
   "devDependencies": {
     "playwright-core": "^1.55.0"
