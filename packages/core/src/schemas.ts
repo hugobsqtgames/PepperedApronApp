@@ -12,6 +12,7 @@ import {
   UNIT_SYSTEMS,
 } from './enums';
 import { LIMITS } from './limits';
+import { CUISINES } from './cuisine';
 
 const uuid = () => z.uuid();
 /** Trimmed string; empty becomes null. */
@@ -91,6 +92,13 @@ export const recipeDataSchema = z
     personalNote: optText(LIMITS.personalNote).default(null),
     /** Saved automatically from the share sheet: what to check, until the user dismisses it. */
     review: z.enum(REVIEW_NOTICES).nullable().default(null),
+    /** Chosen by the user; null = deduced from the title and ingredients (core detectCuisine). */
+    cuisine: z.enum(CUISINES).nullable().default(null),
+    /** The user's notes on steps, by step id ("ici, baisser à 170 °C"). */
+    stepNotes: z
+      .record(z.uuid(), z.string().trim().min(1).max(LIMITS.stepNote))
+      .refine((m) => Object.keys(m).length <= LIMITS.steps, 'too_many')
+      .default({}),
   })
   .strict();
 export type RecipeData = z.infer<typeof recipeDataSchema>;

@@ -168,3 +168,19 @@ export function detectSeasons(ingredientNames: string[]): Season[] {
 export function recipeSeasons(r: { seasons: Season[]; ingredients: { name: string }[] }): Season[] {
   return r.seasons.length ? r.seasons : detectSeasons(r.ingredients.map((i) => i.name));
 }
+
+/**
+ * The seasonal produce an ingredient is ("fraises gariguettes" → "fraise"), as a stable key, or
+ * null when it is not seasonal produce (or sold all year).
+ */
+export function seasonalProduce(name: string): string | null {
+  const toks = tokenize(name).map(singularize);
+  for (const e of ENTRIES) {
+    for (let i = 0; i + e.tokens.length <= toks.length; i++) {
+      let ok = true;
+      for (let j = 0; j < e.tokens.length && ok; j++) ok = toks[i + j] === e.tokens[j];
+      if (ok) return e.seasons ? e.tokens.join(' ') : null;
+    }
+  }
+  return null;
+}

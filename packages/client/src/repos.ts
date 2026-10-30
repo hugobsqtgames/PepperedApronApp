@@ -103,6 +103,8 @@ export const emptyRecipe = (servings = 4): RecipeData => ({
   rating: null,
   personalNote: null,
   review: null,
+  cuisine: null,
+  stepNotes: {},
 });
 
 /** Turn an import draft into editable recipe data (the user reviews everything). */
@@ -300,6 +302,22 @@ export class Repos {
   }
   setPersonalNote(id: string, personalNote: string | null) {
     return this.updateRecipe(id, { personalNote });
+  }
+  /** The user's note on one step; empty removes it. */
+  setStepNote(id: string, stepId: string, note: string | null) {
+    return this.exclusive(async () => {
+      const cur = this.store.get('recipe', id);
+      if (!cur) throw new Error('not_found');
+      const stepNotes = { ...cur.data.stepNotes };
+      const text = note?.trim();
+      if (text) stepNotes[stepId] = text;
+      else delete stepNotes[stepId];
+      return this.updateRecipe(id, { stepNotes });
+    });
+  }
+  /** The user's choice of cuisine (null: deduced again from the recipe). */
+  setCuisine(id: string, cuisine: RecipeData['cuisine']) {
+    return this.updateRecipe(id, { cuisine });
   }
   /** The user checked a recipe saved from the share sheet. */
   dismissReview(id: string) {

@@ -27,6 +27,8 @@ export const LIMITS = {
   firstName: 40,
   importText: 20000,
   personalNote: 2000,
+  /** The user's note on one step ("ici, baisser à 170 °C"). */
+  stepNote: 500,
   priceMax: 100000,
   templateName: 80,
   templateMeals: 60,
