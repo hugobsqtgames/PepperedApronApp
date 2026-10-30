@@ -395,7 +395,10 @@ describe('journeys: what the user does is really saved', () => {
 });
 
 const STRESS = process.env.STRESS ? 1 : 0;
-const STEPS = STRESS ? 2000 : 60;
+// Jest keeps every rendered tree in memory: long runs are split into parts (NAV_PART = 0, 1, …),
+// each in its own process, with its own seed (tools/qa/stress.sh).
+const STEPS = STRESS ? 400 : 60;
+const PART = Number(process.env.NAV_PART ?? 0);
 
 /** Random but valid params for a screen, from the data as it is now. */
 function paramsNow(name: string, r: ReturnType<typeof rng>): Record<string, string> {
@@ -443,7 +446,7 @@ async function backgroundChange(r: ReturnType<typeof rng>) {
 
 describe('stress: random navigation while data changes underneath', () => {
   it(`${STEPS} screens opened, tapped and closed in a random order`, async () => {
-    const r = rng(400_000 + (process.env.APP_VARIANT ?? 'development').length);
+    const r = rng(400_000 + PART * 1000 + (process.env.APP_VARIANT ?? 'development').length);
     mockChoice.next = r.next;
     let taps = 0;
     let changes = 0;
@@ -515,7 +518,7 @@ describe('stress: a very large library on screen', () => {
 });
 
 describe('stress: leaks', () => {
-  const cycles = STRESS ? 2000 : 200;
+  const cycles = STRESS ? 500 : 200;
   it(`${cycles} screens opened and closed leave no subscription behind`, async () => {
     const { importQueue } = jest.requireActual<typeof import('../src/services/importQueue')>(
       '../src/services/importQueue',

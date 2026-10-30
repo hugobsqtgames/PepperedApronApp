@@ -25,8 +25,17 @@ run client env STRESS=1 FUZZ_SCENARIOS=300 pnpm --filter @pepperedapron/client e
 run site pnpm --filter @pepperedapron/site test
 for v in $VARIANTS; do
   run "native-$v" env APP_VARIANT="$v" node tools/qa/native-check.mjs
-  run "mobile-$v" env APP_VARIANT="$v" STRESS=1 MONKEY_PRESSES=200 NODE_OPTIONS=--expose-gc \
-    pnpm --filter @pepperedapron/mobile exec jest --testTimeout=3600000
+  # Jest keeps every rendered tree: the screen tests run in several fresh processes.
+  M=(pnpm --filter @pepperedapron/mobile exec jest --testTimeout=3600000)
+  E=(env APP_VARIANT="$v" STRESS=1 MONKEY_PRESSES=200)
+  run "mobile-$v" "${E[@]}" "${M[@]}" --testPathIgnorePatterns screens
+  run "mobile-$v-screens" "${E[@]}" "${M[@]}" screens -t "renders with real data|survives|journeys"
+  for p in 0 1 2 3 4; do
+    run "mobile-$v-navigation-$p" "${E[@]}" NAV_PART=$p "${M[@]}" screens -t "random navigation"
+  done
+  run "mobile-$v-biglibrary" "${E[@]}" "${M[@]}" screens -t "very large library"
+  run "mobile-$v-leaks" "${E[@]}" "${M[@]}" screens -t "leaks"
+  run "mobile-$v-timers" "${E[@]}" "${M[@]}" screens -t "kitchen timers"
 done
 
 node "$ROOT/tools/qa/summary.mjs" "$OUT" | tee "$OUT/summary.md"
