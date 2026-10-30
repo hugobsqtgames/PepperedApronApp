@@ -1,0 +1,1330 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <title>PepperedApron — App Preview</title>
+    <!--
+  App Store Preview + screenshots, built from the app's own design (theme/tokens.ts colours,
+  Fraunces, the project's photos, the app's French texts). Everything is driven by seek(t):
+  render.mjs captures it frame by frame (30 fps) and encodes it with ffmpeg.
+  Open in a browser to watch it live: preview.html?mode=marketing | ?mode=store | ?still=0…6
+-->
+    <style>
+      @font-face {
+        font-family: 'Fraunces';
+        src: url(../../../apps/mobile/assets/fonts/Fraunces_700Bold.ttf);
+        font-weight: 700;
+      }
+      @font-face {
+        font-family: 'Fraunces';
+        src: url(../../../apps/mobile/assets/fonts/Fraunces_600SemiBold.ttf);
+        font-weight: 600;
+      }
+      :root {
+        --forest: #1f4d3a;
+        --forestDeep: #163a2b;
+        --paprika: #d2642a;
+        --paprikaLight: #e8894f;
+        --cream: #f7f1e6;
+        --sand: #e8dfcf;
+        --ink: #1f2a24;
+        --muted: #5e655f;
+        --subtle: #646962;
+        --soft: #dde8e1;
+        --accentSoft: #f8e3d5;
+        --surface: #fffcf6;
+        --raised: #ffffff;
+        --surfaceMuted: #f0e8da;
+        --accentText: #a84a1a;
+        --sage: #86c1a2;
+        --ui: -apple-system, 'SF Pro Text', 'SF Pro Display', Inter, 'Helvetica Neue', sans-serif;
+        --display: 'Fraunces', Georgia, serif;
+      }
+      html,
+      body {
+        margin: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: var(--forestDeep);
+      }
+      #stage {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 443px;
+        height: 960px;
+        transform-origin: 0 0;
+        overflow: hidden;
+        font-family: var(--ui);
+        color: var(--ink);
+        -webkit-font-smoothing: antialiased;
+        background: radial-gradient(130% 75% at 50% 8%, #2b6550 0%, #1f4d3a 46%, #163a2b 100%);
+      }
+      #glow {
+        position: absolute;
+        width: 700px;
+        height: 700px;
+        border-radius: 50%;
+        left: -130px;
+        top: 180px;
+        background: radial-gradient(circle, rgba(232, 137, 79, 0.2) 0%, rgba(232, 137, 79, 0) 62%);
+        will-change: transform;
+      }
+      p {
+        margin: 0;
+      }
+      /* ------------------------------------------------------------- captions */
+      #cap {
+        position: absolute;
+        left: 30px;
+        right: 30px;
+        top: 62px;
+        text-align: center;
+        color: var(--cream);
+      }
+      #cap .l {
+        font-family: var(--display);
+        font-weight: 700;
+        font-size: 33px;
+        line-height: 39px;
+        letter-spacing: -0.4px;
+      }
+      #cap .w {
+        display: inline-block;
+        will-change: transform, opacity;
+      }
+      #cap .hl {
+        color: var(--paprikaLight);
+      }
+      #cap .sub {
+        margin-top: 12px;
+        font-size: 15.5px;
+        line-height: 21px;
+        font-weight: 500;
+        color: rgba(247, 241, 230, 0.78);
+      }
+      /* ------------------------------------------------------------- phone */
+      #cam {
+        position: absolute;
+        inset: 0;
+        transform-origin: 50% 62%;
+        will-change: transform;
+      }
+      #phone {
+        position: absolute;
+        left: 50%;
+        top: 262px;
+        width: 306px;
+        height: 643px;
+        margin-left: -153px;
+        transform-style: preserve-3d;
+        will-change: transform;
+      }
+      #bezel {
+        position: absolute;
+        inset: 0;
+        border-radius: 46px;
+        background: #0b0f0d;
+        box-shadow:
+          0 0 0 1.5px #3b4540 inset,
+          0 40px 80px -20px rgba(0, 0, 0, 0.55),
+          0 18px 30px -12px rgba(0, 0, 0, 0.35);
+      }
+      #screen {
+        position: absolute;
+        left: 8.5px;
+        top: 8.5px;
+        width: 289px;
+        height: 626px;
+        border-radius: 38px;
+        overflow: hidden;
+        background: var(--cream);
+      }
+      #island {
+        position: absolute;
+        left: 50%;
+        top: 18px;
+        width: 90px;
+        height: 26px;
+        margin-left: -45px;
+        border-radius: 14px;
+        background: #000;
+        z-index: 50;
+      }
+      body.store #bezel,
+      body.store #island {
+        display: none;
+      }
+      body.store #screen {
+        left: 0;
+        top: 0;
+        width: 306px;
+        height: 663px;
+        border-radius: 30px;
+        box-shadow:
+          0 36px 70px -24px rgba(0, 0, 0, 0.55),
+          0 0 0 1px rgba(255, 255, 255, 0.06);
+      }
+      .scr {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 390px;
+        height: 844px;
+        transform-origin: 0 0;
+        overflow: hidden;
+        background: var(--cream);
+      }
+      .scr .in {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 390px;
+        will-change: transform;
+      }
+      /* ------------------------------------------------------------- app UI (390×844, like the app) */
+      .sb {
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 0;
+        height: 47px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 30px 0 36px;
+        font-weight: 600;
+        font-size: 16px;
+        z-index: 5;
+      }
+      .sb .ic {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+      }
+      .hero {
+        font-family: var(--display);
+        font-weight: 700;
+        font-size: 32px;
+        line-height: 38px;
+        letter-spacing: -0.5px;
+      }
+      .t1 {
+        font-family: var(--display);
+        font-weight: 700;
+        font-size: 26px;
+        line-height: 32px;
+        letter-spacing: -0.3px;
+      }
+      .t2 {
+        font-family: var(--display);
+        font-weight: 600;
+        font-size: 21px;
+        line-height: 27px;
+      }
+      .t3 {
+        font-size: 17px;
+        line-height: 22px;
+        font-weight: 700;
+      }
+      .bd {
+        font-size: 16px;
+        line-height: 23px;
+      }
+      .bs {
+        font-size: 16px;
+        line-height: 23px;
+        font-weight: 600;
+      }
+      .co {
+        font-size: 15px;
+        line-height: 21px;
+      }
+      .cap {
+        font-size: 13px;
+        line-height: 18px;
+      }
+      .mi {
+        font-size: 11px;
+        line-height: 14px;
+        font-weight: 600;
+        letter-spacing: 0.4px;
+        text-transform: uppercase;
+      }
+      .mu {
+        color: var(--muted);
+      }
+      .pr {
+        color: var(--forest);
+      }
+      .ac {
+        color: var(--accentText);
+      }
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 3px 8px;
+        border-radius: 999px;
+        font-size: 13px;
+        line-height: 18px;
+        font-weight: 600;
+      }
+      .b-pr {
+        background: var(--soft);
+        color: var(--forest);
+      }
+      .b-ne {
+        background: var(--surfaceMuted);
+        color: var(--muted);
+      }
+      .b-ac {
+        background: var(--accentSoft);
+        color: var(--accentText);
+      }
+      .ib {
+        width: 44px;
+        height: 44px;
+        border-radius: 22px;
+        background: var(--raised);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+      .btn {
+        min-height: 48px;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        font-size: 16px;
+        font-weight: 600;
+      }
+      .card {
+        background: var(--surface);
+        border-radius: 22px;
+        box-shadow: 0 4px 12px rgba(31, 42, 36, 0.12);
+      }
+      .tabs {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 84px;
+        padding-top: 6px;
+        box-sizing: border-box;
+        background: rgba(255, 252, 246, 0.96);
+        border-top: 0.5px solid var(--sand);
+        display: flex;
+        align-items: flex-start;
+      }
+      .tab {
+        flex: 1;
+        min-height: 50px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 2px;
+        color: var(--subtle);
+        font-size: 11px;
+        font-weight: 600;
+      }
+      .tab.on {
+        color: var(--forest);
+      }
+      .plus {
+        width: 54px;
+        height: 54px;
+        border-radius: 27px;
+        margin-top: -18px;
+        background: var(--paprika);
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.18);
+      }
+      .row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      img {
+        display: block;
+      }
+      .spin {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        border: 4px solid var(--soft);
+        border-top-color: var(--forest);
+        box-sizing: border-box;
+      }
+      /* share sheet (iOS) */
+      .sheet {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: #f2f1ee;
+        border-radius: 14px 14px 0 0;
+        padding: 10px 0 34px;
+        will-change: transform;
+      }
+      .app {
+        width: 70px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+        font-size: 12px;
+        text-align: center;
+      }
+      .app i {
+        width: 60px;
+        height: 60px;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+      }
+      .act {
+        min-height: 46px;
+        display: flex;
+        align-items: center;
+        padding: 0 16px;
+        font-size: 16px;
+        border-bottom: 0.5px solid #dad6ce;
+      }
+      /* planning / shopping */
+      .day {
+        border-radius: 22px;
+        padding: 12px;
+        background: var(--surface);
+        border: 0.5px solid var(--sand);
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+      .day.today {
+        border: 1.5px solid var(--forest);
+      }
+      .slot {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-height: 44px;
+      }
+      .sl {
+        width: 92px;
+        flex-shrink: 0;
+        font-size: 13px;
+        color: var(--muted);
+      }
+      .ent {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px;
+        border-radius: 12px;
+        border: 0.5px solid var(--sand);
+        background: #fff;
+        min-height: 44px;
+        box-sizing: border-box;
+        will-change: transform, opacity;
+      }
+      .ent img {
+        width: 34px;
+        height: 34px;
+        border-radius: 8px;
+        object-fit: cover;
+      }
+      .addc {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+      .aisle {
+        padding: 16px 16px 4px;
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.4px;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+      .it {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-height: 52px;
+        padding: 0 16px;
+        will-change: transform, opacity;
+      }
+      .ck {
+        width: 44px;
+        height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+      /* outro + hook */
+      #outro {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        color: var(--cream);
+        text-align: center;
+        pointer-events: none;
+      }
+      #outro .icon {
+        width: 132px;
+        height: 132px;
+        border-radius: 30px;
+        box-shadow: 0 24px 48px -12px rgba(0, 0, 0, 0.5);
+      }
+      #outro .name {
+        font-family: var(--display);
+        font-weight: 700;
+        font-size: 40px;
+        line-height: 46px;
+        margin-top: 26px;
+        letter-spacing: -0.5px;
+      }
+      #outro .tag {
+        font-family: var(--display);
+        font-weight: 600;
+        font-size: 21px;
+        line-height: 28px;
+        margin-top: 10px;
+        color: rgba(247, 241, 230, 0.9);
+      }
+      #outro .pills {
+        display: flex;
+        gap: 8px;
+        margin-top: 26px;
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+      #outro .pill {
+        padding: 7px 12px;
+        border-radius: 999px;
+        background: rgba(247, 241, 230, 0.12);
+        font-size: 13.5px;
+        font-weight: 600;
+      }
+      #outro .avail {
+        margin-top: 30px;
+        font-size: 15px;
+        font-weight: 500;
+        color: rgba(247, 241, 230, 0.7);
+      }
+      .hk {
+        position: absolute;
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 22px 44px -14px rgba(0, 0, 0, 0.5);
+        will-change: transform, opacity;
+        background: #fff;
+      }
+      #tap {
+        position: absolute;
+        width: 56px;
+        height: 56px;
+        margin: -28px 0 0 -28px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.55);
+        box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8);
+        opacity: 0;
+        z-index: 60;
+        pointer-events: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="stage">
+      <div id="glow"></div>
+      <div id="hook"></div>
+      <div id="cam">
+        <div id="phone">
+          <div id="bezel"></div>
+          <div id="screen"></div>
+          <div id="island"></div>
+        </div>
+      </div>
+      <div id="cap"></div>
+      <div id="outro">
+        <img class="icon" src="../../../apps/mobile/assets/icon.png" alt="" />
+        <div class="name">PepperedApron</div>
+        <div class="tag">Toutes vos recettes,<br />au même endroit.</div>
+        <div class="pills">
+          <span class="pill">Sans compte</span><span class="pill">Sans publicité</span
+          ><span class="pill">Synchronisé avec iCloud</span>
+        </div>
+        <div class="avail">Sur iPhone et iPad</div>
+      </div>
+    </div>
+    <script>
+      'use strict';
+      // ================================================================ setup
+      const Q = new URLSearchParams(location.search);
+      const MODE = Q.get('mode') === 'store' || Q.has('still') ? 'store' : 'marketing';
+      document.body.classList.add(MODE);
+      const PH = '../../../apps/mobile/assets/photos/';
+      const ICON = '../../../apps/mobile/assets/icon.png';
+      const $ = (s) => document.querySelector(s);
+      const stage = $('#stage');
+      function fit() {
+        const k = Math.min(innerWidth / 443, innerHeight / 960);
+        stage.style.transform = `translate(${(innerWidth - 443 * k) / 2}px,${(innerHeight - 960 * k) / 2}px) scale(${k})`;
+      }
+      fit();
+      addEventListener('resize', fit);
+
+      // ================================================================ easing / timeline helpers
+      const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
+      const lin = (t, a, b) => clamp((t - a) / (b - a));
+      const ease = (x) => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2); // in-out cubic
+      const out = (x) => 1 - Math.pow(1 - x, 4); // out quart
+      const expo = (x) => (x >= 1 ? 1 : 1 - Math.pow(2, -10 * x));
+      const back = (x) => {
+        const c = 1.35;
+        return 1 + (c + 1) * Math.pow(x - 1, 3) + c * Math.pow(x - 1, 2);
+      };
+      const mix = (a, b, p) => a + (b - a) * p;
+      /** Piecewise interpolation of numeric keyframes [{t, ...values}] with in-out easing. */
+      function keys(list, t) {
+        if (t <= list[0].t) return list[0];
+        for (let i = 0; i < list.length - 1; i++) {
+          const A = list[i],
+            B = list[i + 1];
+          if (t <= B.t) {
+            const p = ease(lin(t, A.t, B.t));
+            const o = {};
+            for (const k in A) o[k] = k === 't' ? t : mix(A[k], B[k] ?? A[k], p);
+            return o;
+          }
+        }
+        return list[list.length - 1];
+      }
+      const css = (el, o) => {
+        for (const k in o) el.style[k] = o[k];
+      };
+
+      // ================================================================ icons (Ionicons-like, as in the app)
+      const I = {
+        heart: (c = 'currentColor', f = 'none') =>
+          `<svg width="22" height="22" viewBox="0 0 24 24" fill="${f}" stroke="${c}" stroke-width="1.8" stroke-linejoin="round"><path d="M12 20.3s-7.5-4.6-8.8-9.4C2.4 7.9 4.4 5 7.5 5c1.9 0 3.4 1.1 4.5 2.7C13.1 6.1 14.6 5 16.5 5c3.1 0 5.1 2.9 4.3 5.9-1.3 4.8-8.8 9.4-8.8 9.4z"/></svg>`,
+        cal: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>`,
+        cart: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4h2.2l2.3 11h10.8l2.2-8H6.3"/><circle cx="9.5" cy="19.5" r="1.4"/><circle cx="17" cy="19.5" r="1.4"/></svg>`,
+        share: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3.5M7.5 8 12 3.5 16.5 8"/><path d="M8 11H6.5A1.5 1.5 0 0 0 5 12.5v7A1.5 1.5 0 0 0 6.5 21h11a1.5 1.5 0 0 0 1.5-1.5v-7a1.5 1.5 0 0 0-1.5-1.5H16"/></svg>`,
+        more: `<svg width="22" height="22" viewBox="0 0 24 24"><circle cx="6" cy="12" r="1.7" fill="currentColor"/><circle cx="12" cy="12" r="1.7" fill="currentColor"/><circle cx="18" cy="12" r="1.7" fill="currentColor"/></svg>`,
+        back: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 5-7 7 7 7"/></svg>`,
+        close: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>`,
+        play: `<svg width="20" height="20" viewBox="0 0 24 24"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor"/></svg>`,
+        timer: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="13" r="7.5"/><path d="M12 9v4l2.5 1.5M10 3h4"/></svg>`,
+        plus: (s = 20) =>
+          `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>`,
+        minus: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 12h14"/></svg>`,
+        ring: (c = '#C9BFAD') =>
+          `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="1.6"><circle cx="12" cy="12" r="9.5"/></svg>`,
+        checked: `<svg width="26" height="26" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#1F4D3A"/><path d="m7.5 12.2 3 3 6-6.4" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+        leaf: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19c0-8 5-13 14-14-1 9-6 14-14 14z"/><path d="M5 19 13 11"/></svg>`,
+        clock: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>`,
+        mic: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1F4D3A" stroke-width="1.8" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/></svg>`,
+        search: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/></svg>`,
+        home: `<svg width="24" height="24" viewBox="0 0 24 24"><path d="M4 10.5 12 4l8 6.5V19a1 1 0 0 1-1 1h-4.5v-5.5h-5V20H5a1 1 0 0 1-1-1z" fill="currentColor"/></svg>`,
+        homeO: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M4 10.5 12 4l8 6.5V19a1 1 0 0 1-1 1h-4.5v-5.5h-5V20H5a1 1 0 0 1-1-1z"/></svg>`,
+        chev: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#646962" stroke-width="2" stroke-linecap="round"><path d="m9 5 7 7-7 7"/></svg>`,
+        cloud: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 18.5a4.5 4.5 0 0 1-.6-9A6 6 0 0 1 18 9a4 4 0 0 1-.5 9.5z"/><path d="m9.5 14 2 2 3.5-3.5"/></svg>`,
+        person: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4.5 20c1.2-3.6 4-5.5 7.5-5.5s6.3 1.9 7.5 5.5"/></svg>`,
+      };
+      const statusBar = (
+        dark,
+      ) => `<div class="sb" style="color:${dark ? '#fff' : 'var(--ink)'}"><span>9:41</span><span class="ic">
+  <svg width="18" height="12" viewBox="0 0 18 12"><rect x="0" y="8" width="3" height="4" rx="1" fill="currentColor"/><rect x="5" y="5.5" width="3" height="6.5" rx="1" fill="currentColor"/><rect x="10" y="3" width="3" height="9" rx="1" fill="currentColor"/><rect x="15" y="0" width="3" height="12" rx="1" fill="currentColor"/></svg>
+  <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor"><path d="M8 2.2c2.3 0 4.4.9 6 2.4l1.2-1.3A10.4 10.4 0 0 0 8 .4C5.2.4 2.7 1.5.8 3.3L2 4.6a8.6 8.6 0 0 1 6-2.4zm0 3.6c1.3 0 2.5.5 3.4 1.3l1.2-1.3A6.6 6.6 0 0 0 8 4c-1.8 0-3.4.7-4.6 1.8l1.2 1.3c.9-.8 2.1-1.3 3.4-1.3zM8 9.4l1.6 1.7L8 12.6 6.4 11z"/></svg>
+  <svg width="27" height="13" viewBox="0 0 27 13"><rect x=".5" y=".5" width="23" height="12" rx="3.5" fill="none" stroke="currentColor" opacity=".4"/><rect x="2" y="2" width="20" height="9" rx="2" fill="currentColor"/><path d="M25 4.5v4c.8-.3 1.3-1.1 1.3-2s-.5-1.7-1.3-2z" fill="currentColor" opacity=".4"/></svg></span></div>`;
+      const tabs = (on) => `<nav class="tabs">
+  <div class="tab ${on === 'home' ? 'on' : ''}">${on === 'home' ? I.home : I.homeO}<span>Accueil</span></div>
+  <div class="tab ${on === 'search' ? 'on' : ''}">${I.search}<span>Recherche</span></div>
+  <div class="tab"><div class="plus">${I.plus(30)}</div></div>
+  <div class="tab ${on === 'plan' ? 'on' : ''}">${I.cal}<span>Planning</span></div>
+  <div class="tab ${on === 'shop' ? 'on' : ''}">${I.cart}<span>Courses</span></div></nav>`;
+
+      // ================================================================ screens (390×844, French texts of the app)
+      const SCREENS = {
+        home: () => `${statusBar()}<div class="in" id="homeIn" style="padding:54px 16px 0;box-sizing:border-box">
+    <div class="row" style="align-items:flex-start;padding-top:16px">
+      <div style="flex:1;display:flex;flex-direction:column;gap:4px"><p class="co mu">Bonjour Camille 👋</p><p class="hero">Qu’est-ce qu’on cuisine aujourd’hui ?</p></div>
+      <div class="ib">${I.heart()}</div><div class="ib">${I.person}</div></div>
+    <p class="t2" style="margin-top:28px">Aujourd’hui</p>
+    <div class="card row" style="margin-top:12px;padding:12px"><img src="${PH}soup.jpg" style="width:56px;height:56px;border-radius:12px;object-fit:cover">
+      <div style="flex:1"><p class="mi ac">Dîner</p><p class="bs">Velouté de potimarron</p></div><div class="ib" style="background:var(--forest);color:var(--cream)">${I.play}</div></div>
+    <div class="row" style="margin-top:28px;padding:16px;border-radius:22px;background:var(--forest);color:var(--cream)"><span style="font-size:28px">🎲</span><span class="t3" style="flex:1">Une recette au hasard</span><span>→</span></div>
+    <div class="row" style="margin-top:28px"><p class="t2" style="flex:1">Vos favoris</p><p class="co pr" style="font-weight:600">Tout voir</p></div>
+    <div style="display:flex;gap:12px;margin-top:12px;width:600px">
+      ${[
+        ['pasta', 'Penne all’arrabbiata', '25 min · Facile'],
+        ['fish', 'Saumon rôti, légumes croquants', '25 min · Facile'],
+      ]
+        .map(
+          ([p, t, m]) =>
+            `<div style="width:280px;display:flex;flex-direction:column;gap:8px"><div style="position:relative"><img src="${PH}${p}.jpg" style="width:280px;height:174px;border-radius:22px;object-fit:cover"><span style="position:absolute;top:8px;right:8px;width:34px;height:34px;border-radius:17px;background:rgba(255,252,246,.92);display:flex;align-items:center;justify-content:center;color:var(--paprika)">${I.heart('#D2642A', '#D2642A')}</span></div><span class="bs">${t}</span><span class="cap mu" style="margin-top:-6px">${m}</span></div>`,
+        )
+        .join('')}</div>
+    <p class="t2" style="margin-top:28px">Envie de…</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px">
+      ${[
+        ['main', 'Plats'],
+        ['pasta', 'Pâtes'],
+        ['dessert', 'Desserts'],
+        ['soup', 'Soupes'],
+      ]
+        .map(
+          ([p, t]) =>
+            `<div style="position:relative;height:125px;border-radius:22px;overflow:hidden"><img src="${PH}${p}.jpg" style="width:100%;height:100%;object-fit:cover"><span style="position:absolute;inset:0;background:rgba(18,24,20,.28)"></span><span class="bs" style="position:absolute;left:12px;bottom:12px;color:#FFFCF6">${t}</span></div>`,
+        )
+        .join('')}</div>
+  </div>${tabs('home')}`,
+
+        reel: () => `<img src="${PH}pasta.jpg" style="position:absolute;inset:0;width:390px;height:844px;object-fit:cover;transform:scale(1.06)">
+    <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.30) 0%,rgba(0,0,0,0) 22%,rgba(0,0,0,0) 55%,rgba(0,0,0,.65) 100%)"></div>
+    ${statusBar(true)}
+    <div style="position:absolute;right:14px;bottom:150px;display:flex;flex-direction:column;gap:26px;align-items:center;color:#fff">
+      ${I.heart('#fff')}<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8"><path d="M20 12a8 8 0 0 1-11.6 7.1L4 20l1-4.2A8 8 0 1 1 20 12z"/></svg>
+      <div id="reelShare">${I.share.replace(/currentColor/g, '#fff')}</div></div>
+    <div style="position:absolute;left:16px;right:70px;bottom:120px;color:#fff;display:flex;flex-direction:column;gap:6px">
+      <p class="bs">@chef.lea</p><p class="co">Pâtes crémeuses au citron 🍋 La recette est dans la vidéo !</p></div>
+    <div id="sheet" class="sheet">
+      <div style="width:36px;height:5px;border-radius:3px;background:#C9C3B8;margin:0 auto 14px"></div>
+      <div class="row" style="padding:0 16px"><img src="${PH}pasta.jpg" style="width:44px;height:44px;border-radius:9px;object-fit:cover"><div style="flex:1"><p class="bs">Pâtes crémeuses au citron</p><p class="cap mu">Vidéo de chef.lea</p></div></div>
+      <div style="display:flex;gap:2px;padding:16px 10px 14px">
+        <div class="app"><i style="background:#34C759"><svg width="32" height="32" viewBox="0 0 24 24"><path d="M12 4C7 4 3 7.3 3 11.3c0 2.3 1.3 4.3 3.3 5.6L5.6 20l3.6-1.8c.9.2 1.8.3 2.8.3 5 0 9-3.3 9-7.2S17 4 12 4z" fill="#fff"/></svg></i>Messages</div>
+        <div class="app"><i style="background:#1E88F5"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8"><rect x="3" y="5.5" width="18" height="13" rx="2"/><path d="m3.5 7 8.5 6 8.5-6"/></svg></i>Mail</div>
+        <div class="app" id="paApp"><i><img src="${ICON}" style="width:60px;height:60px"></i><b style="font-weight:600">PepperedApron</b></div>
+        <div class="app"><i style="background:#FFD54A"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#5E4A00" stroke-width="1.8" stroke-linecap="round"><path d="M6 8h12M6 12h12M6 16h8"/></svg></i>Notes</div>
+        <div class="app"><i style="background:#E3DED5"><svg width="28" height="28" viewBox="0 0 24 24"><circle cx="6" cy="12" r="1.7" fill="#5E655F"/><circle cx="12" cy="12" r="1.7" fill="#5E655F"/><circle cx="18" cy="12" r="1.7" fill="#5E655F"/></svg></i>Plus</div></div>
+      <div style="margin:0 16px;border-radius:12px;background:#fff;overflow:hidden"><div class="act">Copier le lien</div><div class="act" style="border:0">Ajouter aux favoris</div></div>
+    </div>`,
+
+        importing:
+          () => `${statusBar()}<div style="padding:59px 16px 0" class="row"><p class="t1" style="flex:1">Imports</p><div class="ib">${I.close}</div></div>
+    <div style="position:absolute;left:24px;right:24px;top:300px;display:flex;flex-direction:column;align-items:center;gap:18px;text-align:center">
+      <div class="spin" id="spinner"></div>
+      <div style="position:relative;height:23px;width:100%">
+        <p class="bs" id="stg0" style="position:absolute;left:0;right:0">Lecture de la page…</p>
+        <p class="bs" id="stg1" style="position:absolute;left:0;right:0;opacity:0">Écoute de la vidéo… (sur votre téléphone)</p>
+        <p class="bs" id="stg2" style="position:absolute;left:0;right:0;opacity:0">Enregistrement de la recette…</p></div>
+      <p class="co mu" style="max-width:320px;margin-top:6px">La recette s’enregistre toute seule. Vous pourrez la vérifier et la modifier ensuite.</p></div>`,
+
+        recipe: () => `<div class="in" id="recIn">
+    <div style="position:relative"><img src="${PH}pasta.jpg" style="width:390px;height:293px;object-fit:cover">
+      <div class="ib" style="position:absolute;top:55px;left:16px;background:rgba(18,24,20,.45);color:#fff">${I.back}</div></div>
+    <div style="padding:20px 16px 160px;display:flex;flex-direction:column;gap:14px">
+      <div style="padding:16px;border-radius:22px;background:var(--soft);display:flex;flex-direction:column;gap:8px">
+        <div class="row" style="gap:8px">${I.mic}<p class="bs">Importée automatiquement</p></div>
+        <p class="co">Une partie de la recette vient de ce qui est dit dans la vidéo : vérifiez les ingrédients, les quantités et les étapes.</p>
+        <div class="row" style="gap:8px"><span class="btn" style="min-height:36px;padding:0 12px;font-size:13px;background:var(--forest);color:var(--cream)">Modifier</span><span class="btn" style="min-height:36px;padding:0 12px;font-size:13px;background:var(--surfaceMuted)">✓ C’est bon</span></div></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><span class="badge b-pr">${I.clock}20 min</span><span class="badge b-ne">Facile</span><span class="badge b-ne">Pâtes</span><span class="badge b-pr">${I.leaf}Végétarien</span></div>
+      <p class="hero">Pâtes crémeuses au citron</p>
+      <p class="co mu">Source : Instagram · @chef.lea</p>
+      <div class="row" style="gap:8px">${['heart', 'cal', 'cart', 'share', 'more'].map((k) => `<div class="ib">${k === 'heart' ? I.heart() : I[k]}</div>`).join('')}</div>
+      <p class="t2" style="margin-top:12px">Ingrédients</p>
+      <div class="row"><span class="co mu">Pour</span>
+        <div style="display:flex;align-items:center;gap:4px;padding:4px;border-radius:999px;background:var(--surfaceMuted)">
+          <span class="ib" style="width:36px;height:36px;color:var(--forest)">${I.minus}</span>
+          <span class="bs" style="min-width:36px;text-align:center;position:relative;height:23px;overflow:hidden"><span id="sv4" style="position:absolute;left:0;right:0">4</span><span id="sv6" style="position:absolute;left:0;right:0;opacity:0">6</span></span>
+          <span class="ib" id="svPlus" style="width:36px;height:36px;color:var(--forest)">${I.plus(18)}</span></div>
+        <span class="co mu">personnes</span></div>
+      <div>${[
+        ['400 g', '600 g', 'spaghetti'],
+        ['2', '3', 'citrons non traités'],
+        ['20 cl', '30 cl', 'crème fraîche'],
+        ['60 g', '90 g', 'parmesan râpé'],
+        ['1', '1 ½', 'gousse d’ail'],
+        ['', '', 'sel, poivre'],
+      ]
+        .map(
+          ([a, b, n], i) =>
+            `<div class="row" style="min-height:48px;border-bottom:.5px solid var(--sand)">${I.ring()}<span class="bd" style="flex:1"><b style="position:relative;display:inline-block;white-space:nowrap;min-width:${a ? 52 : 0}px"><span class="qa" style="position:absolute;left:0;white-space:nowrap">${a}</span><span class="qb" style="opacity:0">${b}</span></b> ${n}</span></div>`,
+        )
+        .join('')}</div>
+    </div></div>
+    <div style="position:absolute;left:0;right:0;bottom:0;padding:12px 16px 34px;background:var(--cream);border-top:.5px solid var(--sand)"><div class="btn" style="height:56px;background:var(--forest);color:var(--cream)">${I.play}Commencer</div></div>
+    <div id="toast" style="position:absolute;left:16px;right:16px;bottom:118px;padding:14px 16px;border-radius:16px;background:var(--ink);color:var(--cream);display:flex;align-items:center;gap:10px;box-shadow:0 10px 24px rgba(0,0,0,.25);opacity:0">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#86C1A2" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg><span class="bs">Recette enregistrée ✓</span></div>`,
+
+        planning: () => {
+          const ent = (id, p, t, n, extra = '') =>
+            `<div class="ent" id="${id}"><img src="${PH}${p}.jpg"><span style="flex:1;display:flex;flex-direction:column"><span class="co">${t}</span>${extra}</span><span class="cap mu">×${n}</span></div>`;
+          const slot = (l, e) =>
+            `<div class="slot"><span class="sl">${l}</span>${e || '<span style="flex:1"></span>'}<span class="addc">${I.plus(20)}</span></div>`;
+          return `${statusBar()}<div class="in" style="padding:63px 16px 0;box-sizing:border-box;width:390px">
+      <div class="row" style="gap:8px"><p class="t1" style="flex:1">Planning</p><span class="cap pr" style="font-weight:600">Semaines types</span><span class="cap pr" style="font-weight:600;margin-left:8px">Calendrier</span></div>
+      <div class="row" style="margin-top:12px;gap:8px"><div class="ib">${I.back}</div><div style="flex:1;text-align:center"><p class="bs">Cette semaine</p><p class="cap mu">26 oct. – 1 nov.</p></div><div class="ib" style="transform:scaleX(-1)">${I.back}</div></div>
+      <div class="btn" style="margin-top:12px;background:var(--surfaceMuted)">${I.cart}Ajouter la semaine aux courses</div>
+      <div style="display:flex;flex-direction:column;gap:12px;margin-top:16px">
+        <div class="day today"><div class="row"><p class="t3" style="flex:1">lundi 26 octobre</p><span class="mi pr">Aujourd’hui</span></div>
+          ${slot('Petit-déjeuner')}${slot('Déjeuner', ent('e1', 'salad', 'Salade de lentilles', 2))}${slot('Goûter')}${slot('Dîner', ent('e2', 'pasta', 'Pâtes crémeuses au citron', 6))}</div>
+        <div class="day"><div class="row"><p class="t3" style="flex:1">mardi 27 octobre</p><span class="cap mu">3 repas</span></div>
+          ${slot('Petit-déjeuner', ent('e3', 'breakfast', 'Pain perdu brioché', 2))}${slot('Déjeuner', ent('e4', 'pasta', 'Pâtes crémeuses au citron', 2, '<span class="cap" style="color:var(--accentText)">♻︎ Restes</span>'))}${slot('Goûter')}${slot('Dîner', ent('e5', 'soup', 'Velouté de potimarron', 4))}</div>
+        <div class="day"><div class="row"><p class="t3" style="flex:1">mercredi 28 octobre</p><span class="cap mu">1 repas</span></div>
+          ${slot('Petit-déjeuner')}${slot('Déjeuner')}${slot('Goûter')}${slot('Dîner', ent('e6', 'fish', 'Saumon rôti, légumes croquants', 4))}</div>
+      </div></div>${tabs('plan')}`;
+        },
+
+        shopping: () => {
+          const it = (i, n, q, p) =>
+            `<div class="it" id="it${i}"><span class="ck" id="ck${i}" style="position:relative">${I.ring()}<span style="position:absolute;opacity:0" class="on">${I.checked}</span></span><div style="flex:1;display:flex;flex-direction:column;gap:1px;padding:8px 0"><span class="bd nm">${n}</span><span class="cap mu">${q}</span></div><span class="co mu">${p}</span></div>`;
+          return `${statusBar()}<div class="in" style="width:390px">
+      <div style="padding:63px 16px 8px;display:flex;flex-direction:column;gap:12px">
+        <div><p class="mi ac">Liste active</p><p class="t1">Courses de la semaine</p></div>
+        <div class="row" style="gap:8px;flex-wrap:wrap"><span class="badge b-pr" style="position:relative"><span id="rem">13 articles restants</span></span><span class="badge b-ne" id="budget">≈ 42,80 €</span></div>
+        <div class="row" style="padding:0 12px;border-radius:16px;border:1.5px solid var(--sand);background:var(--surface);min-height:48px;gap:8px"><span class="pr">${I.plus(22)}</span><span class="bd" style="color:var(--subtle)">Ajouter un article (ex. 2 kg de pommes)</span></div></div>
+      <p class="aisle">Fruits & légumes · 4</p>
+      ${it(0, 'citrons non traités', '3 · pour 1 recette', '1,35 €')}${it(1, 'potimarron', '1,2 kg', '3,20 €')}${it(2, 'oignons', '4 · pour 2 recettes', '1,10 €')}${it(3, 'salade', '1', '0,95 €')}
+      <p class="aisle">Produits frais & œufs · 3</p>
+      ${it(4, 'crème fraîche', '50 cl · pour 2 recettes', '2,40 €')}${it(5, 'œufs', '6', '1,95 €')}${it(6, 'parmesan', '90 g', '2,60 €')}
+      <p class="aisle">Épicerie · 2</p>
+      ${it(7, 'spaghetti', '600 g', '1,85 €')}${it(8, 'lentilles vertes', '500 g', '2,10 €')}
+    </div>${tabs('shop')}`;
+        },
+
+        cook: () => `${statusBar()}<div style="padding:55px 16px 0" class="row">
+      <div class="ib">${I.close}</div>
+      <div style="flex:1;display:flex;flex-direction:column;gap:6px"><p class="bs" style="text-align:center">Étape 3 / 5</p>
+        <div style="height:6px;border-radius:3px;background:var(--sand);overflow:hidden"><div style="width:60%;height:100%;border-radius:3px;background:var(--paprika)"></div></div>
+        <p class="cap mu" style="text-align:center">L’écran reste allumé</p></div>
+      <div class="ib"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1.1" fill="currentColor"/><circle cx="4.5" cy="12" r="1.1" fill="currentColor"/><circle cx="4.5" cy="18" r="1.1" fill="currentColor"/></svg></div></div>
+    <div style="padding:30px 24px;display:flex;flex-direction:column;gap:24px">
+      <p style="font-size:30px;line-height:42px;font-weight:500">Faites cuire 600 g de spaghetti 8 minutes dans l’eau bouillante salée. Gardez une louche d’eau de cuisson.</p>
+      <div class="btn" id="launch" style="align-self:flex-start;min-height:56px;padding:0 20px;background:var(--paprika);color:#fff">${I.timer}Lancer 08:00</div></div>
+    <div style="position:absolute;left:0;right:0;bottom:116px;display:flex;align-items:center;gap:8px;padding:0 16px">
+      <div class="ib">${I.minus}</div><span class="bs">Aa</span><div class="ib">${I.plus(20)}</div><span style="flex:1"></span>
+      <span class="btn" style="min-height:36px;padding:0 12px;font-size:13px;background:var(--surfaceMuted)">${I.timer}Nouveau minuteur</span></div>
+    <div id="tchip" style="position:absolute;left:16px;bottom:186px;display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:16px;background:#fff;border:.5px solid var(--sand);opacity:0">
+      <div style="display:flex;flex-direction:column;gap:2px"><span class="cap mu">Pâtes</span><span class="t2" id="tclock" style="font-variant-numeric:tabular-nums">08:00</span></div>
+      <span class="ib" style="width:36px;height:36px;background:var(--surfaceMuted)"><svg width="16" height="16" viewBox="0 0 24 24"><rect x="7" y="5.5" width="3.5" height="13" rx="1" fill="currentColor"/><rect x="13.5" y="5.5" width="3.5" height="13" rx="1" fill="currentColor"/></svg></span>
+      <span class="ib cap" style="width:36px;height:36px;background:var(--surfaceMuted);font-weight:700">+1</span></div>
+    <div style="position:absolute;left:0;right:0;bottom:0;display:flex;gap:12px;padding:12px 16px 40px">
+      <div class="btn" style="flex:1;min-height:64px;background:var(--surfaceMuted)">← Précédente</div>
+      <div class="btn" style="flex:1.4;min-height:64px;background:var(--forest);color:var(--cream)">Suivante →</div></div>`,
+
+        search:
+          () => `${statusBar()}<div style="padding:63px 16px 0;display:flex;flex-direction:column;gap:12px">
+      <p class="t1">Recherche</p>
+      <div style="display:flex;padding:3px;border-radius:12px;background:var(--surfaceMuted)"><span class="co" style="flex:1;min-height:36px;border-radius:8px;background:#fff;display:flex;align-items:center;justify-content:center;font-weight:600">Rechercher</span><span class="co mu" style="flex:1;display:flex;align-items:center;justify-content:center">Mon frigo</span></div>
+      <div class="row" style="min-height:50px;padding:0 14px;border:1.5px solid var(--forest);border-radius:16px;background:var(--surface);gap:8px"><span class="mu">${I.search}</span><span class="bd">poulet rapide</span></div>
+      <p class="cap mu">4 recettes</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px 12px">
+        ${[
+          ['meat', 'Poulet rapide au citron', '20 min · Facile'],
+          ['main', 'Curry de poulet express', '25 min · Facile'],
+          ['salad', 'Salade César au poulet', '15 min · Facile'],
+          ['pasta', 'Poêlée de poulet et gnocchis', '30 min · Intermédiaire'],
+        ]
+          .map(
+            ([p, t, m]) =>
+              `<div style="display:flex;flex-direction:column;gap:6px"><img src="${PH}${p}.jpg" style="width:100%;height:135px;border-radius:22px;object-fit:cover"><span class="bs">${t}</span><span class="cap mu">${m}</span></div>`,
+          )
+          .join('')}</div></div>${tabs('search')}`,
+
+        settings: () => {
+          const r = (ic, t, v) =>
+            `<div class="row" style="min-height:52px;padding:8px 16px;border-bottom:.5px solid var(--sand)"><span style="width:32px;height:32px;border-radius:10px;background:var(--soft);color:var(--forest);display:flex;align-items:center;justify-content:center">${ic}</span><span style="flex:1;display:flex;flex-direction:column"><span class="bd">${t}</span>${v ? `<span class="cap mu">${v}</span>` : ''}</span>${I.chev}</div>`;
+          return `${statusBar()}<div style="padding:63px 16px 0;display:flex;flex-direction:column;gap:20px">
+      <p style="font-size:34px;line-height:41px;font-weight:700">Réglages</p>
+      <div style="background:var(--surface);border-radius:22px;overflow:hidden">${r(I.person, 'Prénom', 'Camille')}${r(I.cloud, 'iCloud', 'À jour dans iCloud · à 9:41')}</div>
+      <div style="display:flex;gap:12px;padding:16px;border-radius:22px;background:var(--soft)"><span class="pr">${I.cloud}</span><div style="flex:1;display:flex;flex-direction:column;gap:4px"><p class="bs">Vos données restent chez vous</p><p class="co mu">Pas de compte, pas de serveur, pas de publicité : vos recettes, listes et votre planning sont sur cet appareil et dans votre iCloud privé.</p></div></div>
+      <div style="background:var(--surface);border-radius:22px;overflow:hidden">${r(I.heart(), 'Mes favoris')}${r(I.cal, 'Notifications')}${r(I.share, 'Mes données')}</div></div>`;
+        },
+      };
+
+      // ================================================================ build layers
+      const screen = $('#screen');
+      const layers = {};
+      for (const k of Object.keys(SCREENS)) {
+        const el = document.createElement('div');
+        el.className = 'scr';
+        el.innerHTML = SCREENS[k]();
+        el.style.opacity = '0';
+        screen.appendChild(el);
+        layers[k] = el;
+      }
+      const scaleScreen = () => {
+        const w = screen.clientWidth;
+        for (const el of Object.values(layers)) el.style.transform = `scale(${w / 390})`;
+      };
+      scaleScreen();
+      const tap = document.createElement('div');
+      tap.id = 'tap';
+      screen.appendChild(tap);
+
+      // Hook: recipes scattered everywhere (screenshots, a video, a handwritten card).
+      const hook = $('#hook');
+      const HOOK = [
+        {
+          x: 40,
+          y: 300,
+          w: 150,
+          h: 210,
+          r: -9,
+          html: `<img src="${PH}dessert.jpg" style="width:100%;height:100%;object-fit:cover">`,
+        },
+        {
+          x: 250,
+          y: 270,
+          w: 160,
+          h: 260,
+          r: 7,
+          html: `<img src="${PH}pasta.jpg" style="width:100%;height:100%;object-fit:cover"><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center"><div style="width:52px;height:52px;border-radius:26px;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;color:#fff">${I.play}</div></div>`,
+        },
+        {
+          x: 70,
+          y: 560,
+          w: 190,
+          h: 150,
+          r: 5,
+          html: `<div style="padding:16px;background:#FFFCF6;height:100%;box-sizing:border-box"><p style="font-family:var(--display);font-weight:700;font-size:18px">Crêpes de mamie</p><p class="cap mu" style="margin-top:8px;line-height:20px">250 g de farine<br>4 œufs · ½ l de lait<br>1 pincée de sel</p></div>`,
+        },
+        {
+          x: 255,
+          y: 580,
+          w: 145,
+          h: 190,
+          r: -6,
+          html: `<img src="${PH}salad.jpg" style="width:100%;height:100%;object-fit:cover">`,
+        },
+        {
+          x: 150,
+          y: 740,
+          w: 150,
+          h: 120,
+          r: 3,
+          html: `<img src="${PH}baking.jpg" style="width:100%;height:100%;object-fit:cover">`,
+        },
+      ];
+      for (const c of HOOK) {
+        const el = document.createElement('div');
+        el.className = 'hk';
+        css(el, { left: c.x + 'px', top: c.y + 'px', width: c.w + 'px', height: c.h + 'px' });
+        el.innerHTML = c.html;
+        hook.appendChild(el);
+        c.el = el;
+      }
+
+      // ================================================================ captions
+      const capEl = $('#cap');
+      const CAPTIONS =
+        MODE === 'store'
+          ? [
+              { a: 0.15, b: 3.0, l: ['Toutes vos recettes,', '*au même endroit.*'] },
+              { a: 3.3, b: 5.7, l: ['Partagez une recette', 'depuis *Instagram* ou TikTok.'] },
+              {
+                a: 5.9,
+                b: 8.0,
+                l: ['Elle est lue,', 'et même *écoutée*.'],
+                s: 'Directement sur votre iPhone.',
+              },
+              { a: 8.25, b: 10.3, l: ['*Enregistrée*', 'toute seule.'] },
+              { a: 10.45, b: 12.55, l: ['Pour 6 ?', 'Les quantités *suivent*.'] },
+              { a: 12.8, b: 16.5, l: ['La semaine,', 'planifiée en *deux minutes*.'] },
+              { a: 16.8, b: 20.5, l: ['La liste de courses', 'se remplit *toute seule*.'] },
+              {
+                a: 20.8,
+                b: 24.4,
+                l: ['En cuisine,', '*pas à pas*.'],
+                s: 'Minuteurs compris. L’écran reste allumé.',
+              },
+            ]
+          : [
+              {
+                a: 0.2,
+                b: 2.8,
+                l: ['Des recettes', '*partout*.'],
+                s: 'Captures, vidéos, carnets, favoris…',
+              },
+              { a: 3.3, b: 5.7, l: ['Partagez une recette', 'depuis *Instagram* ou TikTok.'] },
+              {
+                a: 5.9,
+                b: 8.0,
+                l: ['Elle est lue,', 'et même *écoutée*.'],
+                s: 'Directement sur votre iPhone.',
+              },
+              { a: 8.25, b: 10.3, l: ['*Enregistrée*', 'toute seule.'] },
+              { a: 10.45, b: 12.55, l: ['Pour 6 ?', 'Les quantités *suivent*.'] },
+              { a: 12.8, b: 16.5, l: ['La semaine,', 'planifiée en *deux minutes*.'] },
+              { a: 16.8, b: 20.5, l: ['La liste de courses', 'se remplit *toute seule*.'] },
+              {
+                a: 20.8,
+                b: 24.4,
+                l: ['En cuisine,', '*pas à pas*.'],
+                s: 'Minuteurs compris. L’écran reste allumé.',
+              },
+            ];
+      for (const c of CAPTIONS) {
+        const box = document.createElement('div');
+        box.style.cssText = 'position:absolute;left:0;right:0;top:0';
+        let n = 0;
+        box.innerHTML =
+          c.l
+            .map(
+              (line) =>
+                `<div class="l">${line
+                  .split(' ')
+                  .map((w) => {
+                    const hl = /\*/.test(w);
+                    return `<span class="w${hl ? ' hl' : ''}" data-i="${n++}">${w.replace(/\*/g, '')}</span>`;
+                  })
+                  .join(' ')}</div>`,
+            )
+            .join('') + (c.s ? `<div class="sub w" data-i="${n++}">${c.s}</div>` : '');
+        capEl.appendChild(box);
+        c.box = box;
+        c.words = [...box.querySelectorAll('.w')];
+      }
+      function captions(t) {
+        for (const c of CAPTIONS) {
+          const vis = t > c.a - 0.05 && t < c.b + 0.05;
+          c.box.style.display = vis ? '' : 'none';
+          if (!vis) continue;
+          const leave = ease(lin(t, c.b - 0.35, c.b));
+          c.box.style.opacity = String(1 - leave);
+          c.box.style.transform = `translateY(${-14 * leave}px)`;
+          c.box.style.filter = leave > 0 ? `blur(${4 * leave}px)` : '';
+          c.words.forEach((w, i) => {
+            const p = out(lin(t, c.a + i * 0.055, c.a + i * 0.055 + 0.55));
+            w.style.opacity = String(p);
+            w.style.transform = `translateY(${(1 - p) * 22}px)`;
+            w.style.filter = p < 1 ? `blur(${(1 - p) * 6}px)` : '';
+          });
+        }
+      }
+
+      // ================================================================ the timeline (28 s)
+      const DURATION = 28;
+      const show = (k, o, extra = '') => {
+        layers[k].style.opacity = String(o);
+        layers[k].style.visibility = o <= 0.001 ? 'hidden' : 'visible';
+        if (extra !== null) layers[k].dataset.x = extra;
+      };
+      function tapAt(t, at, x, y) {
+        const p = lin(t, at, at + 0.55);
+        if (p <= 0 || p >= 1) return false;
+        css(tap, {
+          left: x + 'px',
+          top: y + 'px',
+          opacity: String(0.9 * (1 - p)),
+          transform: `scale(${0.5 + p * 0.9})`,
+        });
+        return true;
+      }
+      // Screen positions are in the phone's screen pixels (289 wide): convert from the app's 390 grid.
+      const sp = (v) => (v * screen.clientWidth) / 390;
+
+      function seek(t) {
+        const store = MODE === 'store';
+        // background light drifting slowly
+        $('#glow').style.transform =
+          `translate(${Math.sin(t * 0.35) * 60}px,${Math.cos(t * 0.28) * 40}px)`;
+
+        // ---- hook cards (marketing): drifting, then pulled into the phone
+        const pull = ease(lin(t, 2.3, 3.2));
+        HOOK.forEach((c, i) => {
+          if (store) {
+            c.el.style.display = 'none';
+            return;
+          }
+          const enter = out(lin(t, 0.05 + i * 0.12, 0.85 + i * 0.12));
+          const dx = Math.sin(t * 0.9 + i) * 6,
+            dy = Math.cos(t * 0.8 + i * 2) * 6;
+          const cx = 221 - (c.x + c.w / 2),
+            cy = 590 - (c.y + c.h / 2);
+          css(c.el, {
+            display: pull >= 1 ? 'none' : '',
+            opacity: String(enter * (1 - pull)),
+            transform: `translate(${dx + cx * pull}px,${dy + cy * pull + (1 - enter) * 60}px) rotate(${c.r * (1 - pull)}deg) scale(${(0.9 + 0.1 * enter) * (1 - 0.55 * pull)})`,
+          });
+        });
+
+        // ---- camera / phone
+        const cam = store
+          ? keys(
+              [
+                { t: 0, s: 1.0, x: 0, y: 0 },
+                { t: 9.6, s: 1.0, x: 0, y: 0 },
+                { t: 10.6, s: 1.16, x: 0, y: -30 },
+                { t: 12.3, s: 1.16, x: 0, y: -30 },
+                { t: 12.9, s: 1.0, x: 0, y: 0 },
+                { t: 24.3, s: 1, x: 0, y: 0 },
+                { t: 25.4, s: 0.86, x: 0, y: 40 },
+                { t: 28, s: 0.86, x: 0, y: 40 },
+              ],
+              t,
+            )
+          : keys(
+              [
+                { t: 0, s: 1.0, x: 0, y: 0 },
+                { t: 3.2, s: 1.0, x: 0, y: 0 },
+                { t: 5.2, s: 1.04, x: 0, y: -8 },
+                { t: 8.0, s: 1.0, x: 0, y: 0 },
+                { t: 9.6, s: 1.0, x: 0, y: 0 },
+                { t: 10.6, s: 1.2, x: 0, y: -38 },
+                { t: 12.3, s: 1.2, x: 0, y: -38 },
+                { t: 12.9, s: 1.0, x: 0, y: 0 },
+                { t: 24.3, s: 1.0, x: 0, y: 0 },
+                { t: 25.4, s: 0.86, x: 0, y: 40 },
+                { t: 28, s: 0.86, x: 0, y: 40 },
+              ],
+              t,
+            );
+        $('#cam').style.transform = `translate(${cam.x}px,${cam.y}px) scale(${cam.s})`;
+        const tilt = store
+          ? { ry: 0, rx: 0, rz: 0 }
+          : keys(
+              [
+                { t: 0, ry: 0, rx: 0, rz: 0 },
+                { t: 3.4, ry: -7, rx: 3, rz: 0 },
+                { t: 7.8, ry: 5, rx: 2, rz: 0 },
+                { t: 12.5, ry: 0, rx: 0, rz: 0 },
+                { t: 13.4, ry: -10, rx: 4, rz: -1 },
+                { t: 16.4, ry: -6, rx: 2, rz: 0 },
+                { t: 17.2, ry: 9, rx: 3, rz: 1 },
+                { t: 20.4, ry: 5, rx: 2, rz: 0 },
+                { t: 21.2, ry: -4, rx: 2, rz: 0 },
+                { t: 24.3, ry: 0, rx: 0, rz: 0 },
+              ],
+              t,
+            );
+        const rise = store ? out(lin(t, 0, 0.9)) : out(lin(t, 2.4, 3.6));
+        const leave = ease(lin(t, 24.6, 25.8));
+        css($('#phone'), {
+          transform: `perspective(1600px) translateY(${(1 - rise) * 620 + leave * -60}px) rotateY(${tilt.ry}deg) rotateX(${tilt.rx}deg) rotateZ(${tilt.rz}deg) scale(${1 - leave * 0.15})`,
+          opacity: String(Math.min(rise * 1.2, 1) * (1 - leave)),
+        });
+
+        // ---- screens
+        // Home (store opening), reel + share sheet, import, recipe, planning, shopping, cook.
+        const homeO = store ? 1 - ease(lin(t, 2.9, 3.4)) : 0;
+        show('home', homeO);
+        if (homeO > 0)
+          $('#homeIn').style.transform = `translateY(${-ease(lin(t, 0.6, 2.8)) * 120}px)`;
+        const reelIn = store ? ease(lin(t, 2.9, 3.4)) : 1;
+        const reelO = reelIn * (1 - ease(lin(t, 5.75, 6.15)));
+        show('reel', reelO);
+        const sheetUp = out(lin(t, 3.9, 4.5)) * (1 - ease(lin(t, 5.45, 5.85)));
+        $('#sheet').style.transform = `translateY(${(1 - sheetUp) * 105}%)`;
+        const press = lin(t, 5.0, 5.15) - lin(t, 5.2, 5.4);
+        const glowPA = ease(lin(t, 4.4, 4.8));
+        $('#paApp i').style.transform = `scale(${1 - 0.08 * clamp(press * 3)})`;
+        $('#paApp i').style.boxShadow =
+          `0 0 0 ${3 * glowPA}px #D2642A, 0 0 ${18 * glowPA}px rgba(210,100,42,${0.5 * glowPA})`;
+        let tapped = tapAt(t, 3.6, sp(352), sp(612)) || tapAt(t, 5.0, sp(186), sp(700));
+
+        const impO = ease(lin(t, 5.75, 6.15)) * (1 - ease(lin(t, 8.0, 8.35)));
+        show('importing', impO);
+        $('#spinner').style.transform = `rotate(${t * 400}deg)`;
+        const s1 = ease(lin(t, 6.5, 6.75)),
+          s2 = ease(lin(t, 7.55, 7.8));
+        $('#stg0').style.opacity = String(1 - s1);
+        $('#stg1').style.opacity = String(s1 * (1 - s2));
+        $('#stg2').style.opacity = String(s2);
+
+        // recipe slides up over the import screen
+        const recIn = out(lin(t, 8.0, 8.7));
+        const recOut = ease(lin(t, 12.55, 13.05));
+        show('recipe', recIn > 0 ? 1 - recOut : 0);
+        layers.recipe.style.transform = `scale(${screen.clientWidth / 390}) translateY(${(1 - recIn) * 844}px) translateX(${-recOut * 120}px)`;
+        const toast = out(lin(t, 8.6, 9.0)) * (1 - ease(lin(t, 9.9, 10.2)));
+        css($('#toast'), {
+          opacity: String(toast),
+          transform: `translateY(${(1 - toast) * 24}px)`,
+        });
+        $('#recIn').style.transform = `translateY(${-ease(lin(t, 9.5, 10.5)) * 395}px)`;
+        const sv = ease(lin(t, 11.05, 11.4));
+        css($('#sv4'), { opacity: String(1 - sv), transform: `translateY(${-sv * 14}px)` });
+        css($('#sv6'), { opacity: String(sv), transform: `translateY(${(1 - sv) * 14}px)` });
+        layers.recipe.querySelectorAll('.qa').forEach((el, i) => {
+          const p = ease(lin(t, 11.15 + i * 0.07, 11.45 + i * 0.07));
+          css(el, { opacity: String(1 - p), transform: `translateY(${-p * 10}px)` });
+        });
+        layers.recipe.querySelectorAll('.qb').forEach((el, i) => {
+          const p = ease(lin(t, 11.15 + i * 0.07, 11.45 + i * 0.07));
+          css(el, { opacity: String(p), transform: `translateY(${(1 - p) * 10}px)` });
+        });
+        tapped = tapAt(t, 10.95, sp(176) * 1, sp(395 + 0)) || tapped; // stepper "+" (after the content scrolled)
+
+        // planning: meals land in their slots
+        const planIn = ease(lin(t, 12.55, 13.05));
+        const planOut = ease(lin(t, 16.5, 17.0));
+        show('planning', planIn * (planOut < 1 ? 1 : 0));
+        layers.planning.style.transform = `scale(${screen.clientWidth / 390}) translateX(${(1 - planIn) * 140 - planOut * 140}px)`;
+        layers.planning.style.opacity = String(planIn * (1 - planOut));
+        ['e1', 'e2', 'e3', 'e4', 'e5', 'e6'].forEach((id, i) => {
+          const p = back(lin(t, 13.3 + i * 0.32, 13.75 + i * 0.32));
+          const o = lin(t, 13.3 + i * 0.32, 13.55 + i * 0.32);
+          css(layers.planning.querySelector('#' + id), {
+            opacity: String(o),
+            transform: `translateY(${(1 - p) * 26}px) scale(${0.92 + 0.08 * p})`,
+          });
+        });
+        layers.planning.querySelector('.in').style.transform =
+          `translateY(${-ease(lin(t, 14.6, 16.2)) * 150}px)`;
+
+        // shopping: items arrive by aisle, then get checked
+        const shIn = ease(lin(t, 16.5, 17.0));
+        const shOut = ease(lin(t, 20.5, 21.0));
+        show('shopping', shIn * (1 - shOut));
+        layers.shopping.style.transform = `scale(${screen.clientWidth / 390}) translateX(${(1 - shIn) * 140 - shOut * 140}px)`;
+        for (let i = 0; i < 9; i++) {
+          const p = out(lin(t, 16.9 + i * 0.09, 17.4 + i * 0.09));
+          css(layers.shopping.querySelector('#it' + i), {
+            opacity: String(p),
+            transform: `translateX(${(1 - p) * 30}px)`,
+          });
+        }
+        const checks = [
+          [0, 18.4],
+          [4, 18.9],
+          [7, 19.4],
+        ];
+        let done = 0;
+        for (const [i, at] of checks) {
+          const p = back(lin(t, at, at + 0.3));
+          const on = layers.shopping.querySelector(`#ck${i} .on`);
+          css(on, { opacity: String(clamp(p)), transform: `scale(${0.6 + 0.4 * p})` });
+          const nm = layers.shopping.querySelector(`#it${i} .nm`);
+          nm.style.textDecoration = p > 0.5 ? 'line-through' : 'none';
+          layers.shopping.querySelector(`#it${i}`).style.opacity = String(
+            Math.min(
+              Number(layers.shopping.querySelector(`#it${i}`).style.opacity || 1),
+              1 - 0.5 * clamp(p),
+            ),
+          );
+          if (p > 0.5) done++;
+          tapped =
+            tapAt(t, at - 0.15, sp(38), sp([0, 0, 0, 0, 500, 0, 0, 760][i] || 300)) || tapped;
+        }
+        $('#rem').textContent = `${13 - done} articles restants`;
+        $('#budget').textContent = done
+          ? `≈ 42,80 € · ${['1,35', '3,75', '5,60'][done - 1]} € dans le panier`
+          : '≈ 42,80 €';
+
+        // cook mode: launch the timer, it counts down
+        const ckIn = ease(lin(t, 20.5, 21.0));
+        const ckOut = ease(lin(t, 24.4, 24.9));
+        show('cook', ckIn * (1 - ckOut));
+        layers.cook.style.transform = `scale(${screen.clientWidth / 390}) translateY(${(1 - ckIn) * 60}px)`;
+        const launched = lin(t, 21.9, 22.2);
+        const chip = out(launched);
+        css($('#tchip'), { opacity: String(chip), transform: `translateY(${(1 - chip) * 20}px)` });
+        const left = Math.max(0, 480 - Math.max(0, t - 22.0) * 7); // accelerated countdown
+        $('#tclock').textContent =
+          `${String(Math.floor(left / 60)).padStart(2, '0')}:${String(Math.floor(left % 60)).padStart(2, '0')}`;
+        $('#launch').style.transform =
+          `scale(${1 - 0.05 * (lin(t, 21.8, 21.9) - lin(t, 21.95, 22.1))})`;
+        tapped = tapAt(t, 21.75, sp(100), sp(420)) || tapped;
+        if (!tapped) tap.style.opacity = '0';
+
+        // ---- captions + outro
+        captions(t);
+        const o = out(lin(t, 25.0, 26.0));
+        const outro = $('#outro');
+        outro.style.opacity = String(o);
+        outro.querySelector('.icon').style.transform =
+          `scale(${0.7 + 0.3 * back(lin(t, 25.0, 25.8))})`;
+        [...outro.children].forEach((el, i) => {
+          if (i === 0) return;
+          const p = out(lin(t, 25.3 + i * 0.18, 25.9 + i * 0.18));
+          css(el, { opacity: String(p), transform: `translateY(${(1 - p) * 16}px)` });
+        });
+      }
+
+      // ================================================================ stills (App Store screenshots)
+      // Same composition, one screen at rest under the listing caption (docs/store/listings.json).
+      const STILLS = [
+        { cap: ['Toutes vos recettes,', '*enfin au même endroit*'], show: 'home' },
+        { cap: ['Partagez depuis Instagram :', '*c’est enregistré*'], show: 'reel', at: 5.0 },
+        { cap: ['La semaine planifiée', 'en *deux minutes*'], show: 'planning', at: 16.2 },
+        { cap: ['La liste de courses', 'se remplit *toute seule*'], show: 'shopping', at: 20.0 },
+        { cap: ['« Poulet rapide » :', '*trouvé.*'], show: 'search' },
+        { cap: ['En cuisine,', 'minuteurs *compris*'], show: 'cook', at: 23.5 },
+        { cap: ['Sans compte : sur iPhone,', 'iPad et *iCloud*'], show: 'settings' },
+      ];
+      function still(i) {
+        const s = STILLS[i];
+        if (s.at) seek(s.at);
+        else seek(1.0);
+        for (const k of Object.keys(layers)) {
+          show(k, k === s.show ? 1 : 0);
+          layers[k].style.transform = `scale(${screen.clientWidth / 390})`;
+        }
+        // Screens at rest: not scrolled.
+        for (const el of document.querySelectorAll('.scr .in')) el.style.transform = '';
+        if (s.show === 'reel') $('#sheet').style.transform = 'translateY(0)';
+        $('#tap').style.opacity = '0';
+        $('#cam').style.transform = '';
+        css($('#phone'), { transform: 'none', opacity: '1' });
+        $('#outro').style.opacity = '0';
+        for (const c of CAPTIONS) c.box.style.display = 'none';
+        let box = $('#stillCap');
+        if (!box) {
+          box = document.createElement('div');
+          box.id = 'stillCap';
+          box.style.cssText = 'position:absolute;left:0;right:0;top:0';
+          capEl.appendChild(box);
+        }
+        box.innerHTML = s.cap
+          .map(
+            (l) =>
+              `<div class="l">${l
+                .split(' ')
+                .map(
+                  (w) => `<span class="${/\*/.test(w) ? 'hl' : ''}">${w.replace(/\*/g, '')}</span>`,
+                )
+                .join(' ')}</div>`,
+          )
+          .join('');
+      }
+
+      // ================================================================ entry points
+      window.DURATION = DURATION;
+      window.STILLS = STILLS.length;
+      window.seek = seek;
+      window.still = still;
+      window.ready = Promise.all([
+        document.fonts.ready,
+        ...[...document.images].map((im) =>
+          im.complete
+            ? 0
+            : new Promise((r) => {
+                im.onload = im.onerror = r;
+              }),
+        ),
+      ]).then(() => scaleScreen());
+      if (Q.has('still')) window.ready.then(() => still(Number(Q.get('still'))));
+      else if (!navigator.webdriver) {
+        let t0 = null;
+        const loop = (now) => {
+          t0 ??= now;
+          seek(((now - t0) / 1000) % DURATION);
+          requestAnimationFrame(loop);
+        };
+        window.ready.then(() => requestAnimationFrame(loop));
+      } else window.ready.then(() => seek(0));
+    </script>
+  </body>
+</html>
