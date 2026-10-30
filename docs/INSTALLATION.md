@@ -37,12 +37,12 @@ Sans Mac : `eas build --profile development --platform ios` (appareil enregistr�
 ### iCloud en développement
 
 - La synchronisation iCloud ne fonctionne que sur un **appareil connecté à un compte iCloud** (simulateur : se connecter dans Réglages du simulateur ; c'est plus fiable sur un vrai iPhone).
-- Le conteneur `iCloud.app.pepperedapron.dev` doit exister dans le compte développeur Apple : il est créé automatiquement par EAS, ou dans Xcode (*Signing & Capabilities → iCloud → CloudKit containers / iCloud Documents*) lors du premier build signé.
+- Le conteneur `iCloud.app.pepperedapron.com.dev` doit exister dans le compte développeur Apple : il est créé automatiquement par EAS, ou dans Xcode (*Signing & Capabilities → iCloud → CloudKit containers / iCloud Documents*) lors du premier build signé.
 - Pour tester la synchro : installer le même build sur un iPhone et un iPad (ou un simulateur) avec le même identifiant Apple ; Réglages → Mes données affiche l'état.
 
 ### Variantes
 
-`APP_VARIANT=development|staging|production` change l'identifiant (`app.pepperedapron.dev`, `.staging`, sans suffixe), le nom affiché, l'App Group et le conteneur iCloud. Les trois variantes s'installent côte à côte, chacune avec ses propres données.
+`APP_VARIANT=development|staging|production` change l'identifiant (`app.pepperedapron.com.dev`, `.staging`, sans suffixe), le nom affiché, l'App Group et le conteneur iCloud. Les trois variantes s'installent côte à côte, chacune avec ses propres données.
 
 ## 3. Site statique
 

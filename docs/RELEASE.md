@@ -10,7 +10,7 @@ L'app est publiée pour iPhone et iPad sur l'App Store uniquement.
 
 ### Identifiants Apple
 Dans *Certificates, Identifiers & Profiles* (EAS peut les créer automatiquement au premier build) :
-- App IDs : `app.pepperedapron` (+ `.staging`, `.dev`), capacités **iCloud** (*iCloud Documents*, conteneur `iCloud.app.pepperedapron`, `.staging`, `.dev`), **App Groups** (`group.app.pepperedapron`…), **Push Notifications** (ajoutée par `expo-notifications` ; seules des notifications locales sont utilisées).
+- App IDs : `app.pepperedapron.com` (+ `.staging`, `.dev`), capacités **iCloud** (*iCloud Documents*, conteneur `iCloud.app.pepperedapron.com`, `.staging`, `.dev`), **App Groups** (`group.app.pepperedapron.com`…), **Push Notifications** (ajoutée par `expo-notifications` ; seules des notifications locales sont utilisées).
 - Cibles supplémentaires créées par le prebuild : extension de partage, widgets, Live Activity — même App Group.
 
 ### Site
@@ -35,7 +35,7 @@ Build local (Mac) : `APP_VARIANT=production npx expo prebuild --clean && npx exp
 
 ## 3. App Store (iOS / iPadOS)
 
-1. App Store Connect → *Apps* → nouvelle app : nom « PepperedApron: Recettes & Menu » (FR) — [fiches](store/), bundle `app.pepperedapron`, SKU `pepperedapron-ios`.
+1. App Store Connect → *Apps* → nouvelle app : nom « PepperedApron: Recettes & Menu » (FR) — [fiches](store/), bundle `app.pepperedapron.com`, SKU `pepperedapron-ios`.
 2. Ajouter `"ios": { "ascAppId": "<id numérique>" }` sous `submit.production` dans `eas.json` pour la soumission non interactive.
 3. `eas build -p ios --profile production --auto-submit` → TestFlight.
 4. TestFlight : tests internes, puis groupe externe (revue bêta) — [checklist](#checklist-avant-soumission).

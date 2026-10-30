@@ -55,7 +55,7 @@ const withoutDevNetworkInProduction: ConfigPlugin = (c) =>
 type Variant = 'development' | 'staging' | 'production';
 const variant = (process.env.APP_VARIANT ?? 'development') as Variant;
 const suffix = variant === 'production' ? '' : `.${variant === 'development' ? 'dev' : 'staging'}`;
-const bundleId = `app.pepperedapron${suffix}`;
+const bundleId = `app.pepperedapron.com${suffix}`;
 const appGroup = `group.${bundleId}`;
 /** Private iCloud container holding the user's synced data (see services/icloud.ts). */
 const iCloudContainer = `iCloud.${bundleId}`;

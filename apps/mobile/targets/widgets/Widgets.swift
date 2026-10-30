@@ -5,7 +5,7 @@ import WidgetKit
 // Data written by the app (src/services/widgets.ts) into the shared App Group.
 // The widget bundle id is "<app bundle id>.<target>"; the App Group is "group.<app bundle id>".
 private func appGroup() -> String {
-  var parts = (Bundle.main.bundleIdentifier ?? "app.pepperedapron").split(separator: ".").map(String.init)
+  var parts = (Bundle.main.bundleIdentifier ?? "app.pepperedapron.com").split(separator: ".").map(String.init)
   if parts.count > 1 { parts.removeLast() }
   return "group." + parts.joined(separator: ".")
 }

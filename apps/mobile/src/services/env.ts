@@ -12,7 +12,7 @@ export const ENV = {
   /** Public website: privacy policy, terms, help (static pages, no server). */
   siteUrl: (extra.siteUrl ?? 'https://pepperedapron.app').replace(/\/+$/, ''),
   supportEmail: extra.supportEmail ?? 'support@pepperedapron.app',
-  appGroup: extra.appGroup ?? 'group.app.pepperedapron.dev',
+  appGroup: extra.appGroup ?? 'group.app.pepperedapron.com.dev',
   appVersion: Constants.expoConfig?.version ?? '2.0.0',
 };
 

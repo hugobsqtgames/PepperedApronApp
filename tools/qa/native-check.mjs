@@ -15,7 +15,7 @@ const fromExpo = createRequire(fromApp.resolve('expo/package.json'));
 const fromPlugins = createRequire(fromExpo.resolve('@expo/config-plugins'));
 const plist = fromPlugins('@expo/plist').default;
 const variant = process.env.APP_VARIANT ?? 'development';
-const bundle = `app.pepperedapron${{ development: '.dev', staging: '.staging', production: '' }[variant]}`;
+const bundle = `app.pepperedapron.com${{ development: '.dev', staging: '.staging', production: '' }[variant]}`;
 const group = `group.${bundle}`;
 
 let checks = 0;

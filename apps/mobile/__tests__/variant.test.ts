@@ -12,7 +12,7 @@ const suffix = suffixes[variant]!;
 describe(`variant ${variant}`, () => {
   it('runs with its own identifiers', () => {
     expect(ENV.variant).toBe(variant);
-    expect(ENV.appGroup).toBe(`group.app.pepperedapron${suffix}`);
+    expect(ENV.appGroup).toBe(`group.app.pepperedapron.com${suffix}`);
     expect(ENV.siteUrl).toMatch(/^https:\/\//);
   });
 });

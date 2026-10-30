@@ -5,7 +5,7 @@ import Foundation
 // (src/services/widgets.ts). Nothing leaves the device. The extension's bundle id is
 // "<app bundle id>.PepperedApronIntents"; the App Group is "group.<app bundle id>".
 private func appGroup() -> String {
-  var parts = (Bundle.main.bundleIdentifier ?? "app.pepperedapron").split(separator: ".").map(String.init)
+  var parts = (Bundle.main.bundleIdentifier ?? "app.pepperedapron.com").split(separator: ".").map(String.init)
   if parts.count > 1 { parts.removeLast() }
   return "group." + parts.joined(separator: ".")
 }

@@ -23,7 +23,7 @@ Sur Mac avec un simulateur iOS et un build de développement installé (aucun se
 
 ```bash
 curl -Ls https://get.maestro.mobile.dev | bash
-maestro test apps/mobile/.maestro -e APP_ID=app.pepperedapron.dev
+maestro test apps/mobile/.maestro -e APP_ID=app.pepperedapron.com.dev
 ```
 
 Les scénarios s'appuient sur des `testID` stables (pas sur les textes traduits).

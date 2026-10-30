@@ -66,7 +66,7 @@ Résumé (détails dans [SYNC.md](SYNC.md)) : chaque modification reçoit un hor
 
 ## 6. Environnements
 
-`development`, `staging`, `production` : identifiant d'app (`app.pepperedapron.dev`, `.staging`, sans suffixe), nom affiché, App Group et **conteneur iCloud distincts** (`iCloud.<bundleId>`) — les données de test ne se mélangent jamais aux vraies.
+`development`, `staging`, `production` : identifiant d'app (`app.pepperedapron.com.dev`, `.staging`, sans suffixe), nom affiché, App Group et **conteneur iCloud distincts** (`iCloud.<bundleId>`) — les données de test ne se mélangent jamais aux vraies.
 
 ## 7. Coûts
 

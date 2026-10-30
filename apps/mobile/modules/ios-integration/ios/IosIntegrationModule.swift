@@ -7,7 +7,7 @@ import UniformTypeIdentifiers
 /// `isEligibleForSearch` stays on-device for CSSearchableItem) and Handoff of the recipe or the
 /// cook mode being shown, to continue on the user's other iPhone or iPad.
 /// "<bundle id>." — activity types are declared per variant in NSUserActivityTypes (app.config.ts).
-private func activityPrefix() -> String { "\(Bundle.main.bundleIdentifier ?? "app.pepperedapron")." }
+private func activityPrefix() -> String { "\(Bundle.main.bundleIdentifier ?? "app.pepperedapron.com")." }
 
 public class IosIntegrationModule: Module {
   private var activity: NSUserActivity?

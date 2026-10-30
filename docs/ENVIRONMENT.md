@@ -34,5 +34,5 @@ Le build de production (`--production`) **échoue** si l'une des quatre premièr
 
 | | development | staging | production |
 |---|---|---|---|
-| App | `app.pepperedapron.dev` | `app.pepperedapron.staging` | `app.pepperedapron` |
-| Conteneur iCloud | `iCloud.app.pepperedapron.dev` (environnement Development) | `iCloud.app.pepperedapron.staging` | `iCloud.app.pepperedapron` |
+| App | `app.pepperedapron.com.dev` | `app.pepperedapron.com.staging` | `app.pepperedapron.com` |
+| Conteneur iCloud | `iCloud.app.pepperedapron.com.dev` (environnement Development) | `iCloud.app.pepperedapron.com.staging` | `iCloud.app.pepperedapron.com` |
