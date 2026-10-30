@@ -3,8 +3,8 @@
  * devices, with iCloud going away, apps killed and relaunched, and syncs in any order. Every
  * scenario comes from a seed (printed on failure) and must end with all devices identical.
  */
-import { describe, expect, it } from 'vitest';
-import { rng, type Rng } from '../../core/src/fuzz/rng';
+import { afterAll, describe, expect, it } from 'vitest';
+import { casesRun, rng, type Rng } from '../../core/src/fuzz/rng';
 import { emptyRecipe, exportData, importData, ImportFormatError, LocalStore, Repos } from '../src';
 import { betterSqliteDriver } from './betterSqliteDriver';
 import { FakeCloud, SimDevice, syncAll, TestTime } from './fakes';
@@ -226,3 +226,5 @@ describe('backups', () => {
     }
   }, 300_000);
 });
+
+afterAll(() => console.info(`QA-COUNT client.fuzz.sync+backups.cases ${casesRun()}`));

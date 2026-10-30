@@ -5,10 +5,10 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { describe, expect, it } from 'vitest';
+import { afterAll, describe, expect, it } from 'vitest';
 import { DEFAULT_SETTINGS, SETTINGS_ID } from '@pepperedapron/core';
 import { importData, LocalStore, parseSyncRecord, Repos } from '../src';
-import { rng } from '../../core/src/fuzz/rng';
+import { casesRun, rng } from '../../core/src/fuzz/rng';
 import { betterSqliteDriver } from './betterSqliteDriver';
 
 /** Fields added after the first version, per entity (each has a default in the schema). */
@@ -86,3 +86,5 @@ describe('older data formats', () => {
     driver.close();
   });
 });
+
+afterAll(() => console.info(`QA-COUNT client.fuzz.migration.cases ${casesRun()}`));

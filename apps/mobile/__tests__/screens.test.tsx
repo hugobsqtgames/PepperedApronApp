@@ -582,7 +582,7 @@ describe('stress: kitchen timers', () => {
 });
 
 afterAll(async () => {
-  console.info(`monkey: ${totalPresses} taps on ${SCREENS.length} screens`);
+  console.info(`QA-COUNT mobile.monkey.taps ${totalPresses}`);
   // Kitchen timers started by the random taps keep ticking (as in the app): stop them.
   const { timers } =
     jest.requireActual<typeof import('../src/services/timers')>('../src/services/timers');

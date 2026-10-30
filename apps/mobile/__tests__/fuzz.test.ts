@@ -10,7 +10,7 @@ jest.mock('../modules/pdf-text', () => ({}));
 
 import { emptyRecipe } from '@pepperedapron/client';
 import { parseIngredientLine, uuidv7, type Ingredient } from '@pepperedapron/core';
-import { rng } from '../../../packages/core/src/fuzz/rng';
+import { casesRun, rng } from '../../../packages/core/src/fuzz/rng';
 import { draftFromLink, LINK_PREFIX, MAX_LINK_LENGTH, recipeLink } from '../src/lib/recipeLink';
 import { pickFrames } from '../src/lib/frames';
 import { formatIngredient, shoppingListAsText } from '../src/lib/format';
@@ -240,3 +240,5 @@ describe('sharing and pictures', () => {
     }
   });
 });
+
+afterAll(() => console.info(`QA-COUNT mobile.fuzz.cases ${casesRun()}`));

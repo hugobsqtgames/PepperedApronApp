@@ -1,5 +1,5 @@
 /** Property tests of the cooking, planning, shopping, pantry and search logic. */
-import { describe, expect, it } from 'vitest';
+import { afterAll, describe, expect, it } from 'vitest';
 import { getUnit, UNITS } from '../units';
 import { convertAmount, formatAmount, normalizeAmount, scaleAmount } from '../quantity';
 import {
@@ -41,7 +41,7 @@ import { canonicalUrl, findDuplicate } from '../duplicates';
 import { dietTags } from '../diet';
 import { ingredientSeasons } from '../seasonal';
 import { RECIPE_CATEGORIES, SEASONS } from '../enums';
-import { rng } from './rng';
+import { casesRun, rng } from './rng';
 
 const N = 500;
 const MASS = UNITS.filter((u) => u.dimension === 'mass' || u.dimension === 'volume').map(
@@ -431,3 +431,5 @@ describe('search, rules and steps', () => {
     }
   });
 });
+
+afterAll(() => console.info(`QA-COUNT core.fuzz.logic.cases ${casesRun()}`));

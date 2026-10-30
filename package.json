@@ -18,7 +18,9 @@
     "test:mobile": "pnpm --filter @pepperedapron/mobile test",
     "test:site": "pnpm --filter @pepperedapron/site test",
     "build:site": "pnpm --filter @pepperedapron/site build",
-    "verify": "pnpm lint && pnpm typecheck && pnpm test"
+    "verify": "pnpm lint && pnpm typecheck && pnpm test",
+    "qa:stress": "bash tools/qa/stress.sh",
+    "qa:native": "node tools/qa/native-check.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.0",

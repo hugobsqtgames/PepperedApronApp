@@ -1,5 +1,5 @@
 /** Fuzz and property tests of the importers: whatever comes in, nothing throws and the output is valid. */
-import { describe, expect, it } from 'vitest';
+import { afterAll, describe, expect, it } from 'vitest';
 import { parseIngredientLine } from '../parse/ingredient';
 import { parseRecipeText } from '../parse/text';
 import { parseJsonLdRecipe, parseHtmlMeta } from '../parse/jsonld';
@@ -23,7 +23,7 @@ import {
   pinterestSourceUrl,
 } from '../parse/url';
 import { ingredientKey } from '../text';
-import { rng } from './rng';
+import { casesRun, rng } from './rng';
 
 const N = 600;
 
@@ -249,3 +249,5 @@ describe('web pages', () => {
     }
   });
 });
+
+afterAll(() => console.info(`QA-COUNT core.fuzz.parsers.cases ${casesRun()}`));

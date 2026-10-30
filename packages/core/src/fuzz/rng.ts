@@ -2,7 +2,12 @@
  * Deterministic generators for property and fuzz tests: every case comes from a numbered seed,
  * so a failure is reproduced with the seed printed in the test name.
  */
+let created = 0;
+/** Generated cases so far in this test file (one generator per seed), for the QA counts. */
+export const casesRun = () => created;
+
 export function rng(seed: number) {
+  created++;
   let s = seed >>> 0 || 0x9e3779b9;
   const next = () => {
     // mulberry32

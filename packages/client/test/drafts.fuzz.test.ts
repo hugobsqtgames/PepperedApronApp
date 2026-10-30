@@ -2,7 +2,7 @@
  * Every importer's output must be savable: whatever a web page, a caption, a transcript or a QR
  * code contains, recipeFromDraft gives a recipe that passes the data model's validation.
  */
-import { describe, expect, it } from 'vitest';
+import { afterAll, describe, expect, it } from 'vitest';
 import {
   emptyDraft,
   parseJsonLdRecipe,
@@ -11,7 +11,7 @@ import {
   recipeFromTranscript,
   type RecipeDraft,
 } from '@pepperedapron/core';
-import { rng, type Rng } from '../../core/src/fuzz/rng';
+import { casesRun, rng, type Rng } from '../../core/src/fuzz/rng';
 import { recipeFromDraft } from '../src';
 
 const N = 800;
@@ -97,3 +97,5 @@ describe('every imported draft can be saved', () => {
     }
   });
 });
+
+afterAll(() => console.info(`QA-COUNT client.fuzz.drafts.cases ${casesRun()}`));
