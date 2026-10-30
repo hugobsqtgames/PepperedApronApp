@@ -74,6 +74,7 @@ export const ShareCard = forwardRef<View, { recipe: Recipe; system: UnitSystem }
             <Image
               source={require('../../../assets/icon.png')}
               style={{ width: 22, height: 22, borderRadius: 5 }}
+              accessibilityIgnoresInvertColors
             />
             <Text variant="caption" weight="700" style={{ color: C.forest }}>
               PepperedApron

@@ -46,6 +46,22 @@ Ordre et écran pour chaque légende (`screenshots[i]`) :
 
 Ajouter la légende en haut de chaque capture (Fraunces 700, crème sur fond vert forêt `#1F4D3A`) — même charte que la bannière.
 
+## Étiquettes d'accessibilité (App Store Connect › Accessibilité)
+
+À déclarer pour iPhone et iPad (tout est réellement pris en charge et vérifié, voir `docs/MOBILE.md` › Accessibilité) :
+
+| Étiquette | Déclarer | Pourquoi |
+| --- | --- | --- |
+| VoiceOver | Oui | Tous les écrans : rôles, noms, actions, annonces |
+| Contrôle vocal | Oui | Noms accessibles = textes visibles, actions nommées |
+| Texte plus grand | Oui | Dynamic Type jusqu'aux tailles d'accessibilité |
+| Interface sombre | Oui | Thème sombre dédié, automatique ou manuel |
+| Différencier sans couleur | Oui | États doublés d'icônes ou de texte |
+| Contraste suffisant | Oui | AA partout, AAA avec « Augmenter le contraste » |
+| Réduire les animations | Oui | Fondus seulement |
+| Sous-titres | Non concerné | L'app ne contient pas de vidéo ; la vidéo App Preview a ses textes à l'écran et des sous-titres SRT (`docs/store/app-preview-fr.srt`, `-en.srt`, `pnpm preview:srt`) |
+| Audiodescription | Non concerné | Pas de vidéo dans l'app |
+
 ## Notes pour la revue Apple
 
 - Aucun compte : le reviewer ouvre l'app et l'utilise directement. Fichier de démonstration : `docs/store/demo-backup.json` (12 recettes, favoris, collections, planning de la semaine, liste de courses ; les réglages du reviewer ne sont pas touchés). Le joindre aux notes de revue ; il s'importe par Réglages → Mes données → Importer une sauvegarde. Le régénérer juste avant l'envoi pour que le planning tombe sur la semaine en cours : `WRITE_DEMO=1 pnpm --filter @pepperedapron/client test demo` (un test vérifie qu'il s'importe dans une app vide).

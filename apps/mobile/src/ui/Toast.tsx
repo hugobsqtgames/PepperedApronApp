@@ -30,19 +30,19 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   const anim = useRef(new Animated.Value(0)).current;
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const insets = useSafeAreaInsets();
-  const { colors, dark } = useTheme();
+  const { colors, dark, a11y } = useTheme();
+  const still = a11y.reduceMotion;
 
   const show = useCallback(
     (text: string, opts: { tone?: ToastMsg['tone']; action?: ToastMsg['action'] } = {}) => {
       if (timer.current) clearTimeout(timer.current);
       setMsg({ id: Date.now(), text, tone: opts.tone ?? 'success', action: opts.action });
       AccessibilityInfo.announceForAccessibility(text);
-      Animated.spring(anim, {
-        toValue: 1,
-        useNativeDriver: true,
-        speed: 18,
-        bounciness: 4,
-      }).start();
+      // Reduce Motion: a plain fade instead of a spring.
+      (still
+        ? Animated.timing(anim, { toValue: 1, duration: 150, useNativeDriver: true })
+        : Animated.spring(anim, { toValue: 1, useNativeDriver: true, speed: 18, bounciness: 4 })
+      ).start();
       timer.current = setTimeout(
         () => {
           Animated.timing(anim, { toValue: 0, duration: 200, useNativeDriver: true }).start(() =>
@@ -52,7 +52,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         opts.action ? 5000 : 2600,
       );
     },
-    [anim],
+    [anim, still],
   );
   useEffect(() => () => void (timer.current && clearTimeout(timer.current)), []);
 
@@ -74,7 +74,11 @@ export function ToastProvider({ children }: { children: ReactNode }) {
               bottom: insets.bottom + 90,
               opacity: anim,
               transform: [
-                { translateY: anim.interpolate({ inputRange: [0, 1], outputRange: [20, 0] }) },
+                {
+                  translateY: still
+                    ? 0
+                    : anim.interpolate({ inputRange: [0, 1], outputRange: [20, 0] }),
+                },
               ],
             },
           ]}

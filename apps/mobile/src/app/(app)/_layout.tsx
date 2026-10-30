@@ -53,7 +53,7 @@ function useNotificationRouting() {
 
 export default function AppLayout() {
   const rt = useRuntime();
-  const { colors } = useTheme();
+  const { colors, a11y } = useTheme();
   const { t } = useTranslation();
   useShareIntentRouting();
   useNotificationRouting();
@@ -117,6 +117,8 @@ export default function AppLayout() {
     <Stack
       screenOptions={{
         headerShown: false,
+        // Reduce Motion: screens fade instead of sliding.
+        animation: a11y.reduceMotion ? 'fade' : 'default',
         contentStyle: { backgroundColor: colors.background },
         headerTintColor: colors.primary,
         headerStyle: { backgroundColor: colors.background },

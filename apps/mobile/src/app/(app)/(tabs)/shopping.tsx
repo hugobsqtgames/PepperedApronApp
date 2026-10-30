@@ -366,7 +366,9 @@ export default function Shopping() {
                 : void toggle(i)
           }
         >
+          {/* The row is one VoiceOver element (checkbox + actions): its parts are not separate. */}
           <Pressable
+            accessible={false}
             onPress={() => void toggle(i)}
             hitSlop={8}
             style={styles.check}
@@ -379,6 +381,7 @@ export default function Shopping() {
             />
           </Pressable>
           <Pressable
+            accessible={false}
             style={{ flex: 1, gap: 1, paddingVertical: space.sm }}
             onPress={() => router.push(`/shopping/item/${i.id}`)}
           >

@@ -1,4 +1,4 @@
-import { AppState, Platform } from 'react-native';
+import { AccessibilityInfo, AppState, Platform } from 'react-native';
 import { File, Paths } from 'expo-file-system';
 import {
   addTime,
@@ -15,6 +15,7 @@ import {
   ensureNotificationPermission,
   scheduleTimerNotification,
 } from './notifications';
+import i18n from '../i18n';
 import { haptic } from './haptics';
 
 type Listener = (timers: KitchenTimer[]) => void;
@@ -70,6 +71,10 @@ class TimerManager {
         if (timerState(t, now) === 'done' && !this.notified.has(t.id)) {
           this.notified.add(t.id);
           haptic.success();
+          // VoiceOver says it too, whatever screen is shown.
+          AccessibilityInfo.announceForAccessibility(
+            i18n.t('notifications.timerDone', { label: t.label }),
+          );
         }
       }
       if (!this.timers.length && this.tick) {

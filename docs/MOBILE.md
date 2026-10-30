@@ -122,8 +122,19 @@ Aucune : pas de régie, pas d'analytics, pas de SDK de suivi.
 
 ## Accessibilité et confort
 
-Tailles dynamiques respectées (plafonnées pour les grands titres), libellés VoiceOver sur les contrôles, cibles tactiles ≥ 44 pt, contraste AA dans les deux thèmes, retours haptiques désactivables, mode sombre manuel ou automatique, alternatives au glisser-déposer (« Déplacer vers… », flèches haut/bas).
+Toutes les fonctions d'accessibilité d'iOS sont suivies (réglages lus en direct, `theme/a11y.ts`, exposés par `useTheme().a11y`) :
 
+- **VoiceOver** : chaque élément touchable a un rôle et un nom ; les lignes composées (article de courses, repas) sont un seul élément avec actions (cocher, modifier, supprimer) ; tout appui long existe aussi en **action VoiceOver** (`longPressActions`) ; annonces quand un minuteur se termine (`services/timers.ts`), quand les imports sont finis, à chaque changement d'étape en mode cuisine, et pour chaque message (toast).
+- **Taille du texte** (Dynamic Type) jusqu'aux tailles d'accessibilité (×3,1 pour le texte courant, ×1,6 pour les grands titres) ; les lignes de liste passent en colonne et les boutons du mode cuisine l'un sous l'autre ; libellés de la barre d'onglets agrandis par la visionneuse de grand contenu (appui long).
+- **Réduire les animations** : fondus au lieu des glissements (écrans, feuilles, toasts), squelettes immobiles.
+- **Réduire la transparence** : barres et voiles opaques. **Augmenter le contraste** : palettes renforcées, tous les couples de texte à 7:1 (AAA). Thèmes normaux : 4,5:1 (AA) au moins (`__tests__/contrast.test.ts`).
+- **Texte en gras** : graisses relevées, titres Fraunces dans leur coupe grasse.
+- **Différencier sans couleur** : états toujours doublés d'une icône ou d'un texte (coché, minuteur fini, périmé, erreurs).
+- **Inversion intelligente** : photos, images et QR codes ne sont pas inversés.
+- **Contrôle vocal / Contrôle de sélection / clavier** : noms accessibles = textes visibles, ordre de lecture = ordre visuel, cibles ≥ 44 pt (zone de toucher comprise).
+- Audit automatique (`__tests__/a11yAudit.test.tsx`) : rôle et nom de chaque touchable, actions pour les appuis longs, images non inversées, pas de texte figé, cibles ≥ 44 pt, texte à la taille maximale.
+
+Retours haptiques désactivables, mode sombre manuel ou automatique, alternatives au glisser-déposer (« Déplacer vers… », flèches haut/bas).
 ## Internationalisation
 
 `src/i18n/fr.ts` est la source et définit le type des clés ; `en` doit avoir exactement les mêmes clés et variables (test `__tests__/i18n.test.ts`). Pluriels i18next (`_one`/`_other`). Textes système iOS (autorisations, nom de l'app) dans `locales/native/`. Unités : métrique par défaut, impérial disponible (conversion à l'affichage uniquement).

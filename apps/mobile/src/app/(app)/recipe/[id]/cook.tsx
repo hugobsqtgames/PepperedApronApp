@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
+  AccessibilityInfo,
   FlatList,
   Modal,
   Pressable,
@@ -73,7 +74,7 @@ export default function CookMode() {
   const repos = useRepos();
   const sheet = useActionSheet();
   const prompt = usePrompt();
-  const { colors } = useTheme();
+  const { colors, a11y } = useTheme();
   const layout = useLayout();
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
@@ -133,6 +134,14 @@ export default function CookMode() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [readAloud, index, active, done]);
   useEffect(() => () => void Speech.stop(), []);
+  // VoiceOver: the new step is read when it changes (unless it is already read aloud).
+  useEffect(() => {
+    if (a11y.screenReader && !readAloud && !done) {
+      const text = stepSpeech(index);
+      if (text) AccessibilityInfo.announceForAccessibility(text);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [index, active]);
   // Handoff: the cook mode of this recipe continues on the other device.
   const handoffTitle = recipe?.data.title;
   useEffect(() => {
@@ -568,7 +577,14 @@ export default function CookMode() {
       </View>
       {running.length ? <TimerTray timers={running} /> : null}
 
-      <View style={[styles.nav, { paddingBottom: insets.bottom + space.md }]}>
+      <View
+        style={[
+          styles.nav,
+          { paddingBottom: insets.bottom + space.md },
+          // Accessibility text sizes: the two big buttons go one above the other.
+          layout.largeText && { flexDirection: 'column-reverse' },
+        ]}
+      >
         <Button
           title={t('cook.previous')}
           icon="arrow-back"
@@ -576,7 +592,7 @@ export default function CookMode() {
           size="lg"
           disabled={index === 0}
           onPress={() => go(index - 1)}
-          style={{ flex: 1, minHeight: 64 }}
+          style={{ flex: layout.largeText ? undefined : 1, minHeight: 64 }}
         />
         {index < total - 1 ? (
           <Button
@@ -584,7 +600,7 @@ export default function CookMode() {
             icon="arrow-forward"
             size="lg"
             onPress={() => go(index + 1)}
-            style={{ flex: 1.4, minHeight: 64 }}
+            style={{ flex: layout.largeText ? undefined : 1.4, minHeight: 64 }}
             testID="cook-next"
           />
         ) : (
@@ -594,7 +610,7 @@ export default function CookMode() {
             variant="accent"
             size="lg"
             onPress={finish}
-            style={{ flex: 1.4, minHeight: 64 }}
+            style={{ flex: layout.largeText ? undefined : 1.4, minHeight: 64 }}
             testID="cook-finish"
           />
         )}
@@ -602,7 +618,7 @@ export default function CookMode() {
 
       <Modal
         visible={showIngredients}
-        animationType="slide"
+        animationType={a11y.reduceMotion ? 'fade' : 'slide'}
         presentationStyle="pageSheet"
         onRequestClose={() => setShowIngredients(false)}
       >
@@ -622,7 +638,7 @@ export default function CookMode() {
       </Modal>
       <Modal
         visible={adding}
-        animationType="slide"
+        animationType={a11y.reduceMotion ? 'fade' : 'slide'}
         presentationStyle="pageSheet"
         onRequestClose={() => setAdding(false)}
       >

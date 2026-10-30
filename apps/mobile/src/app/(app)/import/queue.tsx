@@ -1,6 +1,14 @@
 import { useEffect, useRef } from 'react';
 import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
-import { ActivityIndicator, FlatList, Linking, Pressable, StyleSheet, View } from 'react-native';
+import {
+  AccessibilityInfo,
+  ActivityIndicator,
+  FlatList,
+  Linking,
+  Pressable,
+  StyleSheet,
+  View,
+} from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
@@ -16,6 +24,7 @@ import {
   Icon,
   IconButton,
   LoadingState,
+  longPressActions,
   Screen,
   Text,
   useToast,
@@ -75,6 +84,18 @@ export default function ImportQueueScreen() {
   const single = wanted !== null && jobs.length === 1 ? jobs[0]! : null;
   const opened = useRef(false);
   const running = state.jobs.some((j) => j.status === 'pending' || j.status === 'running');
+
+  // VoiceOver: say when every import is finished.
+  const wasRunning = useRef(running);
+  useEffect(() => {
+    if (wasRunning.current && !running && state.jobs.length)
+      AccessibilityInfo.announceForAccessibility(
+        t('import.finished', {
+          count: state.jobs.filter((j) => j.status === 'done').length,
+        }),
+      );
+    wasRunning.current = running;
+  }, [running, state.jobs, t]);
 
   // Imports only progress while the app is open: keep the screen on until they are done.
   useEffect(() => {
@@ -209,9 +230,16 @@ export default function ImportQueueScreen() {
     return (
       <Pressable
         accessibilityRole="button"
+        accessibilityLabel={[j.title ?? sourceLabel(j.source, t), subtitle]
+          .filter(Boolean)
+          .join(', ')}
         disabled={!j.recipeId}
         onPress={() => j.recipeId && router.push(`/recipe/${j.recipeId}`)}
         onLongPress={() => j.status === 'duplicate' && void importQueue.saveAnyway(j.id)}
+        {...longPressActions(
+          t('import.saveAnyway'),
+          j.status === 'duplicate' ? () => void importQueue.saveAnyway(j.id) : null,
+        )}
         style={({ pressed }) => [
           styles.row,
           { borderBottomColor: colors.line, opacity: pressed ? 0.7 : 1 },

@@ -35,6 +35,7 @@ export function Stars({
           disabled={!onChange}
           onPress={() => onChange?.(value === n ? null : n)}
           hitSlop={4}
+          accessible={false}
           importantForAccessibility="no"
           accessibilityElementsHidden
           testID={`star-${n}`}

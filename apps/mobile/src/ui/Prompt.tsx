@@ -55,6 +55,7 @@ export function PromptProvider({ children }: { children: ReactNode }) {
             <Pressable
               style={StyleSheet.absoluteFill}
               onPress={() => setOpts(null)}
+              accessibilityRole="button"
               accessibilityLabel={t('common.close')}
             />
             <View

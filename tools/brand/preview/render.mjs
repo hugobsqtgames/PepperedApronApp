@@ -2,6 +2,7 @@
 //   node preview/render.mjs video [store|marketing]   → out/app-preview-<mode>.mp4 (886×1920, 30 fps)
 //   node preview/render.mjs stills                    → out/screenshot-<n>.png (1320×2868)
 //   node preview/render.mjs stills-ipad               → out/ipad-<n>.png (2064×2752)
+//   node preview/render.mjs srt                       → docs/store/app-preview-<fr|en>.srt
 //   add --en for the English version (files suffixed -en)
 //   node preview/render.mjs sound                     → (re)put the soundtrack on rendered videos
 // Frames are captured one by one (no real-time playback), so the result is identical on every run.
@@ -157,8 +158,27 @@ async function stills(ipad = false) {
   await browser.close();
 }
 
+/** Subtitles of the App Preview (SRT), for the site and accessibility: docs/store/. */
+async function srt(mode) {
+  const { browser, page } = await open(`mode=${mode}&lang=${LANG}`, 443, 960);
+  const subs = await page.evaluate(() => window.SUBTITLES);
+  await browser.close();
+  const ts = (s) => {
+    const ms = Math.round(s * 1000);
+    const p = (n, l = 2) => String(n).padStart(l, '0');
+    return `${p(Math.floor(ms / 3600000))}:${p(Math.floor(ms / 60000) % 60)}:${p(Math.floor(ms / 1000) % 60)},${p(ms % 1000, 3)}`;
+  };
+  const body = subs
+    .map((c, i) => `${i + 1}\n${ts(Math.max(0, c.a))} --> ${ts(c.b)}\n${c.text}\n`)
+    .join('\n');
+  const file = path.join(here, '../../../docs/store', `app-preview-${LANG}.srt`);
+  fs.writeFileSync(file, body);
+  console.info(file);
+}
+
 const [cmd = 'video', mode = 'store'] = process.argv.slice(2).filter((a) => !a.startsWith('--'));
 if (cmd === 'stills') await stills();
 else if (cmd === 'stills-ipad') await stills(true);
+else if (cmd === 'srt') await srt(mode);
 else if (cmd === 'sound') sound();
 else await video(mode);

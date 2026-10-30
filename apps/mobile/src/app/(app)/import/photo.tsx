@@ -98,6 +98,7 @@ export default function ImportPhoto() {
                     source={{ uri: u }}
                     style={{ width: 150, height: 200, borderRadius: radius.lg }}
                     resizeMode="cover"
+                    accessibilityIgnoresInvertColors
                     accessibilityLabel={t('import.photoN', { n: i + 1 })}
                   />
                   <View style={{ position: 'absolute', top: 6, right: 6 }}>

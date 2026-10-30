@@ -91,6 +91,9 @@ function TabButton({ icon, iconActive, label, isFocused, vertical, ...props }: T
       accessibilityRole="tab"
       accessibilityLabel={label}
       accessibilityState={{ selected: !!isFocused }}
+      // Tab labels stay small: with large text, a long press shows them enlarged (like iOS).
+      accessibilityShowsLargeContentViewer
+      accessibilityLargeContentTitle={label}
       style={styles.tabItem}
     >
       <Icon name={isFocused ? iconActive : icon} size={24} tint={color} />

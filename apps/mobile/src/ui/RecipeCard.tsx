@@ -9,6 +9,7 @@ import { radius, space } from '../theme/tokens';
 import { Icon } from './Icon';
 import { RecipePhoto } from './Photo';
 import { Text } from './Text';
+import { longPressActions } from './a11y';
 
 interface Props {
   recipe: Recipe;
@@ -42,6 +43,7 @@ function RecipeCardBase({
     .filter(Boolean)
     .join(' · ');
   const label = [d.title, meta, favorite ? t('recipe.favorite') : null].filter(Boolean).join(', ');
+  const moreLabel = t('common.more');
   const uri = recipePhotoUri(recipe);
 
   const heart = onToggleFavorite ? (
@@ -69,6 +71,7 @@ function RecipeCardBase({
         accessibilityLabel={label}
         onPress={onPress}
         onLongPress={onLongPress}
+        {...longPressActions(moreLabel, onLongPress)}
         style={({ pressed }) => [styles.row, { opacity: pressed ? 0.85 : 1 }]}
       >
         <RecipePhoto
@@ -103,6 +106,7 @@ function RecipeCardBase({
       accessibilityLabel={label}
       onPress={onPress}
       onLongPress={onLongPress}
+      {...longPressActions(moreLabel, onLongPress)}
       style={({ pressed }) => [
         {
           width: w,

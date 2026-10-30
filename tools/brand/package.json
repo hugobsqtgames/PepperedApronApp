@@ -8,6 +8,7 @@
     "preview:video:marketing": "node preview/render.mjs video marketing",
     "preview:stills": "node preview/render.mjs stills",
     "preview:stills:ipad": "node preview/render.mjs stills-ipad",
+    "preview:srt": "node preview/render.mjs srt && node preview/render.mjs srt store --en",
     "preview:sound": "node preview/render.mjs sound"
   },
   "devDependencies": {

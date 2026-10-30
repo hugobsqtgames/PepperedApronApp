@@ -20,7 +20,7 @@ const Ctx = createContext<Show>(() => undefined);
 /** Native action sheet on iOS; a matching bottom sheet elsewhere. */
 export function ActionSheetProvider({ children }: { children: ReactNode }) {
   const { t } = useTranslation();
-  const { colors } = useTheme();
+  const { colors, a11y } = useTheme();
   const insets = useSafeAreaInsets();
   const [state, setState] = useState<{
     title?: string;
@@ -60,12 +60,13 @@ export function ActionSheetProvider({ children }: { children: ReactNode }) {
       <Modal
         visible={!!state}
         transparent
-        animationType="slide"
+        animationType={a11y.reduceMotion ? 'fade' : 'slide'}
         onRequestClose={() => setState(null)}
       >
         <Pressable
           style={[StyleSheet.absoluteFill, { backgroundColor: colors.overlay }]}
           onPress={() => setState(null)}
+          accessibilityRole="button"
           accessibilityLabel={t('common.close')}
         />
         <View

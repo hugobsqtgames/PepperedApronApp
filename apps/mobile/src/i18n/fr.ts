@@ -449,6 +449,7 @@ const fr = {
     timerLabel: 'Minuteur',
   },
   planning: {
+    openRecipe: 'Ouvrir la recette',
     templates: 'Semaines types',
     templatesHint: 'Enregistrez une semaine qui vous plaît, puis réutilisez-la en un geste.',
     saveWeek: 'Enregistrer la semaine affichée',

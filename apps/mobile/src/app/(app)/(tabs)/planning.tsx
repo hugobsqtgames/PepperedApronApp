@@ -22,7 +22,16 @@ import { haptic } from '../../../services/haptics';
 import { scheduleShoppingReady } from '../../../services/notifications';
 import { useTheme } from '../../../theme/ThemeProvider';
 import { radius, space } from '../../../theme/tokens';
-import { Button, Icon, IconButton, RecipePhoto, Text, useActionSheet, useToast } from '../../../ui';
+import {
+  Button,
+  Icon,
+  IconButton,
+  longPressActions,
+  RecipePhoto,
+  Text,
+  useActionSheet,
+  useToast,
+} from '../../../ui';
 
 import { WeekSummary } from '../../../features/planning/WeekSummary';
 
@@ -95,6 +104,10 @@ export default function Planning() {
         accessibilityHint={t('planning.moveTo')}
         onPress={() => entryActions(sheet, repos, t, i18n.language, e.id, weekStart)}
         onLongPress={() => info?.recipe && router.push(`/recipe/${info.recipe.id}`)}
+        {...longPressActions(
+          t('planning.openRecipe'),
+          info?.recipe ? () => router.push(`/recipe/${info.recipe!.id}`) : null,
+        )}
         style={({ pressed }) => [
           styles.entry,
           {

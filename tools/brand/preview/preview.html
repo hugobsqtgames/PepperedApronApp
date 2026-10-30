@@ -1460,6 +1460,22 @@
       // ================================================================ entry points
       translateTree(document.getElementById('stage'));
       window.DURATION = DURATION;
+      // Subtitles (render.mjs srt): the captions as they are shown, then the closing line.
+      window.SUBTITLES = [
+        ...CAPTIONS.map((c) => ({
+          a: c.a,
+          b: c.b,
+          text: [...c.l, c.s]
+            .filter(Boolean)
+            .map((x) => x.replace(/\*/g, ''))
+            .join('\n'),
+        })),
+        {
+          a: 25.3,
+          b: DURATION,
+          text: `PepperedApron\n${tr('Toutes vos recettes,')} ${tr('au même endroit.')}`,
+        },
+      ];
       window.STILLS = STILLS.length;
       window.seek = seek;
       window.still = still;

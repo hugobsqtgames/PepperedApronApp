@@ -46,10 +46,10 @@ Repères : modèle de données `packages/core/src/schemas.ts` (champs ajoutés a
 - [x] **Handoff** : `NSUserActivity` sur la fiche et le mode cuisine, reprise sur l'autre appareil.
 
 ## Lot 7 — Accessibilité complète (toutes les fonctions d'Apple)
-- [ ] Audit **VoiceOver** écran par écran : libellés, rôles, ordre, regroupements, actions personnalisées (cocher, supprimer, déplacer), annonces (minuteur fini, import terminé), pas d'élément sans nom.
-- [ ] **Taille du texte (Dynamic Type)** jusqu'aux tailles d'accessibilité sans texte coupé (mises en page qui passent en colonne).
-- [ ] **Réduire les animations**, **Réduire la transparence**, **Augmenter le contraste** (couleurs renforcées), **Texte en gras**, **Différencier sans couleur** (icônes en plus des couleurs), **Inversion intelligente** (photos non inversées).
-- [ ] **Contrôle vocal** (noms visibles = noms accessibles), **Contrôle de sélection** / clavier (ordre de focus), cibles ≥ 44 pt partout.
-- [ ] Sous-titres de la vidéo App Preview (fichier SRT pour le site).
-- [ ] **Étiquettes d'accessibilité App Store** (App Store Connect) : remplir ce qui est réellement pris en charge ; documenter dans `docs/store/README.md`.
-- [ ] Tests : contraste (existe), libellés manquants (test qui parcourt les écrans), Dynamic Type maximal.
+- [x] Audit **VoiceOver** écran par écran : libellés, rôles, ordre, regroupements, actions personnalisées (cocher, supprimer, déplacer), annonces (minuteur fini, import terminé), pas d'élément sans nom.
+- [x] **Taille du texte (Dynamic Type)** jusqu'aux tailles d'accessibilité sans texte coupé (mises en page qui passent en colonne).
+- [x] **Réduire les animations**, **Réduire la transparence**, **Augmenter le contraste** (couleurs renforcées), **Texte en gras**, **Différencier sans couleur** (icônes en plus des couleurs), **Inversion intelligente** (photos non inversées).
+- [x] **Contrôle vocal** (noms visibles = noms accessibles), **Contrôle de sélection** / clavier (ordre de focus), cibles ≥ 44 pt partout.
+- [x] Sous-titres de la vidéo App Preview (fichier SRT pour le site).
+- [x] **Étiquettes d'accessibilité App Store** (App Store Connect) : remplir ce qui est réellement pris en charge ; documenter dans `docs/store/README.md`.
+- [x] Tests : contraste (existe), libellés manquants (test qui parcourt les écrans), Dynamic Type maximal.

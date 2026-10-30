@@ -8,6 +8,7 @@ import {
   View,
   type StyleProp,
   type ViewStyle,
+  useWindowDimensions,
 } from 'react-native';
 import { useTheme } from '../theme/ThemeProvider';
 import { radius, space, TOUCH } from '../theme/tokens';
@@ -209,6 +210,9 @@ export function ListRow({
   right?: ReactNode;
 }) {
   const { colors } = useTheme();
+  // Accessibility text sizes: the value goes under the title instead of beside it.
+  const { fontScale } = useWindowDimensions();
+  const stacked = fontScale >= 1.35;
   const content = (
     <>
       {icon ? (
@@ -230,8 +234,13 @@ export function ListRow({
             {subtitle}
           </Text>
         ) : null}
+        {value && stacked ? (
+          <Text variant="callout" color="textMuted">
+            {value}
+          </Text>
+        ) : null}
       </View>
-      {value ? (
+      {value && !stacked ? (
         <Text variant="callout" color="textMuted" numberOfLines={1} style={{ maxWidth: '45%' }}>
           {value}
         </Text>
@@ -449,9 +458,11 @@ export function Skeleton({
   height: number;
   style?: StyleProp<ViewStyle>;
 }) {
-  const { colors } = useTheme();
+  const { colors, a11y } = useTheme();
   const o = useRef(new Animated.Value(0.5)).current;
   useEffect(() => {
+    // Reduce Motion: a still placeholder, no pulsing.
+    if (a11y.reduceMotion) return;
     const a = Animated.loop(
       Animated.sequence([
         Animated.timing(o, { toValue: 1, duration: 700, useNativeDriver: true }),
@@ -460,7 +471,7 @@ export function Skeleton({
     );
     a.start();
     return () => a.stop();
-  }, [o]);
+  }, [o, a11y.reduceMotion]);
   return (
     <Animated.View
       accessibilityElementsHidden

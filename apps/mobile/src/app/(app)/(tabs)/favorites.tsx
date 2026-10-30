@@ -17,6 +17,7 @@ import {
   Segmented,
   Text,
   TextField,
+  longPressActions,
   useActionSheet,
 } from '../../../ui';
 
@@ -148,6 +149,31 @@ export default function Favorites() {
     );
   }
 
+  type Item = (typeof data.collections)[number];
+  /** Long press (or VoiceOver action): a smart collection's rules, or delete a collection. */
+  const more = (item: Item) =>
+    item.smart
+      ? router.push({ pathname: '/collection/smart', params: { id: item.c.id } })
+      : sheet({
+          title: item.c.data.name,
+          options: [
+            {
+              label: t('favorites.deleteCollection'),
+              icon: 'trash-outline',
+              destructive: true,
+              onPress: () =>
+                Alert.alert(t('favorites.deleteCollection'), t('favorites.deleteCollectionBody'), [
+                  { text: t('common.cancel'), style: 'cancel' },
+                  {
+                    text: t('common.delete'),
+                    style: 'destructive',
+                    onPress: () => void repos.deleteCollection(item.c.id),
+                  },
+                ]),
+            },
+          ],
+        });
+
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.background }}>
       <FlatList
@@ -170,33 +196,8 @@ export default function Favorites() {
                 params: item.smart ? { id: item.c.id, smart: '1' } : { id: item.c.id },
               })
             }
-            onLongPress={() =>
-              item.smart
-                ? router.push({ pathname: '/collection/smart', params: { id: item.c.id } })
-                : sheet({
-                    title: item.c.data.name,
-                    options: [
-                      {
-                        label: t('favorites.deleteCollection'),
-                        icon: 'trash-outline',
-                        destructive: true,
-                        onPress: () =>
-                          Alert.alert(
-                            t('favorites.deleteCollection'),
-                            t('favorites.deleteCollectionBody'),
-                            [
-                              { text: t('common.cancel'), style: 'cancel' },
-                              {
-                                text: t('common.delete'),
-                                style: 'destructive',
-                                onPress: () => void repos.deleteCollection(item.c.id),
-                              },
-                            ],
-                          ),
-                      },
-                    ],
-                  })
-            }
+            {...longPressActions(t('common.more'), () => more(item))}
+            onLongPress={() => more(item)}
             style={{ width: w, gap: space.sm }}
           >
             <View

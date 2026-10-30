@@ -1,4 +1,10 @@
-import { darkColors, lightColors, type ThemeColors } from '../src/theme/tokens';
+import {
+  darkColors,
+  darkContrastColors,
+  lightColors,
+  lightContrastColors,
+  type ThemeColors,
+} from '../src/theme/tokens';
 
 function luminance(hex: string) {
   const [r, g, b] = [1, 3, 5].map((i) => {
@@ -35,5 +41,15 @@ describe.each([
 ])('%s theme contrast', (_name, c) => {
   it.each(pairs)('%s on %s ≥ 4.5:1', (fg, bg) => {
     expect(ratio(c[fg], c[bg])).toBeGreaterThanOrEqual(4.5);
+  });
+});
+
+// Increase Contrast (iOS setting): the same pairs reach AAA.
+describe.each([
+  ['light, increased contrast', lightContrastColors],
+  ['dark, increased contrast', darkContrastColors],
+])('%s', (_name, c) => {
+  it.each(pairs)('%s on %s ≥ 7:1', (fg, bg) => {
+    expect(ratio(c[fg], c[bg])).toBeGreaterThanOrEqual(7);
   });
 });

@@ -97,6 +97,42 @@ export const darkColors: ThemeColors = {
   tabBar: 'rgba(26, 34, 29, 0.97)',
 };
 
+/**
+ * Increase Contrast (iOS setting): darker text and lines, deeper accents, opaque bars. Every
+ * text pair reaches WCAG AAA 7:1 (see __tests__/contrast.test.ts).
+ */
+export const lightContrastColors: ThemeColors = {
+  ...lightColors,
+  line: '#A89C86',
+  textMuted: '#3A403B',
+  textSubtle: '#3F4540',
+  primary: '#123123',
+  primarySoft: '#D5E3DA',
+  accentText: '#7A3210',
+  danger: '#7E2614',
+  tabBar: '#FFFCF6',
+  overlay: 'rgba(18, 24, 20, 0.7)',
+};
+export const darkContrastColors: ThemeColors = {
+  ...darkColors,
+  line: '#5B6B62',
+  text: '#FFFFFF',
+  textMuted: '#DED8CC',
+  textSubtle: '#D2CBBF',
+  primary: '#B5E2C9',
+  primarySoft: '#173023',
+  accentText: '#F7B98E',
+  danger: '#F8B4A2',
+  tabBar: palette.nightSurface,
+  overlay: 'rgba(0, 0, 0, 0.8)',
+};
+
+/** Reduce Transparency (iOS setting): bars and overlays become opaque. */
+export function opaque(c: ThemeColors): ThemeColors {
+  const dark = c.background === darkColors.background;
+  return { ...c, tabBar: c.surface, overlay: dark ? '#000000' : '#2B332E' };
+}
+
 export const space = {
   xxs: 2,
   xs: 4,

@@ -42,6 +42,7 @@ import {
   EmptyState,
   Icon,
   IconButton,
+  longPressActions,
   RecipePhoto,
   Screen,
   Section,
@@ -526,6 +527,10 @@ export default function RecipeDetail() {
                     accessibilityLabel={t('history.resultOn', {
                       date: dayMonth(c.data.date, i18n.language),
                     })}
+                    {...longPressActions(
+                      t('editor.removePhoto'),
+                      () => void repos.setCookPhoto(c.id, null),
+                    )}
                     onLongPress={() =>
                       sheet({
                         title: dayMonth(c.data.date, i18n.language),

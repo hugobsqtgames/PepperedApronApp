@@ -27,7 +27,7 @@ export function ShareModal({
   onClose: () => void;
 }) {
   const { t } = useTranslation();
-  const { colors } = useTheme();
+  const { colors, a11y } = useTheme();
   const toast = useToast();
   const card = useRef<View>(null);
   const [busy, setBusy] = useState(false);
@@ -49,7 +49,7 @@ export function ShareModal({
   return (
     <Modal
       visible={mode !== null}
-      animationType="slide"
+      animationType={a11y.reduceMotion ? 'fade' : 'slide'}
       presentationStyle="pageSheet"
       onRequestClose={onClose}
     >
@@ -88,6 +88,7 @@ export function ShareModal({
                   accessible
                   accessibilityRole="image"
                   accessibilityLabel={t('share.qrLabel', { title: recipe.data.title })}
+                  accessibilityIgnoresInvertColors
                   style={{ padding: space.lg, backgroundColor: '#FFFFFF', borderRadius: 24 }}
                 >
                   <QrCode value={link.url} size={Math.min(CARD_WIDTH, 320)} />

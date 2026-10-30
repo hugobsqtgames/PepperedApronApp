@@ -443,6 +443,7 @@ const en: Translations = {
     timerLabel: 'Timer',
   },
   planning: {
+    openRecipe: 'Open the recipe',
     templates: 'Template weeks',
     templatesHint: 'Save a week you like, then reuse it in one tap.',
     saveWeek: 'Save the week shown',
