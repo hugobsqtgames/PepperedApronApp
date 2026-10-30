@@ -1,12 +1,27 @@
-import { useEffect, useState } from 'react';
-import { Alert, Pressable, ScrollView, Share, StyleSheet, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import {
+  Alert,
+  Animated,
+  Pressable,
+  ScrollView,
+  Share,
+  StyleSheet,
+  useWindowDimensions,
+  View,
+} from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Image } from 'expo-image';
-import { router, useLocalSearchParams } from 'expo-router';
+import { Link, router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import {
   computeTotalMinutes,
+  CUISINE_COUNTRY,
+  CUISINES,
   detectSeasons,
+  flagOf,
+  pairingsFor,
+  recipeCuisine,
   dietTags,
   findMoldSize,
   formatMinutes,
@@ -34,7 +49,9 @@ import { pickImage, preparePhoto, type PhotoSource } from '../../../../services/
 import { clearActivity, setActivity } from '../../../../../modules/ios-integration';
 import { haptic } from '../../../../services/haptics';
 import { timers } from '../../../../services/timers';
-import { useTheme } from '../../../../theme/ThemeProvider';
+import { TintScope, useTheme } from '../../../../theme/ThemeProvider';
+import { useDishColor } from '../../../../lib/photoTint';
+import { useCookCelebration } from '../../../../features/celebrate';
 import { radius, space } from '../../../../theme/tokens';
 import {
   Badge,
@@ -42,6 +59,7 @@ import {
   EmptyState,
   Icon,
   IconButton,
+  type IconName,
   longPressActions,
   RecipePhoto,
   Screen,
@@ -58,10 +76,31 @@ function moldLabel(m: MoldSize): string {
   return m.shape === 'round' ? `Ø ${m.diameter} cm` : `${m.width} × ${m.length} cm`;
 }
 
+/** The page takes on the colour of the dish (its photo, or its category's). */
 export default function RecipeDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const look = useLive(
+    ['recipe'],
+    (r) => {
+      const x = r.recipe(id);
+      return x ? { uri: recipePhotoUri(x), category: x.data.category } : null;
+    },
+    [id],
+  );
+  const color = useDishColor(look?.uri ?? null, look?.category ?? null);
+  return (
+    <TintScope color={color}>
+      <RecipeDetailBody id={id} />
+    </TintScope>
+  );
+}
+
+function RecipeDetailBody({ id }: { id: string }) {
   const { t, i18n } = useTranslation();
-  const { colors } = useTheme();
+  const { colors, a11y } = useTheme();
+  const { width: winW, height: winH } = useWindowDimensions();
+  const scrollY = useRef(new Animated.Value(0)).current;
+  const celebrate = useCookCelebration();
   const repos = useRepos();
   const layout = useLayout();
   const insets = useSafeAreaInsets();
@@ -110,6 +149,9 @@ export default function RecipeDetail() {
   const factor = current / d.servings;
   const total = computeTotalMinutes(d);
   const photo = recipePhotoUri(recipe);
+  // Phones: the photo fills the top of the screen, the title written on it.
+  const bigHeader = !layout.sidebar;
+  const heroH = Math.min(Math.round(winH * 0.56), 560);
   const names = d.ingredients.map((i) => i.name);
   const diets = dietTags(names);
   const seasons = d.seasons.length ? d.seasons : detectSeasons(names);
@@ -140,10 +182,43 @@ export default function RecipeDetail() {
     });
 
   const cookedToday = async () => {
-    await repos.logCooked(recipe.id);
-    haptic.success();
+    await celebrate(() => repos.logCooked(recipe.id));
     toast(t('history.logged'));
   };
+
+  const cuisine = recipeCuisine(d);
+  const chooseCuisine = () =>
+    sheet({
+      title: t('delight.cuisineChoose'),
+      options: [
+        {
+          label: t('delight.cuisineAuto'),
+          icon: 'sparkles-outline' as const,
+          onPress: () => inBackground(repos.setCuisine(recipe.id, null)),
+        },
+        ...CUISINES.map((c) => ({
+          label: `${flagOf(CUISINE_COUNTRY[c])}  ${t(`delight.cuisines.${c}`)}`,
+          onPress: () => inBackground(repos.setCuisine(recipe.id, c)),
+        })),
+      ],
+    });
+  const pairing = pairingsFor({
+    title: d.title,
+    category: d.category,
+    cuisine,
+    ingredients: d.ingredients,
+  });
+
+  const editStepNote = (s: Step, i: number) =>
+    prompt({
+      title: t('delight.stepNoteTitle', { n: i + 1 }),
+      message: t('delight.stepNoteHint'),
+      initial: d.stepNotes[s.id] ?? '',
+      multiline: true,
+      maxLength: 500,
+      allowEmpty: true,
+      onSubmit: (v) => inBackground(repos.setStepNote(recipe.id, s.id, v || null)),
+    });
 
   const history = () =>
     sheet({
@@ -187,9 +262,10 @@ export default function RecipeDetail() {
         return;
       }
       const key = await preparePhoto(r.uri);
-      const log = await repos.logCooked(recipe.id);
-      await repos.setCookPhoto(log.id, key);
-      haptic.success();
+      await celebrate(async () => {
+        const log = await repos.logCooked(recipe.id);
+        await repos.setCookPhoto(log.id, key);
+      });
     } catch (e) {
       toast(errorMessage(e, t), { tone: 'error' });
     }
@@ -363,6 +439,16 @@ export default function RecipeDetail() {
         ) : null}
         {d.difficulty ? <Badge label={t(`difficulty.${d.difficulty}`)} /> : null}
         {d.category ? <Badge label={t(`categories.${d.category}`)} /> : null}
+        <Badge
+          label={
+            cuisine
+              ? `${flagOf(CUISINE_COUNTRY[cuisine])} ${t(`delight.cuisines.${cuisine}`)}`
+              : `🌍 ${t('delight.cuisine')}`
+          }
+          onPress={chooseCuisine}
+          accessibilityHint={t('delight.cuisineHint')}
+          testID="recipe-cuisine"
+        />
         {seasons.map((s) => (
           <Badge key={s} label={t(`seasons.${s}`)} tone="accent" />
         ))}
@@ -377,10 +463,16 @@ export default function RecipeDetail() {
         ) : null}
         {collections ? <Badge icon="albums-outline" label={String(collections)} /> : null}
       </View>
-      <Text variant="hero" accessibilityRole="header" testID="recipe-title">
-        {d.title}
-      </Text>
-      {d.description ? <Text color="textMuted">{d.description}</Text> : null}
+      {bigHeader ? null : (
+        <Text variant="hero" accessibilityRole="header" testID="recipe-title">
+          {d.title}
+        </Text>
+      )}
+      {d.description ? (
+        <Text variant="lede" color="textMuted">
+          {d.description}
+        </Text>
+      ) : null}
       {meta.length ? (
         <Text variant="callout" color="textMuted">
           {meta.join('  ·  ')}
@@ -475,10 +567,43 @@ export default function RecipeDetail() {
       <StepList
         steps={d.steps}
         onTimer={startTimer}
+        notes={d.stepNotes}
+        onNote={editStepNote}
         factor={factor}
         ingredients={d.ingredients}
         system={settings.unitSystem}
       />
+    </Section>
+  );
+
+  const pairings = (
+    <Section title={t('delight.pairing.title')} kicker={t('delight.pairing.kicker')}>
+      <View style={[styles.pairing, { backgroundColor: colors.surface, borderColor: colors.line }]}>
+        {(
+          [
+            pairing.drink
+              ? ['wine-outline', 'drink', t(`delight.pairing.drinks.${pairing.drink}`)]
+              : null,
+            ['cafe-outline', 'soft', t(`delight.pairing.drinks.${pairing.soft}`)],
+            pairing.side
+              ? ['restaurant-outline', 'side', t(`delight.pairing.sides.${pairing.side}`)]
+              : null,
+          ].filter(Boolean) as [IconName, 'drink' | 'soft' | 'side', string][]
+        ).map(([icon, kind, text]) => (
+          <View
+            key={kind}
+            style={{ flexDirection: 'row', gap: space.md, alignItems: 'flex-start' }}
+          >
+            <Icon name={icon} size={20} color="accent" />
+            <View style={{ flex: 1 }}>
+              <Text variant="kicker" color="textMuted">
+                {t(`delight.pairing.${kind}`)}
+              </Text>
+              <Text variant="callout">{text}</Text>
+            </View>
+          </View>
+        ))}
+      </View>
     </Section>
   );
 
@@ -496,7 +621,10 @@ export default function RecipeDetail() {
             {t('recipe.personalNote')}
           </Text>
         </View>
-        <Text variant="body" color={d.personalNote ? 'text' : 'textMuted'}>
+        <Text
+          variant={d.personalNote ? 'quote' : 'body'}
+          color={d.personalNote ? 'text' : 'textMuted'}
+        >
           {d.personalNote ?? t('recipe.personalNoteEmpty')}
         </Text>
       </Pressable>
@@ -586,23 +714,113 @@ export default function RecipeDetail() {
     </View>
   );
 
-  const hero =
-    photo || layout.isTablet ? (
+  // iPad columns: the photo in the left column, as before.
+  const hero = layout.sidebar ? (
+    <Link.AppleZoomTarget>
       <RecipePhoto
         uri={photo}
         category={d.category}
-        radius={layout.sidebar ? radius.xxl : 0}
-        style={{ width: '100%', aspectRatio: layout.sidebar ? 16 / 10 : 4 / 3 }}
+        radius={radius.xxl}
+        style={{ width: '100%', aspectRatio: 16 / 10 }}
         emojiSize={72}
         recyclingKey={recipe.id}
       />
-    ) : null;
+    </Link.AppleZoomTarget>
+  ) : null;
+
+  const kicker = [
+    d.category ? t(`categories.${d.category}`) : null,
+    cuisine ? `${flagOf(CUISINE_COUNTRY[cuisine])} ${t(`delight.cuisines.${cuisine}`)}` : null,
+  ]
+    .filter(Boolean)
+    .join('  ·  ');
+
+  // The photo moves slower than the page, and stretches when pulled down.
+  const still = a11y.reduceMotion;
+  const bigHero = (
+    <View style={{ height: heroH, backgroundColor: colors.surfaceMuted }} testID="recipe-hero">
+      <Animated.View
+        style={[
+          { position: 'absolute', top: 0, left: 0, width: winW, height: heroH },
+          still
+            ? null
+            : {
+                transform: [
+                  {
+                    translateY: scrollY.interpolate({
+                      inputRange: [-heroH, 0, heroH],
+                      outputRange: [-heroH / 2, 0, heroH * 0.35],
+                      extrapolate: 'clamp',
+                    }),
+                  },
+                  {
+                    scale: scrollY.interpolate({
+                      inputRange: [-heroH, 0, 1],
+                      outputRange: [2, 1, 1],
+                      extrapolate: 'clamp',
+                    }),
+                  },
+                ],
+              },
+        ]}
+      >
+        <Link.AppleZoomTarget>
+          <RecipePhoto
+            uri={photo}
+            category={d.category}
+            radius={0}
+            style={{ width: winW, height: heroH }}
+            emojiSize={96}
+            recyclingKey={recipe.id}
+          />
+        </Link.AppleZoomTarget>
+      </Animated.View>
+      <LinearGradient
+        pointerEvents="none"
+        colors={['rgba(0,0,0,0.38)', 'rgba(0,0,0,0)', 'rgba(0,0,0,0)', 'rgba(8,12,10,0.82)']}
+        locations={[0, 0.22, 0.45, 1]}
+        style={{ position: 'absolute', top: 0, left: 0, width: winW, height: heroH }}
+      />
+      <View style={[styles.heroText, { left: layout.gutter, right: layout.gutter }]}>
+        {kicker ? (
+          <Text variant="kicker" style={{ color: 'rgba(255,252,246,0.92)' }}>
+            {kicker}
+          </Text>
+        ) : null}
+        <Text
+          variant="hero"
+          accessibilityRole="header"
+          testID="recipe-title"
+          numberOfLines={4}
+          style={{ color: '#FFFCF6', textShadowColor: 'rgba(0,0,0,0.35)', textShadowRadius: 12 }}
+        >
+          {d.title}
+        </Text>
+      </View>
+    </View>
+  );
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
-      <Screen edges={[]} padded={false} maxWidth={layout.wide ? 1200 : undefined}>
-        {!layout.sidebar ? hero : <View style={{ height: insets.top + space.xxl }} />}
-        <View style={{ paddingHorizontal: layout.gutter, paddingTop: space.xl, gap: space.xxl }}>
+      <Animated.ScrollView
+        testID="recipe-scroll"
+        scrollEventThrottle={16}
+        onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], {
+          useNativeDriver: true,
+        })}
+        contentContainerStyle={{ paddingBottom: space.huge * 2 + 72 }}
+      >
+        {bigHeader ? bigHero : <View style={{ height: insets.top + space.xxl }} />}
+        <View
+          style={{
+            width: '100%',
+            maxWidth: layout.wide ? 1200 : layout.contentMaxWidth,
+            alignSelf: 'center',
+            paddingHorizontal: layout.gutter,
+            paddingTop: space.xl,
+            gap: space.xxl,
+          }}
+        >
           {layout.wide ? (
             <View style={{ flexDirection: 'row', gap: space.xxxl, alignItems: 'flex-start' }}>
               <View style={{ flex: 5, gap: space.xxl }}>
@@ -612,6 +830,7 @@ export default function RecipeDetail() {
               </View>
               <View style={{ flex: 6, gap: space.xxl }}>
                 {steps}
+                {pairings}
                 {extras}
               </View>
             </View>
@@ -621,11 +840,39 @@ export default function RecipeDetail() {
               {header}
               {ingredients}
               {steps}
+              {pairings}
               {extras}
             </>
           )}
         </View>
-      </Screen>
+      </Animated.ScrollView>
+      {bigHeader ? (
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            styles.topBar,
+            {
+              height: insets.top + 52,
+              paddingTop: insets.top,
+              backgroundColor: colors.background,
+              borderBottomColor: colors.line,
+              opacity: scrollY.interpolate({
+                inputRange: [heroH - insets.top - 110, heroH - insets.top - 50],
+                outputRange: [0, 1],
+                extrapolate: 'clamp',
+              }),
+            },
+          ]}
+        >
+          <Text
+            variant="title3"
+            numberOfLines={1}
+            style={{ marginHorizontal: 72, textAlign: 'center' }}
+          >
+            {d.title}
+          </Text>
+        </Animated.View>
+      ) : null}
       <ShareModal
         recipe={recipe}
         mode={shareMode}
@@ -637,7 +884,7 @@ export default function RecipeDetail() {
           icon="chevron-back"
           label={t('common.back')}
           onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))}
-          variant={photo && !layout.sidebar ? 'overlay' : 'surface'}
+          variant={bigHeader ? 'overlay' : 'surface'}
         />
       </View>
       {d.steps.length ? (
@@ -673,6 +920,21 @@ export default function RecipeDetail() {
 
 const styles = StyleSheet.create({
   back: { position: 'absolute', left: space.lg },
+  heroText: { position: 'absolute', bottom: space.xl, gap: space.xs },
+  topBar: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    justifyContent: 'center',
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  pairing: {
+    gap: space.md,
+    padding: space.lg,
+    borderRadius: radius.xl,
+    borderWidth: StyleSheet.hairlineWidth,
+  },
   review: { gap: space.sm, padding: space.lg, borderRadius: radius.xl },
   hint: {
     flexDirection: 'row',

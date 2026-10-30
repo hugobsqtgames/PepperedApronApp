@@ -1,5 +1,6 @@
 import { memo } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
+import { Link } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { computeTotalMinutes, formatMinutes, type Locale } from '@pepperedapron/core';
 import type { Recipe } from '@pepperedapron/client';
@@ -21,6 +22,11 @@ interface Props {
   onToggleFavorite?: () => void;
   subtitle?: string;
   testID?: string;
+  /**
+   * Open the recipe through a link: on iOS 18 its photo zooms into the recipe page (and back
+   * when closing it). onPress is then not used.
+   */
+  zoom?: boolean;
 }
 
 function RecipeCardBase({
@@ -33,6 +39,7 @@ function RecipeCardBase({
   onToggleFavorite,
   subtitle,
   testID,
+  zoom,
 }: Props) {
   const { colors } = useTheme();
   const { t, i18n } = useTranslation();
@@ -99,12 +106,22 @@ function RecipeCardBase({
 
   const w = width ?? (variant === 'wide' ? 280 : 168);
   const h = variant === 'wide' ? Math.round(w * 0.62) : Math.round(w * 0.78);
-  return (
+  const photo = (
+    <RecipePhoto
+      uri={uri}
+      category={d.category}
+      radius={radius.xl}
+      style={{ width: w, height: h }}
+      emojiSize={variant === 'wide' ? 52 : 40}
+      recyclingKey={recipe.id}
+    />
+  );
+  const card = (
     <Pressable
       testID={testID}
       accessibilityRole="button"
       accessibilityLabel={label}
-      onPress={onPress}
+      onPress={zoom ? undefined : onPress}
       onLongPress={onLongPress}
       {...longPressActions(moreLabel, onLongPress)}
       style={({ pressed }) => [
@@ -117,14 +134,7 @@ function RecipeCardBase({
       ]}
     >
       <View>
-        <RecipePhoto
-          uri={uri}
-          category={d.category}
-          radius={radius.xl}
-          style={{ width: w, height: h }}
-          emojiSize={variant === 'wide' ? 52 : 40}
-          recyclingKey={recipe.id}
-        />
+        {zoom ? <Link.AppleZoom>{photo}</Link.AppleZoom> : photo}
         {heart}
       </View>
       <View style={{ gap: 2, paddingHorizontal: 2 }}>
@@ -138,6 +148,13 @@ function RecipeCardBase({
         ) : null}
       </View>
     </Pressable>
+  );
+  return zoom ? (
+    <Link href={`/recipe/${recipe.id}`} asChild>
+      {card}
+    </Link>
+  ) : (
+    card
   );
 }
 

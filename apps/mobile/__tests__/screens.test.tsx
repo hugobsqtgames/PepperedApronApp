@@ -22,7 +22,10 @@ jest.mock('expo-router', () => {
   const React = jest.requireActual<typeof import('react')>('react');
   const Pass = ({ children }: { children?: unknown }) => (children ?? null) as never;
   return {
-    router: mockNav,
+    // Read when used: the mock is built before mockNav is defined (imports come first).
+    get router() {
+      return mockNav;
+    },
     useRouter: () => mockNav,
     useLocalSearchParams: () => mockParams.current,
     useGlobalSearchParams: () => mockParams.current,
@@ -34,7 +37,7 @@ jest.mock('expo-router', () => {
     usePreventRemove: () => () => {},
     useFocusEffect: (cb: () => void) => React.useEffect(cb, []),
     Stack: Object.assign(Pass, { Screen: () => null }),
-    Link: Pass,
+    Link: Object.assign((p: { children?: unknown }) => Pass(p), { AppleZoom: Pass, AppleZoomTarget: Pass }),
     Redirect: () => null,
   };
 });

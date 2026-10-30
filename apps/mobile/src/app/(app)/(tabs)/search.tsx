@@ -343,6 +343,7 @@ export default function Search() {
         renderItem={({ item }) => (
           <View style={{ width: w, gap: 4 }}>
             <RecipeCard
+              zoom
               recipe={item.recipe.record}
               width={w}
               favorite={all.favs.has(item.recipe.id)}

@@ -13,7 +13,7 @@ import { ShareIntentProvider } from 'expo-share-intent';
 import { resolveLocale, setLanguage } from '../i18n';
 import { useRuntime } from '../hooks/runtime';
 import { ThemeProvider, useTheme } from '../theme/ThemeProvider';
-import { ActionSheetProvider, PromptProvider, ToastProvider } from '../ui';
+import { ActionSheetProvider, ConfettiProvider, PromptProvider, ToastProvider } from '../ui';
 import { ErrorState } from '../ui/States';
 import type { SettingsData } from '@pepperedapron/core';
 
@@ -77,6 +77,8 @@ export default function RootLayout() {
   const [fontsLoaded] = useFonts({
     Fraunces_600SemiBold: require('../../assets/fonts/Fraunces_600SemiBold.ttf'),
     Fraunces_700Bold: require('../../assets/fonts/Fraunces_700Bold.ttf'),
+    Fraunces_400Regular_Italic: require('../../assets/fonts/Fraunces_400Regular_Italic.ttf'),
+    Fraunces_600SemiBold_Italic: require('../../assets/fonts/Fraunces_600SemiBold_Italic.ttf'),
   });
 
   useEffect(() => {
@@ -98,17 +100,19 @@ export default function RootLayout() {
       <GestureHandlerRootView style={{ flex: 1 }}>
         <SafeAreaProvider>
           <ThemeProvider preference={settings?.theme ?? 'system'}>
-            <ToastProvider>
-              <ActionSheetProvider>
-                <PromptProvider>
-                  {rt.status === 'failed' ? (
-                    <StartupError />
-                  ) : (
-                    <Navigator onboarded={settings?.onboardingDone === true} />
-                  )}
-                </PromptProvider>
-              </ActionSheetProvider>
-            </ToastProvider>
+            <ConfettiProvider>
+              <ToastProvider>
+                <ActionSheetProvider>
+                  <PromptProvider>
+                    {rt.status === 'failed' ? (
+                      <StartupError />
+                    ) : (
+                      <Navigator onboarded={settings?.onboardingDone === true} />
+                    )}
+                  </PromptProvider>
+                </ActionSheetProvider>
+              </ToastProvider>
+            </ConfettiProvider>
           </ThemeProvider>
         </SafeAreaProvider>
       </GestureHandlerRootView>

@@ -164,6 +164,7 @@ export default function CollectionScreen() {
         contentContainerStyle={{ gap: space.lg, paddingVertical: space.lg }}
         renderItem={({ item }) => (
           <RecipeCard
+            zoom
             recipe={item}
             width={w}
             favorite={favs.has(item.id)}

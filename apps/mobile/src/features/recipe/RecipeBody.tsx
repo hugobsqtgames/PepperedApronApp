@@ -161,9 +161,15 @@ export function StepList({
   factor = 1,
   ingredients = [],
   system = 'metric',
+  notes = {},
+  onNote,
 }: {
   steps: Step[];
   onTimer?: (step: Step, index: number, seconds: number) => void;
+  /** The user's notes by step id, shown under the step. */
+  notes?: Record<string, string>;
+  /** Write or change the note of a step. */
+  onNote?: (step: Step, index: number) => void;
   /** Quantities written in the steps follow the chosen number of servings. */
   factor?: number;
   /** Shown under each step: the ones it uses. */
@@ -218,6 +224,33 @@ export function StepList({
                     <Icon name="timer-outline" size={16} color="accent" />
                     <Text variant="callout" color="accent" weight="600">
                       {s.timerLabel ?? t('recipe.timer', { time: formatClock(seconds) })}
+                    </Text>
+                  </Pressable>
+                ) : null}
+                {notes[s.id] ? (
+                  <Pressable
+                    accessibilityRole={onNote ? 'button' : undefined}
+                    accessibilityLabel={`${t('delight.stepNote')}: ${notes[s.id]}`}
+                    onPress={onNote ? () => onNote(s, i) : undefined}
+                    style={[
+                      styles.stepNote,
+                      { borderLeftColor: colors.accent, backgroundColor: colors.accentSoft },
+                    ]}
+                    testID={`step-note-${i}`}
+                  >
+                    <Text variant="quote">{notes[s.id]}</Text>
+                  </Pressable>
+                ) : onNote ? (
+                  <Pressable
+                    accessibilityRole="button"
+                    onPress={() => onNote(s, i)}
+                    hitSlop={8}
+                    style={styles.addNote}
+                    testID={`step-add-note-${i}`}
+                  >
+                    <Icon name="create-outline" size={14} color="textSubtle" />
+                    <Text variant="caption" color="textSubtle">
+                      {t('delight.addStepNote')}
                     </Text>
                   </Pressable>
                 ) : null}
@@ -288,6 +321,19 @@ export function SourceLink({ source, url }: { source: string | null; url: string
 }
 
 const styles = StyleSheet.create({
+  stepNote: {
+    borderLeftWidth: 3,
+    paddingVertical: space.sm,
+    paddingHorizontal: space.md,
+    borderRadius: radius.sm,
+  },
+  addNote: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.xs,
+    alignSelf: 'flex-start',
+    minHeight: 32,
+  },
   stepIng: {
     flexDirection: 'row',
     gap: 4,

@@ -149,6 +149,9 @@ export const radius = { sm: 8, md: 12, lg: 16, xl: 22, xxl: 28, pill: 999 } as c
 export const fonts = {
   display: 'Fraunces_700Bold',
   displaySemi: 'Fraunces_600SemiBold',
+  /** Editorial italic: introductions, quotes, the cook's notes. */
+  italic: 'Fraunces_400Regular_Italic',
+  italicSemi: 'Fraunces_600SemiBold_Italic',
 } as const;
 
 /** Type scale (points). Body text uses the system font so Dynamic Type & SF behave natively. */
@@ -162,6 +165,18 @@ export const type = {
   callout: { fontSize: 15, lineHeight: 21 },
   caption: { fontSize: 13, lineHeight: 18 },
   micro: { fontSize: 11, lineHeight: 14, fontWeight: '600', letterSpacing: 0.4 },
+  /** Magazine-style introduction under a title. */
+  lede: { fontFamily: fonts.italic, fontSize: 19, lineHeight: 27 },
+  /** Small capitals above a title ("DESSERT · CUISINE FRANÇAISE"). */
+  kicker: {
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: '700',
+    letterSpacing: 1.4,
+    textTransform: 'uppercase',
+  },
+  /** A personal note or a quote, set apart. */
+  quote: { fontFamily: fonts.italicSemi, fontSize: 17, lineHeight: 25 },
   cook: { fontSize: 30, lineHeight: 42, fontWeight: '500' },
 } as const;
 

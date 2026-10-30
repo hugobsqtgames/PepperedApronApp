@@ -246,6 +246,10 @@ export default function RecipeEditor() {
       // Saved from the editor: the user has checked the recipe.
       review: null,
     };
+    // Notes of steps removed in the editor go with them.
+    final.stepNotes = Object.fromEntries(
+      Object.entries(data.stepNotes ?? {}).filter(([k]) => final.steps.some((st) => st.id === k)),
+    );
     if (!final.title.trim()) {
       setTitleError(t('errors.titleRequired'));
       scroll.current?.scrollTo({ y: 0, animated: true });

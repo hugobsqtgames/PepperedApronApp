@@ -353,6 +353,14 @@ export class Repos {
       .filter((c) => c.data.recipeId === recipeId)
       .sort((a, b) => b.data.date.localeCompare(a.data.date));
   }
+  /** The whole cooking history, most recent first (journal, badges, year in review). */
+  allCookLogs(): LocalRecord<'cookLog'>[] {
+    return this.store
+      .all('cookLog')
+      .sort(
+        (a, b) => b.data.date.localeCompare(a.data.date) || b.updatedAt.localeCompare(a.updatedAt),
+      );
+  }
   /** Cooked count and last date of every recipe cooked at least once. */
   cookStats(): Map<string, { count: number; last: string }> {
     const out = new Map<string, { count: number; last: string }>();

@@ -31,9 +31,11 @@ export function Text({
     t =
       t.fontFamily === fonts.displaySemi
         ? { ...t, fontFamily: fonts.display }
-        : t.fontFamily
-          ? t
-          : { ...t, fontWeight: bolder(t.fontWeight as string | undefined) };
+        : t.fontFamily === fonts.italic
+          ? { ...t, fontFamily: fonts.italicSemi }
+          : t.fontFamily
+            ? t
+            : { ...t, fontWeight: bolder(t.fontWeight as string | undefined) };
   const display = variant === 'hero' || variant === 'title1' || variant === 'cook';
   return (
     <RNText

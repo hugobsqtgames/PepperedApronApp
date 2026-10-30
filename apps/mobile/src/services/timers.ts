@@ -80,7 +80,7 @@ class TimerManager {
       for (const t of this.timers) {
         if (timerState(t, now) === 'done' && !this.notified.has(t.id)) {
           this.notified.add(t.id);
-          haptic.success();
+          haptic.timerDone();
           // VoiceOver says it too, whatever screen is shown.
           AccessibilityInfo.announceForAccessibility(
             i18n.t('notifications.timerDone', { label: t.label }),

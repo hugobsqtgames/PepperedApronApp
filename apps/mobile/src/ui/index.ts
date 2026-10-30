@@ -13,3 +13,4 @@ export * from './Prompt';
 export * from './Stars';
 export * from './QrCode';
 export * from './a11y';
+export * from './Confetti';

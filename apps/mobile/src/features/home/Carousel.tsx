@@ -32,6 +32,7 @@ export function RecipeCarousel({
       contentContainerStyle={{ gap: space.md, paddingHorizontal: layout.gutter }}
       renderItem={({ item }) => (
         <RecipeCard
+          zoom
           recipe={item}
           variant={wide ? 'wide' : 'tile'}
           width={wide ? (layout.isTablet ? 340 : 280) : layout.isTablet ? 210 : 168}

@@ -119,10 +119,17 @@ export function Badge({
   label,
   tone = 'neutral',
   icon,
+  onPress,
+  accessibilityHint,
+  testID,
 }: {
   label: string;
   tone?: 'neutral' | 'primary' | 'accent' | 'danger';
   icon?: IconName;
+  /** A badge that can be changed (the cuisine of a recipe…). */
+  onPress?: () => void;
+  accessibilityHint?: string;
+  testID?: string;
 }) {
   const { colors } = useTheme();
   const bg = {
@@ -134,27 +141,49 @@ export function Badge({
   const fg = {
     neutral: colors.textMuted,
     primary: colors.primary,
-    accent: colors.accent,
+    accent: colors.accentText,
     danger: colors.danger,
   }[tone];
-  return (
-    <View style={[styles.badge, { backgroundColor: bg }]}>
+  const body = (
+    <>
       {icon ? <Icon name={icon} size={13} tint={fg} /> : null}
       <Text variant="caption" style={{ color: fg, fontWeight: '600' }}>
         {label}
       </Text>
+    </>
+  );
+  if (onPress)
+    return (
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={label}
+        accessibilityHint={accessibilityHint}
+        onPress={onPress}
+        hitSlop={8}
+        testID={testID}
+        style={({ pressed }) => [styles.badge, { backgroundColor: bg, opacity: pressed ? 0.7 : 1 }]}
+      >
+        {body}
+      </Pressable>
+    );
+  return (
+    <View style={[styles.badge, { backgroundColor: bg }]} testID={testID}>
+      {body}
     </View>
   );
 }
 
 export function Section({
   title,
+  kicker,
   action,
   onAction,
   children,
   style,
 }: {
   title: string;
+  /** Small capitals above the title, magazine style. */
+  kicker?: string;
   action?: string;
   onAction?: () => void;
   children: ReactNode;
@@ -163,9 +192,16 @@ export function Section({
   return (
     <View style={[{ gap: space.md }, style]}>
       <View style={styles.sectionHead}>
-        <Text variant="title2" accessibilityRole="header" style={{ flex: 1 }}>
-          {title}
-        </Text>
+        <View style={{ flex: 1, gap: 2 }}>
+          {kicker ? (
+            <Text variant="kicker" color="accent">
+              {kicker}
+            </Text>
+          ) : null}
+          <Text variant="title2" accessibilityRole="header">
+            {title}
+          </Text>
+        </View>
         {action && onAction ? (
           <Pressable
             accessibilityRole="button"

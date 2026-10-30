@@ -126,6 +126,7 @@ export default function Favorites() {
           contentContainerStyle={{ gap: space.lg, paddingBottom: space.huge * 2 }}
           renderItem={({ item }) => (
             <RecipeCard
+              zoom
               recipe={item}
               width={w}
               favorite
