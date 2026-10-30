@@ -254,3 +254,43 @@ describe('regression: an imported page with oversized fields is still saved', ()
     expect(r.data.servings).toBe(4);
   });
 });
+
+describe('regression: operations started twice at once (double tap)', () => {
+  it('two simultaneous "500 g de riz" add up in one pantry line', async () => {
+    const { repos } = await open();
+    await Promise.all([repos.addPantryText('500 g de riz'), repos.addPantryText('500 g de riz')]);
+    expect(repos.pantryItems().map((p) => [p.data.name, p.data.quantity])).toEqual([['riz', 1000]]);
+  });
+
+  it('"add the week to groceries" tapped twice gives each ingredient once', async () => {
+    const { repos } = await open();
+    const r = await repos.createRecipe({
+      ...emptyRecipe(4),
+      title: 'Crêpes',
+      ingredients: [ing('farine', 250, 'g')],
+    });
+    await repos.planMeal({ date: '2026-11-02', slot: 'dinner', recipeId: r.id });
+    const list = await repos.createList('Courses');
+    await Promise.all([
+      repos.addPlanToList(list.id, '2026-11-02', '2026-11-08'),
+      repos.addPlanToList(list.id, '2026-11-02', '2026-11-08'),
+    ]);
+    expect(repos.items(list.id).map((i) => i.data.name)).toEqual(['farine']);
+  });
+
+  it('a sum beyond the model limit is kept without quantity instead of failing', async () => {
+    const { repos } = await open();
+    const r = await repos.createRecipe({
+      ...emptyRecipe(1),
+      title: 'Sel',
+      ingredients: [ing('gros sel', 90_000, null)],
+    });
+    await repos.planMeal({ date: '2026-11-02', slot: 'dinner', recipeId: r.id });
+    await repos.planMeal({ date: '2026-11-03', slot: 'dinner', recipeId: r.id });
+    const list = await repos.createList('Courses');
+    await repos.addPlanToList(list.id, '2026-11-02', '2026-11-08');
+    expect(repos.items(list.id).map((i) => [i.data.name, i.data.quantity])).toEqual([
+      ['gros sel', null],
+    ]);
+  });
+});

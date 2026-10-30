@@ -187,6 +187,18 @@ export function recipeFromDraft(d: RecipeDraft, defaultServings = 4): RecipeData
 export class Repos {
   constructor(private readonly store: LocalStore) {}
 
+  /**
+   * Read-compute-write operations that merge with what exists (pantry, adding a plan to a list)
+   * run one at a time: two calls at once (a double tap) would both see "not there yet" and
+   * create duplicates.
+   */
+  private queue: Promise<unknown> = Promise.resolve();
+  private exclusive<T>(fn: () => Promise<T>): Promise<T> {
+    const run = this.queue.then(fn, fn);
+    this.queue = run.catch(() => undefined);
+    return run;
+  }
+
   // ================================================================== settings
   settings(): SettingsData {
     const r = this.store.get('settings', SETTINGS_ID);
@@ -772,7 +784,13 @@ export class Repos {
       ),
     );
   }
-  private async addLines(listId: string, all: ReturnType<typeof shoppingLinesFromPlan>) {
+  private addLines(listId: string, all: ReturnType<typeof shoppingLinesFromPlan>) {
+    return this.exclusive(() => this.addLinesNow(listId, all));
+  }
+  private async addLinesNow(listId: string, all: ReturnType<typeof shoppingLinesFromPlan>) {
+    // A sum beyond what the model holds (a whole year planned) stays without quantity rather
+    // than making the whole operation fail.
+    const cap = (q: number | null) => (q !== null && q > LIMITS.quantityMax ? null : q);
     // What is at home is not bought again (or only what is missing).
     const { lines, skipped } = deductPantry(
       all,
@@ -785,7 +803,7 @@ export class Repos {
       if (p.kind === 'update') {
         const cur = this.store.get('shoppingItem', p.id);
         await this.updateItem(p.id, {
-          quantity: p.quantity,
+          quantity: cap(p.quantity),
           unit: p.unit,
           recipeIds: p.recipeIds.slice(0, 50),
           price: cur
@@ -796,7 +814,7 @@ export class Repos {
       } else {
         await this.addItem(listId, {
           name: p.line.name,
-          quantity: p.line.quantity,
+          quantity: cap(p.line.quantity),
           unit: p.line.unit,
           categoryKey: p.categoryKey,
           recipeIds: p.line.recipeIds.slice(0, 50),
@@ -906,6 +924,15 @@ export class Repos {
     place?: PantryPlace;
     expiresOn?: string | null;
   }) {
+    return this.exclusive(() => this.addPantryItemNow(p));
+  }
+  private async addPantryItemNow(p: {
+    name: string;
+    quantity?: number | null;
+    unit?: string | null;
+    place?: PantryPlace;
+    expiresOn?: string | null;
+  }) {
     const place = p.place ?? 'pantry';
     const key = ingredientKey(p.name);
     const same = this.pantryItems(place).find(
@@ -914,7 +941,7 @@ export class Repos {
     if (same) {
       const quantity =
         same.data.quantity !== null && p.quantity != null
-          ? same.data.quantity + p.quantity
+          ? Math.min(same.data.quantity + p.quantity, LIMITS.quantityMax)
           : (same.data.quantity ?? p.quantity ?? null);
       return this.updatePantryItem(same.id, {
         quantity,

@@ -2,7 +2,8 @@
 import { ENV } from '../src/services/env';
 
 const variant = process.env.APP_VARIANT ?? 'development';
-const suffix = { development: '.dev', staging: '.staging', production: '' }[variant]!;
+const suffixes: Record<string, string> = { development: '.dev', staging: '.staging', production: '' };
+const suffix = suffixes[variant]!;
 
 describe(`variant ${variant}`, () => {
   it('runs with its own identifiers', () => {
