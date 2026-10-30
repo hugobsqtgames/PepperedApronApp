@@ -17,3 +17,4 @@ apps/mobile/ios/
 *.p12
 *.mobileprovision
 GoogleService-Info.plist
+app-preview/
