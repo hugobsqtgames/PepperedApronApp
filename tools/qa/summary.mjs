@@ -17,7 +17,7 @@ for (const [name, code, secs] of status) {
   // Vitest: "Tests  281 passed (281)"; Jest: "Tests:       194 passed, 194 total"; node --test: "# pass 3".
   const passed = [
     ...log.matchAll(/Tests\s+(\d+) passed/g),
-    ...log.matchAll(/Tests:\s+(?:\d+ failed, )?(\d+) passed/g),
+    ...log.matchAll(/Tests:\s+(?:\d+ failed, )?(?:\d+ skipped, )?(\d+) passed/g),
     ...log.matchAll(/# pass (\d+)/g),
   ]
     .map((m) => Number(m[1]))

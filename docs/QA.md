@@ -14,7 +14,7 @@
 
 Ce qui manque pour une validation complète : aucun outil Apple n'existe dans cet environnement (Linux, ni Xcode, ni Swift, ni simulateur). Le code Swift n'a donc pas été compilé, et rien n'a tourné sur simulateur ou sur appareil. C'est la première étape du build EAS.
 
-Huit défauts réels ont été trouvés et corrigés, chacun avec un test de régression qui échoue sans la correction (section 4). La campagne a aussi produit des correctifs de dépendances, de sécurité et de performance.
+Quinze défauts réels ont été trouvés et corrigés, chacun avec un test de régression (section 4) : huit pendant l'audit, sept pendant la campagne de stress dev et prod (section 5.1). Cette campagne a tout repassé au vert : 753 tests réussis, 0 échec et 102 465 exécutions générées (cas, actions, appuis et contrôles), en développement comme en production. La campagne a aussi produit des correctifs de dépendances, de sécurité et de performance.
 
 ## 2. Stack et environnement
 
@@ -54,6 +54,14 @@ Huit défauts réels ont été trouvés et corrigés, chacun avec un test de ré
 | 7 | P2 | `@bacons/apple-targets` utilisait `@expo/image-utils` sans le déclarer : le prebuild cassait selon le hoisting de pnpm. | Dépendance non déclarée en amont. | `packageExtensions` dans `pnpm-workspace.yaml`. |
 | 8 | P3 | Test `Button` instable : échec sur machine lente ou cache froid. | Le test dépendait d'un minuteur réel de 50 ms. | Test rendu déterministe. Le composant était correct. |
 
+| 9 | P0 | Production : l'extension de partage n'était pas générée. L'app de l'App Store n'apparaissait donc pas dans la feuille de partage. | La cible de l'extension portait le nom de l'app (« PepperedApron ») et le plugin la prenait pour une cible déjà existante. | Cible renommée `PepperedApronShare`, avec un correctif de `expo-share-intent` pour garder « PepperedApron » comme nom affiché. Vérifié par `pnpm qa:native`. |
+| 10 | P2 | Le nom sur l'écran d'accueil était « PepperedApron » pour toutes les variantes, car les textes traduits l'écrasaient. Dev et prod étaient impossibles à distinguer sur un même iPhone. | Le nom n'était pas défini dans les textes natifs par langue. | Nom par variante injecté dans les textes fr et en. Vérifié par `pnpm qa:native`. |
+| 11 | P2 | Une page de 50 000 chiffres bloquait le lecteur de durées pendant 31 s (ReDoS). | Retour arrière quadratique des expressions régulières. | Les nombres ne peuvent plus commencer au milieu d'un autre nombre (`(?<!\d)`). Analyse linéaire : moins de 200 ms. |
+| 12 | P2 | Deux ajouts simultanés au placard, ou deux « ajouter la semaine aux courses », créaient des doublons. | Lecture, fusion puis écriture sans exclusion. | Ces opérations passent une par une dans `Repos` (`exclusive`). |
+| 13 | P3 | Une somme de quantités au-delà de la limite du modèle faisait échouer l'ajout (erreur de validation). | La somme n'était pas bornée. | La somme est bornée ; au-delà de la limite, l'article est gardé sans quantité. |
+| 14 | P2 | Pendant un gros import (1 500 liens), la file effaçait des imports terminés en cours de route. La progression affichée était alors fausse (1 484 sur 1 500). | La purge des anciens imports avait lieu même pendant l'import. | La purge n'a lieu que lorsque plus rien n'est en attente ni en cours. |
+| 15 | P3 | Une action lancée depuis un menu sur un élément supprimé entre-temps (par exemple sur un autre appareil, via iCloud) laissait une erreur non gérée. Le menu pouvait viser un repas, une liste, etc. Trouvé par la navigation aléatoire. | Les 48 modifications « sans attendre » des écrans ne géraient pas l'échec. | `inBackground()` ignore l'élément disparu et journalise les autres échecs. Un toast demandé après la fermeture de l'écran ne laisse plus de minuteur. |
+
 ### 4.5 Configuration de production
 
 - **Entitlement push (`aps-environment`) retiré.** L'app n'utilise que des notifications locales, sans serveur, donc l'App ID n'a pas besoin de la capacité Push.
@@ -76,11 +84,11 @@ Huit défauts réels ont été trouvés et corrigés, chacun avec un test de ré
 
 | Paquet | Tests définis | Résultat |
 | --- | --- | --- |
-| core | 281 | 281 réussis |
-| client | 60 | 60 réussis |
-| mobile | 188 | 188 réussis |
+| core | 284 | 284 réussis |
+| client | 68 | 68 réussis |
+| mobile | 195 | 195 réussis |
 | site | 3 | 3 réussis |
-| **Total** | **532** | **532 réussis, 0 échec** |
+| **Total** | **550** | **550 réussis, 0 échec** |
 
 Cas générés exécutés à chaque `pnpm test`. Toutes les seeds sont fixes et le numéro de seed est affiché en cas d'échec.
 
@@ -103,6 +111,27 @@ Cas générés exécutés à chaque `pnpm test`. Toutes les seeds sont fixes et 
 | `FUZZ_SCENARIOS=300` (synchro) | 300 scénarios, 12 000 actions | Tous les appareils identiques, aucune perte après relance |
 | `MONKEY_PRESSES=200`, français | 7 400 appuis sur 37 écrans | 0 plantage, 0 avertissement React |
 | `MONKEY_PRESSES=200`, anglais | 7 400 appuis sur 37 écrans | 0 plantage, 0 avertissement React |
+
+### 5.1 Campagne de stress dev et prod (`pnpm qa:stress`)
+
+Exécutée le 30 octobre 2026, après les corrections ci-dessus, avec `STRESS=1`. Chaque étape tourne dans son propre processus. L'app est testée deux fois, avec `APP_VARIANT=development` puis `APP_VARIANT=production` : identifiants, App Group, conteneur iCloud et textes de la variante.
+
+| Étape (par variante pour l'app) | Exécutions | Résultat |
+| --- | --- | --- |
+| core : propriétés, fuzzing, 4 000 entrées pathologiques géantes sur 18 analyseurs, recherche dans 10 000 recettes | 16 800 | 284 tests réussis |
+| client : 10 000 opérations simultanées puis relance ; 5 appareils en parallèle avec horloges décalées, apps tuées et iCloud instable (11 897 actions) ; suppression totale propagée ; recettes maximales et une année de planning ; 150 cycles export/import | 29 165 | 68 tests réussis |
+| config native (prebuild réel puis 47 contrôles : 5 cibles, App Groups, iCloud, entitlements, noms, textes, extension de partage) | 47 × 2 | OK dev et prod |
+| app : fuzzing, file de 1 500 imports avec résultats aléatoires | 3 900 × 2 | 109 tests réussis × 2 |
+| app : 37 écrans montés avec données réelles, monkey testing (200 appuis par écran), parcours | 7 400 appuis × 2 | 82 tests réussis × 2 |
+| app : navigation aléatoire (5 × 400 écrans ouverts, touchés et fermés pendant que les données changent en dessous) | 11 147 (dev), 10 845 (prod) | OK |
+| app : très grosse bibliothèque (3 000 recettes de plus, 600 courses, 300 articles de placard) | 407 × 2 | OK |
+| app : fuites (500 ouvertures et fermetures d'écran, abonnements comptés) | 500 × 2 | OK, aucun abonnement restant |
+| app : 5 000 actions aléatoires sur les minuteurs de cuisine | 5 000 × 2 | OK |
+| **Total** | **102 465** | **753 tests réussis, 0 échec** |
+
+Défauts trouvés par cette campagne : n° 9 à 15 de la section 4. Les deux premières exécutions complètes avaient échoué. La première a été tuée par manque de mémoire, d'où le découpage en processus. La seconde a révélé le n° 15 sur 3 des 10 lots de navigation.
+
+Limite connue de l'outil : Jest garde en mémoire chaque arbre rendu. La mémoire de Jest ne mesure donc pas les fuites de l'app ; elles sont mesurées en comptant les abonnements actifs (base, file d'imports, minuteurs).
 
 ### Ce qui n'est pas compté
 
@@ -153,6 +182,8 @@ cd apps/mobile && APP_VARIANT=production npx expo prebuild --platform ios --no-i
 cd apps/mobile && APP_VARIANT=production npx expo export --platform ios --output-dir /tmp/dist
 cd apps/mobile && npx expo-doctor
 pnpm audit --prod
+APP_VARIANT=production pnpm qa:native               # prebuild réel + 47 contrôles (une variante)
+QA_OUT=/tmp/qa pnpm qa:stress                       # campagne complète dev et prod (environ 10 min)
 ```
 
 ## 9. Fichiers principaux modifiés pendant l'audit
