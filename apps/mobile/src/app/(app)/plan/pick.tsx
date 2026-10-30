@@ -191,7 +191,7 @@ export default function PickMeal() {
           </View>
         )}
         ListEmptyComponent={
-          params.recipeId || params.servingsOnly ? null : (
+          params.recipeId || params.servingsOnly ? undefined : (
             <EmptyState
               emoji="📖"
               title={t('planning.noRecipes')}

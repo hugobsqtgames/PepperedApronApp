@@ -7,7 +7,7 @@ import {
   StyleSheet,
   View,
   useWindowDimensions,
-  type ViewToken,
+  type ListViewToken,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -32,7 +32,7 @@ export default function Welcome() {
   const { width, height } = useWindowDimensions();
   const [index, setIndex] = useState(0);
   const list = useRef<FlatList>(null);
-  const onViewable = useRef(({ viewableItems }: { viewableItems: ViewToken[] }) => {
+  const onViewable = useRef(({ viewableItems }: { viewableItems: ListViewToken[] }) => {
     if (viewableItems[0]?.index != null) setIndex(viewableItems[0].index);
   }).current;
   const last = index === SLIDES.length - 1;

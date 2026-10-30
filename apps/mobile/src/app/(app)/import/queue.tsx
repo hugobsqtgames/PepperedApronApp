@@ -327,7 +327,7 @@ export default function ImportQueueScreen() {
                 />
               ) : null}
             </View>
-          ) : null
+          ) : undefined
         }
       />
     </Screen>

@@ -1,5 +1,5 @@
 import type { Ref } from 'react';
-import { Image, Pressable, StyleSheet, View } from 'react-native';
+import { Image, Pressable, StyleSheet, View, type HostInstance } from 'react-native';
 import { router } from 'expo-router';
 import { TabList, TabSlot, TabTrigger, Tabs, type TabTriggerSlotProps } from 'expo-router/ui';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -52,7 +52,7 @@ type TabButtonProps = TabTriggerSlotProps & {
   iconActive: IconName;
   label: string;
   vertical?: boolean;
-  ref?: Ref<View>;
+  ref?: Ref<HostInstance>;
 };
 
 function TabButton({ icon, iconActive, label, isFocused, vertical, ...props }: TabButtonProps) {

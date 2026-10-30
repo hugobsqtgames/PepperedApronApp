@@ -383,7 +383,7 @@ export default function Search() {
                 ))}
               </View>
             </View>
-          ) : null
+          ) : undefined
         }
       />
     </SafeAreaView>

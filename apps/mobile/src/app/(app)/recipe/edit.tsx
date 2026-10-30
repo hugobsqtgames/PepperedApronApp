@@ -8,9 +8,10 @@ import {
   ScrollView,
   StyleSheet,
   View,
+  type ScrollViewInstance,
 } from 'react-native';
 import { Image } from 'expo-image';
-import { router, useLocalSearchParams, useNavigation } from 'expo-router';
+import { router, useLocalSearchParams, usePreventRemove } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import {
@@ -81,7 +82,6 @@ export default function RecipeEditor() {
   const toast = useToast();
   const sheet = useActionSheet();
   const prompt = usePrompt();
-  const navigation = useNavigation();
 
   const existing = id ? repos.recipe(id) : null;
   const draft: EditorDraft | null = draftKey ? draftStore.get(draftKey) : null;
@@ -132,30 +132,29 @@ export default function RecipeEditor() {
   );
   const [titleError, setTitleError] = useState<string | null>(null);
   const [showMore, setShowMore] = useState(!!existing || !!draft);
-  const dirty = useRef(false);
-  const saved = useRef(false);
-  const scroll = useRef<ScrollView>(null);
+  // Changed and not saved yet.
+  const [dirty, setDirty] = useState(false);
+  const scroll = useRef<ScrollViewInstance>(null);
 
   const patch = (p: Partial<RecipeData>) => {
-    dirty.current = true;
+    setDirty(true);
     setData((d) => ({ ...d, ...p }));
   };
 
-  useEffect(() => {
-    // Protect against losing work (swipe down / back) — ask before discarding.
-    return navigation.addListener('beforeRemove', (e) => {
-      if (!dirty.current || saved.current) return;
-      e.preventDefault();
-      Alert.alert(t('editor.discardTitle'), t('editor.discardBody'), [
-        { text: t('common.cancel'), style: 'cancel' },
-        {
-          text: t('editor.discard'),
-          style: 'destructive',
-          onPress: () => navigation.dispatch(e.data.action),
+  // Protect against losing work (swipe down / back): ask before discarding.
+  const allowLeave = usePreventRemove(dirty, ({ repeat }) => {
+    Alert.alert(t('editor.discardTitle'), t('editor.discardBody'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      {
+        text: t('editor.discard'),
+        style: 'destructive',
+        onPress: () => {
+          allowLeave();
+          repeat();
         },
-      ]);
-    });
-  }, [navigation, t]);
+      },
+    ]);
+  });
 
   useEffect(() => () => void (draftKey && draftStore.drop(draftKey)), [draftKey]);
   useEffect(() => {
@@ -196,7 +195,7 @@ export default function RecipeEditor() {
                 icon: 'trash-outline' as const,
                 destructive: true,
                 onPress: () => {
-                  dirty.current = true;
+                  setDirty(true);
                   setPhoto({ kind: 'remove' });
                 },
               },
@@ -219,7 +218,7 @@ export default function RecipeEditor() {
       );
       return;
     }
-    dirty.current = true;
+    setDirty(true);
     setPhoto({ kind: 'local', uri: r.uri });
   };
 
@@ -268,7 +267,8 @@ export default function RecipeEditor() {
       const rec = existing
         ? await repos.updateRecipe(existing.id, final)
         : await repos.createRecipe(final);
-      saved.current = true;
+      // Leaving after a save needs no confirmation.
+      allowLeave();
       if (photo.kind === 'local' && frames.includes(photo.uri)) dropFrames(rec.id);
       haptic.success();
       toast(t('editor.saved'));
@@ -293,7 +293,7 @@ export default function RecipeEditor() {
           .map((l) => l.trim())
           .filter(Boolean);
         if (!lines.length) return;
-        dirty.current = true;
+        setDirty(true);
         setIngs((rows) => [
           ...rows.filter((r) => r.kind === 'group' || r.text.trim()),
           ...lines.map((l) => ({ kind: 'ing' as const, key: uuidv7(), text: l, source: null })),
@@ -422,7 +422,7 @@ export default function RecipeEditor() {
                         accessibilityLabel={t('editor.videoFrame', { n: i + 1 })}
                         accessibilityState={{ selected: on }}
                         onPress={() => {
-                          dirty.current = true;
+                          setDirty(true);
                           setPhoto({ kind: 'local', uri });
                         }}
                         style={[styles.frame, { borderColor: on ? colors.primary : 'transparent' }]}
@@ -492,7 +492,7 @@ export default function RecipeEditor() {
                       value={row.name}
                       placeholder={t('editor.groupPlaceholder')}
                       onChangeText={(v) => {
-                        dirty.current = true;
+                        setDirty(true);
                         setIngs((r) => r.map((x, j) => (j === i ? { ...x, name: v } : x)));
                       }}
                       style={{ fontWeight: '700' }}
@@ -511,7 +511,7 @@ export default function RecipeEditor() {
                       value={row.text}
                       placeholder={t('editor.ingredientPlaceholder')}
                       onChangeText={(v) => {
-                        dirty.current = true;
+                        setDirty(true);
                         setIngs((r) => r.map((x, j) => (j === i ? { ...x, text: v } : x)));
                       }}
                       onSubmitEditing={() =>
@@ -538,7 +538,7 @@ export default function RecipeEditor() {
                       variant="plain"
                       size={36}
                       onPress={() => {
-                        dirty.current = true;
+                        setDirty(true);
                         setIngs((r) => r.filter((_, j) => j !== i));
                       }}
                     />
@@ -629,7 +629,7 @@ export default function RecipeEditor() {
                         variant="plain"
                         size={36}
                         onPress={() => {
-                          dirty.current = true;
+                          setDirty(true);
                           setSteps((r) => r.filter((_, j) => j !== i));
                         }}
                       />
@@ -639,7 +639,7 @@ export default function RecipeEditor() {
                       placeholder={t('editor.stepPlaceholder')}
                       multiline
                       onChangeText={(v) => {
-                        dirty.current = true;
+                        setDirty(true);
                         setSteps((r) => r.map((x, j) => (j === i ? { ...x, text: v } : x)));
                       }}
                       maxLength={3000}
@@ -709,7 +709,7 @@ export default function RecipeEditor() {
                         : undefined
                     }
                     onChangeText={(v) => {
-                      dirty.current = true;
+                      setDirty(true);
                       setTimes((x) => ({ ...x, [k]: v.replace(/[^0-9]/g, '').slice(0, 5) }));
                     }}
                   />
@@ -771,7 +771,7 @@ export default function RecipeEditor() {
                       keyboardType="number-pad"
                       icon="flame-outline"
                       onChangeText={(v) => {
-                        dirty.current = true;
+                        setDirty(true);
                         setTimes((x) => ({ ...x, oven: v.replace(/[^0-9]/g, '').slice(0, 3) }));
                       }}
                     />

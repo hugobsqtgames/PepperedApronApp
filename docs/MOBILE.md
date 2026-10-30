@@ -1,6 +1,6 @@
 # Application mobile (`apps/mobile`)
 
-Expo SDK 57 · React Native 0.86 (nouvelle architecture) · Expo Router · TypeScript strict. Pour iPhone et iPad uniquement.
+Expo SDK 58 · React Native 0.88 (nouvelle architecture) · Expo Router · TypeScript strict. Pour iPhone et iPad uniquement.
 
 ```
 app.config.ts           configuration native (variantes, permissions, plugins, cibles)

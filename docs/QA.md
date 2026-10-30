@@ -21,7 +21,7 @@ Quinze défauts réels ont été trouvés et corrigés, chacun avec un test de r
 - **Monorepo pnpm** :
   - `packages/core` : logique pure, Vitest ;
   - `packages/client` : base locale SQLite, synchronisation iCloud, Vitest ;
-  - `apps/mobile` : Expo SDK 57, React Native 0.86, expo-router, Jest via jest-expo/ios ;
+  - `apps/mobile` : Expo SDK 58 (passé de 57 à 58 pour Expo Go), React Native 0.88, expo-router, Jest via jest-expo/ios ;
   - `apps/site`.
 - **Code natif** :
   - modules Swift locaux : `video-speech`, `pdf-text`, `voice-commands`, `ios-integration` ;

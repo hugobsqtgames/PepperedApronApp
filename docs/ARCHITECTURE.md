@@ -4,7 +4,7 @@
 
 | Besoin | Choix | Raison |
 |---|---|---|
-| App iPhone et iPad | **Expo SDK 57 + React Native + Expo Router** (TypeScript) | Rendu natif (pas de WebView), modules natifs Swift (Share Extension, WidgetKit, ActivityKit, écoute des vidéos) via config plugins et modules locaux, builds cloud EAS. Uniquement iOS/iPadOS. |
+| App iPhone et iPad | **Expo SDK 58 + React Native + Expo Router** (TypeScript) | Rendu natif (pas de WebView), modules natifs Swift (Share Extension, WidgetKit, ActivityKit, écoute des vidéos) via config plugins et modules locaux, builds cloud EAS. Uniquement iOS/iPadOS. |
 | Données | **SQLite sur l'appareil** (`expo-sqlite`) | Seule source de vérité : instantané, hors ligne, transactionnel, inclus dans les sauvegardes de l'appareil. |
 | Comptes | **Aucun** | Rien à créer, rien à pirater, rien à héberger ; RGPD simple : l'éditeur ne détient aucune donnée. |
 | Synchro iPhone ↔ iPad | **iCloud Drive, conteneur privé de l'app** (`react-native-cloud-storage`) | Gratuit pour l'éditeur comme pour l'utilisateur, lié à son identifiant Apple, invisible dans l'app Fichiers. |

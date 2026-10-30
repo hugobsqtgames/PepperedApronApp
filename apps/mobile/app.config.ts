@@ -144,6 +144,11 @@ const buildConfig = ({ config }: ConfigContext): ExpoConfig => ({
   },
   plugins: [
     'expo-router',
+    'expo-asset',
+    'expo-font',
+    'expo-image',
+    'expo-sharing',
+    'expo-status-bar',
     'expo-sqlite',
     'expo-localization',
     'expo-web-browser',

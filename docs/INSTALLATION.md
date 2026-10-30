@@ -27,7 +27,7 @@ cd apps/mobile
 pnpm go                  # = npx expo start --go ; scanner le QR code avec l'appareil photo de l'iPhone
 ```
 
-Expo Go doit être à jour (SDK 57). Tous les écrans et la base locale fonctionnent. Ce qui demande le code natif propre à l'app est absent : synchro iCloud (« iCloud indisponible »), widgets, feuille de partage, Siri, Spotlight, Handoff, Live Activity, lecture de texte dans les photos et PDF, transcription de vidéos, commandes vocales. Ces éléments se testent avec un build de développement.
+Expo Go doit être à jour (SDK 58). Tous les écrans et la base locale fonctionnent. Ce qui demande le code natif propre à l'app est absent : synchro iCloud (« iCloud indisponible »), widgets, feuille de partage, Siri, Spotlight, Handoff, Live Activity, lecture de texte dans les photos et PDF, transcription de vidéos, commandes vocales. Ces éléments se testent avec un build de développement.
 
 ### Build de développement
 
@@ -67,7 +67,7 @@ npx serve apps/site/dist              # aperçu local
 
 | Symptôme | Solution |
 |---|---|
-| Expo Go affiche « incompatible SDK » | mettre Expo Go à jour depuis l'App Store (SDK 57) |
+| Expo Go affiche « incompatible SDK » | mettre Expo Go à jour depuis l'App Store (SDK 58) |
 | Le QR code ouvre une app de dev absente | lancer `pnpm go` (`npx expo start --go`) et non `npx expo start` |
 | Réglages → Mes données indique « iCloud indisponible » | se connecter à iCloud sur l'appareil ; vérifier que iCloud Drive est activé |
 | Les modifications n'arrivent pas sur l'autre appareil | iCloud transfère les fichiers en différé (quelques secondes à quelques minutes) ; tirer l'accueil vers le bas pour relancer |

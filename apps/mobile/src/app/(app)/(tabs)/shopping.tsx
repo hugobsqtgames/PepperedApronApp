@@ -8,6 +8,7 @@ import {
   StyleSheet,
   TextInput,
   View,
+  type TextInputInstance,
 } from 'react-native';
 import { router } from 'expo-router';
 import ReanimatedSwipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
@@ -64,7 +65,7 @@ export default function Shopping() {
   const prompt = usePrompt();
   const toast = useToast();
   const [text, setText] = useState('');
-  const input = useRef<TextInput>(null);
+  const input = useRef<TextInputInstance>(null);
 
   const { list, items, categories, lists } = useLive(
     ['shoppingList', 'shoppingItem', 'shoppingCategory', 'settings'],

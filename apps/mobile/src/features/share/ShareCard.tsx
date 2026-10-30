@@ -1,6 +1,6 @@
 import { forwardRef } from 'react';
 import { Image } from 'expo-image';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, type HostInstance } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import {
   formatMinutes,
@@ -24,7 +24,7 @@ const C = {
 export const CARD_WIDTH = 360;
 
 /** The recipe as an image to share: photo, title, time, ingredients, the app's name. */
-export const ShareCard = forwardRef<View, { recipe: Recipe; system: UnitSystem }>(
+export const ShareCard = forwardRef<HostInstance, { recipe: Recipe; system: UnitSystem }>(
   function ShareCard({ recipe, system }, ref) {
     const { t, i18n } = useTranslation();
     const d = recipe.data;

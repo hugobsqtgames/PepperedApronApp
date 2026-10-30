@@ -31,6 +31,7 @@ jest.mock('expo-router', () => {
       setOptions: () => {},
       dispatch: () => {},
     }),
+    usePreventRemove: () => () => {},
     useFocusEffect: (cb: () => void) => React.useEffect(cb, []),
     Stack: Object.assign(Pass, { Screen: () => null }),
     Link: Pass,
@@ -88,7 +89,9 @@ import { ActionSheetIOS, Alert, Share } from 'react-native';
 jest
   .spyOn(ActionSheetIOS, 'showActionSheetWithOptions')
   .mockImplementation((opts, cb) => cb(Math.floor(mockChoice.next() * opts.options.length)));
-jest.spyOn(Share, 'share').mockResolvedValue({ action: 'dismissedAction' });
+jest
+  .spyOn(Share, 'share')
+  .mockResolvedValue({ action: 'dismissedAction', activityType: undefined });
 jest.spyOn(Alert, 'alert').mockImplementation((_t, _m, buttons) => {
   const b = buttons?.[Math.floor(mockChoice.next() * (buttons?.length ?? 0))];
   b?.onPress?.();

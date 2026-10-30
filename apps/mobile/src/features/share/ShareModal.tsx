@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { Modal, ScrollView, View } from 'react-native';
+import { Modal, ScrollView, View, type HostInstance } from 'react-native';
 import * as Sharing from 'expo-sharing';
 import { captureRef } from 'react-native-view-shot';
 import { useTranslation } from 'react-i18next';
@@ -29,7 +29,7 @@ export function ShareModal({
   const { t } = useTranslation();
   const { colors, a11y } = useTheme();
   const toast = useToast();
-  const card = useRef<View>(null);
+  const card = useRef<HostInstance>(null);
   const [busy, setBusy] = useState(false);
   const link = mode === 'qr' ? recipeLink(recipe.data) : null;
 

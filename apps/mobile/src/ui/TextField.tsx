@@ -6,6 +6,7 @@ import {
   type TextInputProps,
   type StyleProp,
   type ViewStyle,
+  type TextInputInstance,
 } from 'react-native';
 import { useTheme } from '../theme/ThemeProvider';
 import { radius, space } from '../theme/tokens';
@@ -20,7 +21,7 @@ export interface TextFieldProps extends TextInputProps {
   containerStyle?: StyleProp<ViewStyle>;
 }
 
-export const TextField = forwardRef<TextInput, TextFieldProps>(function TextField(
+export const TextField = forwardRef<TextInputInstance, TextFieldProps>(function TextField(
   { label, error, helper, icon, containerStyle, style, multiline, onFocus, onBlur, ...rest },
   ref,
 ) {
