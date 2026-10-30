@@ -2,7 +2,11 @@
 import { ENV } from '../src/services/env';
 
 const variant = process.env.APP_VARIANT ?? 'development';
-const suffixes: Record<string, string> = { development: '.dev', staging: '.staging', production: '' };
+const suffixes: Record<string, string> = {
+  development: '.dev',
+  staging: '.staging',
+  production: '',
+};
 const suffix = suffixes[variant]!;
 
 describe(`variant ${variant}`, () => {

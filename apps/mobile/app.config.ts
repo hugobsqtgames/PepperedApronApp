@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import type { ConfigContext, ExpoConfig } from 'expo/config';
 import { withEntitlementsPlist, withInfoPlist, type ConfigPlugin } from 'expo/config-plugins';
 
@@ -62,12 +64,26 @@ const MICROPHONE_USAGE =
 const siteUrl = process.env.SITE_URL ?? 'https://pepperedapron.app';
 const supportEmail = process.env.SUPPORT_EMAIL ?? 'support@pepperedapron.app';
 
+const appName =
+  variant === 'production'
+    ? 'PepperedApron'
+    : `PepperedApron ${variant === 'development' ? 'Dev' : 'Beta'}`;
+
+/**
+ * Permission texts and home screen name, per language. The localized name would otherwise show
+ * "PepperedApron" for every variant: on one iPhone, the development build and the App Store app
+ * must be told apart.
+ */
+function nativeTexts(lang: 'fr' | 'en') {
+  const texts = JSON.parse(
+    readFileSync(join(__dirname, 'locales', 'native', `${lang}.json`), 'utf8'),
+  ) as { ios: Record<string, string> };
+  return { ...texts, ios: { ...texts.ios, CFBundleDisplayName: appName } };
+}
+
 const buildConfig = ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
-  name:
-    variant === 'production'
-      ? 'PepperedApron'
-      : `PepperedApron ${variant === 'development' ? 'Dev' : 'Beta'}`,
+  name: appName,
   slug: 'pepperedapron',
   // iPhone and iPad only.
   platforms: ['ios'],
@@ -77,10 +93,7 @@ const buildConfig = ({ config }: ConfigContext): ExpoConfig => ({
   icon: './assets/icon.png',
   userInterfaceStyle: 'automatic',
   runtimeVersion: { policy: 'appVersion' },
-  locales: {
-    fr: './locales/native/fr.json',
-    en: './locales/native/en.json',
-  },
+  locales: { fr: nativeTexts('fr'), en: nativeTexts('en') },
   ios: {
     bundleIdentifier: bundleId,
     appleTeamId: process.env.APPLE_TEAM_ID,
@@ -184,7 +197,11 @@ const buildConfig = ({ config }: ConfigContext): ExpoConfig => ({
           // A PDF (a recipe saved from a site, a scanned page): its text is read on the device.
           NSExtensionActivationSupportsFileWithMaxCount: 1,
         },
-        iosShareExtensionName: 'PepperedApron',
+        // The target needs its own name: in production the app target is "PepperedApron" too,
+        // and the plugin then skipped the extension as "already existing" (no share sheet entry
+        // in the App Store build). The share sheet still shows "PepperedApron" (patched option).
+        iosShareExtensionName: 'PepperedApronShare',
+        iosShareExtensionDisplayName: 'PepperedApron',
         iosAppGroupIdentifier: appGroup,
       },
     ],

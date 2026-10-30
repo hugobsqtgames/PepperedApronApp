@@ -159,9 +159,11 @@ class ImportQueue {
     const s = runtime.session;
     if (!s) return;
     try {
-      // Only what is needed to resume: finished jobs beyond the most recent ones are dropped.
+      // Only what is needed to resume: finished jobs beyond the most recent ones are dropped —
+      // once nothing is running, so the progress of a big import ("650 of 1000") stays right.
       const done = this.state.jobs.filter((j) => j.status === 'done' || j.status === 'duplicate');
-      if (done.length > 300) {
+      const busy = this.state.jobs.some((j) => j.status === 'pending' || j.status === 'running');
+      if (!busy && done.length > 300) {
         const old = new Set(done.slice(0, done.length - 300).map((j) => j.id));
         this.state.jobs = this.state.jobs.filter((j) => !old.has(j.id));
       }

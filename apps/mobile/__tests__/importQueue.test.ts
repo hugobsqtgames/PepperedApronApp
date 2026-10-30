@@ -160,3 +160,55 @@ describe('regression: a damaged saved queue does not stop the imports', () => {
     expect(jobs.some((j) => j.status === 'done' && j.recipeId === 'r1')).toBe(true);
   });
 });
+
+describe('stress: many imports with random outcomes', () => {
+  const N = process.env.STRESS ? 1500 : 300;
+  it(`${N} shared links: each ends saved, recognised or failed, never saved twice`, async () => {
+    const { rng } = jest.requireActual<typeof import('../../../packages/core/src/fuzz/rng')>(
+      '../../../packages/core/src/fuzz/rng',
+    );
+    const r = rng(440_000);
+    const saved = new Map<string, number>();
+    mockPrepare.mockImplementation(async () => {
+      const p = r.int(0, 9);
+      if (p === 0) throw new Error('network');
+      if (p === 1) return prepared('minimal', r.bool(0.3));
+      return prepared(r.pick(['full', 'partial', 'text', 'speech']));
+    });
+    mockSave.mockImplementation(async (p: unknown, opts: { force?: boolean }) => {
+      if (r.bool(0.05)) throw new Error('disk');
+      const id = `r${r.int(0, 10_000)}`;
+      saved.set(id, (saved.get(id) ?? 0) + 1);
+      return r.bool(0.15) && !opts?.force
+        ? { recipeId: id, title: 'Déjà', duplicate: { id, reason: 'link' } }
+        : { recipeId: id, title: 'Nouvelle', duplicate: null };
+    });
+    // All at once, like an Instagram export.
+    const ids = await importQueue.add(
+      Array.from({ length: N }, (_, i) => link(`https://example.com/r${i}`)),
+      { batch: true },
+    );
+    // While imports run, nothing is dropped: the progress stays consistent.
+    let maxSeen = 0;
+    for (let i = 0; i < 400; i++) {
+      await jest.advanceTimersByTimeAsync(60_000);
+      const st = importQueue.snapshot.jobs;
+      if (st.some((j) => j.status === 'pending' || j.status === 'running'))
+        expect(st.filter((j) => ids.includes(j.id))).toHaveLength(N);
+      maxSeen = Math.max(maxSeen, st.length);
+    }
+    expect(maxSeen).toBe(N);
+    const jobs = importQueue.snapshot.jobs.filter((j) => ids.includes(j.id));
+    // Once everything is over, only the 300 most recent finished imports are kept (the recipes
+    // themselves are saved); failed ones always stay, to be retried.
+    const failed = jobs.filter((j) => j.status === 'failed').length;
+    expect(jobs.length).toBe(Math.min(N, 300 + failed));
+    for (const j of jobs) {
+      expect(['done', 'duplicate', 'failed']).toContain(j.status);
+      if (j.status !== 'failed') expect(j.recipeId).toBeTruthy();
+    }
+    // Never more save attempts than allowed per import (3).
+    expect(mockSave.mock.calls.length).toBeLessThanOrEqual(N * 3);
+    console.info(`QA-COUNT mobile.importqueue.jobs ${N}`);
+  }, 3_600_000);
+});

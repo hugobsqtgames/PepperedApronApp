@@ -6,7 +6,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import type { ReactElement } from 'react';
-import { act, fireEvent, render, screen } from '@testing-library/react-native';
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react-native';
 
 const mockParams: { current: Record<string, string> } = { current: {} };
 const mockNav = {
@@ -93,7 +93,7 @@ jest.spyOn(Alert, 'alert').mockImplementation((_t, _m, buttons) => {
   const b = buttons?.[Math.floor(mockChoice.next() * (buttons?.length ?? 0))];
   b?.onPress?.();
 });
-import { LocalStore, Repos, importData } from '@pepperedapron/client';
+import { emptyRecipe, LocalStore, Repos, importData } from '@pepperedapron/client';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 const { betterSqliteDriver } = jest.requireActual<
@@ -392,6 +392,193 @@ describe('journeys: what the user does is really saved', () => {
     expect(sc?.data.rules.diet).toBe('vegetarian');
     expect(repos.smartCollectionRecipes(sc!.id).length).toBeGreaterThan(0);
   });
+});
+
+const STRESS = process.env.STRESS ? 1 : 0;
+const STEPS = STRESS ? 2000 : 60;
+
+/** Random but valid params for a screen, from the data as it is now. */
+function paramsNow(name: string, r: ReturnType<typeof rng>): Record<string, string> {
+  const recipes = repos.recipes();
+  const rec = recipes.length ? r.pick(recipes).id : 'gone';
+  const cols = repos.collections();
+  const smart = repos.smartCollections();
+  const list = repos.activeList();
+  const items = list ? repos.items(list.id) : [];
+  switch (name) {
+    case 'recipe':
+    case 'recipe collections':
+    case 'editor (existing)':
+      return { id: rec };
+    case 'cook':
+      return { id: rec, servings: String(r.int(1, 12)) };
+    case 'merge':
+      return { keep: rec, drop: recipes.length > 1 ? recipes[recipes.length - 1]!.id : 'gone' };
+    case 'collection':
+      return { id: cols.length ? r.pick(cols).id : 'gone' };
+    case 'smart collection':
+      return { id: smart.length ? r.pick(smart).id : 'gone', smart: '1' };
+    case 'smart rules':
+      return smart.length ? { id: r.pick(smart).id } : {};
+    case 'shopping item':
+      return { id: items.length ? r.pick(items).id : 'gone' };
+    default:
+      return SCREENS.find((x) => x[0] === name)![2]();
+  }
+}
+
+/** Something changing underneath the screen (another device's sync arriving). */
+async function backgroundChange(r: ReturnType<typeof rng>) {
+  const recipes = repos.recipes();
+  const x = recipes.length ? r.pick(recipes) : null;
+  await act(async () => {
+    const p = r.int(0, 4);
+    if (p === 0 || !x) await repos.createRecipe({ ...emptyRecipe(4), title: `Sync ${r.word(5)}` });
+    else if (p === 1) await repos.deleteRecipe(x.id);
+    else if (p === 2) await repos.toggleFavorite(x.id);
+    else if (p === 3) await repos.updateRecipe(x.id, { title: `Renommée ${r.word(4)}` });
+    else await repos.addPantryText(`${r.int(1, 9)} kg de pommes`);
+  });
+}
+
+describe('stress: random navigation while data changes underneath', () => {
+  it(`${STEPS} screens opened, tapped and closed in a random order`, async () => {
+    const r = rng(400_000 + (process.env.APP_VARIANT ?? 'development').length);
+    mockChoice.next = r.next;
+    let taps = 0;
+    let changes = 0;
+    for (let k = 0; k < STEPS; k++) {
+      const [name, load] = r.pick(SCREENS);
+      mockParams.current = paramsNow(name, r);
+      const Screen = load().default;
+      const view = await render(wrap(<Screen />));
+      if (!view.toJSON()) throw new Error(`blank screen: ${name}`);
+      for (let t = r.int(0, 8); t > 0; t--) {
+        if (r.bool(0.15)) {
+          await backgroundChange(r);
+          changes++;
+        }
+        const buttons = screen.queryAllByRole('button');
+        if (!buttons.length) break;
+        await act(async () => {
+          fireEvent.press(r.pick(buttons));
+        });
+        taps++;
+      }
+      await cleanup();
+    }
+    console.info(`QA-COUNT mobile.navigation.screens ${STEPS}`);
+    console.info(`QA-COUNT mobile.navigation.taps ${taps}`);
+    console.info(`QA-COUNT mobile.navigation.backgroundChanges ${changes}`);
+  }, 3_600_000);
+});
+
+describe('stress: a very large library on screen', () => {
+  const extra = STRESS ? 3000 : 400;
+  it(`${extra} more recipes, 600 groceries, 300 pantry items: every screen renders and reacts`, async () => {
+    const r = rng(410_000);
+    for (let i = 0; i < extra; i++)
+      await repos.createRecipe({
+        ...emptyRecipe(4),
+        title: `${r.pick(['Poulet', 'Tarte', 'Soupe', 'Gratin'])} ${r.word(6)} ${i}`,
+        prepMinutes: r.int(5, 90),
+      });
+    const list = repos.activeList()!;
+    for (let i = 0; i < 600; i++)
+      await repos.addItemText(list.id, `${r.int(1, 9)} ${r.word(6)}z${i}`);
+    for (let i = 0; i < 300; i++)
+      await repos.addPantryText(`${r.int(1, 900)} g de ${r.word(5)}p${i}`);
+    const slow: string[] = [];
+    let taps = 0;
+    for (const [name, load] of SCREENS) {
+      mockParams.current = paramsNow(name, r);
+      const Screen = load().default;
+      const t = performance.now();
+      const view = await render(wrap(<Screen />));
+      if (!view.toJSON()) throw new Error(`blank screen: ${name}`);
+      const ms = performance.now() - t;
+      if (ms > 5000) slow.push(`${name} ${Math.round(ms)} ms`);
+      for (let k = 0; k < 10; k++) {
+        const buttons = screen.queryAllByRole('button');
+        if (!buttons.length) break;
+        await act(async () => {
+          fireEvent.press(r.pick(buttons));
+        });
+        taps++;
+      }
+      await cleanup();
+    }
+    expect(slow).toEqual([]);
+    console.info(`QA-COUNT mobile.biglibrary.screens ${SCREENS.length}`);
+    console.info(`QA-COUNT mobile.biglibrary.taps ${taps}`);
+  }, 3_600_000);
+});
+
+describe('stress: leaks', () => {
+  const cycles = STRESS ? 2000 : 200;
+  it(`${cycles} screens opened and closed leave no subscription behind`, async () => {
+    const { importQueue } = jest.requireActual<typeof import('../src/services/importQueue')>(
+      '../src/services/importQueue',
+    );
+    const { timers } =
+      jest.requireActual<typeof import('../src/services/timers')>('../src/services/timers');
+    // What a screen could forget to release: listeners of the database, the import queue and
+    // the timers (the jest heap itself keeps every rendered tree, so it says nothing here).
+    const count = () => ({
+      store: (repos as unknown as { store: { listeners: Set<unknown> } }).store.listeners.size,
+      queue: (importQueue as unknown as { listeners: Set<unknown> }).listeners.size,
+      timers: (timers as unknown as { listeners: Set<unknown> }).listeners.size,
+    });
+    const r = rng(430_000);
+    const before = count();
+    // The probe works: an open home screen does hold subscriptions.
+    mockParams.current = {};
+    const Home = SCREENS[0]![1]().default;
+    await render(wrap(<Home />));
+    expect(count().store).toBeGreaterThan(before.store);
+    expect(count().queue).toBeGreaterThan(before.queue);
+    await cleanup();
+    for (let c = 0; c < cycles; c++) {
+      const [name, load] = r.pick(SCREENS);
+      mockParams.current = paramsNow(name, r);
+      const Screen = load().default;
+      await render(wrap(<Screen />));
+      await cleanup();
+    }
+    expect(count()).toEqual(before);
+    console.info(`QA-COUNT mobile.leaks.cycles ${cycles}`);
+  }, 3_600_000);
+});
+
+describe('stress: kitchen timers', () => {
+  const OPS = STRESS ? 5000 : 500;
+  it(`${OPS} random timer actions keep a coherent list`, async () => {
+    const { timers } =
+      jest.requireActual<typeof import('../src/services/timers')>('../src/services/timers');
+    const r = rng(420_000);
+    for (let k = 0; k < OPS; k++) {
+      const list = timers.list();
+      const t = list.length ? r.pick(list) : null;
+      const p = r.int(0, 5);
+      if (p === 0 || !t)
+        await timers.start({
+          label: `T${k}`,
+          seconds: r.int(1, 7200),
+          recipeId: null,
+          stepIndex: null,
+        });
+      else if (p === 1) await timers.pause(t.id);
+      else if (p === 2) await timers.resume(t.id);
+      else if (p === 3) await timers.extend(t.id, r.pick([60, 300, -30]));
+      else await timers.stop(t.id);
+      const now = timers.list();
+      expect(new Set(now.map((x) => x.id)).size).toBe(now.length);
+      for (const x of now) expect(timers.remaining(x)).toBeGreaterThanOrEqual(0);
+    }
+    for (const t of timers.list()) await timers.stop(t.id);
+    expect(timers.list()).toEqual([]);
+    console.info(`QA-COUNT mobile.timers.ops ${OPS}`);
+  }, 3_600_000);
 });
 
 afterAll(async () => {
