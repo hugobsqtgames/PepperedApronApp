@@ -85,6 +85,8 @@ const buildConfig = ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
   name: appName,
   slug: 'pepperedapron',
+  // EAS project (expo.dev/accounts/aazerty12s-team/projects/pepperedapron).
+  owner: 'aazerty12s-team',
   // iPhone and iPad only.
   platforms: ['ios'],
   scheme: 'pepperedapron',
@@ -215,7 +217,7 @@ const buildConfig = ({ config }: ConfigContext): ExpoConfig => ({
     siteUrl,
     supportEmail,
     appGroup,
-    eas: { projectId: process.env.EAS_PROJECT_ID },
+    eas: { projectId: process.env.EAS_PROJECT_ID ?? '1e5e322e-39a3-426c-939a-4fdd064b5512' },
   },
 });
 
