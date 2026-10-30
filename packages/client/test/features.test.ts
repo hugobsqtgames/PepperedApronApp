@@ -133,3 +133,47 @@ describe('budget', () => {
     expect(more.data.price).toBe(2.4);
   });
 });
+
+describe('pantry', () => {
+  it('adds up, skips what is at home and stores what was bought', async () => {
+    const { repos } = await open();
+    await repos.addPantryText('500 g de riz');
+    await repos.addPantryText('250 g de riz');
+    await repos.addPantryText('200 g de farine');
+    expect(repos.pantryItems().map((p) => [p.data.name, p.data.quantity])).toEqual([
+      ['farine', 200],
+      ['riz', 750],
+    ]);
+    const r = await repos.createRecipe({
+      ...emptyRecipe(4),
+      title: 'Crêpes',
+      ingredients: [ing('farine', 250, 'g'), ing('riz', 100, 'g'), ing('lait', 50, 'cl')],
+    });
+    const list = await repos.createList('Courses');
+    expect(await repos.addRecipeToList(list.id, r.id, 4)).toEqual({
+      added: 2,
+      updated: 0,
+      skipped: 1,
+    });
+    const items = repos.items(list.id);
+    expect(items.map((i) => [i.data.name, i.data.quantity, i.data.unit])).toEqual([
+      ['farine', 50, 'g'],
+      ['lait', 50, 'cl'],
+    ]);
+    await repos.storeBoughtItem(items[1]!.id, 'fridge');
+    expect(repos.pantryItems('fridge').map((p) => p.data.name)).toEqual(['lait']);
+  });
+
+  it('sums up a week', async () => {
+    const { repos } = await open();
+    const r = await repos.createRecipe({
+      ...emptyRecipe(2),
+      title: 'Soupe',
+      ingredients: [ing('potimarron', 1, 'kg')],
+    });
+    await repos.planMeal({ date: '2026-10-26', slot: 'dinner', recipeId: r.id });
+    await repos.logCooked(r.id, '2026-10-26');
+    const s = repos.weekSummary('2026-10-26', '2026-11-01');
+    expect(s).toMatchObject({ planned: 1, cooked: 1, vegetarianShare: 1, budget: null });
+  });
+});

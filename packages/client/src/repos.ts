@@ -1,6 +1,11 @@
 import {
   addDays,
   categorizeIngredient,
+  deductPantry,
+  pantryItemDataSchema,
+  weekSummary,
+  type PantryItemData,
+  type PantryPlace,
   cookLogDataSchema,
   dietTags,
   estimateLinePrice,
@@ -670,7 +675,7 @@ export class Repos {
     listId: string,
     start: string,
     end: string,
-  ): Promise<{ added: number; updated: number }> {
+  ): Promise<{ added: number; updated: number; skipped: number }> {
     const planned = this.entries(start, end)
       // Leftovers were cooked with the first meal.
       .filter((e) => e.data.recipeId && !e.data.leftover)
@@ -705,7 +710,12 @@ export class Repos {
       ),
     );
   }
-  private async addLines(listId: string, lines: ReturnType<typeof shoppingLinesFromPlan>) {
+  private async addLines(listId: string, all: ReturnType<typeof shoppingLinesFromPlan>) {
+    // What is at home is not bought again (or only what is missing).
+    const { lines, skipped } = deductPantry(
+      all,
+      this.pantryItems().map((p) => p.data),
+    );
     const existing = this.items(listId).map((i) => ({ id: i.id, ...i.data }));
     let added = 0;
     let updated = 0;
@@ -732,7 +742,96 @@ export class Repos {
         added++;
       }
     }
-    return { added, updated };
+    return { added, updated, skipped: skipped.length };
+  }
+
+  // ---------------------------------------------------------------- pantry
+  /** Things at home, by place, the soonest to expire first. */
+  pantryItems(place?: PantryPlace): LocalRecord<'pantryItem'>[] {
+    return this.store
+      .all('pantryItem')
+      .filter((p) => !place || p.data.place === place)
+      .sort(
+        (a, b) =>
+          (a.data.expiresOn ?? '9999').localeCompare(b.data.expiresOn ?? '9999') ||
+          a.data.name.localeCompare(b.data.name),
+      );
+  }
+  /**
+   * Put something away ("2 kg de pommes de terre"): merged with the same thing in the same place
+   * when the units match, so the quantities add up.
+   */
+  async addPantryItem(p: {
+    name: string;
+    quantity?: number | null;
+    unit?: string | null;
+    place?: PantryPlace;
+    expiresOn?: string | null;
+  }) {
+    const place = p.place ?? 'pantry';
+    const key = ingredientKey(p.name);
+    const same = this.pantryItems(place).find(
+      (x) => ingredientKey(x.data.name) === key && (x.data.unit ?? null) === (p.unit ?? null),
+    );
+    if (same) {
+      const quantity =
+        same.data.quantity !== null && p.quantity != null
+          ? same.data.quantity + p.quantity
+          : (same.data.quantity ?? p.quantity ?? null);
+      return this.updatePantryItem(same.id, {
+        quantity,
+        expiresOn: p.expiresOn ?? same.data.expiresOn,
+      });
+    }
+    const data: PantryItemData = validate(pantryItemDataSchema, {
+      name: p.name,
+      quantity: p.quantity ?? null,
+      unit: p.unit ?? null,
+      place,
+      expiresOn: p.expiresOn ?? null,
+    });
+    return this.store.write('pantryItem', uuidv7(), data);
+  }
+  async addPantryText(text: string, place: PantryPlace = 'pantry') {
+    const parsed = parseIngredientLine(text);
+    if (!parsed) return null;
+    return this.addPantryItem({ ...parsed, place });
+  }
+  async updatePantryItem(id: string, patch: Partial<PantryItemData>) {
+    const cur = this.store.get('pantryItem', id);
+    if (!cur) throw new Error('not_found');
+    return this.store.write(
+      'pantryItem',
+      id,
+      validate(pantryItemDataSchema, { ...cur.data, ...patch }),
+    );
+  }
+  removePantryItem(id: string) {
+    return this.store.remove('pantryItem', id);
+  }
+  /** A ticked shopping line goes into the cupboard (or fridge). */
+  async storeBoughtItem(itemId: string, place: PantryPlace) {
+    const it = this.store.get('shoppingItem', itemId);
+    if (!it) throw new Error('not_found');
+    return this.addPantryItem({
+      name: it.data.name,
+      quantity: it.data.quantity,
+      unit: it.data.unit,
+      place,
+    });
+  }
+
+  /** Planning screen: what the week looked like (meals, cooking, vegetarian share, budget). */
+  weekSummary(start: string, end: string) {
+    return weekSummary({
+      start,
+      end,
+      entries: this.entries(start, end).map((e) => e.data),
+      logs: this.store.all('cookLog').map((l) => l.data),
+      recipeIngredients: (id) =>
+        this.store.get('recipe', id)?.data.ingredients.map((i) => i.name) ?? null,
+      items: this.store.all('shoppingItem').map((i) => i.data),
+    });
   }
 
   // ---------------------------------------------------------------- aisles

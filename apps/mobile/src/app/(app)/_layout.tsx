@@ -4,7 +4,7 @@ import * as Notifications from 'expo-notifications';
 import { useShareIntentContext } from 'expo-share-intent';
 import { useTranslation } from 'react-i18next';
 import { useRuntime } from '../../hooks/runtime';
-import { rescheduleReminders } from '../../services/notifications';
+import { rescheduleExpiry, rescheduleReminders } from '../../services/notifications';
 import { sourcesFromShare } from '../../services/autoImport';
 import { importQueue } from '../../services/importQueue';
 import { shouldShowWhatsNew } from '../../services/appMoments';
@@ -75,6 +75,7 @@ export default function AppLayout() {
       if (pending) clearTimeout(pending);
       pending = setTimeout(() => {
         void rescheduleReminders(s.repos);
+        void rescheduleExpiry(s.repos);
         void publishWidgetData(s.repos);
       }, 2000);
     };
@@ -84,6 +85,7 @@ export default function AppLayout() {
         changed.has('mealPlanEntry') ||
         changed.has('settings') ||
         changed.has('shoppingItem') ||
+        changed.has('pantryItem') ||
         changed.has('recipe')
       )
         refreshDerived();
@@ -127,6 +129,7 @@ export default function AppLayout() {
       <Stack.Screen name="import/photo" options={{ presentation: 'modal' }} />
       <Stack.Screen name="import/queue" options={{ presentation: 'modal' }} />
       <Stack.Screen name="whats-new" options={{ presentation: 'modal' }} />
+      <Stack.Screen name="pantry" options={{ presentation: 'modal' }} />
       <Stack.Screen name="import/instagram" options={{ presentation: 'modal' }} />
       <Stack.Screen name="import/dictate" options={{ presentation: 'modal' }} />
       <Stack.Screen name="tools/converter" options={{ ...sheet, sheetAllowedDetents: [0.75, 1] }} />

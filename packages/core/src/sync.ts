@@ -3,6 +3,7 @@ import {
   cookLogDataSchema,
   planTemplateDataSchema,
   priceDataSchema,
+  pantryItemDataSchema,
   collectionDataSchema,
   collectionItemDataSchema,
   favoriteDataSchema,
@@ -27,6 +28,7 @@ export const SYNC_ENTITIES = [
   'cookLog',
   'planTemplate',
   'price',
+  'pantryItem',
 ] as const;
 export type SyncEntity = (typeof SYNC_ENTITIES)[number];
 
@@ -44,6 +46,7 @@ export const ENTITY_SCHEMAS: Record<SyncEntity, z.ZodType<Record<string, unknown
   cookLog: cookLogDataSchema,
   planTemplate: planTemplateDataSchema,
   price: priceDataSchema,
+  pantryItem: pantryItemDataSchema,
 };
 
 /** Order in which entities are applied when merging (parents before children). */
@@ -60,6 +63,7 @@ export const ENTITY_ORDER: SyncEntity[] = [
   'cookLog',
   'planTemplate',
   'price',
+  'pantryItem',
 ];
 
 /** Top-level fields that differ between two versions of a record. */
@@ -76,6 +80,7 @@ import type {
   CookLogData,
   PlanTemplateData,
   PriceData,
+  PantryItemData,
   CollectionData,
   CollectionItemData,
   FavoriteData,
@@ -100,6 +105,7 @@ export interface EntityDataMap {
   cookLog: CookLogData;
   planTemplate: PlanTemplateData;
   price: PriceData;
+  pantryItem: PantryItemData;
 }
 
 /**
@@ -107,4 +113,4 @@ export interface EntityDataMap {
  * the other devices once after an update (a file read by an older version may have had records
  * it could not understand yet).
  */
-export const DATA_VERSION = 3;
+export const DATA_VERSION = 4;

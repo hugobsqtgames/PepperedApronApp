@@ -25,9 +25,9 @@ Repères : modèle de données `packages/core/src/schemas.ts` (champs ajoutés a
 - [x] **Deux recettes à la fois** : depuis le mode cuisine « Ajouter une recette » → onglets en haut, minuteurs de chaque recette étiquetés.
 
 ## Lot 4 — Placard, frigo, bilan (21, 22, 28)
-- [ ] **Placard** : nouvelle entité synchronisée `pantryItem` (nom, quantité?, unité?, péremption?) ; écran « Mon placard » ; à l'ajout aux courses, ce qui est dans le placard n'est pas ajouté (ou réduit si quantités comparables) ; cocher une course propose de la ranger au placard.
-- [ ] **Péremption** : date sur un article du placard/frigo, rappel local la veille, section accueil « À utiliser vite » avec les recettes qui les utilisent (recherche frigo existante).
-- [ ] **Bilan de la semaine** : dans Planning, repas planifiés/cuisinés, budget des courses, part végétarienne, recettes les plus cuisinées.
+- [x] **Placard** : nouvelle entité synchronisée `pantryItem` (nom, quantité?, unité?, péremption?) ; écran « Mon placard » ; à l'ajout aux courses, ce qui est dans le placard n'est pas ajouté (ou réduit si quantités comparables) ; cocher une course propose de la ranger au placard.
+- [x] **Péremption** : date sur un article du placard/frigo, rappel local la veille, section accueil « À utiliser vite » avec les recettes qui les utilisent (recherche frigo existante).
+- [x] **Bilan de la semaine** : dans Planning, repas planifiés/cuisinés, budget des courses, part végétarienne, recettes les plus cuisinées.
 
 ## Lot 5 — Organisation et partage (29, 31, 32, 34, 35, 43, 45)
 - [ ] **Recherche dans les notes et remarques** (`notes`, `personalNote`, `tips`) avec un poids faible.

@@ -157,10 +157,11 @@ export const shoppingCategoryDataSchema = z
   })
   .strict();
 
+// A category added later is on for data saved before it existed.
 export const notificationPrefsSchema = z.object(
-  Object.fromEntries(NOTIFICATION_CATEGORIES.map((c) => [c, z.boolean()])) as Record<
+  Object.fromEntries(NOTIFICATION_CATEGORIES.map((c) => [c, z.boolean().default(true)])) as Record<
     (typeof NOTIFICATION_CATEGORIES)[number],
-    z.ZodBoolean
+    z.ZodDefault<z.ZodBoolean>
   >,
 );
 
@@ -196,6 +197,7 @@ export const DEFAULT_SETTINGS: SettingsData = {
     shoppingReady: true,
     planningNudge: true,
     timers: true,
+    expiry: true,
   },
   dinnerReminderTime: '17:30',
   hapticsEnabled: true,
@@ -239,6 +241,22 @@ export const priceDataSchema = z
     unit: optText(24),
   })
   .strict();
+
+export const PANTRY_PLACES = ['pantry', 'fridge', 'freezer'] as const;
+export type PantryPlace = (typeof PANTRY_PLACES)[number];
+
+/** Something at home (cupboard, fridge, freezer): not bought again, used before it expires. */
+export const pantryItemDataSchema = z
+  .object({
+    name: reqText(LIMITS.shoppingItemName),
+    quantity: z.number().positive().max(LIMITS.quantityMax).nullable(),
+    unit: optText(24),
+    place: z.enum(PANTRY_PLACES).default('pantry'),
+    /** Best-before / use-by date, reminded the day before. */
+    expiresOn: isoDate.nullable().default(null),
+  })
+  .strict();
+export type PantryItemData = z.infer<typeof pantryItemDataSchema>;
 
 export type FavoriteData = z.infer<typeof favoriteDataSchema>;
 export type CollectionData = z.infer<typeof collectionDataSchema>;

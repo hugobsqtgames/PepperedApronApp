@@ -83,6 +83,10 @@ Fiche recette : nombre de personnes réglable, quantités recalculées et arrond
 
 ## Planning et courses
 
+- **Mon placard** (`pantry`, depuis le profil, le menu des courses ou l'accueil) : placard, frigo, congélateur ; entité synchronisée `pantryItem` (nom, quantité, unité, lieu, date de péremption). Ajouter des courses (semaine ou recette) ne rajoute pas ce qui est à la maison, ou seulement ce qui manque quand les unités se comparent (`deductPantry`). Cocher une course propose de la ranger (frigo pour les produits frais, congélateur pour les surgelés).
+- **Péremption** : rappel local la veille à 18 h (catégorie de notification « Dates de péremption », `rescheduleExpiry`) ; section d'accueil « À utiliser vite » (3 jours) avec les recettes qui les utilisent (même classement que « Mon frigo »).
+- **Bilan de la semaine** (bas du Planning, `weekSummary`) : repas prévus, recettes cuisinées, part végétarienne, budget des courses liées aux recettes de la semaine, recettes les plus cuisinées.
+
 - **Semaines types** (`plan/templates`) : enregistrer la semaine affichée, puis l'ajouter ou la substituer à une autre semaine (entité `planTemplate`, synchronisée).
 - **Restes** : sur un repas, « Prévoir des restes pour demain midi » augmente les portions cuisinées et place un repas « Restes » au déjeuner du lendemain (`leftover: true`), exclu de la liste de courses.
 - **Liste de courses** : partage en texte (Messages, WhatsApp…) ; envoi vers une liste **Rappels** d'Apple (`expo-calendar`, autorisation Rappels uniquement, pas d'accès au calendrier) — une liste Rappels partagée avec la famille fait le lien sans compte ; les articles déjà présents ne sont pas dupliqués.

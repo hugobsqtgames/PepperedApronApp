@@ -53,6 +53,8 @@ import {
 
 type Item = LocalRecord<'shoppingItem'>;
 
+/** Aisles whose products are kept in the fridge once bought. */
+const FRESH = new Set(['produce', 'meat_fish', 'dairy_eggs']);
 export default function Shopping() {
   const { t, i18n } = useTranslation();
   const { colors } = useTheme();
@@ -186,15 +188,41 @@ export default function Shopping() {
     haptic.selection();
     await repos.toggleItem(i.id);
     if (!i.data.checked && remaining === 1) haptic.success();
+    // Bought: it can go straight into the cupboard or the fridge.
+    if (!i.data.checked) {
+      const place =
+        i.data.categoryKey === 'frozen'
+          ? 'freezer'
+          : FRESH.has(i.data.categoryKey)
+            ? 'fridge'
+            : 'pantry';
+      toast(t('pantry.bought', { name: i.data.name }), {
+        tone: 'info',
+        action: {
+          label: t(`pantry.to.${place}`),
+          onPress: () => void repos.storeBoughtItem(i.id, place),
+        },
+      });
+    }
   };
 
   const fromPlanning = async () => {
     const l = list ?? (await repos.createList(t('shopping.defaultName')));
     const ws = startOfWeek(toIsoDate(new Date()));
     const r = await repos.addPlanToList(l.id, ws, addDays(ws, 6));
-    if (r.added + r.updated === 0) return toast(t('planning.toShoppingEmpty'), { tone: 'info' });
+    if (r.added + r.updated === 0)
+      return toast(r.skipped ? t('pantry.allAtHome') : t('planning.toShoppingEmpty'), {
+        tone: 'info',
+      });
     haptic.success();
-    toast(t('planning.toShoppingDone', { list: l.data.name, added: r.added, updated: r.updated }));
+    toast(
+      [
+        t('planning.toShoppingDone', { list: l.data.name, added: r.added, updated: r.updated }),
+        r.skipped ? t('pantry.skipped', { count: r.skipped }) : '',
+      ]
+        .filter(Boolean)
+        .join(' '),
+    );
   };
 
   const menu = () =>
@@ -205,6 +233,11 @@ export default function Shopping() {
           label: t('shopping.fromPlanning'),
           icon: 'calendar-outline',
           onPress: () => void fromPlanning(),
+        },
+        {
+          label: t('pantry.title'),
+          icon: 'file-tray-stacked-outline',
+          onPress: () => router.push('/pantry'),
         },
         ...(checkedCount
           ? [

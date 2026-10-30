@@ -13,12 +13,13 @@ import { Button, Chip, Group, ListRow, Text } from '../../../ui';
 
 const LABELS: Record<
   NotificationCategory,
-  ['notifMealReminder' | 'notifShopping' | 'notifPlanning' | 'notifTimers', string]
+  ['notifMealReminder' | 'notifShopping' | 'notifPlanning' | 'notifTimers' | 'notifExpiry', string]
 > = {
   mealReminder: ['notifMealReminder', 'notifMealReminderBody'],
   shoppingReady: ['notifShopping', 'notifShoppingBody'],
   planningNudge: ['notifPlanning', 'notifPlanningBody'],
   timers: ['notifTimers', 'notifTimersBody'],
+  expiry: ['notifExpiry', 'notifExpiryBody'],
 };
 const TIMES = ['11:00', '16:30', '17:00', '17:30', '18:00', '18:30', '19:00'];
 

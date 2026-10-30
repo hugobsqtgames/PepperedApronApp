@@ -6,7 +6,10 @@ import type { TFunction } from 'i18next';
 import {
   computeTotalMinutes,
   currentSeason,
+  EMPTY_FILTERS,
+  expiringSoon,
   recipeSeasons,
+  searchRecipes,
   toIsoDate,
   type RecipeCategory,
 } from '@pepperedapron/core';
@@ -54,10 +57,27 @@ export default function Home() {
   ).length;
 
   const data = useLive(
-    ['recipe', 'favorite', 'mealPlanEntry', 'cookLog'],
+    ['recipe', 'favorite', 'mealPlanEntry', 'cookLog', 'pantryItem'],
     (r) => {
       const library = r.library();
       const favs = r.favoriteRecipes();
+      // What expires within 3 days, and the recipes that use it (same ranking as "My fridge").
+      const toUseSoon = () => {
+        const soon = expiringSoon(
+          r.pantryItems().map((p) => p.data),
+          today,
+          3,
+        );
+        const names = [...new Set(soon.map((p) => p.name))];
+        return {
+          soon: names,
+          soonRecipes: names.length
+            ? searchRecipes(r.searchable(library), '', { ...EMPTY_FILTERS, fridge: names })
+                .slice(0, 12)
+                .map((x) => x.recipe.record)
+            : [],
+        };
+      };
       const counts: Partial<Record<RecipeCategory, number>> = {};
       for (const x of library)
         if (x.data.category) counts[x.data.category] = (counts[x.data.category] ?? 0) + 1;
@@ -74,6 +94,7 @@ export default function Home() {
         recent: [...library].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)).slice(0, 12),
         seasonal: library.filter((x) => recipeSeasons(x.data).includes(season)).slice(0, 12),
         forgotten: r.forgottenRecipes(today).slice(0, 12),
+        ...toUseSoon(),
         todayMeals: r
           .entries(today, today)
           .map((e) => ({ entry: e, recipe: e.data.recipeId ? r.recipe(e.data.recipeId) : null })),
@@ -260,6 +281,24 @@ export default function Home() {
               <Icon name="arrow-forward" size={20} tint={colors.onPrimary} />
             </Pressable>
 
+            {data.soon.length ? (
+              <Section
+                title={t('home.useSoon')}
+                action={t('pantry.title')}
+                onAction={() => router.push('/pantry')}
+              >
+                <Text variant="callout" color="textMuted">
+                  {data.soon.slice(0, 6).join(' · ')}
+                </Text>
+                {data.soonRecipes.length ? (
+                  <RecipeCarousel
+                    recipes={data.soonRecipes}
+                    repos={repos}
+                    favorites={data.favoriteIds}
+                  />
+                ) : null}
+              </Section>
+            ) : null}
             {data.favorites.length ? (
               <Section
                 title={t('home.favorites')}

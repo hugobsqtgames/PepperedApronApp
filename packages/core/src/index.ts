@@ -26,3 +26,4 @@ export * from './duplicates';
 export * from './cooking';
 export * from './budget';
 export * from './parse/links';
+export * from './pantry';

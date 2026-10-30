@@ -79,6 +79,12 @@ export default function Settings() {
           value={String(stats.collections)}
           onPress={() => router.push('/favorites')}
         />
+        <ListRow
+          icon="file-tray-stacked-outline"
+          title={t('pantry.title')}
+          onPress={() => router.push('/pantry')}
+          testID="open-pantry"
+        />
       </Group>
       <Group title={t('profile.settings')}>
         <ListRow

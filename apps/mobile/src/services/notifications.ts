@@ -142,6 +142,37 @@ export async function rescheduleReminders(repos: Repos, now = new Date()) {
   }
 }
 
+/**
+ * Use-by reminders: one notification per day, at 6 pm the day before, listing what expires the
+ * next day (cupboard, fridge, freezer). Rescheduled when the pantry changes.
+ */
+export async function rescheduleExpiry(repos: Repos, now = new Date()) {
+  if (!(await notificationsAllowed())) return;
+  await cancelKind('expiry');
+  if (!repos.settings().notifications.expiry) return;
+  const byDay = new Map<string, string[]>();
+  for (const p of repos.pantryItems()) {
+    const d = p.data.expiresOn;
+    if (d) byDay.set(d, [...(byDay.get(d) ?? []), p.data.name]);
+  }
+  for (const [day, names] of [...byDay].sort().slice(0, 30)) {
+    const at = new Date(`${addDays(day, -1)}T18:00:00`);
+    if (at <= now) continue;
+    await Notifications.scheduleNotificationAsync({
+      identifier: `expiry-${day}`,
+      content: {
+        title: i18n.t('notifications.expiry', {
+          count: names.length,
+          names: names.slice(0, 4).join(', '),
+        }),
+        body: i18n.t('notifications.expiryBody'),
+        data: { kind: 'expiry', url: '/' },
+      },
+      trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: at },
+    });
+  }
+}
+
 /** "Your shopping list is ready" — next morning, at most once a day. */
 export async function scheduleShoppingReady(repos: Repos, count: number, now = new Date()) {
   if (!pref(repos, 'shoppingReady') || !(await notificationsAllowed()) || count === 0) return;

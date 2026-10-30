@@ -60,6 +60,7 @@ export const NOTIFICATION_CATEGORIES = [
   'shoppingReady',
   'planningNudge',
   'timers',
+  'expiry',
 ] as const;
 export type NotificationCategory = (typeof NOTIFICATION_CATEGORIES)[number];
 

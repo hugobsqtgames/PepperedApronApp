@@ -24,6 +24,8 @@ import { useTheme } from '../../../theme/ThemeProvider';
 import { radius, space } from '../../../theme/tokens';
 import { Button, Icon, IconButton, RecipePhoto, Text, useActionSheet, useToast } from '../../../ui';
 
+import { WeekSummary } from '../../../features/planning/WeekSummary';
+
 type Entry = LocalRecord<'mealPlanEntry'>;
 
 export default function Planning() {
@@ -60,11 +62,23 @@ export default function Planning() {
     try {
       const list = await repos.ensureActiveList(t('shopping.defaultName'));
       const r = await repos.addPlanToList(list.id, weekStart, end);
-      if (r.added + r.updated === 0) return toast(t('planning.toShoppingEmpty'), { tone: 'info' });
+      if (r.added + r.updated === 0)
+        return toast(r.skipped ? t('pantry.allAtHome') : t('planning.toShoppingEmpty'), {
+          tone: 'info',
+        });
       haptic.success();
       void scheduleShoppingReady(repos, r.added + r.updated);
       toast(
-        t('planning.toShoppingDone', { list: list.data.name, added: r.added, updated: r.updated }),
+        [
+          t('planning.toShoppingDone', {
+            list: list.data.name,
+            added: r.added,
+            updated: r.updated,
+          }),
+          r.skipped ? t('pantry.skipped', { count: r.skipped }) : '',
+        ]
+          .filter(Boolean)
+          .join(' '),
         { action: { label: t('tabs.shopping'), onPress: () => router.push('/shopping') } },
       );
     } catch (e) {
@@ -254,6 +268,9 @@ export default function Planning() {
               ))}
             </View>
           </ScrollView>
+          <View style={{ paddingHorizontal: layout.gutter }}>
+            <WeekSummary start={weekStart} end={end} />
+          </View>
         </ScrollView>
       </SafeAreaView>
     );
@@ -323,6 +340,7 @@ export default function Planning() {
               </View>
             );
           })}
+          <WeekSummary start={weekStart} end={end} />
         </View>
       </ScrollView>
     </SafeAreaView>
