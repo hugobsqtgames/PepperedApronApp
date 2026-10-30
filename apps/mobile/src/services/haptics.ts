@@ -25,11 +25,15 @@ export const haptic = {
     if (!enabled()) return;
     void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => undefined);
     for (const ms of [180, 320])
-      setTimeout(() => void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => undefined), ms);
+      setTimeout(
+        () => void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => undefined),
+        ms,
+      );
   },
   /** Picking up something to drag (a meal in the week). */
   pickUp: () =>
-    enabled() && void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => undefined),
+    enabled() &&
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => undefined),
   /** Putting it down somewhere new. */
   drop: () =>
     enabled() && void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Rigid).catch(() => undefined),
@@ -40,7 +44,10 @@ export const haptic = {
   timerDone: () => {
     if (!enabled()) return;
     for (const ms of [0, 260, 520])
-      setTimeout(() => void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy).catch(() => undefined), ms);
+      setTimeout(
+        () => void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy).catch(() => undefined),
+        ms,
+      );
   },
   error: () =>
     enabled() &&

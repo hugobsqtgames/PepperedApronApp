@@ -72,8 +72,15 @@ export function ConfettiProvider({ children }: { children: ReactNode }) {
                   backgroundColor: p.color,
                   opacity: t.interpolate({ inputRange: [0, 0.8, 1], outputRange: [1, 1, 0] }),
                   transform: [
-                    { translateY: t.interpolate({ inputRange: [0, 1], outputRange: [0, height * 0.9] }) },
-                    { translateX: t.interpolate({ inputRange: [0, 1], outputRange: [0, p.drift] }) },
+                    {
+                      translateY: t.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [0, height * 0.9],
+                      }),
+                    },
+                    {
+                      translateX: t.interpolate({ inputRange: [0, 1], outputRange: [0, p.drift] }),
+                    },
                     {
                       rotate: t.interpolate({
                         inputRange: [0, 1],

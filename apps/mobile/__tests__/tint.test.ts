@@ -1,5 +1,13 @@
 import { darkColors, lightColors } from '../src/theme/tokens';
-import { CATEGORY_TINTS, contrast, dominantColor, hslToRgb, rgbToHsl, tintFor, type RGB } from '../src/lib/tint';
+import {
+  CATEGORY_TINTS,
+  contrast,
+  dominantColor,
+  hslToRgb,
+  rgbToHsl,
+  tintFor,
+  type RGB,
+} from '../src/lib/tint';
 
 describe('dish colour', () => {
   it('keeps every text and button readable (AA 4.5:1) for any dish colour, light and dark', () => {

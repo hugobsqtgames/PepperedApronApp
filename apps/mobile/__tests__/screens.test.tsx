@@ -37,7 +37,10 @@ jest.mock('expo-router', () => {
     usePreventRemove: () => () => {},
     useFocusEffect: (cb: () => void) => React.useEffect(cb, []),
     Stack: Object.assign(Pass, { Screen: () => null }),
-    Link: Object.assign((p: { children?: unknown }) => Pass(p), { AppleZoom: Pass, AppleZoomTarget: Pass }),
+    Link: Object.assign((p: { children?: unknown }) => Pass(p), {
+      AppleZoom: Pass,
+      AppleZoomTarget: Pass,
+    }),
     Redirect: () => null,
   };
 });
