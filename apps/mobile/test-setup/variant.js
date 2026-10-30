@@ -14,7 +14,6 @@ jest.mock('expo-constants', () => {
 // jest-expo 58 mocks `react-native/asset-registry`, but expo-asset reads the registry through
 // `react-native`: icon fonts could not be "loaded". Fonts are irrelevant in tests.
 jest.mock('expo-font', () => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const actual = jest.requireActual('expo-font');
   return {
     ...actual,

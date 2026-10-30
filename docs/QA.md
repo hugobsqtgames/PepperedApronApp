@@ -14,7 +14,7 @@
 
 Ce qui manque pour une validation complète : aucun outil Apple n'existe dans cet environnement (Linux, ni Xcode, ni Swift, ni simulateur). Le code Swift n'a donc pas été compilé, et rien n'a tourné sur simulateur ou sur appareil. C'est la première étape du build EAS.
 
-Quinze défauts réels ont été trouvés et corrigés, chacun avec un test de régression (section 4) : huit pendant l'audit, sept pendant la campagne de stress dev et prod (section 5.1). Cette campagne a tout repassé au vert : 753 tests réussis, 0 échec et 102 465 exécutions générées (cas, actions, appuis et contrôles), en développement comme en production. La campagne a aussi produit des correctifs de dépendances, de sécurité et de performance.
+Dix-sept défauts réels ont été trouvés et corrigés, chacun avec un test de régression (section 4) : huit pendant l'audit, sept pendant la campagne de stress dev et prod (section 5.1), deux au premier essai dans Expo Go. Cette campagne a tout repassé au vert : 753 tests réussis, 0 échec et 102 465 exécutions générées (cas, actions, appuis et contrôles), en développement comme en production. La campagne a aussi produit des correctifs de dépendances, de sécurité et de performance.
 
 ## 2. Stack et environnement
 
@@ -61,6 +61,8 @@ Quinze défauts réels ont été trouvés et corrigés, chacun avec un test de r
 | 13 | P3 | Une somme de quantités au-delà de la limite du modèle faisait échouer l'ajout (erreur de validation). | La somme n'était pas bornée. | La somme est bornée ; au-delà de la limite, l'article est gardé sans quantité. |
 | 14 | P2 | Pendant un gros import (1 500 liens), la file effaçait des imports terminés en cours de route. La progression affichée était alors fausse (1 484 sur 1 500). | La purge des anciens imports avait lieu même pendant l'import. | La purge n'a lieu que lorsque plus rien n'est en attente ni en cours. |
 | 15 | P3 | Une action lancée depuis un menu sur un élément supprimé entre-temps (par exemple sur un autre appareil, via iCloud) laissait une erreur non gérée. Le menu pouvait viser un repas, une liste, etc. Trouvé par la navigation aléatoire. | Les 48 modifications « sans attendre » des écrans ne géraient pas l'échec. | `inBackground()` ignore l'élément disparu et journalise les autres échecs. Un toast demandé après la fermeture de l'écran ne laisse plus de minuteur. |
+| 16 | P0 | Sur iPhone, l'app ne pouvait pas ouvrir les recettes (« Secure random generator unavailable »), dans Expo Go comme dans les builds. Trouvé au premier essai dans Expo Go. | Hermes, le moteur JavaScript d'iOS, n'a pas `crypto.getRandomValues`, que demandent les identifiants. Les tests tournaient sous Node, qui l'a. | Générateur sûr du système (`expo-crypto`) installé avant tout le reste (`index.ts`, `src/polyfills.ts`). |
+| 17 | P1 | Sur iPhone, un lien TikTok était traité comme une simple page web (pas de transcription), un lien Instagram en majuscules était refusé, et la détection des doublons se trompait. | Le `URL` de React Native est partiel (il accepte tout, ne normalise rien), alors que les tests utilisaient celui de Node. | `URL` standard (`react-native-url-polyfill`) installé au démarrage ; un test compare les résultats avec les trois implémentations. |
 
 ### 4.5 Configuration de production
 
