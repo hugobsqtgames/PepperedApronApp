@@ -25,6 +25,7 @@ export function CategoryGrid({
     space.md,
     layout.gutter,
   );
+  const h = Math.round(w * 0.72);
   const cats = HOME_CATEGORIES.slice(0, limit ?? HOME_CATEGORIES.length);
   return (
     <View style={styles.grid}>
@@ -37,7 +38,7 @@ export function CategoryGrid({
           style={({ pressed }) => [
             {
               width: w,
-              height: Math.round(w * 0.72),
+              height: h,
               borderRadius: radius.xl,
               overflow: 'hidden',
               transform: [{ scale: pressed ? 0.97 : 1 }],
@@ -46,8 +47,11 @@ export function CategoryGrid({
         >
           <Image
             source={CATEGORY_PHOTOS[c]}
-            style={StyleSheet.absoluteFill}
+            // Sized like the tile: with only its edges set, the picture kept its own size (720×540)
+            // on the iPhone and the tile showed a zoomed-in corner of it.
+            style={{ position: 'absolute', top: 0, left: 0, width: w, height: h }}
             resizeMode="cover"
+            testID="category-photo"
             accessibilityIgnoresInvertColors
           />
           <View style={styles.scrim} />
