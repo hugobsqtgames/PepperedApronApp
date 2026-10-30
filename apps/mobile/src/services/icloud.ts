@@ -26,7 +26,14 @@ async function requestDownload(path: string) {
 }
 
 export const iCloudDrive: CloudDrive = {
-  isAvailable: () => CloudStorage.isCloudAvailable(),
+  // Throws synchronously when the native module is missing (Expo Go): iCloud is then unavailable.
+  isAvailable: async () => {
+    try {
+      return await CloudStorage.isCloudAvailable();
+    } catch {
+      return false;
+    }
+  },
   async list(dir) {
     if (!(await CloudStorage.exists(abs(dir), scope))) return [];
     const names = (await CloudStorage.readdir(abs(dir), scope)).filter((n) => !n.startsWith('.'));

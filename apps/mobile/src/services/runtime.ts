@@ -84,7 +84,12 @@ export class AppRuntime {
     AppState.addEventListener('change', (s: AppStateStatus) => {
       if (s === 'active') this.scheduleSync(0);
     });
-    CloudStorage.getDefaultInstance().subscribeToCloudAvailability(() => this.scheduleSync(0));
+    // Without the native module (Expo Go), iCloud is simply absent: the app works locally.
+    try {
+      CloudStorage.getDefaultInstance().subscribeToCloudAvailability(() => this.scheduleSync(0));
+    } catch {
+      // No iCloud.
+    }
     // Other devices' changes arrive silently in the container: look again regularly.
     setInterval(() => {
       if (AppState.currentState === 'active') this.scheduleSync(0);

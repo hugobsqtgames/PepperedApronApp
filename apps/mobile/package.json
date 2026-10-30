@@ -64,6 +64,7 @@
   },
   "scripts": {
     "start": "expo start",
+    "go": "expo start --go",
     "ios": "expo run:ios",
     "typecheck": "tsc --noEmit",
     "test": "jest",

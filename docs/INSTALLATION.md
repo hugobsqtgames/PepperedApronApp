@@ -19,7 +19,19 @@ cd apps/mobile
 cp .env.example .env     # facultatif : tout a une valeur par défaut en développement
 ```
 
-L'app contient des modules natifs : il faut un **build de développement** (une fois, puis à chaque ajout de module natif). Ensuite le bundler Metro suffit.
+### Essai rapide dans Expo Go (sans Xcode ni compte Apple payant)
+
+```bash
+pnpm install
+cd apps/mobile
+pnpm go                  # = npx expo start --go ; scanner le QR code avec l'appareil photo de l'iPhone
+```
+
+Expo Go doit être à jour (SDK 57). Tous les écrans et la base locale fonctionnent. Ce qui demande le code natif propre à l'app est absent : synchro iCloud (« iCloud indisponible »), widgets, feuille de partage, Siri, Spotlight, Handoff, Live Activity, lecture de texte dans les photos et PDF, transcription de vidéos, commandes vocales. Ces éléments se testent avec un build de développement.
+
+### Build de développement
+
+L'app contient des modules natifs : pour tout tester, il faut un **build de développement** (une fois, puis à chaque ajout de module natif). Ensuite le bundler Metro suffit.
 
 ```bash
 # Mac + iPhone/iPad
@@ -55,7 +67,8 @@ npx serve apps/site/dist              # aperçu local
 
 | Symptôme | Solution |
 |---|---|
-| « Expo Go » ne charge pas l'app | normal : utiliser un build de développement (`npx expo run:ios`) |
+| Expo Go affiche « incompatible SDK » | mettre Expo Go à jour depuis l'App Store (SDK 57) |
+| Le QR code ouvre une app de dev absente | lancer `pnpm go` (`npx expo start --go`) et non `npx expo start` |
 | Réglages → Mes données indique « iCloud indisponible » | se connecter à iCloud sur l'appareil ; vérifier que iCloud Drive est activé |
 | Les modifications n'arrivent pas sur l'autre appareil | iCloud transfère les fichiers en différé (quelques secondes à quelques minutes) ; tirer l'accueil vers le bas pour relancer |
 | Widgets vides | ouvrir l'app une fois : elle écrit les données dans l'App Group |
