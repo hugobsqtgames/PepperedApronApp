@@ -216,15 +216,14 @@ export default function RecipeDetail() {
       ],
     });
 
-  const startTimer = (s: Step, i: number) => {
-    if (!s.timerSeconds) return;
+  const startTimer = (s: Step, i: number, seconds: number) => {
     void timers.start({
       label: s.timerLabel ?? `${d.title} — ${t('recipe.stepN', { n: i + 1 })}`,
-      seconds: s.timerSeconds,
+      seconds,
       recipeId: recipe.id,
       stepIndex: i,
     });
-    toast(t('recipe.timer', { time: `${Math.round(s.timerSeconds / 60)} min` }), { tone: 'info' });
+    toast(t('recipe.timer', { time: `${Math.round(seconds / 60)} min` }), { tone: 'info' });
   };
 
   const meta = [
@@ -382,7 +381,13 @@ export default function RecipeDetail() {
 
   const steps = (
     <Section title={t('recipe.steps')}>
-      <StepList steps={d.steps} onTimer={startTimer} factor={factor} />
+      <StepList
+        steps={d.steps}
+        onTimer={startTimer}
+        factor={factor}
+        ingredients={d.ingredients}
+        system={settings.unitSystem}
+      />
     </Section>
   );
 

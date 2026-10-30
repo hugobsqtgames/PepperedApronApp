@@ -180,6 +180,8 @@ export const settingsDataSchema = z
     firstName: optText(LIMITS.firstName).default(null),
     /** Text size in cooking mode (1 = normal). */
     cookTextScale: z.number().min(0.8).max(2).default(1),
+    /** Cook mode reads each step aloud when it is shown. */
+    cookReadAloud: z.boolean().default(false),
   })
   .strict();
 export type SettingsData = z.infer<typeof settingsDataSchema>;
@@ -201,6 +203,7 @@ export const DEFAULT_SETTINGS: SettingsData = {
   onboardingDone: false,
   firstName: null,
   cookTextScale: 1,
+  cookReadAloud: false,
 };
 
 /** One time a recipe was cooked (cooking history). */

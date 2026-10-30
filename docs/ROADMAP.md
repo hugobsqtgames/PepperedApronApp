@@ -18,11 +18,11 @@ Repères : modèle de données `packages/core/src/schemas.ts` (champs ajoutés a
 - [x] **Pinterest et grands sites** : résolution des liens `pin.it`/Pinterest vers la recette d'origine ; tests avec pages enregistrées (fixtures) de Marmiton, 750g, Cuisine AZ, Ricardo, BBC Good Food, AllRecipes, NYT Cooking (JSON-LD), dans `packages/core/src/parse`.
 
 ## Lot 3 — En cuisine (14, 15, 16, 17, 19)
-- [ ] **Minuteurs détectés** : « cuire 8 min », « 1 h 30 de repos » dans une étape sans minuteur → bouton minuteur (core : `parseTimerSeconds` existe ; le faire à l'affichage, sans modifier la recette).
-- [ ] **Ingrédients de l'étape** : sous chaque étape (mode cuisine et fiche), les ingrédients cités, avec quantités à l'échelle (correspondance par `ingredientKey`).
-- [ ] **Lecture à voix haute** : `expo-speech`, bouton haut-parleur + lecture auto à chaque étape (réglage), langue de l'app.
-- [ ] **Commandes vocales** : « suivant », « précédent », « répète », « lance le minuteur », « ingrédients » ; reconnaissance continue **sur l'appareil** (module Swift : AVAudioEngine + `SFSpeechAudioBufferRecognitionRequest`, `requiresOnDeviceRecognition`), activable seulement en mode cuisine, indicateur micro visible, s'arrête en quittant.
-- [ ] **Deux recettes à la fois** : depuis le mode cuisine « Ajouter une recette » → onglets en haut, minuteurs de chaque recette étiquetés.
+- [x] **Minuteurs détectés** : « cuire 8 min », « 1 h 30 de repos » dans une étape sans minuteur → bouton minuteur (core : `parseTimerSeconds` existe ; le faire à l'affichage, sans modifier la recette).
+- [x] **Ingrédients de l'étape** : sous chaque étape (mode cuisine et fiche), les ingrédients cités, avec quantités à l'échelle (correspondance par `ingredientKey`).
+- [x] **Lecture à voix haute** : `expo-speech`, bouton haut-parleur + lecture auto à chaque étape (réglage), langue de l'app.
+- [x] **Commandes vocales** : « suivant », « précédent », « répète », « lance le minuteur », « ingrédients » ; reconnaissance continue **sur l'appareil** (module Swift : AVAudioEngine + `SFSpeechAudioBufferRecognitionRequest`, `requiresOnDeviceRecognition`), activable seulement en mode cuisine, indicateur micro visible, s'arrête en quittant.
+- [x] **Deux recettes à la fois** : depuis le mode cuisine « Ajouter une recette » → onglets en haut, minuteurs de chaque recette étiquetés.
 
 ## Lot 4 — Placard, frigo, bilan (21, 22, 28)
 - [ ] **Placard** : nouvelle entité synchronisée `pantryItem` (nom, quantité?, unité?, péremption?) ; écran « Mon placard » ; à l'ajout aux courses, ce qui est dans le placard n'est pas ajouté (ou réduit si quantités comparables) ; cocher une course propose de la ranger au placard.

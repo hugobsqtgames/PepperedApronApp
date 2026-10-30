@@ -35,7 +35,7 @@ const appGroup = `group.${bundleId}`;
 /** Private iCloud container holding the user's synced data (see services/icloud.ts). */
 const iCloudContainer = `iCloud.${bundleId}`;
 const MICROPHONE_USAGE =
-  'PepperedApron records the recipe you dictate, then writes it down on your iPhone. Nothing is sent.';
+  'PepperedApron records the recipe you dictate, and in cook mode listens for “next” or “repeat” if you turn voice commands on. Everything stays on your iPhone.';
 const siteUrl = process.env.SITE_URL ?? 'https://pepperedapron.app';
 const supportEmail = process.env.SUPPORT_EMAIL ?? 'support@pepperedapron.app';
 
@@ -74,7 +74,7 @@ const buildConfig = ({ config }: ConfigContext): ExpoConfig => ({
       CFBundleAllowMixedLocalizations: true,
       NSSupportsLiveActivities: true,
       NSSpeechRecognitionUsageDescription:
-        'PepperedApron listens to a recipe video you import, or the recipe you dictate, on your iPhone, to write down the ingredients and steps. Nothing is sent.',
+        'PepperedApron listens to a recipe video you import, the recipe you dictate, or your voice commands in cook mode, on your iPhone. Nothing is sent.',
     },
     privacyManifests: {
       NSPrivacyTracking: false,

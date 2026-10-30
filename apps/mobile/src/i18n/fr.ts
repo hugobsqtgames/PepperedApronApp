@@ -399,6 +399,27 @@ const fr = {
       'La recette est expliquée à l’oral, mais l’iPhone n’a pas pu écouter la vidéo. Astuce : faites une capture d’écran de la légende ou de la recette, puis « + » → « Depuis une photo ».',
   },
   cook: {
+    stepIngredients: 'Ingrédients de l’étape',
+    stepShort: 'Étape {{n}}/{{total}}',
+    readAloudOn: 'Lire les étapes à voix haute',
+    readAloudOff: 'Arrêter la lecture à voix haute',
+    voiceOn: 'Commandes vocales',
+    voiceOff: 'Arrêter les commandes vocales',
+    voiceOnHint:
+      'Dites « suivant », « précédent », « répète », « lance le minuteur » ou « ingrédients ».',
+    listening: 'À l’écoute, sur votre iPhone : « suivant », « répète », « lance le minuteur »…',
+    voicePermission:
+      'Autorisez le micro et la reconnaissance vocale dans Réglages pour utiliser les commandes vocales.',
+    voiceLanguage:
+      'La reconnaissance vocale sur l’appareil n’est pas disponible pour cette langue.',
+    voiceFailed: 'Les commandes vocales n’ont pas pu démarrer.',
+    lastStep: 'C’est la dernière étape.',
+    noTimer: 'Pas de minuteur pour cette étape.',
+    addRecipe: 'Cuisiner une autre recette en même temps',
+    addRecipeHint: 'Un onglet par recette ; chaque minuteur porte le nom de sa recette.',
+    stepsCount_one: '{{count}} étape',
+    stepsCount_other: '{{count}} étapes',
+    recipeDone: '« {{title}} » est terminée.',
     rate: 'Votre note',
     forPeople_one: 'Pour {{count}} personne',
     forPeople_other: 'Pour {{count}} personnes',

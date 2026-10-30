@@ -1,0 +1,7 @@
+{
+  "name": "voice-commands",
+  "version": "1.0.0",
+  "description": "Continuous on-device speech recognition for cook mode commands (Apple Speech).",
+  "main": "index.ts",
+  "private": true
+}

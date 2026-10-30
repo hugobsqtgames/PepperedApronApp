@@ -2,8 +2,10 @@ import { useState } from 'react';
 import { Linking, Pressable, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import {
+  detectStepTimer,
   formatClock,
   scaleStepText,
+  stepIngredients,
   type Ingredient,
   type Locale,
   type Step,
@@ -98,15 +100,75 @@ export function IngredientList({
   );
 }
 
+/** The ingredients a step uses, with their quantities for the chosen number of servings. */
+export function StepIngredients({
+  text,
+  ingredients,
+  factor,
+  system,
+  large = false,
+}: {
+  text: string;
+  ingredients: Ingredient[];
+  factor: number;
+  system: UnitSystem;
+  large?: boolean;
+}) {
+  const { t, i18n } = useTranslation();
+  const { colors } = useTheme();
+  const used = stepIngredients(text, ingredients);
+  if (!used.length) return null;
+  return (
+    <View
+      style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space.xs }}
+      accessible
+      accessibilityLabel={`${t('cook.stepIngredients')} : ${used
+        .map((i) => {
+          const f = formatIngredient(i, factor, i18n.language as Locale, system);
+          return [f.amount, f.name].filter(Boolean).join(' ');
+        })
+        .join(', ')}`}
+    >
+      {used.map((i) => {
+        const f = formatIngredient(i, factor, i18n.language as Locale, system);
+        return (
+          <View
+            key={i.id}
+            style={[
+              styles.stepIng,
+              { backgroundColor: colors.primarySoft },
+              large && { paddingVertical: 6, paddingHorizontal: 12 },
+            ]}
+          >
+            {f.amount ? (
+              <Text variant={large ? 'bodyStrong' : 'caption'} weight="700" color="primary">
+                {f.amount}
+              </Text>
+            ) : null}
+            <Text variant={large ? 'body' : 'caption'} color="primary">
+              {f.name}
+            </Text>
+          </View>
+        );
+      })}
+    </View>
+  );
+}
+
 export function StepList({
   steps,
   onTimer,
   factor = 1,
+  ingredients = [],
+  system = 'metric',
 }: {
   steps: Step[];
-  onTimer?: (step: Step, index: number) => void;
+  onTimer?: (step: Step, index: number, seconds: number) => void;
   /** Quantities written in the steps follow the chosen number of servings. */
   factor?: number;
+  /** Shown under each step: the ones it uses. */
+  ingredients?: Ingredient[];
+  system?: UnitSystem;
 }) {
   const { t, i18n } = useTranslation();
   const { colors } = useTheme();
@@ -123,6 +185,8 @@ export function StepList({
       {steps.map((s, i) => {
         const header = s.group && s.group !== group ? s.group : null;
         group = s.group;
+        // A step without a timer that says "cuire 8 min" still gets a timer button.
+        const seconds = detectStepTimer(s);
         return (
           <View key={s.id} style={{ gap: space.sm }}>
             {header ? (
@@ -138,16 +202,22 @@ export function StepList({
               </View>
               <View style={{ flex: 1, gap: space.sm }}>
                 <Text variant="body">{scaleStepText(s.text, factor, i18n.language as Locale)}</Text>
-                {s.timerSeconds && onTimer ? (
+                <StepIngredients
+                  text={s.text}
+                  ingredients={ingredients}
+                  factor={factor}
+                  system={system}
+                />
+                {seconds && onTimer ? (
                   <Pressable
                     accessibilityRole="button"
-                    accessibilityLabel={t('cook.startTimer', { time: formatClock(s.timerSeconds) })}
-                    onPress={() => onTimer(s, i)}
+                    accessibilityLabel={t('cook.startTimer', { time: formatClock(seconds) })}
+                    onPress={() => onTimer(s, i, seconds)}
                     style={[styles.timerChip, { backgroundColor: colors.accentSoft }]}
                   >
                     <Icon name="timer-outline" size={16} color="accent" />
                     <Text variant="callout" color="accent" weight="600">
-                      {s.timerLabel ?? t('recipe.timer', { time: formatClock(s.timerSeconds) })}
+                      {s.timerLabel ?? t('recipe.timer', { time: formatClock(seconds) })}
                     </Text>
                   </Pressable>
                 ) : null}
@@ -218,6 +288,14 @@ export function SourceLink({ source, url }: { source: string | null; url: string
 }
 
 const styles = StyleSheet.create({
+  stepIng: {
+    flexDirection: 'row',
+    gap: 4,
+    alignItems: 'baseline',
+    paddingVertical: 3,
+    paddingHorizontal: 8,
+    borderRadius: radius.pill,
+  },
   ingRow: {
     flexDirection: 'row',
     alignItems: 'center',
