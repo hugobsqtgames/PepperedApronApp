@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { AppState } from 'react-native';
 import { Stack, router } from 'expo-router';
 import * as Notifications from 'expo-notifications';
 import { useShareIntentContext } from 'expo-share-intent';
@@ -8,7 +9,8 @@ import { rescheduleExpiry, rescheduleReminders } from '../../services/notificati
 import { sourcesFromShare } from '../../services/autoImport';
 import { importQueue } from '../../services/importQueue';
 import { shouldShowWhatsNew } from '../../services/appMoments';
-import { publishWidgetData } from '../../services/widgets';
+import { applyExtensionRequests, publishWidgetData } from '../../services/widgets';
+import { refreshSpotlight } from '../../services/spotlight';
 import { useTheme } from '../../theme/ThemeProvider';
 
 /**
@@ -77,6 +79,7 @@ export default function AppLayout() {
         void rescheduleReminders(s.repos);
         void rescheduleExpiry(s.repos);
         void publishWidgetData(s.repos);
+        void refreshSpotlight(s.repos);
       }, 2000);
     };
     refreshDerived();
@@ -91,9 +94,15 @@ export default function AppLayout() {
         refreshDerived();
     });
     const off2 = rt.onRemoteChange(refreshDerived);
+    // Widget ticks and Siri additions made while the app was closed.
+    void applyExtensionRequests(s.repos);
+    const appState = AppState.addEventListener('change', (st) => {
+      if (st === 'active') void applyExtensionRequests(s.repos);
+    });
     return () => {
       off1();
       off2();
+      appState.remove();
       if (pending) clearTimeout(pending);
     };
   }, [rt.session, rt]);

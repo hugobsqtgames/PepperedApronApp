@@ -707,6 +707,14 @@ const en: Translations = {
     preview_other: '{{count}} recipes match today.',
     delete: 'Delete the collection',
   },
+  siri: {
+    tonight: 'Tonight: {{title}}.',
+    nothingTonight: 'Nothing is planned tonight.',
+    added: 'Added to your groceries: {{item}}.',
+    addFailed: 'Nothing was added.',
+    random: 'Why not {{title}}?',
+    noRecipe: 'Your cookbook is empty.',
+  },
   notifications: {
     tonight: '🍝 Tonight: {{title}}',
     tonightBody: 'Everything is ready in your meal plan.',

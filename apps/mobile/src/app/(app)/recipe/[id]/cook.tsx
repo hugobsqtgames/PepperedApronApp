@@ -33,6 +33,7 @@ import {
   voiceCommandsAvailable,
 } from '../../../../../modules/voice-commands';
 import { IngredientList, StepIngredients } from '../../../../features/recipe/RecipeBody';
+import { clearActivity, setActivity } from '../../../../../modules/ios-integration';
 import { useLive, useRepos } from '../../../../hooks/runtime';
 import { useLayout } from '../../../../lib/layout';
 import { haptic } from '../../../../services/haptics';
@@ -132,6 +133,13 @@ export default function CookMode() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [readAloud, index, active, done]);
   useEffect(() => () => void Speech.stop(), []);
+  // Handoff: the cook mode of this recipe continues on the other device.
+  const handoffTitle = recipe?.data.title;
+  useEffect(() => {
+    if (!handoffTitle) return;
+    setActivity('cook', handoffTitle, `pepperedapron://recipe/${active}/cook`);
+    return () => clearActivity();
+  }, [active, handoffTitle]);
 
   // Voice commands: only while turned on, in cook mode; listening stops when leaving.
   useEffect(() => {

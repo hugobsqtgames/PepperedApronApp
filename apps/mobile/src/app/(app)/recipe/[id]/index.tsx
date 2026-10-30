@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Alert, Pressable, ScrollView, Share, StyleSheet, View } from 'react-native';
 import { Image } from 'expo-image';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -31,6 +31,7 @@ import { photoUri, recipePhotoUri } from '../../../../lib/media';
 import { printRecipes, shareRecipesPdf } from '../../../../lib/print';
 import { ShareModal } from '../../../../features/share/ShareModal';
 import { pickImage, preparePhoto, type PhotoSource } from '../../../../services/photos';
+import { clearActivity, setActivity } from '../../../../../modules/ios-integration';
 import { haptic } from '../../../../services/haptics';
 import { timers } from '../../../../services/timers';
 import { useTheme } from '../../../../theme/ThemeProvider';
@@ -81,6 +82,13 @@ export default function RecipeDetail() {
   );
   const [servings, setServings] = useState<number | null>(null);
   const [shareMode, setShareMode] = useState<'card' | 'qr' | null>(null);
+  // Handoff: this recipe can be continued on the user's other iPhone or iPad.
+  const handoffTitle = recipe?.data.title;
+  useEffect(() => {
+    if (!handoffTitle) return;
+    setActivity('recipe', handoffTitle, `pepperedapron://recipe/${id}`);
+    return () => clearActivity();
+  }, [id, handoffTitle]);
 
   if (!recipe) {
     return (

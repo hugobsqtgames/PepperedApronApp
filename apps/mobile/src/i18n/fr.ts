@@ -712,6 +712,14 @@ const fr = {
     preview_other: '{{count}} recettes correspondent aujourd’hui.',
     delete: 'Supprimer la collection',
   },
+  siri: {
+    tonight: 'Ce soir : {{title}}.',
+    nothingTonight: 'Rien de prévu ce soir.',
+    added: 'Ajouté à vos courses : {{item}}.',
+    addFailed: 'Rien n’a été ajouté.',
+    random: 'Et pourquoi pas : {{title}} ?',
+    noRecipe: 'Votre carnet de recettes est vide.',
+  },
   notifications: {
     tonight: '🍝 Ce soir : {{title}}',
     tonightBody: 'Tout est prêt dans votre planning.',

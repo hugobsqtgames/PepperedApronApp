@@ -73,6 +73,8 @@ const buildConfig = ({ config }: ConfigContext): ExpoConfig => ({
       ITSAppUsesNonExemptEncryption: false,
       CFBundleAllowMixedLocalizations: true,
       NSSupportsLiveActivities: true,
+      // Handoff: the recipe or the cook mode continues on the user's other device.
+      NSUserActivityTypes: ['app.pepperedapron.recipe', 'app.pepperedapron.cook'],
       NSSpeechRecognitionUsageDescription:
         'PepperedApron listens to a recipe video you import, the recipe you dictate, or your voice commands in cook mode, on your iPhone. Nothing is sent.',
     },

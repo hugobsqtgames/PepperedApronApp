@@ -62,6 +62,20 @@ export async function publishWidgetData(repos: Repos, now = new Date()) {
         .map((i) => i.data.name)
         .join('\n'),
     });
+    // Interactive widget: each item can be checked off from the widget.
+    storage.set(
+      'shoppingItems',
+      items.slice(0, 6).map((i) => ({ id: i.id, name: i.data.name })),
+    );
+    // Siri answers (targets/intents), in the app's language.
+    storage.set('intentLabels', {
+      tonight: i18n.t('siri.tonight', { title: '%@' }),
+      nothingTonight: i18n.t('siri.nothingTonight'),
+      added: i18n.t('siri.added', { item: '%@' }),
+      addFailed: i18n.t('siri.addFailed'),
+      random: i18n.t('siri.random', { title: '%@' }),
+      noRecipe: i18n.t('siri.noRecipe'),
+    });
     storage.set(
       'random',
       random
@@ -71,5 +85,42 @@ export async function publishWidgetData(repos: Repos, now = new Date()) {
     ExtensionStorage.reloadWidget();
   } catch {
     // Widgets are optional; never break the app for them.
+  }
+}
+
+/**
+ * What was done outside the app while it was closed: items checked off in the shopping widget,
+ * items added with Siri ("Add milk to my groceries"). Queued in the App Group by the extensions,
+ * applied here when the app opens or comes back, then cleared.
+ */
+export async function applyExtensionRequests(repos: Repos) {
+  if (Platform.OS !== 'ios') return;
+  try {
+    const { ExtensionStorage } = await import('@bacons/apple-targets');
+    const storage = new ExtensionStorage(ENV.appGroup);
+    const read = (key: string): string[] => {
+      try {
+        const v = JSON.parse(storage.get(key) ?? '[]') as unknown;
+        return Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string') : [];
+      } catch {
+        return [];
+      }
+    };
+    const checks = read('pendingChecks');
+    const adds = read('pendingAdds');
+    if (!checks.length && !adds.length) return;
+    storage.set('pendingChecks', '[]');
+    storage.set('pendingAdds', '[]');
+    for (const id of checks) {
+      const item = repos.items(repos.activeList()?.id ?? '').find((i) => i.id === id);
+      if (item && !item.data.checked) await repos.toggleItem(id);
+    }
+    if (adds.length) {
+      const list = await repos.ensureActiveList(i18n.t('shopping.defaultName'));
+      for (const text of adds) await repos.addItemText(list.id, text);
+    }
+    await publishWidgetData(repos);
+  } catch {
+    // Optional: the requests stay queued until the next try.
   }
 }

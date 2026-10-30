@@ -1,0 +1,7 @@
+{
+  "name": "ios-integration",
+  "version": "1.0.0",
+  "description": "Spotlight indexing of recipes and Handoff between the user's devices.",
+  "main": "index.ts",
+  "private": true
+}

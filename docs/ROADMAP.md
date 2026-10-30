@@ -39,11 +39,11 @@ Repères : modèle de données `packages/core/src/schemas.ts` (champs ajoutés a
 - [x] **QR code** : la recette compressée dans un lien `pepperedapron://r/<données>` (sans serveur ; si trop longue : ingrédients + étapes seulement), scanné par l'appareil photo → import.
 
 ## Lot 6 — Intégration iOS (36, 37, 38, 39, 41)
-- [ ] **Raccourcis Siri / App Intents** : « Qu'est-ce qu'on mange ce soir ? » (lit l'instantané des widgets dans l'App Group), « Ajoute … aux courses » (écrit une demande dans l'App Group, appliquée au lancement suivant), « Recette au hasard ».
-- [ ] **Spotlight** : indexer titres/ingrédients/photos (CoreSpotlight, module natif), ouvrir la fiche ; désindexer à la suppression.
-- [ ] **Widgets interactifs** (iOS 17) : cocher un article de courses depuis le widget (App Intent dans la cible widget → App Group → appliqué par l'app).
-- [ ] **Écran verrouillé** : familles `accessoryRectangular/Inline/Circular` (repas du soir, articles restants).
-- [ ] **Handoff** : `NSUserActivity` sur la fiche et le mode cuisine, reprise sur l'autre appareil.
+- [x] **Raccourcis Siri / App Intents** : « Qu'est-ce qu'on mange ce soir ? » (lit l'instantané des widgets dans l'App Group), « Ajoute … aux courses » (écrit une demande dans l'App Group, appliquée au lancement suivant), « Recette au hasard ».
+- [x] **Spotlight** : indexer titres/ingrédients/photos (CoreSpotlight, module natif), ouvrir la fiche ; désindexer à la suppression.
+- [x] **Widgets interactifs** (iOS 17) : cocher un article de courses depuis le widget (App Intent dans la cible widget → App Group → appliqué par l'app).
+- [x] **Écran verrouillé** : familles `accessoryRectangular/Inline/Circular` (repas du soir, articles restants).
+- [x] **Handoff** : `NSUserActivity` sur la fiche et le mode cuisine, reprise sur l'autre appareil.
 
 ## Lot 7 — Accessibilité complète (toutes les fonctions d'Apple)
 - [ ] Audit **VoiceOver** écran par écran : libellés, rôles, ordre, regroupements, actions personnalisées (cocher, supprimer, déplacer), annonces (minuteur fini, import terminé), pas d'élément sans nom.

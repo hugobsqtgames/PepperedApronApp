@@ -69,6 +69,14 @@ Depuis l'app (« + ») : lien(s) collé(s), texte, photo(s), dictée, enregistre
 
 `targets/widgets` (WidgetKit, SwiftUI) : **Ce soir**, **Prochain repas**, **Liste de courses**, **Recette au hasard**, en petit/moyen. L'app publie un instantané JSON dans l'App Group (`group.<bundleId>`) dès que le planning, les recettes ou la liste active changent, localement ou via iCloud (`services/widgets.ts`) ; les widgets fonctionnent hors ligne et ouvrent l'écran concerné.
 
+## Intégration iOS : Siri, Spotlight, widgets interactifs, écran verrouillé, Handoff
+
+- **Widgets interactifs** (iOS 17) : dans le widget « Liste de courses » (moyen/grand), toucher le rond d'un article le coche. L'App Intent `ToggleShoppingItemIntent` (cible `targets/widgets`) masque l'article tout de suite et met la demande en attente dans l'App Group (`pendingChecks`) ; l'app l'applique à l'ouverture ou au retour au premier plan (`applyExtensionRequests`).
+- **Écran verrouillé** : « Ce soir » (rectangulaire, en ligne) et « Liste de courses » (circulaire : articles restants, rectangulaire, en ligne).
+- **Siri / Raccourcis** : extension App Intents `targets/intents` (nouvel identifiant `<bundle>.PepperedApronIntents`, App Group partagé ; EAS crée son profil comme pour les widgets). « Qu'est-ce qu'on mange ce soir dans PepperedApron », « Ajoute aux courses dans PepperedApron » (Siri demande quoi ; mis en attente `pendingAdds`, ajouté à la liste active à l'ouverture suivante), « Une recette au hasard dans PepperedApron ». Réponses lues dans l'instantané des widgets, dans la langue de l'app (`intentLabels`). Tout reste sur l'appareil.
+- **Spotlight** : module local `modules/ios-integration` ; titres, ingrédients, étiquettes et photos indexés **sur l'appareil** (`services/spotlight.ts`, ré-indexé après chaque changement, supprimés avec la recette). Un résultat ouvre la fiche (`IosIntegrationAppDelegate` → `pepperedapron://recipe/<id>`).
+- **Handoff** : la fiche et le mode cuisine publient une `NSUserActivity` (`app.pepperedapron.recipe` / `.cook`, déclarées dans `NSUserActivityTypes`) ; sur l'autre appareil connecté au même compte Apple, l'icône Handoff rouvre la même recette.
+
 ## Mode cuisine, minuteurs, Live Activities
 
 Texte agrandi et réglable (A−/A+, retenu dans les réglages), écran maintenu allumé, navigation par étapes, ingrédients à portée **pour le nombre de personnes choisi sur la fiche** (les quantités écrites dans les étapes suivent aussi : `scaleStepText`), minuteurs multiples et nommables (« + Minuteur » : durée puis nom ; heures de fin absolues : ils survivent à la navigation, à l'arrière-plan et au redémarrage). « Terminer » ajoute la recette à l'historique (une entrée par jour) et propose de la noter et d'ajouter une remarque.
