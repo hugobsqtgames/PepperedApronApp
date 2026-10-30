@@ -98,7 +98,7 @@ const buildConfig = ({ config }: ConfigContext): ExpoConfig => ({
   locales: { fr: nativeTexts('fr'), en: nativeTexts('en') },
   ios: {
     bundleIdentifier: bundleId,
-    appleTeamId: process.env.APPLE_TEAM_ID,
+    appleTeamId: process.env.APPLE_TEAM_ID ?? '336SM4755V',
     supportsTablet: true,
     requireFullScreen: false,
     icon: {

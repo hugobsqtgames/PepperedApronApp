@@ -9,7 +9,7 @@ Lues au moment du build par `app.config.ts`. Les variables `EXPO_PUBLIC_*` sont 
 | Variable | Rôle |
 |---|---|
 | `APP_VARIANT` | `development`, `staging`, `production` (identifiant, nom, App Group, conteneur iCloud) |
-| `APPLE_TEAM_ID` | équipe Apple (signature des cibles, App Group, iCloud) |
+| `APPLE_TEAM_ID` | équipe Apple (signature des cibles, App Group, iCloud) ; par défaut `336SM4755V` |
 | `EAS_PROJECT_ID` | projet EAS (builds) |
 | `SITE_URL` | site public (défaut `https://pepperedapron.app`) : l'app y ouvre l'aide et les pages légales |
 | `SUPPORT_EMAIL` | adresse affichée dans Aide (défaut `support@pepperedapron.app`) |

@@ -166,7 +166,7 @@ Non mesurée. L'instrumentation n'est pas configurée dans le projet, et je n'ai
    - QR code scanné par l'appareil photo.
 3. **`decode-uri-component` (via `query-string` d'expo-router)** : vulnérabilité connue, sans correctif compatible (le correctif est en ESM seulement). Exposition faible : seuls les liens de l'app sont décodés.
 4. **`expo-live-activity`** est signalé non maintenu.
-5. **`APPLE_TEAM_ID`** doit être défini dans les variables d'environnement EAS (`apple-targets` le signale).
+5. **`APPLE_TEAM_ID`** : `336SM4755V` par défaut dans `app.config.ts`, modifiable par variable d'environnement.
 6. **Planning** : un repas planifié sur un appareil pendant que la recette est supprimée sur un autre reste dans le planning avec le titre « — ». Il n'y a pas de perte de données utilisateur.
 7. **Couverture de code non mesurée.**
 
