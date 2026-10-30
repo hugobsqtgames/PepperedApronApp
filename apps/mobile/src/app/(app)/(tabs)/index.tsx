@@ -3,16 +3,24 @@ import { Pressable, View } from 'react-native';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
+import type { Repos } from '@pepperedapron/client';
 import {
+  addDays,
   computeTotalMinutes,
   currentSeason,
   EMPTY_FILTERS,
   expiringSoon,
+  leftoverIdeas,
+  mealMoment,
+  pickOfTheDay,
   recipeSeasons,
   searchRecipes,
+  seasonalHighlights,
   toIsoDate,
   type RecipeCategory,
 } from '@pepperedapron/core';
+import type { Recipe } from '@pepperedapron/client';
+import { TonightCard, type TonightReason } from '../../../features/home/Tonight';
 import { CategoryGrid } from '../../../features/home/CategoryGrid';
 import { RecipeCarousel } from '../../../features/home/Carousel';
 import { useImportQueue } from '../../../hooks/importQueue';
@@ -34,10 +42,99 @@ import {
   useToast,
 } from '../../../ui';
 
+/** Greeting and question for the moment of the day ("Une idée pour le goûter ?"). */
 function greeting(t: TFunction, firstName: string | null, d = new Date()) {
-  const h = d.getHours();
-  const part = h < 12 ? 'morning' : h < 18 ? 'afternoon' : 'evening';
-  return firstName ? t(`home.${part}Name`, { name: firstName }) : t(`home.${part}`);
+  const m = mealMoment(d);
+  const day = d.getDay();
+  return {
+    hello: firstName ? t(`delight.greet.${m}Name`, { name: firstName }) : t(`delight.greet.${m}`),
+    question: t(`delight.greet.q_${m}`),
+    // A word for the weekend, Friday and Monday; nothing the other days.
+    flavor:
+      day === 0 || day === 6
+        ? t('delight.greet.weekend')
+        : day === 5
+          ? t('delight.greet.friday')
+          : day === 1
+            ? t('delight.greet.monday')
+            : null,
+  };
+}
+
+/**
+ * Tonight's dinner if planned, or else the idea of the day: what needs finishing in the pantry,
+ * then seasonal, favourite and long-forgotten recipes (one per day, stable through the day).
+ * Also the produce in season and ideas for yesterday's leftovers.
+ */
+function tonightAndMore(
+  r: Repos,
+  library: Recipe[],
+  favs: Recipe[],
+  today: string,
+  season: ReturnType<typeof currentSeason>,
+  pantry: Recipe[],
+) {
+  const dinner = r
+    .entries(today, today)
+    .find((e) => e.data.slot === 'dinner' && e.data.recipeId && r.recipe(e.data.recipeId));
+  let tonight: { recipe: Recipe; reason: TonightReason } | null = dinner
+    ? { recipe: r.recipe(dinner.data.recipeId!)!, reason: 'planned' }
+    : null;
+  if (!tonight && library.length) {
+    const stats = r.cookStats();
+    const recent = (x: Recipe) => {
+      const last = stats.get(x.id)?.last;
+      return !!last && last >= addDays(today, -10);
+    };
+    const ranked: { recipe: Recipe; reason: TonightReason }[] = [];
+    const add = (list: Recipe[], reason: TonightReason) => {
+      for (const recipe of list)
+        if (!recent(recipe) && !ranked.some((x) => x.recipe.id === recipe.id))
+          ranked.push({ recipe, reason });
+    };
+    const mains = (list: Recipe[]) =>
+      list.filter(
+        (x) =>
+          !x.data.category ||
+          !['dessert', 'baking', 'drinks', 'breakfast', 'snack', 'sauce'].includes(x.data.category),
+      );
+    add(mains(pantry), 'pantry');
+    add(mains(library.filter((x) => recipeSeasons(x.data).includes(season))), 'season');
+    add(mains(favs), 'favorite');
+    add(mains(r.forgottenRecipes(today)), 'forgotten');
+    add(mains(library), 'any');
+    tonight = pickOfTheDay(ranked, today, 4);
+  }
+  // Yesterday's dishes: what was cooked, and what was planned.
+  const yesterday = addDays(today, -1);
+  const eatenIds = new Set([
+    ...r
+      .allCookLogs()
+      .filter((l) => l.data.date === yesterday)
+      .map((l) => l.data.recipeId),
+    ...r
+      .entries(yesterday, yesterday)
+      .map((e) => e.data.recipeId)
+      .filter((x): x is string => !!x),
+  ]);
+  const asData = (x: Recipe) => ({
+    id: x.id,
+    title: x.data.title,
+    ingredients: x.data.ingredients,
+    record: x,
+  });
+  const eaten = [...eatenIds].map((id) => r.recipe(id)).filter((x): x is Recipe => !!x);
+  return {
+    tonight,
+    highlights: seasonalHighlights(
+      library.map((x) => ({ id: x.id, ingredients: x.data.ingredients })),
+      season,
+      2,
+    ),
+    leftovers: leftoverIdeas(eaten.map(asData), library.map(asData), 6)
+      .slice(0, 1)
+      .map((i) => ({ base: i.base, recipes: i.recipes.map((x) => x.record) })),
+  };
 }
 
 export default function Home() {
@@ -99,6 +196,7 @@ export default function Home() {
           .entries(today, today)
           .map((e) => ({ entry: e, recipe: e.data.recipeId ? r.recipe(e.data.recipeId) : null })),
         counts,
+        ...tonightAndMore(r, library, favs, today, season, toUseSoon().soonRecipes),
       };
     },
     [today, season],
@@ -119,6 +217,27 @@ export default function Home() {
   };
 
   const empty = data.library.length === 0;
+  const hello = greeting(t, settings.firstName);
+  // Tonight's planned dinner is already the big card.
+  const todayOthers = data.todayMeals.filter(
+    (m) =>
+      !(
+        data.tonight?.reason === 'planned' &&
+        m.entry.data.slot === 'dinner' &&
+        m.recipe?.id === data.tonight.recipe.id
+      ),
+  );
+  const cardW =
+    Math.min(
+      layout.sidebar ? layout.width - 260 : layout.width,
+      layout.contentMaxWidth + layout.gutter * 2,
+    ) -
+    layout.gutter * 2;
+  const planTonight = async (recipe: Recipe) => {
+    await repos.planMeal({ date: today, slot: 'dinner', recipeId: recipe.id });
+    haptic.success();
+    toast(t('delight.tonight.planned_ok'));
+  };
 
   return (
     <Screen refreshing={refreshing} onRefresh={refresh} testID="home">
@@ -132,11 +251,16 @@ export default function Home() {
       >
         <View style={{ flex: 1, gap: space.xs }}>
           <Text variant="callout" color="textMuted">
-            {greeting(t, settings.firstName)}
+            {hello.hello}
           </Text>
           <Text variant="hero" accessibilityRole="header">
-            {t('home.question')}
+            {hello.question}
           </Text>
+          {hello.flavor ? (
+            <Text variant="lede" color="textMuted">
+              {hello.flavor}
+            </Text>
+          ) : null}
         </View>
         {!layout.sidebar ? (
           <IconButton
@@ -186,75 +310,115 @@ export default function Home() {
           </Card>
         ) : (
           <>
-            <Section title={t('home.today')}>
-              {data.todayMeals.length ? (
-                <View style={{ gap: space.sm }}>
-                  {data.todayMeals.map(({ entry, recipe }) => (
-                    <Card
-                      key={entry.id}
-                      padded={false}
-                      onPress={() =>
-                        recipe ? router.push(`/recipe/${recipe.id}`) : router.push('/planning')
-                      }
-                      accessibilityLabel={`${t(`slots.${entry.data.slot}`)}: ${recipe?.data.title ?? entry.data.customTitle}`}
-                    >
-                      <View
-                        style={{
-                          flexDirection: 'row',
-                          alignItems: 'center',
-                          gap: space.md,
-                          padding: space.md,
-                        }}
-                      >
-                        <RecipePhoto
-                          uri={recipe ? recipePhotoUri(recipe) : null}
-                          category={recipe?.data.category ?? null}
-                          radius={radius.md}
-                          style={{ width: 56, height: 56 }}
-                          emojiSize={24}
-                        />
-                        <View style={{ flex: 1 }}>
-                          <Text
-                            variant="micro"
-                            color="accent"
-                            style={{ textTransform: 'uppercase' }}
-                          >
-                            {t(`slots.${entry.data.slot}`)}
-                          </Text>
-                          <Text variant="bodyStrong" numberOfLines={2}>
-                            {recipe?.data.title ?? entry.data.customTitle}
-                          </Text>
-                        </View>
-                        {recipe ? (
-                          <IconButton
-                            icon="play"
-                            label={t('recipe.startCooking')}
-                            variant="primary"
-                            onPress={() => router.push(`/recipe/${recipe.id}/cook`)}
-                          />
-                        ) : null}
-                      </View>
-                    </Card>
-                  ))}
-                </View>
-              ) : (
-                <Card
-                  onPress={() => router.push('/planning')}
-                  accessibilityLabel={t('home.planSomething')}
-                >
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.md }}>
-                    <Icon name="calendar-outline" size={26} color="primary" />
-                    <View style={{ flex: 1 }}>
-                      <Text variant="bodyStrong">{t('home.nothingPlanned')}</Text>
-                      <Text variant="callout" color="primary">
-                        {t('home.planSomething')}
+            {data.tonight ? (
+              <TonightCard
+                recipe={data.tonight.recipe}
+                reason={data.tonight.reason}
+                width={cardW}
+                onPlan={
+                  data.tonight.reason === 'planned'
+                    ? undefined
+                    : () => void planTonight(data.tonight!.recipe)
+                }
+              />
+            ) : null}
+            {data.highlights.length ? (
+              <View style={{ gap: space.sm }}>
+                {data.highlights.map((h) => (
+                  <Card
+                    key={h.key}
+                    onPress={() => router.push({ pathname: '/search', params: { q: h.label } })}
+                    accessibilityLabel={`${t('delight.season.banner', { name: h.label })}, ${t('delight.season.count', { count: h.recipeIds.length })}`}
+                  >
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.md }}>
+                      <Text style={{ fontSize: 28 }} maxFontSizeMultiplier={1}>
+                        {seasonEmoji(season)}
                       </Text>
+                      <View style={{ flex: 1 }}>
+                        <Text variant="bodyStrong">
+                          {t('delight.season.banner', { name: h.label })}
+                        </Text>
+                        <Text variant="callout" color="textMuted">
+                          {t('delight.season.count', { count: h.recipeIds.length })}
+                        </Text>
+                      </View>
+                      <Icon name="chevron-forward" size={18} color="textSubtle" />
                     </View>
-                    <Icon name="chevron-forward" size={18} color="textSubtle" />
+                  </Card>
+                ))}
+              </View>
+            ) : null}
+            {todayOthers.length || data.tonight?.reason !== 'planned' ? (
+              <Section title={t('home.today')}>
+                {todayOthers.length ? (
+                  <View style={{ gap: space.sm }}>
+                    {todayOthers.map(({ entry, recipe }) => (
+                      <Card
+                        key={entry.id}
+                        padded={false}
+                        onPress={() =>
+                          recipe ? router.push(`/recipe/${recipe.id}`) : router.push('/planning')
+                        }
+                        accessibilityLabel={`${t(`slots.${entry.data.slot}`)}: ${recipe?.data.title ?? entry.data.customTitle}`}
+                      >
+                        <View
+                          style={{
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            gap: space.md,
+                            padding: space.md,
+                          }}
+                        >
+                          <RecipePhoto
+                            uri={recipe ? recipePhotoUri(recipe) : null}
+                            category={recipe?.data.category ?? null}
+                            radius={radius.md}
+                            style={{ width: 56, height: 56 }}
+                            emojiSize={24}
+                          />
+                          <View style={{ flex: 1 }}>
+                            <Text
+                              variant="micro"
+                              color="accent"
+                              style={{ textTransform: 'uppercase' }}
+                            >
+                              {t(`slots.${entry.data.slot}`)}
+                            </Text>
+                            <Text variant="bodyStrong" numberOfLines={2}>
+                              {recipe?.data.title ?? entry.data.customTitle}
+                            </Text>
+                          </View>
+                          {recipe ? (
+                            <IconButton
+                              icon="play"
+                              label={t('recipe.startCooking')}
+                              variant="primary"
+                              onPress={() => router.push(`/recipe/${recipe.id}/cook`)}
+                            />
+                          ) : null}
+                        </View>
+                      </Card>
+                    ))}
                   </View>
-                </Card>
-              )}
-            </Section>
+                ) : (
+                  <Card
+                    onPress={() => router.push('/planning')}
+                    accessibilityLabel={t('home.planSomething')}
+                  >
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.md }}>
+                      <Icon name="calendar-outline" size={26} color="primary" />
+                      <View style={{ flex: 1 }}>
+                        <Text variant="bodyStrong">{t('home.nothingPlanned')}</Text>
+                        <Text variant="callout" color="primary">
+                          {t('home.planSomething')}
+                        </Text>
+                      </View>
+                      <Icon name="chevron-forward" size={18} color="textSubtle" />
+                    </View>
+                  </Card>
+                )}
+              </Section>
+            ) : null}
 
             <Pressable
               accessibilityRole="button"
@@ -281,6 +445,20 @@ export default function Home() {
               <Icon name="arrow-forward" size={20} tint={colors.onPrimary} />
             </Pressable>
 
+            {data.leftovers.length ? (
+              <Section title={t('delight.leftovers.title')}>
+                <Text variant="callout" color="textMuted">
+                  {t('delight.leftovers.line', {
+                    base: t(`delight.leftovers.base.${data.leftovers[0]!.base as 'rice'}`),
+                  })}
+                </Text>
+                <RecipeCarousel
+                  recipes={data.leftovers[0]!.recipes}
+                  repos={repos}
+                  favorites={data.favoriteIds}
+                />
+              </Section>
+            ) : null}
             {data.soon.length ? (
               <Section
                 title={t('home.useSoon')}
@@ -356,4 +534,8 @@ export default function Home() {
       </View>
     </Screen>
   );
+}
+
+function seasonEmoji(s: ReturnType<typeof currentSeason>): string {
+  return { spring: '🌱', summer: '☀️', autumn: '🍂', winter: '❄️' }[s];
 }
