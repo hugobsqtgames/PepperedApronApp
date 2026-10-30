@@ -7,3 +7,15 @@ onlyBuiltDependencies:
   - esbuild
 patchedDependencies:
   '@bacons/apple-targets@5.0.0': patches/@bacons__apple-targets@5.0.0.patch
+packageExtensions:
+  # @bacons/apple-targets requires @expo/image-utils without declaring it (it only worked when
+  # pnpm happened to hoist it): declare it so prebuild works the same locally and on EAS.
+  '@bacons/apple-targets@5.0.0':
+    dependencies:
+      '@expo/image-utils': ^0.11.6
+overrides:
+  # Known vulnerabilities fixed within compatible versions (pnpm audit).
+  'shell-quote@<1.11.0': ^1.11.0
+  '@xmldom/xmldom@<0.8.15': ^0.8.15
+  'source-map-js@<1.2.2': ^1.2.2
+  'zod@>=4.0.0 <4.6.6': ^4.6.6

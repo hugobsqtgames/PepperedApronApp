@@ -12,18 +12,27 @@ describe('Button', () => {
   });
 
   it('awaits async actions and accepts taps again afterwards', async () => {
-    const onPress = jest.fn(() => new Promise<void>((r) => setTimeout(r, 50)));
+    // The test decides when the action ends (no real timer: same result on a slow machine).
+    let finish = () => {};
+    const onPress = jest.fn(() => new Promise<void>((r) => (finish = r)));
     await wrap(<Button title="Enregistrer" onPress={onPress} />);
-    await fireEvent.press(screen.getByRole('button'));
+    const first = fireEvent.press(screen.getByRole('button'));
+    await waitFor(() =>
+      expect(screen.getByRole('button').props.accessibilityState).toMatchObject({ busy: true }),
+    );
     // A second tap while the action runs is ignored…
     await fireEvent.press(screen.getByRole('button'));
     expect(onPress).toHaveBeenCalledTimes(1);
     // …and accepted once it has finished.
+    finish();
+    await first;
     await waitFor(() =>
       expect(screen.getByRole('button').props.accessibilityState).toMatchObject({ busy: false }),
     );
-    await fireEvent.press(screen.getByRole('button'));
-    expect(onPress).toHaveBeenCalledTimes(2);
+    const second = fireEvent.press(screen.getByRole('button'));
+    await waitFor(() => expect(onPress).toHaveBeenCalledTimes(2));
+    finish();
+    await second;
   });
 
   it('announces a busy state and ignores taps while loading', async () => {
