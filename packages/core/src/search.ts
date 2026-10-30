@@ -499,7 +499,18 @@ interface Indexed {
   all: string;
 }
 
+/**
+ * Words of each recipe, computed once per recipe object: the search runs at every keystroke and
+ * the library objects stay the same between keystrokes.
+ */
+const indexCache = new WeakMap<SearchableRecipe, Indexed>();
 function index(r: SearchableRecipe): Indexed {
+  let ix = indexCache.get(r);
+  if (!ix) indexCache.set(r, (ix = buildIndex(r)));
+  return ix;
+}
+
+function buildIndex(r: SearchableRecipe): Indexed {
   const title = tokenize(r.title).map(singularize);
   const ingredients = r.ingredientNames.flatMap((n) => tokenize(n).map(singularize));
   const tags = r.tags.flatMap((t) => tokenize(t).map(singularize));
