@@ -20,6 +20,7 @@ import {
   longPressActions,
   useActionSheet,
 } from '../../../ui';
+import { inBackground } from '../../../lib/errors';
 
 export default function Favorites() {
   const { t } = useTranslation();
@@ -130,7 +131,7 @@ export default function Favorites() {
               favorite
               onToggleFavorite={() => {
                 haptic.light();
-                void repos.toggleFavorite(item.id);
+                inBackground(repos.toggleFavorite(item.id));
               }}
               onPress={() => router.push(`/recipe/${item.id}`)}
             />
@@ -167,7 +168,7 @@ export default function Favorites() {
                   {
                     text: t('common.delete'),
                     style: 'destructive',
-                    onPress: () => void repos.deleteCollection(item.c.id),
+                    onPress: () => inBackground(repos.deleteCollection(item.c.id)),
                   },
                 ]),
             },

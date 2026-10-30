@@ -24,7 +24,7 @@ import {
   TextBlock,
 } from '../../../../features/recipe/RecipeBody';
 import { useLive, useRepos } from '../../../../hooks/runtime';
-import { errorMessage } from '../../../../lib/errors';
+import { errorMessage, inBackground } from '../../../../lib/errors';
 import { formatOven, recipeAsText } from '../../../../lib/format';
 import { useLayout } from '../../../../lib/layout';
 import { photoUri, recipePhotoUri } from '../../../../lib/media';
@@ -136,7 +136,7 @@ export default function RecipeDetail() {
       multiline: true,
       maxLength: 2000,
       allowEmpty: true,
-      onSubmit: (v) => void repos.setPersonalNote(recipe.id, v || null),
+      onSubmit: (v) => inBackground(repos.setPersonalNote(recipe.id, v || null)),
     });
 
   const cookedToday = async () => {
@@ -153,7 +153,7 @@ export default function RecipeDetail() {
         label: dayMonth(c.data.date, i18n.language),
         icon: 'trash-outline' as const,
         destructive: true,
-        onPress: () => void repos.removeCookLog(c.id),
+        onPress: () => inBackground(repos.removeCookLog(c.id)),
       })),
     });
 
@@ -387,7 +387,7 @@ export default function RecipeDetail() {
         </Text>
       ) : null}
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.md, flexWrap: 'wrap' }}>
-        <Stars value={d.rating} onChange={(v) => void repos.setRating(recipe.id, v)} />
+        <Stars value={d.rating} onChange={(v) => inBackground(repos.setRating(recipe.id, v))} />
         {cooked.length ? (
           <Text
             variant="caption"
@@ -527,9 +527,8 @@ export default function RecipeDetail() {
                     accessibilityLabel={t('history.resultOn', {
                       date: dayMonth(c.data.date, i18n.language),
                     })}
-                    {...longPressActions(
-                      t('editor.removePhoto'),
-                      () => void repos.setCookPhoto(c.id, null),
+                    {...longPressActions(t('editor.removePhoto'), () =>
+                      inBackground(repos.setCookPhoto(c.id, null)),
                     )}
                     onLongPress={() =>
                       sheet({
@@ -539,7 +538,7 @@ export default function RecipeDetail() {
                             label: t('editor.removePhoto'),
                             icon: 'trash-outline',
                             destructive: true,
-                            onPress: () => void repos.setCookPhoto(c.id, null),
+                            onPress: () => inBackground(repos.setCookPhoto(c.id, null)),
                           },
                         ],
                       })

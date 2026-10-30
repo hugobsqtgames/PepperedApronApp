@@ -12,7 +12,7 @@ import {
 } from '@pepperedapron/core';
 import { useLive, useRepos } from '../../hooks/runtime';
 import { dayMonth } from '../../lib/dates';
-import { errorMessage } from '../../lib/errors';
+import { errorMessage, inBackground } from '../../lib/errors';
 import { haptic } from '../../services/haptics';
 import { space } from '../../theme/tokens';
 import {
@@ -78,23 +78,23 @@ export default function Pantry() {
         ...([1, 3, 7, 30] as const).map((d) => ({
           label: t('pantry.expiresIn', { count: d }),
           icon: 'calendar-outline' as const,
-          onPress: () => void repos.updatePantryItem(id, { expiresOn: addDays(today, d) }),
+          onPress: () => inBackground(repos.updatePantryItem(id, { expiresOn: addDays(today, d) })),
         })),
         {
           label: t('pantry.noDate'),
           icon: 'remove-circle-outline',
-          onPress: () => void repos.updatePantryItem(id, { expiresOn: null }),
+          onPress: () => inBackground(repos.updatePantryItem(id, { expiresOn: null })),
         },
         ...PANTRY_PLACES.filter((p) => p !== place).map((p) => ({
           label: t('pantry.moveTo', { place: t(`pantry.places.${p}`) }),
           icon: PLACE_ICONS[p],
-          onPress: () => void repos.updatePantryItem(id, { place: p }),
+          onPress: () => inBackground(repos.updatePantryItem(id, { place: p })),
         })),
         {
           label: t('pantry.usedUp'),
           icon: 'checkmark-done-outline',
           destructive: true,
-          onPress: () => void repos.removePantryItem(id),
+          onPress: () => inBackground(repos.removePantryItem(id)),
         },
       ],
     });

@@ -29,12 +29,16 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   const [msg, setMsg] = useState<ToastMsg | null>(null);
   const anim = useRef(new Animated.Value(0)).current;
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // An action that ends after its screen closed may still ask for a toast: once the provider is
+  // gone, nothing is shown and no timer is left behind.
+  const mounted = useRef(true);
   const insets = useSafeAreaInsets();
   const { colors, dark, a11y } = useTheme();
   const still = a11y.reduceMotion;
 
   const show = useCallback(
     (text: string, opts: { tone?: ToastMsg['tone']; action?: ToastMsg['action'] } = {}) => {
+      if (!mounted.current) return;
       if (timer.current) clearTimeout(timer.current);
       setMsg({ id: Date.now(), text, tone: opts.tone ?? 'success', action: opts.action });
       AccessibilityInfo.announceForAccessibility(text);
@@ -54,7 +58,13 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     },
     [anim, still],
   );
-  useEffect(() => () => void (timer.current && clearTimeout(timer.current)), []);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+      if (timer.current) clearTimeout(timer.current);
+    };
+  }, []);
 
   const icon: IconName =
     msg?.tone === 'error'

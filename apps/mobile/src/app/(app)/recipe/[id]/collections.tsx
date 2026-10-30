@@ -6,6 +6,7 @@ import { useLive, useRepos } from '../../../../hooks/runtime';
 import { haptic } from '../../../../services/haptics';
 import { space } from '../../../../theme/tokens';
 import { Button, Group, ListRow, Text, TextField } from '../../../../ui';
+import { inBackground } from '../../../../lib/errors';
 
 export default function RecipeCollections() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -41,7 +42,7 @@ export default function RecipeCollections() {
               toggle={inside.has(c.id)}
               onToggle={(v) => {
                 haptic.selection();
-                void repos.setInCollection(c.id, id, v);
+                inBackground(repos.setInCollection(c.id, id, v));
               }}
             />
           ))}

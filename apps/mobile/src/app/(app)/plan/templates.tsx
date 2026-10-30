@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { addDays, startOfWeek, toIsoDate } from '@pepperedapron/core';
 import { useLive, useRepos } from '../../../hooks/runtime';
 import { dayMonth } from '../../../lib/dates';
-import { errorMessage } from '../../../lib/errors';
+import { errorMessage, inBackground } from '../../../lib/errors';
 import { haptic } from '../../../services/haptics';
 import { space } from '../../../theme/tokens';
 import { Button, Group, ListRow, Text, useActionSheet, usePrompt, useToast } from '../../../ui';
@@ -76,7 +76,7 @@ export default function PlanTemplates() {
                   title: t('planning.templateName'),
                   initial: name,
                   maxLength: 80,
-                  onSubmit: (v) => void repos.renameTemplate(id, v),
+                  onSubmit: (v) => inBackground(repos.renameTemplate(id, v)),
                 }),
               350,
             ),
@@ -91,7 +91,7 @@ export default function PlanTemplates() {
               {
                 text: t('common.delete'),
                 style: 'destructive',
-                onPress: () => void repos.deleteTemplate(id),
+                onPress: () => inBackground(repos.deleteTemplate(id)),
               },
             ]),
         },

@@ -5,6 +5,7 @@ import { useLive, useRepos } from '../../../hooks/runtime';
 import { haptic } from '../../../services/haptics';
 import { space } from '../../../theme/tokens';
 import { Button, Group, ListRow, Text, useActionSheet, usePrompt } from '../../../ui';
+import { inBackground } from '../../../lib/errors';
 
 /** Many lists, but always one clearly active list. */
 export default function ShoppingLists() {
@@ -41,7 +42,7 @@ export default function ShoppingLists() {
               }
               onPress={() => {
                 haptic.selection();
-                void repos.setActiveList(l.id);
+                inBackground(repos.setActiveList(l.id));
                 router.back();
               }}
               chevron={false}
@@ -59,7 +60,7 @@ export default function ShoppingLists() {
             title: t('shopping.newList'),
             placeholder: t('shopping.listExamples'),
             maxLength: 80,
-            onSubmit: (v) => void repos.createList(v).then(() => router.back()),
+            onSubmit: (v) => inBackground(repos.createList(v).then(() => router.back())),
           })
         }
         testID="new-list"
@@ -87,7 +88,7 @@ export default function ShoppingLists() {
                                 title: t('shopping.renameList'),
                                 initial: l.data.name,
                                 maxLength: 80,
-                                onSubmit: (v) => void repos.updateList(l.id, { name: v }),
+                                onSubmit: (v) => inBackground(repos.updateList(l.id, { name: v })),
                               }),
                           },
                           {
@@ -100,7 +101,7 @@ export default function ShoppingLists() {
                                 {
                                   text: t('common.delete'),
                                   style: 'destructive',
-                                  onPress: () => void repos.deleteList(l.id),
+                                  onPress: () => inBackground(repos.deleteList(l.id)),
                                 },
                               ]),
                           },

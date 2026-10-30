@@ -33,6 +33,7 @@ import {
   Text,
   TextField,
 } from '../../../ui';
+import { inBackground } from '../../../lib/errors';
 
 const TIMES = [15, 30, 45, 60];
 
@@ -347,7 +348,7 @@ export default function Search() {
               favorite={all.favs.has(item.recipe.id)}
               onToggleFavorite={() => {
                 haptic.light();
-                void repos.toggleFavorite(item.recipe.id);
+                inBackground(repos.toggleFavorite(item.recipe.id));
               }}
               onPress={() => router.push(`/recipe/${item.recipe.id}`)}
             />

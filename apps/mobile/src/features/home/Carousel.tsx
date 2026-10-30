@@ -5,6 +5,7 @@ import { useLayout } from '../../lib/layout';
 import { haptic } from '../../services/haptics';
 import { space } from '../../theme/tokens';
 import { RecipeCard } from '../../ui';
+import { inBackground } from '../../lib/errors';
 
 export function RecipeCarousel({
   recipes,
@@ -37,7 +38,7 @@ export function RecipeCarousel({
           favorite={favorites.has(item.id)}
           onToggleFavorite={() => {
             haptic.light();
-            void repos.toggleFavorite(item.id);
+            inBackground(repos.toggleFavorite(item.id));
           }}
           onPress={() => router.push(`/recipe/${item.id}`)}
         />

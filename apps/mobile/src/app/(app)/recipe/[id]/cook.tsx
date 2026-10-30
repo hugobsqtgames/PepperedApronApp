@@ -54,6 +54,7 @@ import {
   usePrompt,
   useToast,
 } from '../../../../ui';
+import { inBackground } from '../../../../lib/errors';
 
 const TIMER_PRESETS = [1, 3, 5, 10, 15, 20, 30, 45, 60];
 const TEXT_SCALES = [0.85, 1, 1.15, 1.3, 1.5, 1.75];
@@ -212,7 +213,7 @@ export default function CookMode() {
   const setScale = (dir: 1 | -1) => {
     const i = TEXT_SCALES.findIndex((x) => x >= scale - 0.01);
     const next = TEXT_SCALES[Math.max(0, Math.min(TEXT_SCALES.length - 1, i + dir))]!;
-    if (next !== scale) void repos.updateSettings({ cookTextScale: next });
+    if (next !== scale) inBackground(repos.updateSettings({ cookTextScale: next }));
   };
 
   /** A timer of its own ("pasta", "sauce"): pick a duration, then name it. */
@@ -263,7 +264,7 @@ export default function CookMode() {
   const finish = () => {
     haptic.success();
     // Cooking history: one entry per recipe and day.
-    void repos.logCooked(recipe.id);
+    inBackground(repos.logCooked(recipe.id));
     // Another recipe still cooking: carry on with it.
     const next = others[0];
     if (next) {
@@ -327,7 +328,7 @@ export default function CookMode() {
               multiline: true,
               maxLength: 2000,
               allowEmpty: true,
-              onSubmit: (v) => void repos.setPersonalNote(recipe.id, v || null),
+              onSubmit: (v) => inBackground(repos.setPersonalNote(recipe.id, v || null)),
             })
           }
           secondary={t('common.close')}
@@ -340,7 +341,7 @@ export default function CookMode() {
           <Stars
             value={recipe.data.rating}
             onChange={(v) => {
-              void repos.setRating(recipe.id, v);
+              inBackground(repos.setRating(recipe.id, v));
               // A happy moment: the only place the App Store rating is ever asked.
               void maybeAskForReview(v);
             }}
@@ -546,7 +547,7 @@ export default function CookMode() {
           variant={readAloud ? 'primary' : 'surface'}
           onPress={() => {
             if (readAloud) void Speech.stop();
-            void repos.updateSettings({ cookReadAloud: !readAloud });
+            inBackground(repos.updateSettings({ cookReadAloud: !readAloud }));
           }}
           testID="cook-read-aloud"
         />

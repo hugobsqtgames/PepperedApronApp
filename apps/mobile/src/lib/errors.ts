@@ -15,3 +15,15 @@ export function errorMessage(e: unknown, t: TFunction): string {
     return t('errors.storageFull');
   return t('errors.generic');
 }
+
+/**
+ * For a change started from a tap without waiting for it. The item may have been deleted in the
+ * meantime (on another device, through iCloud): there is then nothing left to change, and the
+ * screen already shows it gone. Anything else is logged, never left as an unhandled rejection.
+ */
+export function inBackground(p: Promise<unknown>): void {
+  p.catch((e: unknown) => {
+    if (e instanceof Error && e.message === 'not_found') return;
+    console.warn('[action] failed', e instanceof Error ? e.message : e);
+  });
+}

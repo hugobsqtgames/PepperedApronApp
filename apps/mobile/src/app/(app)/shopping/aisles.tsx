@@ -6,6 +6,7 @@ import { aisleName } from '../../../lib/aisles';
 import { useTheme } from '../../../theme/ThemeProvider';
 import { space } from '../../../theme/tokens';
 import { Button, Group, IconButton, ListRow, Text, usePrompt } from '../../../ui';
+import { inBackground } from '../../../lib/errors';
 
 /** Order aisles like your supermarket; add your own aisles. */
 export default function Aisles() {
@@ -21,7 +22,7 @@ export default function Aisles() {
     if (j < 0 || j >= keys.length) return;
     const next = [...keys];
     [next[i], next[j]] = [next[j]!, next[i]!];
-    void repos.setCategoryOrder(next);
+    inBackground(repos.setCategoryOrder(next));
   };
   return (
     <ScrollView
@@ -48,7 +49,7 @@ export default function Aisles() {
                       title: t('common.rename'),
                       initial: aisleName(c.key, custom, t),
                       maxLength: 60,
-                      onSubmit: (v) => void repos.renameCategory(c.key, v),
+                      onSubmit: (v) => inBackground(repos.renameCategory(c.key, v)),
                     })
                 : undefined
             }
@@ -82,7 +83,7 @@ export default function Aisles() {
           prompt({
             title: t('shopping.newAisle'),
             maxLength: 60,
-            onSubmit: (v) => void repos.createCategory(v),
+            onSubmit: (v) => inBackground(repos.createCategory(v)),
           })
         }
       />

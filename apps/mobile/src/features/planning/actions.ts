@@ -5,6 +5,7 @@ import type { Repos } from '@pepperedapron/client';
 import type { SheetOption } from '../../ui';
 import { dayLong } from '../../lib/dates';
 import { haptic } from '../../services/haptics';
+import { inBackground } from '../../lib/errors';
 
 type Show = (o: { title?: string; message?: string; options: SheetOption[] }) => void;
 
@@ -30,7 +31,7 @@ export function moveMealFlow(
               options: MEAL_SLOTS.map((s: MealSlot) => ({
                 label: t(`slots.${s}`),
                 onPress: () => {
-                  void repos.moveMeal(entryId, d, s);
+                  inBackground(repos.moveMeal(entryId, d, s));
                   haptic.success();
                 },
               })),
@@ -78,7 +79,7 @@ export function entryActions(
                       options: [1, 2, 3, 4, 6].map((n) => ({
                         label: t('planning.portions', { count: n }),
                         onPress: () => {
-                          void repos.planLeftovers(e.id, n);
+                          inBackground(repos.planLeftovers(e.id, n));
                           haptic.success();
                         },
                       })),
@@ -116,7 +117,7 @@ export function entryActions(
         label: t('planning.removeMeal'),
         icon: 'trash-outline',
         destructive: true,
-        onPress: () => void repos.removeMeal(e.id),
+        onPress: () => inBackground(repos.removeMeal(e.id)),
       },
     ],
   });

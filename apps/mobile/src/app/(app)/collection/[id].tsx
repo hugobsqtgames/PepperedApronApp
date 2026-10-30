@@ -8,6 +8,7 @@ import { haptic } from '../../../services/haptics';
 import { useTheme } from '../../../theme/ThemeProvider';
 import { space } from '../../../theme/tokens';
 import { EmptyState, IconButton, RecipeCard, useActionSheet, usePrompt } from '../../../ui';
+import { inBackground } from '../../../lib/errors';
 
 export default function CollectionScreen() {
   const { id, smart } = useLocalSearchParams<{ id: string; smart?: string }>();
@@ -65,7 +66,7 @@ export default function CollectionScreen() {
       title: t('common.rename'),
       initial: col.data.name,
       maxLength: 80,
-      onSubmit: (v) => void repos.updateCollection(col.id, { name: v.slice(0, 80) }),
+      onSubmit: (v) => inBackground(repos.updateCollection(col.id, { name: v.slice(0, 80) })),
     });
 
   return (
@@ -168,7 +169,7 @@ export default function CollectionScreen() {
             favorite={favs.has(item.id)}
             onToggleFavorite={() => {
               haptic.light();
-              void repos.toggleFavorite(item.id);
+              inBackground(repos.toggleFavorite(item.id));
             }}
             onPress={() => router.push(`/recipe/${item.id}`)}
             onLongPress={() =>
@@ -180,7 +181,7 @@ export default function CollectionScreen() {
                     label: t('common.remove'),
                     icon: 'remove-circle-outline',
                     destructive: true,
-                    onPress: () => void repos.setInCollection(col.id, item.id, false),
+                    onPress: () => inBackground(repos.setInCollection(col.id, item.id, false)),
                   },
                 ],
               })

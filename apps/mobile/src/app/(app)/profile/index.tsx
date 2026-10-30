@@ -7,6 +7,7 @@ import { ENV } from '../../../services/env';
 import { useTheme } from '../../../theme/ThemeProvider';
 import { space } from '../../../theme/tokens';
 import { Group, ListRow, Text, usePrompt } from '../../../ui';
+import { inBackground } from '../../../lib/errors';
 
 /** Settings. No account: everything lives on this device (and in the user's own iCloud). */
 export default function Settings() {
@@ -22,7 +23,7 @@ export default function Settings() {
       initial: settings.firstName ?? '',
       placeholder: t('onboarding.namePlaceholder'),
       maxLength: 40,
-      onSubmit: (v) => void repos.updateSettings({ firstName: v }),
+      onSubmit: (v) => inBackground(repos.updateSettings({ firstName: v })),
     });
   const stats = useLive(['recipe', 'favorite', 'collection'], (r) => ({
     recipes: r.recipes().length,

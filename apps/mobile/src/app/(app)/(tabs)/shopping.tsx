@@ -25,7 +25,7 @@ import {
 import type { LocalRecord } from '@pepperedapron/client';
 import { useLive, useRepos } from '../../../hooks/runtime';
 import { aisleName } from '../../../lib/aisles';
-import { errorMessage } from '../../../lib/errors';
+import { errorMessage, inBackground } from '../../../lib/errors';
 import { shoppingListAsText } from '../../../lib/format';
 import { formatMoney } from '../../../lib/money';
 import { useLayout } from '../../../lib/layout';
@@ -200,7 +200,7 @@ export default function Shopping() {
         tone: 'info',
         action: {
           label: t(`pantry.to.${place}`),
-          onPress: () => void repos.storeBoughtItem(i.id, place),
+          onPress: () => inBackground(repos.storeBoughtItem(i.id, place)),
         },
       });
     }
@@ -244,7 +244,7 @@ export default function Shopping() {
               {
                 label: t('shopping.clearChecked'),
                 icon: 'checkmark-done-outline' as const,
-                onPress: () => void repos.clearChecked(list!.id),
+                onPress: () => inBackground(repos.clearChecked(list!.id)),
               },
             ]
           : []),
@@ -275,7 +275,7 @@ export default function Shopping() {
               title: t('shopping.newList'),
               placeholder: t('shopping.listExamples'),
               maxLength: 80,
-              onSubmit: (v) => void repos.createList(v),
+              onSubmit: (v) => inBackground(repos.createList(v)),
             }),
         },
         ...(list
@@ -288,7 +288,7 @@ export default function Shopping() {
                     title: t('shopping.renameList'),
                     initial: list.data.name,
                     maxLength: 80,
-                    onSubmit: (v) => void repos.updateList(list.id, { name: v }),
+                    onSubmit: (v) => inBackground(repos.updateList(list.id, { name: v })),
                   }),
               },
             ]
@@ -310,7 +310,7 @@ export default function Shopping() {
                     {
                       text: t('common.delete'),
                       style: 'destructive',
-                      onPress: () => void repos.deleteList(list.id),
+                      onPress: () => inBackground(repos.deleteList(list.id)),
                     },
                   ]),
               },
@@ -322,12 +322,12 @@ export default function Shopping() {
   const renderItem = (i: Item) => {
     const qty = formatShoppingQuantity(i.data, locale);
     const del = () => {
-      void repos.removeItem(i.id);
+      inBackground(repos.removeItem(i.id));
       toast(`${i.data.name} ✕`, {
         tone: 'info',
         action: {
           label: t('common.undo'),
-          onPress: () => void repos.addItem(i.data.listId, { ...i.data }),
+          onPress: () => inBackground(repos.addItem(i.data.listId, { ...i.data })),
         },
       });
     };
@@ -517,7 +517,7 @@ export default function Shopping() {
             title={t('shopping.clearChecked')}
             variant="ghost"
             size="sm"
-            onPress={() => list && void repos.clearChecked(list.id)}
+            onPress={() => list && inBackground(repos.clearChecked(list.id))}
           />
         </View>
       ) : null}
