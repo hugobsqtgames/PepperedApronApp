@@ -5,11 +5,11 @@ Chaque lot se fait dans une **nouvelle session** (contexte léger) : « Fais le 
 Repères : modèle de données `packages/core/src/schemas.ts` (champs ajoutés avec `.default()`, `DATA_VERSION` à incrémenter dans `sync.ts`), logique `packages/client/src/repos.ts`, écrans `apps/mobile/src/app`, imports `apps/mobile/src/services/{importer,autoImport,importQueue}.ts`, module natif local `apps/mobile/modules/video-speech` (Swift, modèle pour d'autres modules), widgets `apps/mobile/targets/widgets`, vidéo/captures `tools/brand/preview`.
 
 ## Lot 1 — Prêt pour l'App Store (1, 2, 4, 5, 50)
-- [ ] **Quoi de neuf** : écran affiché une fois par version (`meta` locale « last_seen_version »), contenu fr/en dans i18n.
-- [ ] **Fichier de démonstration** : `docs/store/demo-backup.json` au format d'export (`EXPORT_FORMAT`), ~15 recettes avec photos? (les photos ne sont pas dans l'export : recettes sans photo ou catégories), planning de la semaine, liste en cours ; test qui vérifie qu'il s'importe ; mention dans `docs/store/README.md` (notes pour la revue).
-- [ ] **Vidéo + captures en anglais** : `tools/brand/preview` paramétré `?lang=en` (textes des écrans et légendes dans un dictionnaire fr/en ; légendes = `docs/store/listings.json`), sorties `-en`.
-- [ ] **Captures iPad 13″** (2064×2752) : mises en page iPad (barre latérale, grilles, comme l'app sur iPad) dans la même page, `render.mjs stills-ipad`.
-- [ ] **Demande d'avis** : `expo-store-review`, seulement après « Terminer » en mode cuisine avec une note de 5 étoiles, au plus une fois tous les 4 mois (règle Apple : 3 fois/an max).
+- [x] **Quoi de neuf** : écran affiché une fois par version (`meta` locale « last_seen_version »), contenu fr/en dans i18n.
+- [x] **Fichier de démonstration** : `docs/store/demo-backup.json` au format d'export (`EXPORT_FORMAT`), ~15 recettes avec photos? (les photos ne sont pas dans l'export : recettes sans photo ou catégories), planning de la semaine, liste en cours ; test qui vérifie qu'il s'importe ; mention dans `docs/store/README.md` (notes pour la revue).
+- [x] **Vidéo + captures en anglais** : `tools/brand/preview` paramétré `?lang=en` (textes des écrans et légendes dans un dictionnaire fr/en ; légendes = `docs/store/listings.json`), sorties `-en`.
+- [x] **Captures iPad 13″** (2064×2752) : mises en page iPad (barre latérale, grilles, comme l'app sur iPad) dans la même page, `render.mjs stills-ipad`.
+- [x] **Demande d'avis** : `expo-store-review`, seulement après « Terminer » en mode cuisine avec une note de 5 étoiles, au plus une fois tous les 4 mois (règle Apple : 3 fois/an max).
 
 ## Lot 2 — Import (7, 8, 9, 10)
 - [ ] **Texte écrit dans la vidéo** : pour un Reel/TikTok téléchargé (déjà fait pour l'écoute) extraire ~1 image/s (`expo-video-thumbnails`), OCR sur l'appareil (`services/ocr.ts`), garder les lignes qui ressemblent à des ingrédients/quantités, fusionner avec la légende et la transcription (sans doublons).

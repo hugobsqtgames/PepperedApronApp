@@ -48,19 +48,22 @@ Ajouter la légende en haut de chaque capture (Fraunces 700, crème sur fond ver
 
 ## Notes pour la revue Apple
 
-- Aucun compte : le reviewer ouvre l'app et l'utilise directement. Joindre un fichier de sauvegarde de démonstration (Réglages → Mes données → Importer) pour qu'il n'ait pas à créer de contenu.
+- Aucun compte : le reviewer ouvre l'app et l'utilise directement. Fichier de démonstration : `docs/store/demo-backup.json` (12 recettes, favoris, collections, planning de la semaine, liste de courses ; les réglages du reviewer ne sont pas touchés). Le joindre aux notes de revue ; il s'importe par Réglages → Mes données → Importer une sauvegarde. Le régénérer juste avant l'envoi pour que le planning tombe sur la semaine en cours : `WRITE_DEMO=1 pnpm --filter @pepperedapron/client test demo` (un test vérifie qu'il s'importe dans une app vide).
 - Expliquer : l'extension de partage importe le lien et les métadonnées publiques ; aucune IA ; aucune publicité ; les données restent sur l'appareil et dans l'iCloud de l'utilisateur.
 - Pas de connexion tierce, donc pas de Sign in with Apple requis (règle 4.8) ; pas de compte, donc pas d'obligation de suppression de compte (5.1.1(v)) — l'effacement des données reste disponible dans Réglages → Mes données.
 
 ## Vidéo App Preview et captures (`tools/brand/preview`)
 
-`preview.html` recompose les vrais écrans de l'app (couleurs de `theme/tokens.ts`, Fraunces, photos de `assets/photos`, icône, textes français de l'app) et les anime avec une timeline déterministe ; `render.mjs` la capture image par image (30 i/s, Chromium) puis encode avec ffmpeg. Ouvrir `preview.html` dans un navigateur la joue en direct (`?mode=store`, `?mode=marketing`, `?still=0…6`).
+`preview.html` recompose les vrais écrans de l'app (couleurs de `theme/tokens.ts`, Fraunces, photos de `assets/photos`, icône, textes français de l'app) et les anime avec une timeline déterministe ; `render.mjs` la capture image par image (30 i/s, Chromium) puis encode avec ffmpeg. Ouvrir `preview.html` dans un navigateur la joue en direct (`?mode=store`, `?mode=marketing`, `?still=0…6`, `&ipad=1`, `&lang=en`).
+
+Version anglaise : ajouter `-- --en` à chaque commande (fichiers suffixés `-en`, textes dans `en.js`, légendes = `listings.json` en-US).
 
 ```
 cd tools/brand
 pnpm preview:video              # out/app-preview-store.mp4      → App Store (886×1920, 28 s, H.264 ~11 Mb/s, AAC stéréo muet)
 pnpm preview:video:marketing    # out/app-preview-marketing.mp4  → site, réseaux, pubs (iPhone en scène, mouvements 3D)
 pnpm preview:stills             # out/screenshot-1…7.png         → captures iPhone 6,9″ (1320×2868), légendes ci-dessus
+pnpm preview:stills:ipad        # out/ipad-1…7.png               → captures iPad 13″ (2064×2752), mise en page iPad (barre latérale)
 ```
 
 Récit (28 s) : recettes éparpillées → partage depuis un Reel → lecture puis écoute de la vidéo sur l'iPhone → recette enregistrée toute seule → 6 personnes, quantités recalculées → planning → courses (rayons, budget) → mode cuisine et minuteur → logo, « Sans compte · Sans publicité · iCloud ».

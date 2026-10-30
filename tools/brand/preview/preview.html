@@ -166,6 +166,115 @@
           0 36px 70px -24px rgba(0, 0, 0, 0.55),
           0 0 0 1px rgba(255, 255, 255, 0.06);
       }
+      /* iPad 13" screenshots (?still=N&ipad=1): 1032×1376 stage, the app's iPad layout
+         (sidebar of 260 pt, content beside it), screen drawn at 0.82 of its 1032×1376 pt. */
+      body.ipad #stage {
+        width: 1032px;
+        height: 1376px;
+      }
+      body.ipad #cap {
+        left: 80px;
+        right: 80px;
+        top: 58px;
+      }
+      body.ipad #cap .l {
+        font-size: 46px;
+        line-height: 54px;
+      }
+      body.ipad #phone {
+        left: 93px;
+        top: 210px;
+        width: 846px;
+        height: 1128px;
+        margin-left: 0;
+      }
+      body.ipad #screen {
+        width: 846px;
+        height: 1128px;
+        border-radius: 26px;
+      }
+      body.ipad .scr {
+        left: 213px;
+        width: 772px;
+        height: 1376px;
+      }
+      body.ipad .tabs {
+        display: none;
+      }
+      /* Content spans the column with the iPad gutter (28 pt), like useLayout() on iPad. */
+      body.ipad .scr .in {
+        width: 100% !important;
+        padding-left: 28px !important;
+        padding-right: 28px !important;
+        box-sizing: border-box;
+      }
+      /* Instagram and the cook mode (a full-screen modal) cover the whole iPad screen. */
+      body.ipad .scr.full {
+        left: 0;
+        width: 1032px;
+      }
+      body.ipad .scr.full > img {
+        width: 100% !important;
+      }
+      body.ipad.noside #side {
+        display: none;
+      }
+      #side {
+        display: none;
+      }
+      body.ipad #side {
+        display: flex;
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 260px;
+        height: 1376px;
+        box-sizing: border-box;
+        padding: 48px 16px 24px;
+        flex-direction: column;
+        gap: 16px;
+        background: var(--surface);
+        border-right: 0.5px solid var(--sand);
+        transform: scale(0.82);
+        transform-origin: 0 0;
+        z-index: 5;
+      }
+      #side .brand {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 0 8px 8px;
+        font-family: var(--display);
+        font-weight: 700;
+        font-size: 22px;
+      }
+      #side .add {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 0 24px;
+        min-height: 48px;
+        border-radius: 16px;
+        background: var(--paprika);
+        color: #fff;
+        font-weight: 600;
+        font-size: 17px;
+      }
+      #side .it {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding: 0 16px;
+        min-height: 46px;
+        border-radius: 12px;
+        font-size: 17px;
+        color: var(--muted);
+      }
+      #side .it.on {
+        background: var(--soft);
+        color: var(--forest);
+        font-weight: 600;
+      }
       .scr {
         position: absolute;
         left: 0;
@@ -576,19 +685,36 @@
         <div class="avail">Sur iPhone et iPad</div>
       </div>
     </div>
+    <script src="en.js"></script>
     <script>
       'use strict';
       // ================================================================ setup
       const Q = new URLSearchParams(location.search);
       const MODE = Q.get('mode') === 'store' || Q.has('still') ? 'store' : 'marketing';
+      // English version (?lang=en): texts translated from en.js.
+      const LANG = Q.get('lang') === 'en' ? 'en' : 'fr';
+      document.documentElement.lang = LANG;
+      const tr = (s) => (LANG === 'en' ? (window.EN[s] ?? s) : s);
+      function translateTree(root) {
+        if (LANG !== 'en') return;
+        const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+        for (let n = w.nextNode(); n; n = w.nextNode()) {
+          const k = n.nodeValue.trim();
+          if (k && window.EN[k]) n.nodeValue = n.nodeValue.replace(k, window.EN[k]);
+        }
+      }
       document.body.classList.add(MODE);
+      const IPAD = Q.has('ipad');
+      if (IPAD) document.body.classList.add('ipad');
+      const SW = IPAD ? 1032 : 443;
+      const SH = IPAD ? 1376 : 960;
       const PH = '../../../apps/mobile/assets/photos/';
       const ICON = '../../../apps/mobile/assets/icon.png';
       const $ = (s) => document.querySelector(s);
       const stage = $('#stage');
       function fit() {
-        const k = Math.min(innerWidth / 443, innerHeight / 960);
-        stage.style.transform = `translate(${(innerWidth - 443 * k) / 2}px,${(innerHeight - 960 * k) / 2}px) scale(${k})`;
+        const k = Math.min(innerWidth / SW, innerHeight / SH);
+        stage.style.transform = `translate(${(innerWidth - SW * k) / 2}px,${(innerHeight - SH * k) / 2}px) scale(${k})`;
       }
       fit();
       addEventListener('resize', fit);
@@ -976,6 +1102,8 @@
               },
             ];
       for (const c of CAPTIONS) {
+        c.l = c.l.map(tr);
+        if (c.s) c.s = tr(c.s);
         const box = document.createElement('div');
         box.style.cssText = 'position:absolute;left:0;right:0;top:0';
         let n = 0;
@@ -1218,10 +1346,16 @@
           tapped =
             tapAt(t, at - 0.15, sp(38), sp([0, 0, 0, 0, 500, 0, 0, 760][i] || 300)) || tapped;
         }
-        $('#rem').textContent = `${13 - done} articles restants`;
-        $('#budget').textContent = done
-          ? `≈ 42,80 € · ${['1,35', '3,75', '5,60'][done - 1]} € dans le panier`
-          : '≈ 42,80 €';
+        const cart = ['1,35', '3,75', '5,60'][done - 1];
+        if (LANG === 'en') {
+          $('#rem').textContent = `${13 - done} items left`;
+          $('#budget').textContent = done
+            ? `≈ $42.80 · $${cart.replace(',', '.')} in the basket`
+            : '≈ $42.80';
+        } else {
+          $('#rem').textContent = `${13 - done} articles restants`;
+          $('#budget').textContent = done ? `≈ 42,80 € · ${cart} € dans le panier` : '≈ 42,80 €';
+        }
 
         // cook mode: launch the timer, it counts down
         const ckIn = ease(lin(t, 20.5, 21.0));
@@ -1264,13 +1398,35 @@
         { cap: ['En cuisine,', 'minuteurs *compris*'], show: 'cook', at: 23.5 },
         { cap: ['Sans compte : sur iPhone,', 'iPad et *iCloud*'], show: 'settings' },
       ];
+      // The app's iPad sidebar ((tabs)/_layout.tsx): brand, Add, the tabs, Profile at the bottom.
+      function sidebar(on) {
+        let side = $('#side');
+        if (!side) {
+          side = document.createElement('div');
+          side.id = 'side';
+          screen.appendChild(side);
+        }
+        const tab = { home: 'home', search: 'search', planning: 'plan', shopping: 'shop' }[on];
+        const it = (k, icon, label) =>
+          `<div class="it ${tab === k ? 'on' : ''}">${icon}<span>${tr(label)}</span></div>`;
+        side.innerHTML = `<div class="brand"><img src="${ICON}" style="width:36px;height:36px;border-radius:9px">PepperedApron</div>
+  <div class="add">${I.plus(22)}<span>${tr('Ajouter une recette')}</span></div>
+  <div style="display:flex;flex-direction:column;gap:2px">${it('home', I.homeO, 'Accueil')}${it('search', I.search, 'Recherche')}${it('fav', I.heart(), 'Favoris')}${it('plan', I.cal, 'Planning')}${it('shop', I.cart, 'Courses')}</div>
+  <div style="flex:1"></div>${it('profile', I.person, 'Profil')}`;
+      }
       function still(i) {
         const s = STILLS[i];
         if (s.at) seek(s.at);
         else seek(1.0);
         for (const k of Object.keys(layers)) {
           show(k, k === s.show ? 1 : 0);
-          layers[k].style.transform = `scale(${screen.clientWidth / 390})`;
+          layers[k].style.transform = `scale(${IPAD ? 0.82 : screen.clientWidth / 390})`;
+        }
+        if (IPAD) {
+          const full = s.show === 'reel' || s.show === 'cook';
+          layers[s.show].classList.toggle('full', full);
+          document.body.classList.toggle('noside', full);
+          sidebar(s.show);
         }
         // Screens at rest: not scrolled.
         for (const el of document.querySelectorAll('.scr .in')) el.style.transform = '';
@@ -1288,6 +1444,7 @@
           capEl.appendChild(box);
         }
         box.innerHTML = s.cap
+          .map(tr)
           .map(
             (l) =>
               `<div class="l">${l
@@ -1301,6 +1458,7 @@
       }
 
       // ================================================================ entry points
+      translateTree(document.getElementById('stage'));
       window.DURATION = DURATION;
       window.STILLS = STILLS.length;
       window.seek = seek;

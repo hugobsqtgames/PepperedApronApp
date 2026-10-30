@@ -23,6 +23,7 @@ import { IngredientList } from '../../../../features/recipe/RecipeBody';
 import { useLive, useRepos } from '../../../../hooks/runtime';
 import { useLayout } from '../../../../lib/layout';
 import { haptic } from '../../../../services/haptics';
+import { maybeAskForReview } from '../../../../services/appMoments';
 import { timers } from '../../../../services/timers';
 import { useTheme } from '../../../../theme/ThemeProvider';
 import { radius, space } from '../../../../theme/tokens';
@@ -169,7 +170,11 @@ export default function CookMode() {
           </Text>
           <Stars
             value={recipe.data.rating}
-            onChange={(v) => void repos.setRating(recipe.id, v)}
+            onChange={(v) => {
+              void repos.setRating(recipe.id, v);
+              // A happy moment: the only place the App Store rating is ever asked.
+              void maybeAskForReview(v);
+            }}
             size={36}
           />
           <Text variant="caption" color="textMuted">

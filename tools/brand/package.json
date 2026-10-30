@@ -7,6 +7,7 @@
     "preview:video": "node preview/render.mjs video store",
     "preview:video:marketing": "node preview/render.mjs video marketing",
     "preview:stills": "node preview/render.mjs stills",
+    "preview:stills:ipad": "node preview/render.mjs stills-ipad",
     "preview:sound": "node preview/render.mjs sound"
   },
   "devDependencies": {

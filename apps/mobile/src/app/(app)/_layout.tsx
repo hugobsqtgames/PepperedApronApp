@@ -7,6 +7,7 @@ import { useRuntime } from '../../hooks/runtime';
 import { rescheduleReminders } from '../../services/notifications';
 import { sourcesFromShare } from '../../services/autoImport';
 import { importQueue } from '../../services/importQueue';
+import { shouldShowWhatsNew } from '../../services/appMoments';
 import { publishWidgetData } from '../../services/widgets';
 import { useTheme } from '../../theme/ThemeProvider';
 
@@ -55,6 +56,12 @@ export default function AppLayout() {
   // Imports interrupted when the app was closed resume on their own.
   useEffect(() => {
     if (rt.session) void importQueue.start();
+  }, [rt.session]);
+
+  // After an update: what changed, once.
+  useEffect(() => {
+    if (!rt.session) return;
+    void shouldShowWhatsNew().then((show) => show && router.push('/whats-new'));
   }, [rt.session]);
 
   useEffect(() => {
@@ -116,6 +123,7 @@ export default function AppLayout() {
       <Stack.Screen name="import/text" options={{ presentation: 'modal' }} />
       <Stack.Screen name="import/photo" options={{ presentation: 'modal' }} />
       <Stack.Screen name="import/queue" options={{ presentation: 'modal' }} />
+      <Stack.Screen name="whats-new" options={{ presentation: 'modal' }} />
       <Stack.Screen name="import/instagram" options={{ presentation: 'modal' }} />
       <Stack.Screen name="import/dictate" options={{ presentation: 'modal' }} />
       <Stack.Screen name="tools/converter" options={{ ...sheet, sheetAllowedDetents: [0.75, 1] }} />

@@ -755,6 +755,37 @@ const fr = {
     sent_other: '{{count}} articles ajoutés à « {{list}} »',
     denied: 'Autorisez l’accès aux Rappels pour PepperedApron dans Réglages.',
   },
+  whatsNew: {
+    title: 'Quoi de neuf',
+    version: 'Version {{version}}',
+    items: [
+      {
+        icon: 'share-outline',
+        title: 'Partager, c’est enregistré',
+        body: 'Depuis Instagram ou TikTok, Partager → PepperedApron : la recette s’enregistre toute seule, même dite à l’oral.',
+      },
+      {
+        icon: 'logo-instagram',
+        title: 'Vos enregistrements Instagram',
+        body: 'Importez d’un coup toutes les recettes enregistrées, rangées dans leurs collections.',
+      },
+      {
+        icon: 'mic-outline',
+        title: 'Dictée',
+        body: 'Racontez une recette, l’iPhone l’écrit pour vous.',
+      },
+      {
+        icon: 'restaurant-outline',
+        title: 'En cuisine',
+        body: 'Minuteurs nommés, texte réglable, quantités qui suivent le nombre de personnes.',
+      },
+      {
+        icon: 'calendar-outline',
+        title: 'Planning et courses',
+        body: 'Semaines types, restes du lendemain, budget et envoi vers Rappels.',
+      },
+    ],
+  },
 };
 
 export default fr;

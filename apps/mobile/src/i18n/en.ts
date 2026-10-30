@@ -749,6 +749,37 @@ const en: Translations = {
     sent_other: '{{count}} items added to “{{list}}”',
     denied: 'Allow access to Reminders for PepperedApron in Settings.',
   },
+  whatsNew: {
+    title: 'What’s new',
+    version: 'Version {{version}}',
+    items: [
+      {
+        icon: 'share-outline',
+        title: 'Share, and it’s saved',
+        body: 'From Instagram or TikTok, Share → PepperedApron: the recipe saves itself, even when it’s only said out loud.',
+      },
+      {
+        icon: 'logo-instagram',
+        title: 'Your Instagram saved posts',
+        body: 'Import every saved recipe at once, sorted into their collections.',
+      },
+      {
+        icon: 'mic-outline',
+        title: 'Dictation',
+        body: 'Say a recipe, your iPhone writes it down.',
+      },
+      {
+        icon: 'restaurant-outline',
+        title: 'In the kitchen',
+        body: 'Named timers, adjustable text, quantities that follow the number of people.',
+      },
+      {
+        icon: 'calendar-outline',
+        title: 'Planning and shopping',
+        body: 'Template weeks, next-day leftovers, budget and sending to Reminders.',
+      },
+    ],
+  },
 };
 
 export default en;

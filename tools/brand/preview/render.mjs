@@ -1,6 +1,8 @@
 // Renders preview.html to the App Store Preview video and the iPhone screenshots.
 //   node preview/render.mjs video [store|marketing]   → out/app-preview-<mode>.mp4 (886×1920, 30 fps)
 //   node preview/render.mjs stills                    → out/screenshot-<n>.png (1320×2868)
+//   node preview/render.mjs stills-ipad               → out/ipad-<n>.png (2064×2752)
+//   add --en for the English version (files suffixed -en)
 //   node preview/render.mjs sound                     → (re)put the soundtrack on rendered videos
 // Frames are captured one by one (no real-time playback), so the result is identical on every run.
 import { chromium } from 'playwright-core';
@@ -12,6 +14,9 @@ import { fileURLToPath } from 'node:url';
 const here = path.dirname(fileURLToPath(import.meta.url));
 const outDir = path.join(here, 'out');
 const FPS = 30;
+/** --en: the English version (files suffixed -en). */
+const LANG = process.argv.includes('--en') ? 'en' : 'fr';
+const SUFFIX = LANG === 'en' ? '-en' : '';
 
 function chromiumPath() {
   if (process.env.CHROMIUM_PATH) return process.env.CHROMIUM_PATH;
@@ -39,11 +44,11 @@ async function open(query, width, height) {
 
 async function video(mode) {
   // App Store App Preview, iPhone 6.9"/6.5": 886×1920 portrait, 15–30 s, 30 fps, H.264 + AAC stereo.
-  const { browser, page } = await open(`mode=${mode}`, 886, 1920);
+  const { browser, page } = await open(`mode=${mode}&lang=${LANG}`, 886, 1920);
   const duration = await page.evaluate(() => window.DURATION);
   const frames = Math.round(duration * FPS);
   fs.mkdirSync(outDir, { recursive: true });
-  const file = path.join(outDir, `app-preview-${mode}.mp4`);
+  const file = path.join(outDir, `app-preview-${mode}${SUFFIX}.mp4`);
   const ff = spawn(
     'ffmpeg',
     [
@@ -124,7 +129,7 @@ function soundtrack() {
 function sound() {
   const wav = soundtrack();
   for (const mode of ['store', 'marketing']) {
-    const file = path.join(outDir, `app-preview-${mode}.mp4`);
+    const file = path.join(outDir, `app-preview-${mode}${SUFFIX}.mp4`);
     if (!fs.existsSync(file)) continue;
     const tmp = file.replace(/\.mp4$/, '.tmp.mp4');
     const args = ['-y', '-loglevel', 'error', '-i', file, '-i', wav, '-map', '0:v', '-map', '1:a'];
@@ -136,20 +141,24 @@ function sound() {
   }
 }
 
-async function stills() {
-  const { browser, page } = await open('still=0', 1320, 2868);
+/** iPhone 6.9" (1320×2868) or, with ipad, iPad 13" (2064×2752) screenshots. */
+async function stills(ipad = false) {
+  const { browser, page } = ipad
+    ? await open(`still=0&ipad=1&lang=${LANG}`, 2064, 2752)
+    : await open(`still=0&lang=${LANG}`, 1320, 2868);
   const n = await page.evaluate(() => window.STILLS);
   fs.mkdirSync(outDir, { recursive: true });
   for (let i = 0; i < n; i++) {
     await page.evaluate((k) => window.still(k), i);
-    const file = path.join(outDir, `screenshot-${i + 1}.png`);
+    const file = path.join(outDir, `${ipad ? 'ipad' : 'screenshot'}-${i + 1}${SUFFIX}.png`);
     await page.screenshot({ path: file, type: 'png' });
     console.info(file);
   }
   await browser.close();
 }
 
-const [cmd = 'video', mode = 'store'] = process.argv.slice(2);
+const [cmd = 'video', mode = 'store'] = process.argv.slice(2).filter((a) => !a.startsWith('--'));
 if (cmd === 'stills') await stills();
+else if (cmd === 'stills-ipad') await stills(true);
 else if (cmd === 'sound') sound();
 else await video(mode);

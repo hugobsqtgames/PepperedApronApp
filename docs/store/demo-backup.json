@@ -1,0 +1,2160 @@
+{
+ "format": "pepperedapron-export/1",
+ "exportedAt": "2026-10-30T11:05:12.387Z",
+ "records": [
+  {
+   "entity": "collection",
+   "id": "01a18c7c-339e-7437-a46f-0fed381d42e9",
+   "hlc": "001793358312350-00000-01a18c7c-337b-746f-91ad-7999934e5ca6",
+   "deleted": false,
+   "data": {
+    "name": "Rapide",
+    "emoji": "⚡",
+    "position": 0
+   }
+  },
+  {
+   "entity": "collection",
+   "id": "01a18c7c-339f-7758-88e5-27f8037ac829",
+   "hlc": "001793358312351-00003-01a18c7c-337b-746f-91ad-7999934e5ca6",
+   "deleted": false,
+   "data": {
+    "name": "Desserts",
+    "emoji": "🍰",
+    "position": 1
+   }
+  },
+  {
+   "entity": "collectionItem",
+   "id": "72f8ac0c-2672-537f-9c08-f1d88ebf3b5c",
+   "hlc": "001793358312350-00001-01a18c7c-337b-746f-91ad-7999934e5ca6",
+   "deleted": false,
+   "data": {
+    "collectionId": "01a18c7c-339e-7437-a46f-0fed381d42e9",
+    "recipeId": "01a18c7c-3391-7147-b7a5-40a6d395b53e",
+    "position": 0
+   }
+  },
+  {
+   "entity": "collectionItem",
+   "id": "997ae3c0-7c34-557b-9e9a-c40039008e17",
+   "hlc": "001793358312352-00001-01a18c7c-337b-746f-91ad-7999934e5ca6",
+   "deleted": false,
+   "data": {
+    "collectionId": "01a18c7c-339f-7758-88e5-27f8037ac829",
+    "recipeId": "01a18c7c-3399-7119-9693-1a678ca273d4",
+    "position": 1
+   }
+  },
+  {
+   "entity": "collectionItem",
+   "id": "a8b97fc0-b5b9-5dca-824f-650aa696f79e",
+   "hlc": "001793358312351-00001-01a18c7c-337b-746f-91ad-7999934e5ca6",
+   "deleted": false,
+   "data": {
+    "collectionId": "01a18c7c-339e-7437-a46f-0fed381d42e9",
+    "recipeId": "01a18c7c-3395-7368-9343-827da988edcf",
+    "position": 2
+   }
+  },
+  {
+   "entity": "collectionItem",
+   "id": "a926ab37-61a2-5cbe-82ba-534c9e321fda",
+   "hlc": "001793358312351-00000-01a18c7c-337b-746f-91ad-7999934e5ca6",
+   "deleted": false,
+   "data": {
+    "collectionId": "01a18c7c-339e-7437-a46f-0fed381d42e9",
+    "recipeId": "01a18c7c-3392-718e-abfd-3ad014b12551",
+    "position": 1
+   }
+  },
+  {
+   "entity": "collectionItem",
+   "id": "b7653db5-33f4-5b34-8570-4c515dc303ed",
+   "hlc": "001793358312352-00000-01a18c7c-337b-746f-91ad-7999934e5ca6",
+   "deleted": false,
+   "data": {
+    "collectionId": "01a18c7c-339f-7758-88e5-27f8037ac829",
+    "recipeId": "01a18c7c-3396-709c-9f26-4681f67bdc65",
+    "position": 0
+   }
+  },
+  {
+   "entity": "collectionItem",
+   "id": "f4c548e4-71b7-5360-806e-920fd2f67adc",
+   "hlc": "001793358312351-00002-01a18c7c-337b-746f-91ad-7999934e5ca6",
+   "deleted": false,
+   "data": {
+    "collectionId": "01a18c7c-339e-7437-a46f-0fed381d42e9",
+    "recipeId": "01a18c7c-339c-753b-ba30-1854a5bac131",
+    "position": 3
+   }
+  },
+  {
+   "entity": "cookLog",
+   "id": "07b0f989-07c9-5609-a5b9-949e3af516ee",
+   "hlc": "001793358312360-00000-01a18c7c-337b-746f-91ad-7999934e5ca6",
+   "deleted": false,
+   "data": {
+    "recipeId": "01a18c7c-338e-7550-ba64-762b69980f53",
+    "date": "2026-10-16"
+   }
+  },
+  {
+   "entity": "cookLog",
+   "id": "53162699-3658-5120-a16c-4d355f80086b",
+   "hlc": "001793358312361-00000-01a18c7c-337b-746f-91ad-7999934e5ca6",
+   "deleted": false,
+   "data": {
+    "recipeId": "01a18c7c-3396-709c-9f26-4681f67bdc65",
+    "date": "2026-07-28"
+   }
+  },
+  {
+   "entity": "favorite",
+   "id": "2fa93fff-53b6-5cff-8855-8dc12070c1a8",
+   "hlc": "001793358312349-00001-01a18c7c-337b-746f-91ad-7999934e5ca6",
+   "deleted": false,
+   "data": {
+    "recipeId": "01a18c7c-3397-707c-a2e5-5bee07469512"
+   }
+  },
+  {
+   "entity": "favorite",
+   "id": "3d91e811-89cf-5fbe-8a50-6b0bf59902f7",
+   "hlc": "001793358312348-00002-01a18c7c-337b-746f-91ad-7999934e5ca6",
+   "deleted": false,
+   "data": {
+    "recipeId": "01a18c7c-3391-7147-b7a5-40a6d395b53e"
+   }
+  },
+  {
+   "entity": "favorite",
+   "id": "8dcb3e38-2731-53c4-a5a3-5612f45e0889",
+   "hlc": "001793358312349-00000-01a18c7c-337b-746f-91ad-7999934e5ca6",
+   "deleted": false,
+   "data": {
+    "recipeId": "01a18c7c-3396-709c-9f26-4681f67bdc65"
+   }
+  },
+  {
+   "entity": "favorite",
+   "id": "cf586e0a-d1a5-5d68-bb12-84c76175bf71",
+   "hlc": "001793358312348-00001-01a18c7c-337b-746f-91ad-7999934e5ca6",
+   "deleted": false,
+   "data": {
+    "recipeId": "01a18c7c-338e-7550-ba64-762b69980f53"
+   }
+  },
+  {
+   "entity": "mealPlanEntry",
+   "id": "01a18c7c-33a5-7599-850a-7ef82b1c891c",
+   "hlc": "001793358312357-00000-01a18c7c-337b-746f-91ad-7999934e5ca6",
+   "deleted": false,
+   "data": {
+    "date": "2026-10-26",
+    "slot": "lunch",
+    "recipeId": "01a18c7c-3393-7663-933b-5d9d7cfc39e0",
+    "customTitle": null,
+    "servings": null,
+    "position": 0,
+    "leftover": false
+   }
+  },
+  {
+   "entity": "mealPlanEntry",
+   "id": "01a18c7c-33a5-759a-82ae-0bdaea95d6bb",
+   "hlc": "001793358312357-00001-01a18c7c-337b-746f-91ad-7999934e5ca6",
+   "deleted": false,
+   "data": {
+    "date": "2026-10-26",
+    "slot": "dinner",
+    "recipeId": "01a18c7c-3391-7147-b7a5-40a6d395b53e",
+    "customTitle": null,
+    "servings": null,
+    "position": 0,
+    "leftover": false
+   }
+  },
+  {
+   "entity": "mealPlanEntry",
+   "id": "01a18c7c-33a5-759b-b6ec-479dd723a362",
+   "hlc": "001793358312357-00002-01a18c7c-337b-746f-91ad-7999934e5ca6",
+   "deleted": false,
+   "data": {
+    "date": "2026-10-27",
+    "slot": "breakfast",
+    "recipeId": "01a18c7c-3395-7368-9343-827da988edcf",
+    "customTitle": null,
+    "servings": null,
+    "position": 0,
+    "leftover": false
+   }
+  },
+  {
+   "entity": "mealPlanEntry",
+   "id": "01a18c7c-33a6-741e-8e90-567d72cb465e",
+   "hlc": "001793358312358-00000-01a18c7c-337b-746f-91ad-7999934e5ca6",
+   "deleted": false,
+   "data": {
+    "date": "2026-10-27",
+    "slot": "dinner",
+    "recipeId": "01a18c7c-338e-7550-ba64-762b69980f53",
+    "customTitle": null,
+    "servings": null,
+    "position": 0,
+    "leftover": false
+   }
+  },
+  {
+   "entity": "mealPlanEntry",
+   "id": "01a18c7c-33a6-741f-96c6-d2e93440af68",
+   "hlc": "001793358312358-00001-01a18c7c-337b-746f-91ad-7999934e5ca6",
+   "deleted": false,
+   "data": {
+    "date": "2026-10-28",
+    "slot": "dinner",
+    "recipeId": "01a18c7c-3394-72fc-b005-60023fd2b754",
+    "customTitle": null,
+    "servings": null,
+    "position": 0,
+    "leftover": false
+   }
+  },
+  {
+   "entity": "mealPlanEntry",
+   "id": "01a18c7c-33a6-7420-8f4b-073c16b6a7a1",
+   "hlc": "001793358312358-00002-01a18c7c-337b-746f-91ad-7999934e5ca6",
+   "deleted": false,
+   "data": {
+    "date": "2026-10-29",
+    "slot": "lunch",
+    "recipeId": "01a18c7c-339a-70cb-8c9a-ff29883cd19e",
+    "customTitle": null,
+    "servings": null,
+    "position": 0,
+    "leftover": false
+   }
+  },
+  {
+   "entity": "mealPlanEntry",
+   "id": "01a18c7c-33a6-7421-8f3f-66849b34b8a2",
+   "hlc": "001793358312358-00003-01a18c7c-337b-746f-91ad-7999934e5ca6",
+   "deleted": false,
+   "data": {
+    "date": "2026-10-29",
+    "slot": "dinner",
+    "recipeId": "01a18c7c-3392-718e-abfd-3ad014b12551",
+    "customTitle": null,
+    "servings": null,
+    "position": 0,
+    "leftover": false
+   }
+  },
+  {
+   "entity": "mealPlanEntry",
+   "id": "01a18c7c-33a7-7588-b30a-14da17b9143b",
+   "hlc": "001793358312359-00000-01a18c7c-337b-746f-91ad-7999934e5ca6",
+   "deleted": false,
+   "data": {
+    "date": "2026-10-30",
+    "slot": "dinner",
+    "recipeId": "01a18c7c-3397-707c-a2e5-5bee07469512",
+    "customTitle": null,
+    "servings": null,
+    "position": 0,
+    "leftover": false
+   }
+  },
+  {
+   "entity": "mealPlanEntry",
+   "id": "01a18c7c-33a7-7589-86c3-85beb69fb770",
+   "hlc": "001793358312359-00001-01a18c7c-337b-746f-91ad-7999934e5ca6",
+   "deleted": false,
+   "data": {
+    "date": "2026-10-31",
+    "slot": "breakfast",
+    "recipeId": "01a18c7c-3396-709c-9f26-4681f67bdc65",
+    "customTitle": null,
+    "servings": null,
+    "position": 0,
+    "leftover": false
+   }
+  },
+  {
+   "entity": "mealPlanEntry",
+   "id": "01a18c7c-33a7-758a-9075-3f4bcfabe2e9",
+   "hlc": "001793358312359-00002-01a18c7c-337b-746f-91ad-7999934e5ca6",
+   "deleted": false,
+   "data": {
+    "date": "2026-11-01",
+    "slot": "dinner",
+    "recipeId": "01a18c7c-339b-7018-b9fa-a2a8d10dce35",
+    "customTitle": null,
+    "servings": null,
+    "position": 0,
+    "leftover": false
+   }
+  },
+  {
+   "entity": "recipe",
+   "id": "01a18c7c-338e-7550-ba64-762b69980f53",
+   "hlc": "001793358312355-00000-01a18c7c-337b-746f-91ad-7999934e5ca6",
+   "deleted": false,
+   "data": {
+    "title": "Velouté de potimarron",
+    "description": null,
+    "photoKey": null,
+    "prepMinutes": 15,
+    "cookMinutes": 30,
+    "restMinutes": null,
+    "totalMinutes": null,
+    "servings": 4,
+    "yieldLabel": null,
+    "difficulty": "easy",
+    "seasons": [
+     "autumn",
+     "winter"
+    ],
+    "category": "soup",
+    "ovenTemperatureC": null,
+    "ovenMode": null,
+    "notes": null,
+    "tips": null,
+    "extraInfo": null,
+    "source": null,
+    "sourceUrl": null,
+    "tags": [],
+    "ingredients": [
+     {
+      "id": "01a18c7c-3380-73fc-adbf-754f8af35fd7",
+      "group": null,
+      "name": "potimarron",
+      "quantity": 1.2,
+      "quantityMax": null,
+      "unit": "kg",
+      "note": null
+     },
+     {
+      "id": "01a18c7c-3382-746c-a1ff-11c935f2844f",
+      "group": null,
+      "name": "oignons",
+      "quantity": 2,
+      "quantityMax": null,
+      "unit": null,
+      "note": null
+     },
+     {
+      "id": "01a18c7c-3383-7383-9947-6b6ed3dc1eec",
+      "group": null,
+      "name": "ail",
+      "quantity": 1,
+      "quantityMax": null,
+      "unit": "clove",
+      "note": null
+     },
+     {
+      "id": "01a18c7c-3384-70ed-ad3e-abcceafcd92a",
+      "group": null,
+      "name": "bouillon de légumes",
+      "quantity": 80,
+      "quantityMax": null,
+      "unit": "cl",
+      "note": null
+     },
+     {
+      "id": "01a18c7c-3384-70ee-b0d2-0f37af047300",
+      "group": null,
+      "name": "crème fraîche",
+      "quantity": 20,
+      "quantityMax": null,
+      "unit": "cl",
+      "note": null
+     },
+     {
+      "id": "01a18c7c-3384-70ef-bba8-7cc9a661d94e",
+      "group": null,
+      "name": "huile d’olive",
+      "quantity": 1,
+      "quantityMax": null,
+      "unit": "tbsp",
+      "note": null
+     }
+    ],
+    "steps": [
+     {
+      "id": "01a18c7c-3384-70f0-a814-b3360db32b8a",
+      "group": null,
+      "text": "Couper le potimarron en cubes.",
+      "timerSeconds": null,
+      "timerLabel": null
+     },
+     {
+      "id": "01a18c7c-3384-70f1-83a2-7755e4ceea62",
+      "group": null,
+      "text": "Faire revenir les oignons et l’ail dans l’huile 5 min.",
+      "timerSeconds": null,
+      "timerLabel": null
+     },
+     {
+      "id": "01a18c7c-3384-70f2-b7f5-e376d627cf3a",
+      "group": null,
+      "text": "Ajouter le potimarron et le bouillon, cuire 25 min.",
+      "timerSeconds": null,
+      "timerLabel": null
+     },
+     {
+      "id": "01a18c7c-3384-70f3-b44a-a335e4d58b45",
+      "group": null,
+      "text": "Mixer avec la crème.",
+      "timerSeconds": null,
+      "timerLabel": null
+     }
+    ],
+    "rating": 5,
+    "personalNote": "Une pointe de muscade, et un peu moins de crème.",
+    "review": null
+   }
+  },
+  {
+   "entity": "recipe",
+   "id": "01a18c7c-3391-7147-b7a5-40a6d395b53e",
+   "hlc": "001793358312337-00000-01a18c7c-337b-746f-91ad-7999934e5ca6",
+   "deleted": false,
+   "data": {
+    "title": "Pâtes crémeuses au citron",
+    "description": null,
+    "photoKey": null,
+    "prepMinutes": 5,
+    "cookMinutes": 12,
+    "restMinutes": null,
+    "totalMinutes": null,
+    "servings": 4,
+    "yieldLabel": null,
+    "difficulty": "easy",
+    "seasons": [],
+    "category": "pasta",
+    "ovenTemperatureC": null,
+    "ovenMode": null,
+    "notes": null,
+    "tips": null,
+    "extraInfo": null,
+    "source": null,
+    "sourceUrl": null,
+    "tags": [],
+    "ingredients": [
+     {
+      "id": "01a18c7c-338f-710b-85c6-b057afc5f638",
+      "group": null,
+      "name": "spaghetti",
+      "quantity": 400,
+      "quantityMax": null,
+      "unit": "g",
+      "note": null
+     },
+     {
+      "id": "01a18c7c-3390-727c-84d5-5f118c69d8bc",
+      "group": null,
+      "name": "citrons non traités",
+      "quantity": 2,
+      "quantityMax": null,
+      "unit": null,
+      "note": null
+     },
+     {
+      "id": "01a18c7c-3390-727d-8bf5-234ed8641193",
+      "group": null,
+      "name": "crème fraîche",
+      "quantity": 20,
+      "quantityMax": null,
+      "unit": "cl",
+      "note": null
+     },
+     {
+      "id": "01a18c7c-3390-727e-b696-3fe4272837bb",
+      "group": null,
+      "name": "parmesan râpé",
+      "quantity": 60,
+      "quantityMax": null,
+      "unit": "g",
+      "note": null
+     },
+     {
+      "id": "01a18c7c-3390-727f-a2ae-55b05cea5a2f",
+      "group": null,
+      "name": "ail",
+      "quantity": 1,
+      "quantityMax": null,
+      "unit": "clove",
+      "note": null
+     }
+    ],
+    "steps": [
+     {
+      "id": "01a18c7c-3390-7280-b703-8323c5e9e542",
+      "group": null,
+      "text": "Cuire les spaghetti 8 min dans l’eau bouillante salée.",
+      "timerSeconds": null,
+      "timerLabel": null
+     },
+     {
+      "id": "01a18c7c-3390-7281-927f-fea967336f09",
+      "group": null,
+      "text": "Chauffer la crème avec le zeste et le jus des citrons.",
+      "timerSeconds": null,
+      "timerLabel": null
+     },
+     {
+      "id": "01a18c7c-3390-7282-8e66-03273c6f9aeb",
+      "group": null,
+      "text": "Mélanger avec les pâtes et le parmesan.",
+      "timerSeconds": null,
+      "timerLabel": null
+     }
+    ],
+    "rating": null,
+    "personalNote": null,
+    "review": null
+   }
+  },
+  {
+   "entity": "recipe",
+   "id": "01a18c7c-3392-718e-abfd-3ad014b12551",
+   "hlc": "001793358312338-00000-01a18c7c-337b-746f-91ad-7999934e5ca6",
+   "deleted": false,
+   "data": {
+    "title": "Poulet rapide au citron",
+    "description": null,
+    "photoKey": null,
+    "prepMinutes": 10,
+    "cookMinutes": 15,
+    "restMinutes": null,
+    "totalMinutes": null,
+    "servings": 4,
+    "yieldLabel": null,
+    "difficulty": "easy",
+    "seasons": [],
+    "category": "main",
+    "ovenTemperatureC": null,
+    "ovenMode": null,
+    "notes": null,
+    "tips": null,
+    "extraInfo": null,
+    "source": null,
+    "sourceUrl": null,
+    "tags": [],
+    "ingredients": [
+     {
+      "id": "01a18c7c-3391-7148-ac12-e2954f3593a1",
+      "group": null,
+      "name": "filets de poulet",
+      "quantity": 4,
+      "quantityMax": null,
+      "unit": null,
+      "note": null
+     },
+     {
+      "id": "01a18c7c-3391-7149-92b8-9a373300595d",
+      "group": null,
+      "name": "citron",
+      "quantity": 1,
+      "quantityMax": null,
+      "unit": null,
+      "note": null
+     },
+     {
+      "id": "01a18c7c-3391-714a-b996-ca1dbcfe28a2",
+      "group": null,
+      "name": "huile d’olive",
+      "quantity": 2,
+      "quantityMax": null,
+      "unit": "tbsp",
+      "note": null
+     },
+     {
+      "id": "01a18c7c-3392-718a-a460-8549dfa7b9a4",
+      "group": null,
+      "name": "thym",
+      "quantity": 1,
+      "quantityMax": null,
+      "unit": "tsp",
+      "note": null
+     }
+    ],
+    "steps": [
+     {
+      "id": "01a18c7c-3392-718b-8b2d-1e5b1bb26505",
+      "group": null,
+      "text": "Couper le poulet en lanières.",
+      "timerSeconds": null,
+      "timerLabel": null
+     },
+     {
+      "id": "01a18c7c-3392-718c-a346-d67723549a05",
+      "group": null,
+      "text": "Saisir 8 min à feu vif.",
+      "timerSeconds": null,
+      "timerLabel": null
+     },
+     {
+      "id": "01a18c7c-3392-718d-9a2c-8af591f0e60a",
+      "group": null,
+      "text": "Arroser de citron, parsemer de thym.",
+      "timerSeconds": null,
+      "timerLabel": null
+     }
+    ],
+    "rating": null,
+    "personalNote": null,
+    "review": null
+   }
+  },
+  {
+   "entity": "recipe",
+   "id": "01a18c7c-3393-7663-933b-5d9d7cfc39e0",
+   "hlc": "001793358312339-00000-01a18c7c-337b-746f-91ad-7999934e5ca6",
+   "deleted": false,
+   "data": {
+    "title": "Salade de lentilles",
+    "description": null,
+    "photoKey": null,
+    "prepMinutes": 15,
+    "cookMinutes": 20,
+    "restMinutes": null,
+    "totalMinutes": null,
+    "servings": 4,
+    "yieldLabel": null,
+    "difficulty": "easy",
+    "seasons": [],
+    "category": "salad",
+    "ovenTemperatureC": null,
+    "ovenMode": null,
+    "notes": null,
+    "tips": null,
+    "extraInfo": null,
+    "source": null,
+    "sourceUrl": null,
+    "tags": [],
+    "ingredients": [
+     {
+      "id": "01a18c7c-3392-718f-b9d3-6923cf79a080",
+      "group": null,
+      "name": "lentilles vertes",
+      "quantity": 300,
+      "quantityMax": null,
+      "unit": "g",
+      "note": null
+     },
+     {
+      "id": "01a18c7c-3393-765d-895e-47569dc33273",
+      "group": null,
+      "name": "échalote",
+      "quantity": 1,
+      "quantityMax": null,
+      "unit": null,
+      "note": null
+     },
+     {
+      "id": "01a18c7c-3393-765e-a909-3187d75be591",
+      "group": null,
+      "name": "carottes",
+      "quantity": 2,
+      "quantityMax": null,
+      "unit": null,
+      "note": null
+     },
+     {
+      "id": "01a18c7c-3393-765f-af9c-7fedd78afdef",
+      "group": null,
+      "name": "vinaigrette",
+      "quantity": 3,
+      "quantityMax": null,
+      "unit": "tbsp",
+      "note": null
+     }
+    ],
+    "steps": [
+     {
+      "id": "01a18c7c-3393-7660-98b9-84926210679b",
+      "group": null,
+      "text": "Cuire les lentilles 20 min.",
+      "timerSeconds": null,
+      "timerLabel": null
+     },
+     {
+      "id": "01a18c7c-3393-7661-9995-f3c33f9a549c",
+      "group": null,
+      "text": "Couper les carottes et l’échalote.",
+      "timerSeconds": null,
+      "timerLabel": null
+     },
+     {
+      "id": "01a18c7c-3393-7662-af61-1729dcf0a9ae",
+      "group": null,
+      "text": "Mélanger tiède avec la vinaigrette.",
+      "timerSeconds": null,
+      "timerLabel": null
+     }
+    ],
+    "rating": null,
+    "personalNote": null,
+    "review": null
+   }
+  },
+  {
+   "entity": "recipe",
+   "id": "01a18c7c-3394-72fc-b005-60023fd2b754",
+   "hlc": "001793358312340-00000-01a18c7c-337b-746f-91ad-7999934e5ca6",
+   "deleted": false,
+   "data": {
+    "title": "Saumon rôti, légumes croquants",
+    "description": null,
+    "photoKey": null,
+    "prepMinutes": 10,
+    "cookMinutes": 15,
+    "restMinutes": null,
+    "totalMinutes": null,
+    "servings": 4,
+    "yieldLabel": null,
+    "difficulty": "easy",
+    "seasons": [],
+    "category": "fish",
+    "ovenTemperatureC": null,
+    "ovenMode": null,
+    "notes": null,
+    "tips": null,
+    "extraInfo": null,
+    "source": null,
+    "sourceUrl": null,
+    "tags": [],
+    "ingredients": [
+     {
+      "id": "01a18c7c-3394-72f6-b54b-27addd217af9",
+      "group": null,
+      "name": "pavés de saumon",
+      "quantity": 4,
+      "quantityMax": null,
+      "unit": null,
+      "note": null
+     },
+     {
+      "id": "01a18c7c-3394-72f7-bfae-298b24515e8e",
+      "group": null,
+      "name": "courgettes",
+      "quantity": 2,
+      "quantityMax": null,
+      "unit": null,
+      "note": null
+     },
+     {
+      "id": "01a18c7c-3394-72f8-86a7-fc8443ae3c7a",
+      "group": null,
+      "name": "poivron",
+      "quantity": 1,
+      "quantityMax": null,
+      "unit": null,
+      "note": null
+     },
+     {
+      "id": "01a18c7c-3394-72f9-a3ce-bd9fd49d9f41",
+      "group": null,
+      "name": "huile d’olive",
+      "quantity": 2,
+      "quantityMax": null,
+      "unit": "tbsp",
+      "note": null
+     }
+    ],
+    "steps": [
+     {
+      "id": "01a18c7c-3394-72fa-a175-433f69560c11",
+      "group": null,
+      "text": "Préchauffer le four à 200 °C.",
+      "timerSeconds": null,
+      "timerLabel": null
+     },
+     {
+      "id": "01a18c7c-3394-72fb-8752-2ab927cf9819",
+      "group": null,
+      "text": "Rôtir légumes et saumon 15 min.",
+      "timerSeconds": null,
+      "timerLabel": null
+     }
+    ],
+    "rating": null,
+    "personalNote": null,
+    "review": null
+   }
+  },
+  {
+   "entity": "recipe",
+   "id": "01a18c7c-3395-7368-9343-827da988edcf",
+   "hlc": "001793358312341-00000-01a18c7c-337b-746f-91ad-7999934e5ca6",
+   "deleted": false,
+   "data": {
+    "title": "Pain perdu brioché",
+    "description": null,
+    "photoKey": null,
+    "prepMinutes": 5,
+    "cookMinutes": 10,
+    "restMinutes": null,
+    "totalMinutes": null,
+    "servings": 2,
+    "yieldLabel": null,
+    "difficulty": "easy",
+    "seasons": [],
+    "category": "breakfast",
+    "ovenTemperatureC": null,
+    "ovenMode": null,
+    "notes": null,
+    "tips": null,
+    "extraInfo": null,
+    "source": null,
+    "sourceUrl": null,
+    "tags": [],
+    "ingredients": [
+     {
+      "id": "01a18c7c-3395-7362-b26b-a757d037201d",
+      "group": null,
+      "name": "brioche",
+      "quantity": 4,
+      "quantityMax": null,
+      "unit": "slice",
+      "note": null
+     },
+     {
+      "id": "01a18c7c-3395-7363-985b-ecd0fc946998",
+      "group": null,
+      "name": "œufs",
+      "quantity": 2,
+      "quantityMax": null,
+      "unit": null,
+      "note": null
+     },
+     {
+      "id": "01a18c7c-3395-7364-86bc-a9605a9ae626",
+      "group": null,
+      "name": "lait",
+      "quantity": 20,
+      "quantityMax": null,
+      "unit": "cl",
+      "note": null
+     },
+     {
+      "id": "01a18c7c-3395-7365-83bd-709f90a66e00",
+      "group": null,
+      "name": "sucre",
+      "quantity": 1,
+      "quantityMax": null,
+      "unit": "tbsp",
+      "note": null
+     }
+    ],
+    "steps": [
+     {
+      "id": "01a18c7c-3395-7366-8245-c644af253c3c",
+      "group": null,
+      "text": "Battre œufs, lait et sucre.",
+      "timerSeconds": null,
+      "timerLabel": null
+     },
+     {
+      "id": "01a18c7c-3395-7367-93c4-77fd621f9a9a",
+      "group": null,
+      "text": "Tremper la brioche et dorer 3 min par face.",
+      "timerSeconds": null,
+      "timerLabel": null
+     }
+    ],
+    "rating": null,
+    "personalNote": null,
+    "review": null
+   }
+  },
+  {
+   "entity": "recipe",
+   "id": "01a18c7c-3396-709c-9f26-4681f67bdc65",
+   "hlc": "001793358312353-00000-01a18c7c-337b-746f-91ad-7999934e5ca6",
+   "deleted": false,
+   "data": {
+    "title": "Crêpes de mamie",
+    "description": null,
+    "photoKey": null,
+    "prepMinutes": 10,
+    "cookMinutes": 20,
+    "restMinutes": null,
+    "totalMinutes": null,
+    "servings": 6,
+    "yieldLabel": null,
+    "difficulty": "easy",
+    "seasons": [],
+    "category": "dessert",
+    "ovenTemperatureC": null,
+    "ovenMode": null,
+    "notes": null,
+    "tips": null,
+    "extraInfo": null,
+    "source": null,
+    "sourceUrl": null,
+    "tags": [],
+    "ingredients": [
+     {
+      "id": "01a18c7c-3395-7369-a4d4-ee95a4116142",
+      "group": null,
+      "name": "farine",
+      "quantity": 250,
+      "quantityMax": null,
+      "unit": "g",
+      "note": null
+     },
+     {
+      "id": "01a18c7c-3396-7094-b4dc-acd6b6e3d06a",
+      "group": null,
+      "name": "œufs",
+      "quantity": 4,
+      "quantityMax": null,
+      "unit": null,
+      "note": null
+     },
+     {
+      "id": "01a18c7c-3396-7095-876c-619d2b578384",
+      "group": null,
+      "name": "lait",
+      "quantity": 50,
+      "quantityMax": null,
+      "unit": "cl",
+      "note": null
+     },
+     {
+      "id": "01a18c7c-3396-7096-ba19-c5ddc4c646b2",
+      "group": null,
+      "name": "sel",
+      "quantity": 1,
+      "quantityMax": null,
+      "unit": "pinch",
+      "note": null
+     },
+     {
+      "id": "01a18c7c-3396-7097-b592-64317501afc5",
+      "group": null,
+      "name": "beurre fondu",
+      "quantity": 30,
+      "quantityMax": null,
+      "unit": "g",
+      "note": null
+     }
+    ],
+    "steps": [
+     {
+      "id": "01a18c7c-3396-7098-8d8c-2dec4e1594f5",
+      "group": null,
+      "text": "Mélanger farine, œufs et sel.",
+      "timerSeconds": null,
+      "timerLabel": null
+     },
+     {
+      "id": "01a18c7c-3396-7099-a972-b53fbd2d1a0d",
+      "group": null,
+      "text": "Ajouter le lait petit à petit, puis le beurre.",
+      "timerSeconds": null,
+      "timerLabel": null
+     },
+     {
+      "id": "01a18c7c-3396-709a-8665-cfa5799c926f",
+      "group": null,
+      "text": "Laisser reposer 1 h.",
+      "timerSeconds": null,
+      "timerLabel": null
+     },
+     {
+      "id": "01a18c7c-3396-709b-b8a2-ad3a478423da",
+      "group": null,
+      "text": "Cuire les crêpes à la poêle.",
+      "timerSeconds": null,
+      "timerLabel": null
+     }
+    ],
+    "rating": 5,
+    "personalNote": null,
+    "review": null
+   }
+  },
+  {
+   "entity": "recipe",
+   "id": "01a18c7c-3397-707c-a2e5-5bee07469512",
+   "hlc": "001793358312343-00000-01a18c7c-337b-746f-91ad-7999934e5ca6",
+   "deleted": false,
+   "data": {
+    "title": "Ratatouille",
+    "description": null,
+    "photoKey": null,
+    "prepMinutes": 25,
+    "cookMinutes": 45,
+    "restMinutes": null,
+    "totalMinutes": null,
+    "servings": 6,
+    "yieldLabel": null,
+    "difficulty": "medium",
+    "seasons": [
+     "summer"
+    ],
+    "category": "vegetarian",
+    "ovenTemperatureC": null,
+    "ovenMode": null,
+    "notes": null,
+    "tips": null,
+    "extraInfo": null,
+    "source": null,
+    "sourceUrl": null,
+    "tags": [],
+    "ingredients": [
+     {
+      "id": "01a18c7c-3396-709d-ae49-4a61dd6e62f9",
+      "group": null,
+      "name": "aubergines",
+      "quantity": 2,
+      "quantityMax": null,
+      "unit": null,
+      "note": null
+     },
+     {
+      "id": "01a18c7c-3396-709e-b119-a64a8973b728",
+      "group": null,
+      "name": "courgettes",
+      "quantity": 3,
+      "quantityMax": null,
+      "unit": null,
+      "note": null
+     },
+     {
+      "id": "01a18c7c-3396-709f-86ec-7e8f1d5906fe",
+      "group": null,
+      "name": "poivrons",
+      "quantity": 2,
+      "quantityMax": null,
+      "unit": null,
+      "note": null
+     },
+     {
+      "id": "01a18c7c-3397-7076-8a48-faf906767104",
+      "group": null,
+      "name": "tomates",
+      "quantity": 6,
+      "quantityMax": null,
+      "unit": null,
+      "note": null
+     },
+     {
+      "id": "01a18c7c-3397-7077-9e7f-24effa9fa669",
+      "group": null,
+      "name": "oignons",
+      "quantity": 2,
+      "quantityMax": null,
+      "unit": null,
+      "note": null
+     },
+     {
+      "id": "01a18c7c-3397-7078-8c28-c2e84cce012c",
+      "group": null,
+      "name": "huile d’olive",
+      "quantity": 3,
+      "quantityMax": null,
+      "unit": "tbsp",
+      "note": null
+     }
+    ],
+    "steps": [
+     {
+      "id": "01a18c7c-3397-7079-90e9-a4208a83ad43",
+      "group": null,
+      "text": "Couper tous les légumes.",
+      "timerSeconds": null,
+      "timerLabel": null
+     },
+     {
+      "id": "01a18c7c-3397-707a-8335-5b679f0119c1",
+      "group": null,
+      "text": "Cuire chaque légume séparément.",
+      "timerSeconds": null,
+      "timerLabel": null
+     },
+     {
+      "id": "01a18c7c-3397-707b-8520-bac35d826f4f",
+      "group": null,
+      "text": "Réunir et mijoter 30 min.",
+      "timerSeconds": null,
+      "timerLabel": null
+     }
+    ],
+    "rating": null,
+    "personalNote": null,
+    "review": null
+   }
+  },
+  {
+   "entity": "recipe",
+   "id": "01a18c7c-3399-7119-9693-1a678ca273d4",
+   "hlc": "001793358312345-00000-01a18c7c-337b-746f-91ad-7999934e5ca6",
+   "deleted": false,
+   "data": {
+    "title": "Tarte aux pommes",
+    "description": null,
+    "photoKey": null,
+    "prepMinutes": 20,
+    "cookMinutes": 35,
+    "restMinutes": null,
+    "totalMinutes": null,
+    "servings": 8,
+    "yieldLabel": null,
+    "difficulty": "medium",
+    "seasons": [
+     "autumn"
+    ],
+    "category": "baking",
+    "ovenTemperatureC": null,
+    "ovenMode": null,
+    "notes": null,
+    "tips": null,
+    "extraInfo": null,
+    "source": null,
+    "sourceUrl": null,
+    "tags": [],
+    "ingredients": [
+     {
+      "id": "01a18c7c-3397-707d-8eae-04c83463ba02",
+      "group": null,
+      "name": "pâte brisée",
+      "quantity": 1,
+      "quantityMax": null,
+      "unit": null,
+      "note": null
+     },
+     {
+      "id": "01a18c7c-3398-7201-a069-1c9d3c63ae3a",
+      "group": null,
+      "name": "pommes",
+      "quantity": 5,
+      "quantityMax": null,
+      "unit": null,
+      "note": null
+     },
+     {
+      "id": "01a18c7c-3398-7202-af5f-b59272161c8d",
+      "group": null,
+      "name": "beurre",
+      "quantity": 30,
+      "quantityMax": null,
+      "unit": "g",
+      "note": null
+     },
+     {
+      "id": "01a18c7c-3398-7203-a7d8-1b92ea55d0ab",
+      "group": null,
+      "name": "sucre",
+      "quantity": 2,
+      "quantityMax": null,
+      "unit": "tbsp",
+      "note": null
+     }
+    ],
+    "steps": [
+     {
+      "id": "01a18c7c-3398-7204-9060-c3921888e52d",
+      "group": null,
+      "text": "Étaler la pâte dans un moule de 24 cm.",
+      "timerSeconds": null,
+      "timerLabel": null
+     },
+     {
+      "id": "01a18c7c-3398-7205-83c1-9745ff954006",
+      "group": null,
+      "text": "Disposer les pommes en rosace.",
+      "timerSeconds": null,
+      "timerLabel": null
+     },
+     {
+      "id": "01a18c7c-3398-7206-8850-49571c37957b",
+      "group": null,
+      "text": "Cuire 35 min à 180 °C.",
+      "timerSeconds": null,
+      "timerLabel": null
+     }
+    ],
+    "rating": null,
+    "personalNote": null,
+    "review": null
+   }
+  },
+  {
+   "entity": "recipe",
+   "id": "01a18c7c-339a-70cb-8c9a-ff29883cd19e",
+   "hlc": "001793358312346-00000-01a18c7c-337b-746f-91ad-7999934e5ca6",
+   "deleted": false,
+   "data": {
+    "title": "Curry de pois chiches",
+    "description": null,
+    "photoKey": null,
+    "prepMinutes": 10,
+    "cookMinutes": 20,
+    "restMinutes": null,
+    "totalMinutes": null,
+    "servings": 4,
+    "yieldLabel": null,
+    "difficulty": "easy",
+    "seasons": [],
+    "category": "vegetarian",
+    "ovenTemperatureC": null,
+    "ovenMode": null,
+    "notes": null,
+    "tips": null,
+    "extraInfo": null,
+    "source": null,
+    "sourceUrl": null,
+    "tags": [],
+    "ingredients": [
+     {
+      "id": "01a18c7c-3399-711a-b781-f5a3e90be9db",
+      "group": null,
+      "name": "pois chiches",
+      "quantity": 2,
+      "quantityMax": null,
+      "unit": "can",
+      "note": null
+     },
+     {
+      "id": "01a18c7c-3399-711b-92f0-0c836882d848",
+      "group": null,
+      "name": "lait de coco",
+      "quantity": 40,
+      "quantityMax": null,
+      "unit": "cl",
+      "note": null
+     },
+     {
+      "id": "01a18c7c-3399-711c-9dbd-af6b7c06c3b3",
+      "group": null,
+      "name": "oignon",
+      "quantity": 1,
+      "quantityMax": null,
+      "unit": null,
+      "note": null
+     },
+     {
+      "id": "01a18c7c-3399-711d-9303-e4ff4d4bde8d",
+      "group": null,
+      "name": "pâte de curry",
+      "quantity": 2,
+      "quantityMax": null,
+      "unit": "tbsp",
+      "note": null
+     },
+     {
+      "id": "01a18c7c-3399-711e-9ed0-11516fc84d29",
+      "group": null,
+      "name": "épinards",
+      "quantity": 200,
+      "quantityMax": null,
+      "unit": "g",
+      "note": null
+     }
+    ],
+    "steps": [
+     {
+      "id": "01a18c7c-3399-711f-a759-739be4450e15",
+      "group": null,
+      "text": "Faire revenir l’oignon et le curry.",
+      "timerSeconds": null,
+      "timerLabel": null
+     },
+     {
+      "id": "01a18c7c-3399-7120-ba09-423ecd393204",
+      "group": null,
+      "text": "Ajouter pois chiches et lait de coco, cuire 15 min.",
+      "timerSeconds": null,
+      "timerLabel": null
+     },
+     {
+      "id": "01a18c7c-3399-7121-a949-dc024ff8f3f6",
+      "group": null,
+      "text": "Ajouter les épinards en fin de cuisson.",
+      "timerSeconds": null,
+      "timerLabel": null
+     }
+    ],
+    "rating": null,
+    "personalNote": null,
+    "review": null
+   }
+  },
+  {
+   "entity": "recipe",
+   "id": "01a18c7c-339b-7018-b9fa-a2a8d10dce35",
+   "hlc": "001793358312347-00000-01a18c7c-337b-746f-91ad-7999934e5ca6",
+   "deleted": false,
+   "data": {
+    "title": "Gratin dauphinois",
+    "description": null,
+    "photoKey": null,
+    "prepMinutes": 20,
+    "cookMinutes": 60,
+    "restMinutes": null,
+    "totalMinutes": null,
+    "servings": 6,
+    "yieldLabel": null,
+    "difficulty": "medium",
+    "seasons": [
+     "winter"
+    ],
+    "category": "side",
+    "ovenTemperatureC": null,
+    "ovenMode": null,
+    "notes": null,
+    "tips": null,
+    "extraInfo": null,
+    "source": null,
+    "sourceUrl": null,
+    "tags": [],
+    "ingredients": [
+     {
+      "id": "01a18c7c-339a-70cc-a216-1c8ee4aa7bd3",
+      "group": null,
+      "name": "pommes de terre",
+      "quantity": 1.5,
+      "quantityMax": null,
+      "unit": "kg",
+      "note": null
+     },
+     {
+      "id": "01a18c7c-339a-70cd-a247-b30949d5b281",
+      "group": null,
+      "name": "crème",
+      "quantity": 50,
+      "quantityMax": null,
+      "unit": "cl",
+      "note": null
+     },
+     {
+      "id": "01a18c7c-339a-70ce-ada2-efc7dfacf506",
+      "group": null,
+      "name": "lait",
+      "quantity": 50,
+      "quantityMax": null,
+      "unit": "cl",
+      "note": null
+     },
+     {
+      "id": "01a18c7c-339b-7014-9ae7-8dbfc68ccd6a",
+      "group": null,
+      "name": "ail",
+      "quantity": 2,
+      "quantityMax": null,
+      "unit": "clove",
+      "note": null
+     }
+    ],
+    "steps": [
+     {
+      "id": "01a18c7c-339b-7015-8051-ed8728a97f21",
+      "group": null,
+      "text": "Trancher finement les pommes de terre.",
+      "timerSeconds": null,
+      "timerLabel": null
+     },
+     {
+      "id": "01a18c7c-339b-7016-ba87-3619ca11fc31",
+      "group": null,
+      "text": "Chauffer crème, lait et ail.",
+      "timerSeconds": null,
+      "timerLabel": null
+     },
+     {
+      "id": "01a18c7c-339b-7017-9c0d-bd62e173004d",
+      "group": null,
+      "text": "Cuire 1 h à 160 °C.",
+      "timerSeconds": null,
+      "timerLabel": null
+     }
+    ],
+    "rating": null,
+    "personalNote": null,
+    "review": null
+   }
+  },
+  {
+   "entity": "recipe",
+   "id": "01a18c7c-339c-753b-ba30-1854a5bac131",
+   "hlc": "001793358312348-00000-01a18c7c-337b-746f-91ad-7999934e5ca6",
+   "deleted": false,
+   "data": {
+    "title": "Smoothie banane-fraise",
+    "description": null,
+    "photoKey": null,
+    "prepMinutes": 5,
+    "cookMinutes": null,
+    "restMinutes": null,
+    "totalMinutes": null,
+    "servings": 2,
+    "yieldLabel": null,
+    "difficulty": "easy",
+    "seasons": [
+     "spring",
+     "summer"
+    ],
+    "category": "drinks",
+    "ovenTemperatureC": null,
+    "ovenMode": null,
+    "notes": null,
+    "tips": null,
+    "extraInfo": null,
+    "source": null,
+    "sourceUrl": null,
+    "tags": [],
+    "ingredients": [
+     {
+      "id": "01a18c7c-339b-7019-ab4e-91300ab9c9bf",
+      "group": null,
+      "name": "bananes",
+      "quantity": 2,
+      "quantityMax": null,
+      "unit": null,
+      "note": null
+     },
+     {
+      "id": "01a18c7c-339b-701a-8467-2f6f9f0cb2aa",
+      "group": null,
+      "name": "fraises",
+      "quantity": 200,
+      "quantityMax": null,
+      "unit": "g",
+      "note": null
+     },
+     {
+      "id": "01a18c7c-339b-701b-b0a6-0ff35f5c8dcd",
+      "group": null,
+      "name": "lait",
+      "quantity": 25,
+      "quantityMax": null,
+      "unit": "cl",
+      "note": null
+     }
+    ],
+    "steps": [
+     {
+      "id": "01a18c7c-339b-701c-ae01-dfa56ff7af10",
+      "group": null,
+      "text": "Tout mixer.",
+      "timerSeconds": null,
+      "timerLabel": null
+     }
+    ],
+    "rating": null,
+    "personalNote": null,
+    "review": null
+   }
+  },
+  {
+   "entity": "shoppingItem",
+   "id": "01a18c7c-33be-7429-9742-01fd468047fb",
+   "hlc": "001793358312382-00000-01a18c7c-337b-746f-91ad-7999934e5ca6",
+   "deleted": false,
+   "data": {
+    "listId": "01a18c7c-33a9-7336-99d8-bc0d043e4250",
+    "name": "lentilles vertes",
+    "quantity": 300,
+    "unit": "g",
+    "categoryKey": "pantry",
+    "checked": false,
+    "position": 0,
+    "note": null,
+    "recipeIds": [
+     "01a18c7c-3393-7663-933b-5d9d7cfc39e0"
+    ],
+    "price": null
+   }
+  },
+  {
+   "entity": "shoppingItem",
+   "id": "01a18c7c-33be-742a-a638-07fc1b8a350e",
+   "hlc": "001793358312382-00001-01a18c7c-337b-746f-91ad-7999934e5ca6",
+   "deleted": false,
+   "data": {
+    "listId": "01a18c7c-33a9-7336-99d8-bc0d043e4250",
+    "name": "échalote",
+    "quantity": 1,
+    "unit": null,
+    "categoryKey": "produce",
+    "checked": false,
+    "position": 1,
+    "note": null,
+    "recipeIds": [
+     "01a18c7c-3393-7663-933b-5d9d7cfc39e0"
+    ],
+    "price": null
+   }
+  },
+  {
+   "entity": "shoppingItem",
+   "id": "01a18c7c-33be-742b-b702-b9d8c7bbe9e9",
+   "hlc": "001793358312382-00002-01a18c7c-337b-746f-91ad-7999934e5ca6",
+   "deleted": false,
+   "data": {
+    "listId": "01a18c7c-33a9-7336-99d8-bc0d043e4250",
+    "name": "carottes",
+    "quantity": 2,
+    "unit": null,
+    "categoryKey": "produce",
+    "checked": false,
+    "position": 2,
+    "note": null,
+    "recipeIds": [
+     "01a18c7c-3393-7663-933b-5d9d7cfc39e0"
+    ],
+    "price": null
+   }
+  },
+  {
+   "entity": "shoppingItem",
+   "id": "01a18c7c-33be-742c-bb3f-12e528c74b7b",
+   "hlc": "001793358312382-00003-01a18c7c-337b-746f-91ad-7999934e5ca6",
+   "deleted": false,
+   "data": {
+    "listId": "01a18c7c-33a9-7336-99d8-bc0d043e4250",
+    "name": "vinaigrette",
+    "quantity": 3,
+    "unit": "tbsp",
+    "categoryKey": "other",
+    "checked": false,
+    "position": 3,
+    "note": null,
+    "recipeIds": [
+     "01a18c7c-3393-7663-933b-5d9d7cfc39e0"
+    ],
+    "price": null
+   }
+  },
+  {
+   "entity": "shoppingItem",
+   "id": "01a18c7c-33be-742d-8f84-747ae087aa3f",
+   "hlc": "001793358312382-00004-01a18c7c-337b-746f-91ad-7999934e5ca6",
+   "deleted": false,
+   "data": {
+    "listId": "01a18c7c-33a9-7336-99d8-bc0d043e4250",
+    "name": "spaghetti",
+    "quantity": 400,
+    "unit": "g",
+    "categoryKey": "pantry",
+    "checked": false,
+    "position": 4,
+    "note": null,
+    "recipeIds": [
+     "01a18c7c-3391-7147-b7a5-40a6d395b53e"
+    ],
+    "price": null
+   }
+  },
+  {
+   "entity": "shoppingItem",
+   "id": "01a18c7c-33bf-76fd-b5ec-dd6591fe41c4",
+   "hlc": "001793358312383-00000-01a18c7c-337b-746f-91ad-7999934e5ca6",
+   "deleted": false,
+   "data": {
+    "listId": "01a18c7c-33a9-7336-99d8-bc0d043e4250",
+    "name": "citrons non traités",
+    "quantity": 2,
+    "unit": null,
+    "categoryKey": "produce",
+    "checked": false,
+    "position": 5,
+    "note": null,
+    "recipeIds": [
+     "01a18c7c-3391-7147-b7a5-40a6d395b53e"
+    ],
+    "price": null
+   }
+  },
+  {
+   "entity": "shoppingItem",
+   "id": "01a18c7c-33bf-76fe-ad74-64c34fe6634a",
+   "hlc": "001793358312383-00001-01a18c7c-337b-746f-91ad-7999934e5ca6",
+   "deleted": false,
+   "data": {
+    "listId": "01a18c7c-33a9-7336-99d8-bc0d043e4250",
+    "name": "crème fraîche",
+    "quantity": 40,
+    "unit": "cl",
+    "categoryKey": "dairy_eggs",
+    "checked": false,
+    "position": 6,
+    "note": null,
+    "recipeIds": [
+     "01a18c7c-3391-7147-b7a5-40a6d395b53e",
+     "01a18c7c-338e-7550-ba64-762b69980f53"
+    ],
+    "price": null
+   }
+  },
+  {
+   "entity": "shoppingItem",
+   "id": "01a18c7c-33bf-76ff-a20c-29ad72a16d4f",
+   "hlc": "001793358312383-00002-01a18c7c-337b-746f-91ad-7999934e5ca6",
+   "deleted": false,
+   "data": {
+    "listId": "01a18c7c-33a9-7336-99d8-bc0d043e4250",
+    "name": "parmesan râpé",
+    "quantity": 60,
+    "unit": "g",
+    "categoryKey": "dairy_eggs",
+    "checked": false,
+    "position": 7,
+    "note": null,
+    "recipeIds": [
+     "01a18c7c-3391-7147-b7a5-40a6d395b53e"
+    ],
+    "price": null
+   }
+  },
+  {
+   "entity": "shoppingItem",
+   "id": "01a18c7c-33bf-7700-a44b-c066407357a9",
+   "hlc": "001793358312383-00003-01a18c7c-337b-746f-91ad-7999934e5ca6",
+   "deleted": false,
+   "data": {
+    "listId": "01a18c7c-33a9-7336-99d8-bc0d043e4250",
+    "name": "ail",
+    "quantity": 4,
+    "unit": "clove",
+    "categoryKey": "produce",
+    "checked": false,
+    "position": 8,
+    "note": null,
+    "recipeIds": [
+     "01a18c7c-3391-7147-b7a5-40a6d395b53e",
+     "01a18c7c-338e-7550-ba64-762b69980f53",
+     "01a18c7c-339b-7018-b9fa-a2a8d10dce35"
+    ],
+    "price": null
+   }
+  },
+  {
+   "entity": "shoppingItem",
+   "id": "01a18c7c-33bf-7701-ba35-0c9ec25b5167",
+   "hlc": "001793358312384-00000-01a18c7c-337b-746f-91ad-7999934e5ca6",
+   "deleted": false,
+   "data": {
+    "listId": "01a18c7c-33a9-7336-99d8-bc0d043e4250",
+    "name": "brioche",
+    "quantity": 4,
+    "unit": "slice",
+    "categoryKey": "bakery",
+    "checked": false,
+    "position": 9,
+    "note": null,
+    "recipeIds": [
+     "01a18c7c-3395-7368-9343-827da988edcf"
+    ],
+    "price": null
+   }
+  },
+  {
+   "entity": "shoppingItem",
+   "id": "01a18c7c-33c0-77bd-bb73-e5b36c6f80cf",
+   "hlc": "001793358312384-00001-01a18c7c-337b-746f-91ad-7999934e5ca6",
+   "deleted": false,
+   "data": {
+    "listId": "01a18c7c-33a9-7336-99d8-bc0d043e4250",
+    "name": "œufs",
+    "quantity": 6,
+    "unit": null,
+    "categoryKey": "dairy_eggs",
+    "checked": false,
+    "position": 10,
+    "note": null,
+    "recipeIds": [
+     "01a18c7c-3395-7368-9343-827da988edcf",
+     "01a18c7c-3396-709c-9f26-4681f67bdc65"
+    ],
+    "price": null
+   }
+  },
+  {
+   "entity": "shoppingItem",
+   "id": "01a18c7c-33c0-77be-8d25-dc4164303b13",
+   "hlc": "001793358312384-00002-01a18c7c-337b-746f-91ad-7999934e5ca6",
+   "deleted": false,
+   "data": {
+    "listId": "01a18c7c-33a9-7336-99d8-bc0d043e4250",
+    "name": "lait",
+    "quantity": 1.2,
+    "unit": "l",
+    "categoryKey": "dairy_eggs",
+    "checked": false,
+    "position": 11,
+    "note": null,
+    "recipeIds": [
+     "01a18c7c-3395-7368-9343-827da988edcf",
+     "01a18c7c-3396-709c-9f26-4681f67bdc65",
+     "01a18c7c-339b-7018-b9fa-a2a8d10dce35"
+    ],
+    "price": null
+   }
+  },
+  {
+   "entity": "shoppingItem",
+   "id": "01a18c7c-33c0-77bf-b4df-3bc4d84f5f1d",
+   "hlc": "001793358312384-00003-01a18c7c-337b-746f-91ad-7999934e5ca6",
+   "deleted": false,
+   "data": {
+    "listId": "01a18c7c-33a9-7336-99d8-bc0d043e4250",
+    "name": "sucre",
+    "quantity": 1,
+    "unit": "tbsp",
+    "categoryKey": "sweets_breakfast",
+    "checked": false,
+    "position": 12,
+    "note": null,
+    "recipeIds": [
+     "01a18c7c-3395-7368-9343-827da988edcf"
+    ],
+    "price": null
+   }
+  },
+  {
+   "entity": "shoppingItem",
+   "id": "01a18c7c-33c0-77c0-8987-4923f281412c",
+   "hlc": "001793358312384-00004-01a18c7c-337b-746f-91ad-7999934e5ca6",
+   "deleted": false,
+   "data": {
+    "listId": "01a18c7c-33a9-7336-99d8-bc0d043e4250",
+    "name": "potimarron",
+    "quantity": 1.2,
+    "unit": "kg",
+    "categoryKey": "other",
+    "checked": false,
+    "position": 13,
+    "note": null,
+    "recipeIds": [
+     "01a18c7c-338e-7550-ba64-762b69980f53"
+    ],
+    "price": null
+   }
+  },
+  {
+   "entity": "shoppingItem",
+   "id": "01a18c7c-33c0-77c1-a509-278786a6deb8",
+   "hlc": "001793358312384-00005-01a18c7c-337b-746f-91ad-7999934e5ca6",
+   "deleted": false,
+   "data": {
+    "listId": "01a18c7c-33a9-7336-99d8-bc0d043e4250",
+    "name": "oignons",
+    "quantity": 5,
+    "unit": null,
+    "categoryKey": "produce",
+    "checked": false,
+    "position": 14,
+    "note": null,
+    "recipeIds": [
+     "01a18c7c-338e-7550-ba64-762b69980f53",
+     "01a18c7c-339a-70cb-8c9a-ff29883cd19e",
+     "01a18c7c-3397-707c-a2e5-5bee07469512"
+    ],
+    "price": null
+   }
+  },
+  {
+   "entity": "shoppingItem",
+   "id": "01a18c7c-33c0-77c2-8227-504a6fe25378",
+   "hlc": "001793358312384-00006-01a18c7c-337b-746f-91ad-7999934e5ca6",
+   "deleted": false,
+   "data": {
+    "listId": "01a18c7c-33a9-7336-99d8-bc0d043e4250",
+    "name": "bouillon de légumes",
+    "quantity": 80,
+    "unit": "cl",
+    "categoryKey": "pantry",
+    "checked": false,
+    "position": 15,
+    "note": null,
+    "recipeIds": [
+     "01a18c7c-338e-7550-ba64-762b69980f53"
+    ],
+    "price": null
+   }
+  },
+  {
+   "entity": "shoppingItem",
+   "id": "01a18c7c-33c1-76d7-aff0-d3bcc98f3e38",
+   "hlc": "001793358312385-00000-01a18c7c-337b-746f-91ad-7999934e5ca6",
+   "deleted": false,
+   "data": {
+    "listId": "01a18c7c-33a9-7336-99d8-bc0d043e4250",
+    "name": "huile d’olive",
+    "quantity": 8,
+    "unit": "tbsp",
+    "categoryKey": "pantry",
+    "checked": false,
+    "position": 16,
+    "note": null,
+    "recipeIds": [
+     "01a18c7c-338e-7550-ba64-762b69980f53",
+     "01a18c7c-3394-72fc-b005-60023fd2b754",
+     "01a18c7c-3392-718e-abfd-3ad014b12551",
+     "01a18c7c-3397-707c-a2e5-5bee07469512"
+    ],
+    "price": null
+   }
+  },
+  {
+   "entity": "shoppingItem",
+   "id": "01a18c7c-33c1-76d8-97c9-0dbc53770eec",
+   "hlc": "001793358312385-00001-01a18c7c-337b-746f-91ad-7999934e5ca6",
+   "deleted": false,
+   "data": {
+    "listId": "01a18c7c-33a9-7336-99d8-bc0d043e4250",
+    "name": "pavés de saumon",
+    "quantity": 4,
+    "unit": null,
+    "categoryKey": "meat_fish",
+    "checked": false,
+    "position": 17,
+    "note": null,
+    "recipeIds": [
+     "01a18c7c-3394-72fc-b005-60023fd2b754"
+    ],
+    "price": null
+   }
+  },
+  {
+   "entity": "shoppingItem",
+   "id": "01a18c7c-33c1-76d9-8ee0-bf4a5226cf29",
+   "hlc": "001793358312385-00002-01a18c7c-337b-746f-91ad-7999934e5ca6",
+   "deleted": false,
+   "data": {
+    "listId": "01a18c7c-33a9-7336-99d8-bc0d043e4250",
+    "name": "courgettes",
+    "quantity": 5,
+    "unit": null,
+    "categoryKey": "produce",
+    "checked": false,
+    "position": 18,
+    "note": null,
+    "recipeIds": [
+     "01a18c7c-3394-72fc-b005-60023fd2b754",
+     "01a18c7c-3397-707c-a2e5-5bee07469512"
+    ],
+    "price": null
+   }
+  },
+  {
+   "entity": "shoppingItem",
+   "id": "01a18c7c-33c1-76da-a69a-617a8ad2b255",
+   "hlc": "001793358312385-00003-01a18c7c-337b-746f-91ad-7999934e5ca6",
+   "deleted": false,
+   "data": {
+    "listId": "01a18c7c-33a9-7336-99d8-bc0d043e4250",
+    "name": "poivron",
+    "quantity": 3,
+    "unit": null,
+    "categoryKey": "produce",
+    "checked": false,
+    "position": 19,
+    "note": null,
+    "recipeIds": [
+     "01a18c7c-3394-72fc-b005-60023fd2b754",
+     "01a18c7c-3397-707c-a2e5-5bee07469512"
+    ],
+    "price": null
+   }
+  },
+  {
+   "entity": "shoppingItem",
+   "id": "01a18c7c-33c1-76db-a1ab-6fc16062427a",
+   "hlc": "001793358312385-00004-01a18c7c-337b-746f-91ad-7999934e5ca6",
+   "deleted": false,
+   "data": {
+    "listId": "01a18c7c-33a9-7336-99d8-bc0d043e4250",
+    "name": "pois chiches",
+    "quantity": 2,
+    "unit": "can",
+    "categoryKey": "other",
+    "checked": false,
+    "position": 20,
+    "note": null,
+    "recipeIds": [
+     "01a18c7c-339a-70cb-8c9a-ff29883cd19e"
+    ],
+    "price": null
+   }
+  },
+  {
+   "entity": "shoppingItem",
+   "id": "01a18c7c-33c1-76dc-92b0-73eb0c57eba0",
+   "hlc": "001793358312385-00005-01a18c7c-337b-746f-91ad-7999934e5ca6",
+   "deleted": false,
+   "data": {
+    "listId": "01a18c7c-33a9-7336-99d8-bc0d043e4250",
+    "name": "lait de coco",
+    "quantity": 40,
+    "unit": "cl",
+    "categoryKey": "pantry",
+    "checked": false,
+    "position": 21,
+    "note": null,
+    "recipeIds": [
+     "01a18c7c-339a-70cb-8c9a-ff29883cd19e"
+    ],
+    "price": null
+   }
+  },
+  {
+   "entity": "shoppingItem",
+   "id": "01a18c7c-33c1-76dd-bb07-54ba9811b433",
+   "hlc": "001793358312385-00006-01a18c7c-337b-746f-91ad-7999934e5ca6",
+   "deleted": false,
+   "data": {
+    "listId": "01a18c7c-33a9-7336-99d8-bc0d043e4250",
+    "name": "pâte de curry",
+    "quantity": 2,
+    "unit": "tbsp",
+    "categoryKey": "pantry",
+    "checked": false,
+    "position": 22,
+    "note": null,
+    "recipeIds": [
+     "01a18c7c-339a-70cb-8c9a-ff29883cd19e"
+    ],
+    "price": null
+   }
+  },
+  {
+   "entity": "shoppingItem",
+   "id": "01a18c7c-33c1-76de-8df2-9467d4682faf",
+   "hlc": "001793358312385-00007-01a18c7c-337b-746f-91ad-7999934e5ca6",
+   "deleted": false,
+   "data": {
+    "listId": "01a18c7c-33a9-7336-99d8-bc0d043e4250",
+    "name": "épinards",
+    "quantity": 200,
+    "unit": "g",
+    "categoryKey": "produce",
+    "checked": false,
+    "position": 23,
+    "note": null,
+    "recipeIds": [
+     "01a18c7c-339a-70cb-8c9a-ff29883cd19e"
+    ],
+    "price": null
+   }
+  },
+  {
+   "entity": "shoppingItem",
+   "id": "01a18c7c-33c1-76df-9088-945dd1309d0d",
+   "hlc": "001793358312385-00008-01a18c7c-337b-746f-91ad-7999934e5ca6",
+   "deleted": false,
+   "data": {
+    "listId": "01a18c7c-33a9-7336-99d8-bc0d043e4250",
+    "name": "filets de poulet",
+    "quantity": 4,
+    "unit": null,
+    "categoryKey": "meat_fish",
+    "checked": false,
+    "position": 24,
+    "note": null,
+    "recipeIds": [
+     "01a18c7c-3392-718e-abfd-3ad014b12551"
+    ],
+    "price": null
+   }
+  },
+  {
+   "entity": "shoppingItem",
+   "id": "01a18c7c-33c2-76b2-920a-c6ac2406169c",
+   "hlc": "001793358312386-00000-01a18c7c-337b-746f-91ad-7999934e5ca6",
+   "deleted": false,
+   "data": {
+    "listId": "01a18c7c-33a9-7336-99d8-bc0d043e4250",
+    "name": "citron",
+    "quantity": 1,
+    "unit": null,
+    "categoryKey": "produce",
+    "checked": false,
+    "position": 25,
+    "note": null,
+    "recipeIds": [
+     "01a18c7c-3392-718e-abfd-3ad014b12551"
+    ],
+    "price": null
+   }
+  },
+  {
+   "entity": "shoppingItem",
+   "id": "01a18c7c-33c2-76b3-82c3-f92996e4b5a7",
+   "hlc": "001793358312386-00001-01a18c7c-337b-746f-91ad-7999934e5ca6",
+   "deleted": false,
+   "data": {
+    "listId": "01a18c7c-33a9-7336-99d8-bc0d043e4250",
+    "name": "thym",
+    "quantity": 1,
+    "unit": "tsp",
+    "categoryKey": "condiments",
+    "checked": false,
+    "position": 26,
+    "note": null,
+    "recipeIds": [
+     "01a18c7c-3392-718e-abfd-3ad014b12551"
+    ],
+    "price": null
+   }
+  },
+  {
+   "entity": "shoppingItem",
+   "id": "01a18c7c-33c2-76b4-b555-e0c5006c677c",
+   "hlc": "001793358312386-00002-01a18c7c-337b-746f-91ad-7999934e5ca6",
+   "deleted": false,
+   "data": {
+    "listId": "01a18c7c-33a9-7336-99d8-bc0d043e4250",
+    "name": "aubergines",
+    "quantity": 2,
+    "unit": null,
+    "categoryKey": "produce",
+    "checked": false,
+    "position": 27,
+    "note": null,
+    "recipeIds": [
+     "01a18c7c-3397-707c-a2e5-5bee07469512"
+    ],
+    "price": null
+   }
+  },
+  {
+   "entity": "shoppingItem",
+   "id": "01a18c7c-33c2-76b5-9a22-0adde8373579",
+   "hlc": "001793358312386-00003-01a18c7c-337b-746f-91ad-7999934e5ca6",
+   "deleted": false,
+   "data": {
+    "listId": "01a18c7c-33a9-7336-99d8-bc0d043e4250",
+    "name": "tomates",
+    "quantity": 6,
+    "unit": null,
+    "categoryKey": "produce",
+    "checked": false,
+    "position": 28,
+    "note": null,
+    "recipeIds": [
+     "01a18c7c-3397-707c-a2e5-5bee07469512"
+    ],
+    "price": null
+   }
+  },
+  {
+   "entity": "shoppingItem",
+   "id": "01a18c7c-33c2-76b6-afe9-36df0b56f40a",
+   "hlc": "001793358312386-00004-01a18c7c-337b-746f-91ad-7999934e5ca6",
+   "deleted": false,
+   "data": {
+    "listId": "01a18c7c-33a9-7336-99d8-bc0d043e4250",
+    "name": "farine",
+    "quantity": 250,
+    "unit": "g",
+    "categoryKey": "pantry",
+    "checked": false,
+    "position": 29,
+    "note": null,
+    "recipeIds": [
+     "01a18c7c-3396-709c-9f26-4681f67bdc65"
+    ],
+    "price": null
+   }
+  },
+  {
+   "entity": "shoppingItem",
+   "id": "01a18c7c-33c2-76b7-9907-c86b828b74ea",
+   "hlc": "001793358312386-00005-01a18c7c-337b-746f-91ad-7999934e5ca6",
+   "deleted": false,
+   "data": {
+    "listId": "01a18c7c-33a9-7336-99d8-bc0d043e4250",
+    "name": "sel",
+    "quantity": 1,
+    "unit": "pinch",
+    "categoryKey": "condiments",
+    "checked": false,
+    "position": 30,
+    "note": null,
+    "recipeIds": [
+     "01a18c7c-3396-709c-9f26-4681f67bdc65"
+    ],
+    "price": null
+   }
+  },
+  {
+   "entity": "shoppingItem",
+   "id": "01a18c7c-33c2-76b8-9946-1cd404c3acfd",
+   "hlc": "001793358312386-00006-01a18c7c-337b-746f-91ad-7999934e5ca6",
+   "deleted": false,
+   "data": {
+    "listId": "01a18c7c-33a9-7336-99d8-bc0d043e4250",
+    "name": "beurre fondu",
+    "quantity": 30,
+    "unit": "g",
+    "categoryKey": "dairy_eggs",
+    "checked": false,
+    "position": 31,
+    "note": null,
+    "recipeIds": [
+     "01a18c7c-3396-709c-9f26-4681f67bdc65"
+    ],
+    "price": null
+   }
+  },
+  {
+   "entity": "shoppingItem",
+   "id": "01a18c7c-33c2-76b9-b47f-4024f42e4474",
+   "hlc": "001793358312386-00007-01a18c7c-337b-746f-91ad-7999934e5ca6",
+   "deleted": false,
+   "data": {
+    "listId": "01a18c7c-33a9-7336-99d8-bc0d043e4250",
+    "name": "pommes de terre",
+    "quantity": 1.5,
+    "unit": "kg",
+    "categoryKey": "produce",
+    "checked": false,
+    "position": 32,
+    "note": null,
+    "recipeIds": [
+     "01a18c7c-339b-7018-b9fa-a2a8d10dce35"
+    ],
+    "price": null
+   }
+  },
+  {
+   "entity": "shoppingItem",
+   "id": "01a18c7c-33c3-712c-bc80-cd60a0ad85a2",
+   "hlc": "001793358312387-00000-01a18c7c-337b-746f-91ad-7999934e5ca6",
+   "deleted": false,
+   "data": {
+    "listId": "01a18c7c-33a9-7336-99d8-bc0d043e4250",
+    "name": "crème",
+    "quantity": 50,
+    "unit": "cl",
+    "categoryKey": "dairy_eggs",
+    "checked": false,
+    "position": 33,
+    "note": null,
+    "recipeIds": [
+     "01a18c7c-339b-7018-b9fa-a2a8d10dce35"
+    ],
+    "price": null
+   }
+  },
+  {
+   "entity": "shoppingList",
+   "id": "01a18c7c-33a9-7336-99d8-bc0d043e4250",
+   "hlc": "001793358312361-00001-01a18c7c-337b-746f-91ad-7999934e5ca6",
+   "deleted": false,
+   "data": {
+    "name": "Courses de la semaine",
+    "emoji": null,
+    "archived": false
+   }
+  }
+ ]
+}
