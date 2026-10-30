@@ -115,7 +115,19 @@ class ImportQueue {
     if (!s) return;
     try {
       const raw = await s.store.meta(META_KEY);
-      if (raw) this.state = { ...this.state, ...(JSON.parse(raw) as QueueState) };
+      const saved = raw ? (JSON.parse(raw) as Partial<QueueState> | null) : null;
+      // A damaged or older state must not stop the imports: keep only well-formed jobs.
+      if (saved && typeof saved === 'object')
+        this.state = {
+          ...this.state,
+          ...saved,
+          jobs: Array.isArray(saved.jobs)
+            ? saved.jobs.filter(
+                (j) =>
+                  j && typeof j.id === 'string' && j.source && typeof j.source.kind === 'string',
+              )
+            : [],
+        };
     } catch {
       // Unreadable: start empty.
     }

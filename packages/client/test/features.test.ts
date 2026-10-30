@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { addDays } from '@pepperedapron/core';
-import { emptyRecipe, LocalStore, Repos } from '../src';
+import { addDays, parseJsonLdRecipe } from '@pepperedapron/core';
+import { emptyRecipe, LocalStore, recipeFromDraft, Repos } from '../src';
 import { betterSqliteDriver } from './betterSqliteDriver';
 
 async function open() {
@@ -230,5 +230,27 @@ describe('smart collections and merging duplicates', () => {
       ['2026-10-01', 'p-123.jpg'],
     ]);
     expect(repos.entries('2026-11-02', '2026-11-02')[0]!.data.recipeId).toBe(a.id);
+  });
+});
+
+describe('regression: an imported page with oversized fields is still saved', () => {
+  it('a 6000-character description and a 10-day "prep time" do not block the import', async () => {
+    const { repos } = await open();
+    const d = parseJsonLdRecipe(
+      `<script type="application/ld+json">${JSON.stringify({
+        '@type': 'Recipe',
+        name: 'Pain au levain',
+        description: 'Une longue histoire. '.repeat(300),
+        prepTime: 'P10D',
+        recipeYield: '500',
+        recipeIngredient: ['500 g de farine'],
+        recipeInstructions: ['Pétrir.'],
+      })}</script>`,
+    )!;
+    const r = await repos.createRecipe(recipeFromDraft(d));
+    expect(r.data.title).toBe('Pain au levain');
+    expect(r.data.description!.length).toBeLessThanOrEqual(2000);
+    expect(r.data.prepMinutes).toBeNull();
+    expect(r.data.servings).toBe(4);
   });
 });

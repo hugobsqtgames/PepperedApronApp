@@ -79,11 +79,13 @@ export function draftFromLink(data: string): RecipeDraft | null {
     const d = emptyDraft();
     d.title = p.t.slice(0, 200);
     d.servings = typeof p.s === 'number' ? p.s : null;
-    for (const l of p.i ?? []) {
-      const ing = parseIngredientLine(String(l));
+    // A QR code can be made by anyone: only as much as a recipe can hold is read.
+    const list = (v: unknown, max: number) => (Array.isArray(v) ? v.slice(0, max) : []);
+    for (const l of list(p.i, 200)) {
+      const ing = parseIngredientLine(String(l).slice(0, 500));
       if (ing) d.ingredients.push({ group: null, ...ing });
     }
-    d.steps = (p.st ?? []).map((text) => ({
+    d.steps = list(p.st, 100).map((text) => ({
       group: null,
       text: String(text).slice(0, 5000),
       timerSeconds: null,

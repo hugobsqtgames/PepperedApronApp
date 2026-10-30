@@ -14,13 +14,18 @@ import { Button, Icon, IconButton, LoadingState, Screen, Text, useToast } from '
 /** Instagram exports can contain every photo of the account: read only the "saved" lists. */
 const MAX_BYTES = 150 * 1024 * 1024;
 const WANTED = /(^|\/)saved[^/]*\.(json|html?)$/i;
+/** A list of saved posts is a few MB at most. */
+const MAX_ENTRY_BYTES = 40 * 1024 * 1024;
 
 async function readExport(uri: string, name: string): Promise<{ name: string; text: string }[]> {
   const file = new File(uri);
   if (file.size > MAX_BYTES) throw new Error('too_big');
   const bytes = await file.bytes();
   if (/\.zip$/i.test(name) || (bytes[0] === 0x50 && bytes[1] === 0x4b)) {
-    const entries = unzipSync(bytes, { filter: (f) => WANTED.test(f.name) });
+    // The size is checked before decompressing: a crafted archive cannot fill the memory.
+    const entries = unzipSync(bytes, {
+      filter: (f) => WANTED.test(f.name) && f.originalSize <= MAX_ENTRY_BYTES,
+    });
     return Object.entries(entries).map(([n, data]) => ({ name: n, text: strFromU8(data) }));
   }
   return [{ name, text: strFromU8(bytes) }];

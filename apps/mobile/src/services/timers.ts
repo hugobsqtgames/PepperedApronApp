@@ -36,7 +36,17 @@ class TimerManager {
   constructor() {
     try {
       const f = file();
-      if (f.exists) this.timers = JSON.parse(f.textSync()) as KitchenTimer[];
+      const saved: unknown = f.exists ? JSON.parse(f.textSync()) : [];
+      // A damaged or older file must not break the timers: keep only well-formed ones.
+      this.timers = Array.isArray(saved)
+        ? (saved as KitchenTimer[]).filter(
+            (t) =>
+              t &&
+              typeof t.id === 'string' &&
+              typeof t.label === 'string' &&
+              Number.isFinite(t.endsAt ?? t.pausedRemaining),
+          )
+        : [];
     } catch {
       this.timers = [];
     }

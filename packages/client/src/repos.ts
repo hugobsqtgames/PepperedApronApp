@@ -15,6 +15,7 @@ import {
   findDuplicate,
   ingredientKey,
   leftoverSlot,
+  LIMITS,
   mealsFromTemplate,
   planTemplateDataSchema,
   priceDataSchema,
@@ -105,32 +106,81 @@ export const emptyRecipe = (servings = 4): RecipeData => ({
 });
 
 /** Turn an import draft into editable recipe data (the user reviews everything). */
+// Imported data comes from anywhere (web pages, captions, QR codes): every field is brought
+// within the data model's limits so an import can always be saved.
+const clip = (v: string | null | undefined, max: number): string | null => {
+  const t = v?.trim();
+  return t ? t.slice(0, max).trim() : null;
+};
+const intIn = (v: number | null | undefined, min: number, max: number): number | null =>
+  typeof v === 'number' && Number.isFinite(v) && Math.round(v) >= min && Math.round(v) <= max
+    ? Math.round(v)
+    : null;
+const positive = (v: number | null | undefined): number | null =>
+  typeof v === 'number' && Number.isFinite(v) && v > 0 && v <= LIMITS.quantityMax ? v : null;
+const httpUrl = (v: string | null | undefined): string | null => {
+  if (!v || v.length > LIMITS.url) return null;
+  try {
+    const u = new URL(v);
+    return u.protocol === 'http:' || u.protocol === 'https:' ? v : null;
+  } catch {
+    return null;
+  }
+};
+
 export function recipeFromDraft(d: RecipeDraft, defaultServings = 4): RecipeData {
+  const minutes = (v: number | null) => intIn(v, 0, LIMITS.minutesMax);
+  const source = d.author ? `${d.source ?? ''}${d.source ? ' · ' : ''}${d.author}` : d.source;
   return {
-    ...emptyRecipe(d.servings ?? defaultServings),
-    title: d.title ?? '',
-    description: d.description,
-    prepMinutes: d.prepMinutes,
-    cookMinutes: d.cookMinutes,
-    restMinutes: d.restMinutes,
-    totalMinutes: d.totalMinutes,
-    yieldLabel: d.yieldLabel,
+    ...emptyRecipe(intIn(d.servings, 1, LIMITS.servingsMax) ?? defaultServings),
+    title: clip(d.title, LIMITS.title) ?? '',
+    description: clip(d.description, LIMITS.description),
+    prepMinutes: minutes(d.prepMinutes),
+    cookMinutes: minutes(d.cookMinutes),
+    restMinutes: minutes(d.restMinutes),
+    totalMinutes: minutes(d.totalMinutes),
+    yieldLabel: clip(d.yieldLabel, 40),
     difficulty: d.difficulty,
     category: d.category,
-    ovenTemperatureC: d.ovenTemperatureC,
-    notes:
-      [d.notes, d.unparsed.length ? d.unparsed.join('\n') : null].filter(Boolean).join('\n\n') ||
-      null,
-    tips: d.tips,
-    source: d.author
-      ? `${d.source ?? ''}${d.source ? ' · ' : ''}${d.author}`.slice(0, 500)
-      : d.source,
-    sourceUrl: d.sourceUrl,
-    tags: d.tags.slice(0, 20),
+    ovenTemperatureC: intIn(d.ovenTemperatureC, LIMITS.ovenMinC, LIMITS.ovenMaxC),
+    notes: clip(
+      [d.notes, d.unparsed.length ? d.unparsed.join('\n') : null].filter(Boolean).join('\n\n'),
+      LIMITS.longText,
+    ),
+    tips: clip(d.tips, LIMITS.longText),
+    source: clip(source, LIMITS.source),
+    sourceUrl: httpUrl(d.sourceUrl),
+    tags: [
+      ...new Set(
+        d.tags.map((t) => clip(t, LIMITS.tag)?.toLowerCase()).filter((t): t is string => !!t),
+      ),
+    ].slice(0, LIMITS.tags),
     ingredients: d.ingredients
-      .slice(0, 200)
-      .map((i) => ({ id: uuidv7(), ...i, name: i.name.slice(0, 200) })),
-    steps: d.steps.slice(0, 100).map((s) => ({ id: uuidv7(), ...s, text: s.text.slice(0, 3000) })),
+      .map((i) => {
+        const quantity = positive(i.quantity);
+        const quantityMax = quantity === null ? null : positive(i.quantityMax);
+        return {
+          id: uuidv7(),
+          group: clip(i.group, LIMITS.groupName),
+          name: clip(i.name, LIMITS.ingredientName) ?? '',
+          quantity,
+          quantityMax: quantityMax !== null && quantityMax > quantity! ? quantityMax : null,
+          unit: clip(i.unit, 24),
+          note: clip(i.note, LIMITS.ingredientNote),
+        };
+      })
+      .filter((i) => i.name)
+      .slice(0, LIMITS.ingredients),
+    steps: d.steps
+      .map((st) => ({
+        id: uuidv7(),
+        group: clip(st.group, LIMITS.groupName),
+        text: clip(st.text, LIMITS.stepText) ?? '',
+        timerSeconds: intIn(st.timerSeconds, 1, LIMITS.timerMaxSeconds),
+        timerLabel: clip(st.timerLabel, 60),
+      }))
+      .filter((st) => st.text)
+      .slice(0, LIMITS.steps),
   };
 }
 

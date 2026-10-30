@@ -141,3 +141,22 @@ describe('import queue', () => {
     expect(importQueue.snapshot.jobs[0]).toMatchObject({ status: 'done', recipeId: 'r9' });
   });
 });
+
+describe('regression: a damaged saved queue does not stop the imports', () => {
+  it.each([
+    'null',
+    '42',
+    '{"jobs":"x"}',
+    '{"jobs":[null,{"id":1},{"id":"a"}]}',
+    '{"jobs":[{"id":"b","source":{"kind":"link","url":"https://x.fr","text":null,"title":null},"status":"running"}]',
+  ])('saved state %s', async (raw) => {
+    mockMeta.set('import_queue', raw);
+    mockPrepare.mockResolvedValue(prepared('partial'));
+    mockSave.mockResolvedValue({ recipeId: 'r1', title: 'Pâtes', duplicate: null });
+    await importQueue.add([link('https://www.instagram.com/p/A/')]);
+    await settle();
+    const jobs = importQueue.snapshot.jobs;
+    expect(jobs.every((j) => typeof j.id === 'string' && j.source)).toBe(true);
+    expect(jobs.some((j) => j.status === 'done' && j.recipeId === 'r1')).toBe(true);
+  });
+});
