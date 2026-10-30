@@ -75,7 +75,7 @@ Depuis l'app (« + ») : lien(s) collé(s), texte, photo(s), dictée, enregistre
 - **Écran verrouillé** : « Ce soir » (rectangulaire, en ligne) et « Liste de courses » (circulaire : articles restants, rectangulaire, en ligne).
 - **Siri / Raccourcis** : extension App Intents `targets/intents` (nouvel identifiant `<bundle>.PepperedApronIntents`, App Group partagé ; EAS crée son profil comme pour les widgets). « Qu'est-ce qu'on mange ce soir dans PepperedApron », « Ajoute aux courses dans PepperedApron » (Siri demande quoi ; mis en attente `pendingAdds`, ajouté à la liste active à l'ouverture suivante), « Une recette au hasard dans PepperedApron ». Réponses lues dans l'instantané des widgets, dans la langue de l'app (`intentLabels`). Tout reste sur l'appareil.
 - **Spotlight** : module local `modules/ios-integration` ; titres, ingrédients, étiquettes et photos indexés **sur l'appareil** (`services/spotlight.ts`, ré-indexé après chaque changement, supprimés avec la recette). Un résultat ouvre la fiche (`IosIntegrationAppDelegate` → `pepperedapron://recipe/<id>`).
-- **Handoff** : la fiche et le mode cuisine publient une `NSUserActivity` (`app.pepperedapron.recipe` / `.cook`, déclarées dans `NSUserActivityTypes`) ; sur l'autre appareil connecté au même compte Apple, l'icône Handoff rouvre la même recette.
+- **Handoff** : la fiche et le mode cuisine publient une `NSUserActivity` (`<bundle id>.recipe` / `.cook`, propres à chaque variante dev/staging/prod, déclarées dans `NSUserActivityTypes`) ; sur l'autre appareil connecté au même compte Apple, l'icône Handoff rouvre la même recette.
 
 ## Mode cuisine, minuteurs, Live Activities
 

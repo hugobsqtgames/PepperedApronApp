@@ -80,7 +80,7 @@ jest.mock('../src/services/runtime', () => ({ runtime: mockRuntime }));
 
 import { ActionSheetProvider, PromptProvider, ToastProvider } from '../src/ui';
 import { ThemeProvider } from '../src/theme/ThemeProvider';
-import { setLanguage } from '../src/i18n';
+import i18n, { setLanguage } from '../src/i18n';
 import { rng } from '../../../packages/core/src/fuzz/rng';
 import { ActionSheetIOS, Alert, Share } from 'react-native';
 
@@ -261,6 +261,136 @@ describe.each(SCREENS)('%s', (name, load, params) => {
       totalPresses++;
     }
     expect(pressed).toBeGreaterThanOrEqual(0);
+  });
+});
+
+/* eslint-disable @typescript-eslint/no-require-imports */
+const screenOf = (p: string) => (require(p) as { default: () => ReactElement }).default;
+/* eslint-enable @typescript-eslint/no-require-imports */
+const tap = async (el: Parameters<typeof fireEvent.press>[0]) => {
+  await act(async () => {
+    fireEvent.press(el);
+  });
+};
+const settle = () => act(async () => new Promise((r) => setTimeout(r, 30)));
+
+describe('journeys: what the user does is really saved', () => {
+  it('a new recipe typed in the editor is saved with its ingredient', async () => {
+    mockParams.current = {};
+    const Edit = screenOf('../src/app/(app)/recipe/edit');
+    await render(wrap(<Edit />));
+    await act(async () => {
+      fireEvent.changeText(screen.getByTestId('editor-title'), 'Tarte du test');
+      fireEvent.changeText(
+        screen.getAllByPlaceholderText(i18n.t('editor.ingredientPlaceholder'))[0]!,
+        '250 g de farine',
+      );
+    });
+    await tap(screen.getByTestId('editor-save'));
+    await settle();
+    const saved = repos.recipes().find((r) => r.data.title === 'Tarte du test');
+    expect(saved).toBeTruthy();
+    expect(saved!.data.ingredients.map((x) => [x.quantity, x.unit, x.name])).toEqual([
+      [250, 'g', 'farine'],
+    ]);
+    expect(mockNav.replace).toHaveBeenCalledWith(`/recipe/${saved!.id}`);
+  });
+
+  it('an empty title is refused and nothing is saved', async () => {
+    mockParams.current = {};
+    const before = repos.recipes().length;
+    const Edit = screenOf('../src/app/(app)/recipe/edit');
+    await render(wrap(<Edit />));
+    await tap(screen.getByTestId('editor-save'));
+    await settle();
+    expect(repos.recipes().length).toBe(before);
+    expect(screen.getByText(i18n.t('errors.titleRequired'))).toBeTruthy();
+  });
+
+  it('favorite and "cooked today" on the recipe page are saved', async () => {
+    mockParams.current = { id: ids.recipe! };
+    const wasFav = repos.isFavorite(ids.recipe!);
+    const today = new Date().toISOString().slice(0, 10);
+    const cooked = repos.cookLogs(ids.recipe!).length;
+    const hadToday = repos.cookLogs(ids.recipe!).some((c) => c.data.date === today);
+    const Recipe = screenOf('../src/app/(app)/recipe/[id]/index');
+    await render(wrap(<Recipe />));
+    await tap(screen.getByTestId('recipe-favorite'));
+    await tap(screen.getByTestId('recipe-cooked'));
+    await settle();
+    expect(repos.isFavorite(ids.recipe!)).toBe(!wasFav);
+    expect(repos.cookLogs(ids.recipe!).length).toBe(cooked + (hadToday ? 0 : 1));
+  });
+
+  it('cook mode: "next" moves on, "finish" on the last step logs the recipe', async () => {
+    const r = repos.recipes().find((x) => x.data.steps.length === 2)!;
+    mockParams.current = { id: r.id };
+    const Cook = screenOf('../src/app/(app)/recipe/[id]/cook');
+    await render(wrap(<Cook />));
+    expect(screen.getByText(i18n.t('cook.step', { n: 1, total: 2 }))).toBeTruthy();
+    await tap(screen.getByTestId('cook-next'));
+    expect(screen.getByText(i18n.t('cook.step', { n: 2, total: 2 }))).toBeTruthy();
+    await tap(screen.getByTestId('cook-finish'));
+    await settle();
+    expect(repos.cookLogs(r.id).length).toBeGreaterThan(0);
+    expect(screen.getByText(i18n.t('cook.doneTitle'))).toBeTruthy();
+  });
+
+  it('ticking a grocery item is saved', async () => {
+    mockParams.current = {};
+    const list = repos.activeList()!;
+    const Shopping = screenOf('../src/app/(app)/(tabs)/shopping');
+    await render(wrap(<Shopping />));
+    // The first item shown (the list is virtualised: not every row is rendered).
+    const shown = screen.getAllByTestId(/^item-check-/)[0]!;
+    const name = String(shown.props.testID).slice('item-check-'.length);
+    const item = repos.items(list.id).find((x) => x.data.name === name && !x.data.checked)!;
+    await tap(shown);
+    await settle();
+    expect(repos.items(list.id).find((x) => x.id === item.id)!.data.checked).toBe(true);
+  });
+
+  it('something typed in the pantry is stored with its quantity', async () => {
+    mockParams.current = {};
+    const Pantry = screenOf('../src/app/(app)/pantry');
+    await render(wrap(<Pantry />));
+    await act(async () => {
+      fireEvent.changeText(screen.getByTestId('pantry-add'), '2 kg de pommes');
+    });
+    await act(async () => {
+      fireEvent(screen.getByTestId('pantry-add'), 'submitEditing');
+    });
+    await settle();
+    const p = repos.pantryItems().find((x) => x.data.name === 'pommes');
+    expect(p?.data.quantity).toBe(2);
+    expect(p?.data.unit).toBe('kg');
+  });
+
+  it('"add the week to groceries" fills the active list from the planning', async () => {
+    mockParams.current = {};
+    const list = repos.activeList()!;
+    for (const it of repos.items(list.id)) await repos.removeItem(it.id);
+    const Planning = screenOf('../src/app/(app)/(tabs)/planning');
+    await render(wrap(<Planning />));
+    await tap(screen.getByTestId('plan-to-shopping'));
+    await settle();
+    expect(repos.items(list.id).length).toBeGreaterThan(5);
+  });
+
+  it('a smart collection is saved with its rules', async () => {
+    mockParams.current = {};
+    const Smart = screenOf('../src/app/(app)/collection/smart');
+    await render(wrap(<Smart />));
+    await act(async () => {
+      fireEvent.changeText(screen.getByPlaceholderText(i18n.t('smart.namePlaceholder')), 'Végé');
+    });
+    // The diet row comes first (the same word is also a category).
+    await tap(screen.getAllByText(i18n.t('diets.vegetarian'))[0]!);
+    await tap(screen.getByText(i18n.t('common.save')));
+    await settle();
+    const sc = repos.smartCollections().find((x) => x.data.name === 'Végé');
+    expect(sc?.data.rules.diet).toBe('vegetarian');
+    expect(repos.smartCollectionRecipes(sc!.id).length).toBeGreaterThan(0);
   });
 });
 
