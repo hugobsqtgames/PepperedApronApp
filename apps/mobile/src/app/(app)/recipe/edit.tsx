@@ -9,6 +9,7 @@ import {
   StyleSheet,
   View,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { router, useLocalSearchParams, useNavigation } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -42,6 +43,7 @@ import { noticeText, WARNING_NOTICES } from '../../../features/recipe/notices';
 import { draftStore, type EditorDraft } from '../../../services/drafts';
 import { haptic } from '../../../services/haptics';
 import { photoFromUrl, pickImage, preparePhoto, type PhotoSource } from '../../../services/photos';
+import { dropFrames, framesFor } from '../../../services/videoFrames';
 import { useTheme } from '../../../theme/ThemeProvider';
 import { radius, space } from '../../../theme/tokens';
 import {
@@ -123,6 +125,10 @@ export default function RecipeEditor() {
       : draft?.imageUrl
         ? { kind: 'remote', url: draft.imageUrl }
         : { kind: 'keep' },
+  );
+  // Pictures of the imported video, offered as the photo (best first).
+  const [frames] = useState<string[]>(
+    () => draft?.frames ?? (existing ? framesFor(existing.id) : []),
   );
   const [titleError, setTitleError] = useState<string | null>(null);
   const [showMore, setShowMore] = useState(!!existing || !!draft);
@@ -263,6 +269,7 @@ export default function RecipeEditor() {
         ? await repos.updateRecipe(existing.id, final)
         : await repos.createRecipe(final);
       saved.current = true;
+      if (photo.kind === 'local' && frames.includes(photo.uri)) dropFrames(rec.id);
       haptic.success();
       toast(t('editor.saved'));
       if (existing) router.back();
@@ -399,6 +406,40 @@ export default function RecipeEditor() {
               </View>
             )}
           </Pressable>
+          {frames.length ? (
+            <View style={{ gap: space.sm }}>
+              <Text variant="caption" color="textMuted">
+                {t('editor.videoFrames')}
+              </Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                <View style={{ flexDirection: 'row', gap: space.sm }}>
+                  {frames.map((uri, i) => {
+                    const on = photo.kind === 'local' && photo.uri === uri;
+                    return (
+                      <Pressable
+                        key={uri}
+                        accessibilityRole="button"
+                        accessibilityLabel={t('editor.videoFrame', { n: i + 1 })}
+                        accessibilityState={{ selected: on }}
+                        onPress={() => {
+                          dirty.current = true;
+                          setPhoto({ kind: 'local', uri });
+                        }}
+                        style={[styles.frame, { borderColor: on ? colors.primary : 'transparent' }]}
+                      >
+                        <Image
+                          source={{ uri }}
+                          style={{ width: '100%', height: '100%', borderRadius: radius.md }}
+                          contentFit="cover"
+                          accessibilityIgnoresInvertColors
+                        />
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              </ScrollView>
+            </View>
+          ) : null}
 
           <View style={{ gap: space.lg }}>
             <TextField
@@ -840,6 +881,7 @@ export default function RecipeEditor() {
 }
 
 const styles = StyleSheet.create({
+  frame: { width: 72, height: 96, borderRadius: radius.md + 3, borderWidth: 3, padding: 0 },
   header: {
     flexDirection: 'row',
     alignItems: 'center',

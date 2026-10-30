@@ -1,0 +1,7 @@
+{
+  "name": "pdf-text",
+  "version": "1.0.0",
+  "description": "Text of a PDF read on the device (PDFKit); pages of scanned PDFs as pictures.",
+  "main": "index.ts",
+  "private": true
+}

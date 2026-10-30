@@ -99,7 +99,11 @@ function mergeCaption(draft: RecipeDraft, raw: string | null) {
  * TikTok/YouTube, public schema.org data or OpenGraph meta otherwise. Never scrapes behind logins
  * and never throws for an unreachable page: the link alone is still a valid draft.
  */
-export async function importFromUrl(fetchPage: FetchPage, raw: string): Promise<ImportResult> {
+export async function importFromUrl(
+  fetchPage: FetchPage,
+  raw: string,
+  depth = 0,
+): Promise<ImportResult> {
   const url = normalizeImportUrl(raw);
   const platform = detectPlatform(url);
   const draft = emptyDraft();
@@ -121,6 +125,15 @@ export async function importFromUrl(fetchPage: FetchPage, raw: string): Promise<
   }
   if (page.status >= 400 || !(page.contentType ?? '').includes('html'))
     return { draft, platform, completeness: 'minimal' };
+
+  // A pin links to the recipe it was saved from: import the recipe from there.
+  if (platform === 'pinterest' && !depth) {
+    const origin = pinterestSourceUrl(page.body);
+    if (origin) {
+      const res = await importFromUrl(fetchPage, origin, 1);
+      if (res.completeness !== 'minimal') return res;
+    }
+  }
 
   const structured = parseJsonLdRecipe(page.body);
   if (structured) {
@@ -146,6 +159,37 @@ export async function importFromUrl(fetchPage: FetchPage, raw: string): Promise<
     platform,
     completeness: draft.ingredients.length || draft.title ? 'partial' : 'minimal',
   };
+}
+
+const PINTEREST_HOST = /(^|\.)(pinterest\.[a-z.]+|pin\.it|pinimg\.com)$/i;
+
+/**
+ * Link of the page a pin was saved from: in the pin's data ("link":"https:\/\/…") or its
+ * og:see_also meta. Pinterest's own links (other pins, images) are ignored.
+ */
+export function pinterestSourceUrl(html: string): string | null {
+  const candidates: string[] = [];
+  const see = html.match(
+    /<meta[^>]+(?:property|name)=["']og:see_also["'][^>]*content=["']([^"']+)/i,
+  );
+  if (see) candidates.push(see[1]!);
+  const re = /"(?:link|source_url|sourceUrl)"\s*:\s*"(https?:[^"]+)"/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(html)) && candidates.length < 20) candidates.push(m[1]!);
+  for (const c of candidates) {
+    const raw = c
+      .replace(/\\u002F/gi, '/')
+      .replace(/\\\//g, '/')
+      .replace(/&amp;/g, '&');
+    try {
+      const u = new URL(raw);
+      if ((u.protocol === 'https:' || u.protocol === 'http:') && !PINTEREST_HOST.test(u.hostname))
+        return u.toString();
+    } catch {
+      // not a link
+    }
+  }
+  return null;
 }
 
 /** Post code of an Instagram link (/p/…, /reel/…, /reels/…, /tv/…, with or without a username). */

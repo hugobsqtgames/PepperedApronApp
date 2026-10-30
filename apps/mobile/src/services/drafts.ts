@@ -7,6 +7,8 @@ export interface EditorDraft {
   /** Local image (shared photo, OCR source) to attach on save. */
   localImageUri: string | null;
   notice: ReviewNotice | null;
+  /** Pictures of the imported video, offered as the photo. */
+  frames?: string[];
 }
 
 const drafts = new Map<string, EditorDraft>();

@@ -38,8 +38,10 @@ export default function ImportLink() {
     setLoading('fetching');
     try {
       // Offline or unreadable pages still open a draft keeping the link: nothing is lost.
-      const { result, listenError } = await importLinkFull(raw, () => setLoading('listening'));
-      openDraft(result.draft, { notice: linkNotice(result, listenError) });
+      const { result, listenError, frames } = await importLinkFull(raw, () =>
+        setLoading('listening'),
+      );
+      openDraft(result.draft, { notice: linkNotice(result, listenError), frames });
     } catch (e) {
       setError(e instanceof ImportUrlError ? t('errors.invalid_url') : errorMessage(e, t));
     } finally {

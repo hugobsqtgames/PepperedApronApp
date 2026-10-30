@@ -1,13 +1,18 @@
 import { Directory, File, Paths } from 'expo-file-system';
 import {
   importFromUrl,
+  ingredientsFromScreenText,
+  mergeIngredients,
   recipeFromTranscript,
   uuidv7,
+  type DraftIngredient,
   type FetchPage,
   type ImportResult,
 } from '@pepperedapron/core';
-import { transcribeVideo, videoSpeechAvailable } from '../../modules/video-speech';
+import { transcribeVideo, videoFrames, videoSpeechAvailable } from '../../modules/video-speech';
 import i18n from '../i18n';
+import { pickFrames } from '../lib/frames';
+import { ocrSupported, readTextFromImage } from './ocr';
 
 const TIMEOUT_MS = 12_000;
 const MAX_CHARS = 3_000_000;
@@ -82,6 +87,47 @@ export async function transcribeFile(
   }
 }
 
+export interface VideoPictures {
+  /** Ingredients written on the video ("200 g de farine" in an overlay). */
+  ingredients: DraftIngredient[];
+  /** Up to 6 pictures of the video for the recipe photo, sharpest and best exposed first. */
+  frames: string[];
+}
+
+const FRAMES_PER_VIDEO = 60;
+
+/**
+ * Look at a video on the device: about one picture per second, the text written on each one read
+ * by the phone's text recognition. Only the 6 pictures offered as the photo are kept on disk.
+ */
+export async function readVideoPictures(uri: string): Promise<VideoPictures> {
+  if (!videoSpeechAvailable) return { ingredients: [], frames: [] };
+  try {
+    const frames = await videoFrames(uri, FRAMES_PER_VIDEO);
+    const texts: string[][] = [];
+    if (await ocrSupported())
+      for (const f of frames) {
+        try {
+          texts.push((await readTextFromImage(f.uri)).split('\n'));
+        } catch {
+          // An unreadable picture: the others still count.
+        }
+      }
+    const kept = pickFrames(frames);
+    for (const f of frames) {
+      if (kept.includes(f.uri)) continue;
+      try {
+        new File(f.uri).delete();
+      } catch {
+        // Caches folder: cleaned by the system anyway.
+      }
+    }
+    return { ingredients: ingredientsFromScreenText(texts), frames: kept };
+  } catch {
+    return { ingredients: [], frames: [] };
+  }
+}
+
 /**
  * Instagram reel whose recipe is only said out loud: download the public video to the cache,
  * transcribe it with the phone's on-device speech recognition, delete it, and complete the
@@ -89,28 +135,39 @@ export async function transcribeFile(
  */
 export async function listenToVideo(
   res: ImportResult,
-): Promise<{ result: ImportResult; error: VideoListenError | null }> {
-  if (!res.videoUrl) return { result: res, error: null };
-  if (!videoSpeechAvailable) return { result: res, error: 'unsupported' };
+): Promise<{ result: ImportResult; error: VideoListenError | null; frames: string[] }> {
+  if (!res.videoUrl) return { result: res, error: null, frames: [] };
+  if (!videoSpeechAvailable) return { result: res, error: 'unsupported', frames: [] };
   const dir = new Directory(Paths.cache, 'video-import');
   const video = new File(dir, `${uuidv7()}.mp4`);
+  let pictures: VideoPictures = { ingredients: [], frames: [] };
   try {
     if (!dir.exists) dir.create({ intermediates: true });
     await File.downloadFileAsync(res.videoUrl, video);
-    const heard = await transcribeFile(video.uri, res.language);
-    if ('error' in heard) return { result: res, error: heard.error };
-    const spoken = recipeFromTranscript(heard.lines);
+    pictures = await readVideoPictures(video.uri);
     const draft = { ...res.draft };
-    if (!draft.ingredients.length) draft.ingredients = spoken.ingredients;
+    draft.ingredients = mergeIngredients(draft.ingredients, pictures.ingredients);
+    const seen = pictures.ingredients.length > 0;
+    const heard = await transcribeFile(video.uri, res.language);
+    if ('error' in heard)
+      return {
+        result: seen ? { ...res, draft, completeness: 'partial' } : res,
+        error: heard.error,
+        frames: pictures.frames,
+      };
+    const spoken = recipeFromTranscript(heard.lines);
+    // Quantities written on the video are more precise than what is said: they come first.
+    draft.ingredients = mergeIngredients(draft.ingredients, spoken.ingredients);
     if (!draft.steps.length) draft.steps = spoken.steps;
     draft.notes = [draft.notes, `🎙️ ${spoken.text}`].filter(Boolean).join('\n\n').slice(0, 5000);
     const found = spoken.ingredients.length > 0 || spoken.steps.length > 0;
     return {
       result: { ...res, draft, fromSpeech: found, completeness: 'partial' },
       error: null,
+      frames: pictures.frames,
     };
   } catch (e) {
-    return { result: res, error: listenError(e) };
+    return { result: res, error: listenError(e), frames: pictures.frames };
   } finally {
     try {
       if (video.exists) video.delete();
@@ -128,15 +185,20 @@ export async function listenToVideo(
 export async function importLinkFull(
   url: string,
   onListening: () => void,
-): Promise<{ result: ImportResult; listenError: VideoListenError | null; offline: boolean }> {
+): Promise<{
+  result: ImportResult;
+  listenError: VideoListenError | null;
+  offline: boolean;
+  frames: string[];
+}> {
   let networkErrors = 0;
   const res = await importFromUrl(
     pageFetcher(() => networkErrors++),
     url,
   );
   const offline = networkErrors > 0 && res.completeness === 'minimal';
-  if (!res.videoUrl) return { result: res, listenError: null, offline };
+  if (!res.videoUrl) return { result: res, listenError: null, offline, frames: [] };
   onListening();
-  const { result, error } = await listenToVideo(res);
-  return { result, listenError: error, offline };
+  const { result, error, frames } = await listenToVideo(res);
+  return { result, listenError: error, offline, frames };
 }

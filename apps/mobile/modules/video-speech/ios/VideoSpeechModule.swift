@@ -1,6 +1,7 @@
 import AVFoundation
 import ExpoModulesCore
 import Speech
+import UIKit
 
 /// On-device transcription of a video's speech: the audio track is converted to 16 kHz mono
 /// PCM, then recognised by Apple Speech with `requiresOnDeviceRecognition` (nothing leaves the
@@ -36,6 +37,83 @@ public class VideoSpeechModule: Module {
         }
       }
     }
+
+    // About one picture per second of the video (at most `count`), saved as JPEG in the caches
+    // folder, each with a quality score (sharp and well exposed = high): for reading the text
+    // written on the video and for choosing the recipe photo.
+    AsyncFunction("frames") { (videoUri: URL, count: Int, promise: Promise) in
+      DispatchQueue.global(qos: .userInitiated).async {
+        do {
+          promise.resolve(try VideoFrames.extract(from: videoUri, count: max(1, min(count, 90))))
+        } catch {
+          promise.reject("ERR_FRAMES", "Cannot read the pictures of this video.")
+        }
+      }
+    }
+  }
+}
+
+enum VideoFrames {
+  static func extract(from video: URL, count: Int) throws -> [[String: Any]] {
+    let asset = AVURLAsset(url: video)
+    let duration = CMTimeGetSeconds(asset.duration)
+    guard duration.isFinite, duration > 0 else { return [] }
+    let n = min(count, max(1, Int(duration.rounded(.down))))
+    let generator = AVAssetImageGenerator(asset: asset)
+    generator.appliesPreferredTrackTransform = true
+    generator.maximumSize = CGSize(width: 1080, height: 1080)
+    generator.requestedTimeToleranceBefore = CMTime(seconds: 0.4, preferredTimescale: 600)
+    generator.requestedTimeToleranceAfter = CMTime(seconds: 0.4, preferredTimescale: 600)
+    let dir = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
+      .appendingPathComponent("video-frames/\(UUID().uuidString)", isDirectory: true)
+    try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+    var out: [[String: Any]] = []
+    for i in 0..<n {
+      let t = duration * (Double(i) + 0.5) / Double(n)
+      guard
+        let cg = try? generator.copyCGImage(
+          at: CMTime(seconds: t, preferredTimescale: 600), actualTime: nil),
+        let jpeg = UIImage(cgImage: cg).jpegData(compressionQuality: 0.85)
+      else { continue }
+      let file = dir.appendingPathComponent("\(i).jpg")
+      try jpeg.write(to: file)
+      out.append(["uri": file.absoluteString, "time": t, "score": quality(cg)])
+    }
+    return out
+  }
+
+  /// Sharpness (variance of a Laplacian on a 96×96 grey copy) lowered for dark or burnt pictures.
+  static func quality(_ image: CGImage) -> Double {
+    let w = 96, h = 96
+    var px = [UInt8](repeating: 0, count: w * h)
+    let drawn = px.withUnsafeMutableBytes { buf -> Bool in
+      guard
+        let ctx = CGContext(
+          data: buf.baseAddress, width: w, height: h, bitsPerComponent: 8, bytesPerRow: w,
+          space: CGColorSpaceCreateDeviceGray(), bitmapInfo: CGImageAlphaInfo.none.rawValue)
+      else { return false }
+      ctx.interpolationQuality = .medium
+      ctx.draw(image, in: CGRect(x: 0, y: 0, width: w, height: h))
+      return true
+    }
+    guard drawn else { return 0 }
+    var sum = 0.0, sumSq = 0.0, mean = 0.0, n = 0.0
+    for y in 1..<(h - 1) {
+      for x in 1..<(w - 1) {
+        let c = Double(px[y * w + x])
+        let lap =
+          4 * c - Double(px[y * w + x - 1]) - Double(px[y * w + x + 1])
+          - Double(px[(y - 1) * w + x]) - Double(px[(y + 1) * w + x])
+        sum += lap
+        sumSq += lap * lap
+        mean += c
+        n += 1
+      }
+    }
+    let variance = sumSq / n - (sum / n) * (sum / n)
+    let brightness = mean / n / 255
+    let exposure = max(0, 1 - abs(brightness - 0.5) * 2)
+    return variance * (0.25 + 0.75 * exposure)
   }
 }
 

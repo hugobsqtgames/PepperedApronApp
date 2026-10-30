@@ -46,7 +46,7 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const isInstagram = (s: ImportSource) => s.kind === 'link' && /instagram\.com/i.test(s.url);
 
 function filesOf(s: ImportSource): string[] {
-  return s.kind === 'photos' ? s.uris : s.kind === 'video' ? [s.uri] : [];
+  return s.kind === 'photos' ? s.uris : s.kind === 'video' || s.kind === 'pdf' ? [s.uri] : [];
 }
 
 /** Shared files live in the share extension's folder, which iOS may empty: keep a copy. */
@@ -64,7 +64,7 @@ async function keepFiles(s: ImportSource, jobId: string): Promise<ImportSource> 
     }
   };
   if (s.kind === 'photos') return { ...s, uris: await Promise.all(s.uris.map(copy)) };
-  if (s.kind === 'video') return { ...s, uri: await copy(s.uri, 0) };
+  if (s.kind === 'video' || s.kind === 'pdf') return { ...s, uri: await copy(s.uri, 0) };
   return s;
 }
 

@@ -7,7 +7,12 @@ import { draftStore, type EditorDraft } from '../../services/drafts';
 /** Open the editor pre-filled with an import result. Nothing is saved until the user confirms. */
 export function openDraft(
   d: RecipeDraft,
-  opts: { notice: EditorDraft['notice']; localImageUri?: string | null; replace?: boolean },
+  opts: {
+    notice: EditorDraft['notice'];
+    localImageUri?: string | null;
+    replace?: boolean;
+    frames?: string[];
+  },
 ) {
   const servings = runtime.session?.repos.settings().defaultServings ?? 4;
   const key = draftStore.put({
@@ -15,6 +20,7 @@ export function openDraft(
     imageUrl: d.imageUrl,
     localImageUri: opts.localImageUri ?? null,
     notice: opts.notice,
+    frames: opts.frames,
   });
   const go = opts.replace === false ? router.push : router.replace;
   go({ pathname: '/recipe/edit', params: { draft: key } });

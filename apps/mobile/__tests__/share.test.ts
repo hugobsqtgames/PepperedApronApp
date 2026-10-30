@@ -3,9 +3,12 @@ jest.mock('../src/services/runtime', () => ({ runtime: { session: null } }));
 jest.mock('../src/services/importer', () => ({}));
 jest.mock('../src/services/ocr', () => ({}));
 jest.mock('../src/services/photos', () => ({}));
+jest.mock('../src/services/videoFrames', () => ({}));
+jest.mock('../modules/pdf-text', () => ({}));
 
 import { draftFromDictation, sourcesFromShare } from '../src/services/autoImport';
 import { formatIngredient, shoppingListAsText } from '../src/lib/format';
+import { pickFrames } from '../src/lib/frames';
 
 const share = (p: Partial<Parameters<typeof sourcesFromShare>[0]>) =>
   sourcesFromShare({ text: null, url: null, title: null, images: [], videos: [], ...p });
@@ -41,6 +44,9 @@ describe('what is shared becomes imports', () => {
     ]);
     expect(share({ videos: ['file:///v.mp4'], text: 'Recette' })).toEqual([
       { kind: 'video', uri: 'file:///v.mp4', text: 'Recette' },
+    ]);
+    expect(share({ pdfs: ['file:///r.pdf'], text: 'Recette' })).toEqual([
+      { kind: 'pdf', uri: 'file:///r.pdf' },
     ]);
     expect(share({ text: 'Crêpes\n250 g de farine' })[0]).toMatchObject({ kind: 'text' });
     expect(share({})).toEqual([]);
@@ -95,5 +101,14 @@ describe('shopping list as text', () => {
         { title: 'Épicerie', items: [{ name: 'Riz', quantity: '', checked: true }] },
       ]),
     ).toBe('Courses\n\nFruits & légumes\n☐ 1 kg Tomates');
+  });
+});
+
+describe('pictures of a video offered as the photo', () => {
+  it('best first, never twice the same moment', () => {
+    const f = (time: number, score: number) => ({ uri: `${time}.jpg`, time, score });
+    const frames = [f(0, 10), f(1, 90), f(2, 85), f(5, 50), f(6, 70), f(12, 5)];
+    expect(pickFrames(frames, 3)).toEqual(['1.jpg', '6.jpg', '12.jpg']);
+    expect(pickFrames([], 6)).toEqual([]);
   });
 });

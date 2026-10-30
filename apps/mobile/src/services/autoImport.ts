@@ -1,6 +1,7 @@
 import {
   emptyDraft,
   extractUrls,
+  mergeIngredients,
   parseRecipeText,
   recipeFromTranscript,
   type DuplicateMatch,
@@ -9,10 +10,12 @@ import {
   type ReviewNotice,
 } from '@pepperedapron/core';
 import { recipeFromDraft } from '@pepperedapron/client';
+import { readPdf } from '../../modules/pdf-text';
 import { linkNotice } from '../features/recipe/notices';
 import i18n from '../i18n';
-import { importLinkFull, transcribeFile } from './importer';
+import { importLinkFull, readVideoPictures, transcribeFile } from './importer';
 import { ocrSupported, readTextFromImage } from './ocr';
+import { keepFramesFor } from './videoFrames';
 import { photoFromUrl, preparePhoto } from './photos';
 import { runtime } from './runtime';
 
@@ -23,7 +26,9 @@ export type ImportSource =
   /** Screenshots or photos of one recipe (a carousel, several pages of a book). */
   | { kind: 'photos'; uris: string[] }
   /** A video file (saved from TikTok or Instagram): its speech is transcribed. */
-  | { kind: 'video'; uri: string; text: string | null };
+  | { kind: 'video'; uri: string; text: string | null }
+  /** A PDF (a recipe saved from a site, a scanned page of a book): its text is read. */
+  | { kind: 'pdf'; uri: string };
 
 export type ImportStage = 'fetching' | 'listening' | 'reading' | 'saving';
 
@@ -34,6 +39,8 @@ export interface PreparedImport {
   platform: ImportPlatform | null;
   /** The site could not be reached (no network): nothing useful to save yet. */
   offline: boolean;
+  /** Pictures of the video (best first), offered as the recipe photo. */
+  frames?: string[];
 }
 
 /** Below this many characters, a shared picture is the dish, not a screenshot of the recipe. */
@@ -49,7 +56,9 @@ export function sourcesFromShare(p: {
   title: string | null;
   images: string[];
   videos: string[];
+  pdfs?: string[];
 }): ImportSource[] {
+  if (p.pdfs?.[0]) return [{ kind: 'pdf', uri: p.pdfs[0] }];
   if (p.images.length) return [{ kind: 'photos', uris: p.images.slice(0, 10) }];
   if (p.videos[0]) return [{ kind: 'video', uri: p.videos[0], text: p.text }];
   const urls = [...new Set([...(p.url ? [p.url] : []), ...extractUrls(p.text ?? '')])];
@@ -91,7 +100,7 @@ export async function prepareImport(
 
   if (src.kind === 'link') {
     onStage('fetching');
-    const { result, listenError, offline } = await importLinkFull(src.url, () =>
+    const { result, listenError, offline, frames } = await importLinkFull(src.url, () =>
       onStage('listening'),
     );
     // Text shared alongside the link (a caption) complements what the page exposes.
@@ -109,6 +118,7 @@ export async function prepareImport(
         localImageUri: null,
         platform: result.platform,
         offline: false,
+        frames,
       };
     }
     const draft = result.draft;
@@ -119,51 +129,94 @@ export async function prepareImport(
       localImageUri: null,
       platform: result.platform,
       offline,
+      frames,
     };
   }
 
+  if (src.kind === 'pdf') {
+    onStage('reading');
+    return { ...(await readPdfImport(src.uri)), platform: null, offline: false };
+  }
+
   if (src.kind === 'video') {
+    onStage('reading');
+    const pictures = await readVideoPictures(src.uri);
     onStage('listening');
     const heard = await transcribeFile(src.uri);
     const caption = src.text?.trim() ? fromText(src.text) : null;
+    // A video file has no other picture: its best frame is the photo (changeable in the editor).
+    const photo = pictures.frames[0] ?? null;
     if ('error' in heard) {
+      const d = caption ?? emptyDraft();
+      d.ingredients = mergeIngredients(d.ingredients, pictures.ingredients);
       return {
-        draft: caption ?? emptyDraft(),
+        draft: d,
         notice:
           heard.error === 'permission'
             ? 'listenPermission'
             : heard.error === 'language'
               ? 'listenLanguage'
               : 'listenFailed',
-        localImageUri: null,
+        localImageUri: photo,
         platform: null,
         offline: false,
+        frames: pictures.frames,
       };
     }
     const d = fromSpeech(heard.lines, { title: caption?.title ?? null });
     if (caption?.ingredients.length) d.ingredients = caption.ingredients;
     if (caption?.steps.length) d.steps = caption.steps;
-    return { draft: d, notice: 'speech', localImageUri: null, platform: null, offline: false };
+    d.ingredients = mergeIngredients(pictures.ingredients, d.ingredients);
+    return {
+      draft: d,
+      notice: 'speech',
+      localImageUri: photo,
+      platform: null,
+      offline: false,
+      frames: pictures.frames,
+    };
+  }
+
+  /** Text of every picture, in order (unreadable ones are skipped). */
+  async function readPictures(uris: string[]): Promise<string[]> {
+    if (!(await ocrSupported())) return [];
+    const out: string[] = [];
+    for (const uri of uris) {
+      try {
+        out.push(await readTextFromImage(uri));
+      } catch {
+        out.push('');
+      }
+    }
+    return out;
+  }
+
+  /** A PDF: its text (PDFKit), or for a scanned one the text recognised on its pages. */
+  async function readPdfImport(
+    uri: string,
+  ): Promise<Pick<PreparedImport, 'draft' | 'notice' | 'localImageUri'>> {
+    try {
+      const pdf = await readPdf(uri);
+      const text = pdf.text || (await readPictures(pdf.pages)).join('\n\n').trim();
+      if (text.length >= PHOTO_TEXT_LIMIT)
+        return { draft: fromText(text), notice: 'text', localImageUri: null };
+    } catch {
+      // Unreadable or protected: an empty recipe to fill in, as for a photo without text.
+    }
+    return { draft: emptyDraft(), notice: 'photo', localImageUri: null };
   }
 
   // Photos: the text of every picture, in order, makes one recipe; a picture with (almost) no
   // text is the dish itself and becomes the recipe photo.
   onStage('reading');
-  const canRead = await ocrSupported();
+  const read = await readPictures(src.uris);
   const texts: string[] = [];
   let dish: string | null = null;
-  for (const uri of src.uris) {
-    let text = '';
-    if (canRead) {
-      try {
-        text = await readTextFromImage(uri);
-      } catch {
-        text = '';
-      }
-    }
+  src.uris.forEach((uri, i) => {
+    const text = read[i] ?? '';
     if (text.length >= PHOTO_TEXT_LIMIT) texts.push(text);
     else dish ??= uri;
-  }
+  });
   if (!texts.length)
     return {
       draft: emptyDraft(),
@@ -241,6 +294,7 @@ export async function saveImport(
     data.photoKey = null;
   }
   const rec = await repos.createRecipe(data);
+  await keepFramesFor(rec.id, p.frames ?? []);
   if (opts.collection) await addToCollection(rec.id, opts.collection);
   return { recipeId: rec.id, title: rec.data.title, duplicate: null };
 }

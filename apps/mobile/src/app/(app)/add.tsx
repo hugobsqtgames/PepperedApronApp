@@ -1,11 +1,24 @@
 import { Pressable, StyleSheet, View } from 'react-native';
+import * as DocumentPicker from 'expo-document-picker';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
+import { importQueue } from '../../services/importQueue';
 import { useTheme } from '../../theme/ThemeProvider';
 import { radius, space } from '../../theme/tokens';
 import { Icon, Text, type IconName } from '../../ui';
 
 /** One sheet, every way to add a recipe. The share extension tip teaches the TikTok/Instagram flow. */
+/** A PDF from Files (a recipe saved from a site, a scanned page): read like a shared one. */
+async function importPdf() {
+  const r = await DocumentPicker.getDocumentAsync({
+    type: 'application/pdf',
+    copyToCacheDirectory: true,
+  });
+  if (r.canceled || !r.assets[0]) return;
+  const ids = await importQueue.add([{ source: { kind: 'pdf', uri: r.assets[0].uri } }]);
+  router.replace({ pathname: '/import/queue', params: { ids: ids.join(',') } });
+}
+
 export default function AddSheet() {
   const { t } = useTranslation();
   const { colors } = useTheme();
@@ -38,6 +51,13 @@ export default function AddSheet() {
         body: t('add.photoBody'),
         go: () => router.replace('/import/photo'),
         testID: 'add-photo',
+      },
+      {
+        icon: 'document-text-outline',
+        title: t('add.pdf'),
+        body: t('add.pdfBody'),
+        go: () => void importPdf(),
+        testID: 'add-pdf',
       },
       {
         icon: 'mic-outline',

@@ -155,6 +155,8 @@ const buildConfig = ({ config }: ConfigContext): ExpoConfig => ({
           NSExtensionActivationSupportsImageWithMaxCount: 10,
           // A video saved from TikTok or Instagram: its speech is transcribed on the device.
           NSExtensionActivationSupportsMovieWithMaxCount: 1,
+          // A PDF (a recipe saved from a site, a scanned page): its text is read on the device.
+          NSExtensionActivationSupportsFileWithMaxCount: 1,
         },
         iosShareExtensionName: 'PepperedApron',
         iosAppGroupIdentifier: appGroup,

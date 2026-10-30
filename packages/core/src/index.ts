@@ -18,6 +18,7 @@ export * from './parse/jsonld';
 export * from './parse/url';
 export * from './parse/social';
 export * from './parse/transcript';
+export * from './parse/onscreen';
 export * from './diet';
 export * from './seasonal';
 export * from './duplicates';

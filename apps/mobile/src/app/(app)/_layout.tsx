@@ -26,6 +26,9 @@ function useShareIntentRouting() {
       title: (shareIntent.meta?.title as string | undefined) ?? null,
       images: files.filter((f) => f.mimeType?.startsWith('image/')).map((f) => f.path),
       videos: files.filter((f) => f.mimeType?.startsWith('video/')).map((f) => f.path),
+      pdfs: files
+        .filter((f) => f.mimeType === 'application/pdf' || /\.pdf$/i.test(f.path))
+        .map((f) => f.path),
     });
     resetShareIntent();
     if (!sources.length) return;

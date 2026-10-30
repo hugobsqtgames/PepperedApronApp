@@ -33,6 +33,7 @@ function sourceLabel(s: ImportSource, t: TFunction): string {
   }
   if (s.kind === 'photos') return t('import.photosCount', { count: s.uris.length });
   if (s.kind === 'video') return t('import.videoFile');
+  if (s.kind === 'pdf') return t('import.pdfFile');
   return (
     s.text
       .split('\n')

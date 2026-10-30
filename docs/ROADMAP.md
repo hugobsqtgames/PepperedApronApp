@@ -12,10 +12,10 @@ Repères : modèle de données `packages/core/src/schemas.ts` (champs ajoutés a
 - [x] **Demande d'avis** : `expo-store-review`, seulement après « Terminer » en mode cuisine avec une note de 5 étoiles, au plus une fois tous les 4 mois (règle Apple : 3 fois/an max).
 
 ## Lot 2 — Import (7, 8, 9, 10)
-- [ ] **Texte écrit dans la vidéo** : pour un Reel/TikTok téléchargé (déjà fait pour l'écoute) extraire ~1 image/s (`expo-video-thumbnails`), OCR sur l'appareil (`services/ocr.ts`), garder les lignes qui ressemblent à des ingrédients/quantités, fusionner avec la légende et la transcription (sans doublons).
-- [ ] **Photo depuis la vidéo** : proposer 6 images de la vidéo dans l'éditeur (« Choisir une image de la vidéo »), image nette et bien exposée en premier par défaut.
-- [ ] **PDF** : extension de partage + « + » acceptent les PDF ; texte lu par PDFKit (petit module natif Swift sur le modèle de `video-speech`), puis `parseRecipeText` ; PDF scannés → OCR des pages.
-- [ ] **Pinterest et grands sites** : résolution des liens `pin.it`/Pinterest vers la recette d'origine ; tests avec pages enregistrées (fixtures) de Marmiton, 750g, Cuisine AZ, Ricardo, BBC Good Food, AllRecipes, NYT Cooking (JSON-LD), dans `packages/core/src/parse`.
+- [x] **Texte écrit dans la vidéo** : pour un Reel/TikTok téléchargé (déjà fait pour l'écoute) extraire ~1 image/s (`expo-video-thumbnails`), OCR sur l'appareil (`services/ocr.ts`), garder les lignes qui ressemblent à des ingrédients/quantités, fusionner avec la légende et la transcription (sans doublons).
+- [x] **Photo depuis la vidéo** : proposer 6 images de la vidéo dans l'éditeur (« Choisir une image de la vidéo »), image nette et bien exposée en premier par défaut.
+- [x] **PDF** : extension de partage + « + » acceptent les PDF ; texte lu par PDFKit (petit module natif Swift sur le modèle de `video-speech`), puis `parseRecipeText` ; PDF scannés → OCR des pages.
+- [x] **Pinterest et grands sites** : résolution des liens `pin.it`/Pinterest vers la recette d'origine ; tests avec pages enregistrées (fixtures) de Marmiton, 750g, Cuisine AZ, Ricardo, BBC Good Food, AllRecipes, NYT Cooking (JSON-LD), dans `packages/core/src/parse`.
 
 ## Lot 3 — En cuisine (14, 15, 16, 17, 19)
 - [ ] **Minuteurs détectés** : « cuire 8 min », « 1 h 30 de repos » dans une étape sans minuteur → bouton minuteur (core : `parseTimerSeconds` existe ; le faire à l'affichage, sans modifier la recette).
