@@ -39,6 +39,9 @@ jobs:
           token: ${{ secrets.EXPO_TOKEN }}
       - name: Send the latest build to TestFlight
         if: ${{ inputs.submit_latest_only }}
+        # The app config picks the bundle id from APP_VARIANT (development by default).
+        env:
+          APP_VARIANT: production
         run: eas submit --non-interactive --platform ios --profile production --latest --no-wait
       - name: Build
         if: ${{ !inputs.submit_latest_only }}
