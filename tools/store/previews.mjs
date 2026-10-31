@@ -4,46 +4,20 @@
 //   ASC_KEY_JSON=path/to/key.json node tools/store/previews.mjs 2.0.0
 // key.json: { key_id, issuer_id, key } (the file the store-listing workflow writes).
 import crypto from 'node:crypto';
+import { api, findApp } from './asc.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const version = process.argv[2] ?? '2.0.0';
-const BUNDLE_ID = 'app.pepperedapron.com';
 /** iPhone 6.9"/6.7" previews: 886×1920 portrait, which is what tools/brand renders. */
 const PREVIEW_TYPE = 'IPHONE_67';
 const VIDEOS = { 'fr-FR': 'app-preview-store.mp4', 'en-US': 'app-preview-store-en.mp4' };
 // Poster frame: the recipe saved on its own, the most telling moment of the story.
 const POSTER = '00:00:10:00';
 
-const key = JSON.parse(fs.readFileSync(process.env.ASC_KEY_JSON, 'utf8'));
-const b64 = (o) => Buffer.from(typeof o === 'string' ? o : JSON.stringify(o)).toString('base64url');
-function token() {
-  const now = Math.floor(Date.now() / 1000);
-  const head = b64({ alg: 'ES256', kid: key.key_id, typ: 'JWT' });
-  const body = b64({ iss: key.issuer_id, iat: now, exp: now + 15 * 60, aud: 'appstoreconnect-v1' });
-  const sig = crypto
-    .sign('sha256', Buffer.from(`${head}.${body}`), { key: key.key, dsaEncoding: 'ieee-p1363' })
-    .toString('base64url');
-  return `${head}.${body}.${sig}`;
-}
-
-async function api(method, url, body) {
-  const res = await fetch(
-    url.startsWith('http') ? url : `https://api.appstoreconnect.apple.com${url}`,
-    {
-      method,
-      headers: { Authorization: `Bearer ${token()}`, 'Content-Type': 'application/json' },
-      body: body ? JSON.stringify(body) : undefined,
-    },
-  );
-  if (!res.ok) throw new Error(`${method} ${url}: ${res.status} ${await res.text()}`);
-  return res.status === 204 ? null : res.json();
-}
-
-const app = (await api('GET', `/v1/apps?filter[bundleId]=${BUNDLE_ID}`)).data[0];
-if (!app) throw new Error(`no app ${BUNDLE_ID}`);
+const app = await findApp();
 const ver = (
   await api(
     'GET',

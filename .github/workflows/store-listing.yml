@@ -75,6 +75,10 @@ jobs:
             fs.writeFileSync(process.env.RUNNER_TEMP + "/asc.json", JSON.stringify({
               key_id: id, issuer_id: issuer, key: pem, in_house: false }));
             console.log("API key OK");'
+      - name: Primary language (French)
+        env:
+          ASC_KEY_JSON: ${{ runner.temp }}/asc.json
+        run: node tools/store/app-info.mjs
       - name: Upload to App Store Connect
         run: |
           brew install fastlane >/dev/null || gem install fastlane --no-document
