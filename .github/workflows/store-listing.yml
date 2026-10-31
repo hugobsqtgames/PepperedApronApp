@@ -15,6 +15,10 @@ on:
         description: Replace the screenshots too
         type: boolean
         default: true
+      preview:
+        description: Replace the App Preview video too (iPhone, shown before the screenshots)
+        type: boolean
+        default: true
 
 jobs:
   listing:
@@ -37,6 +41,15 @@ jobs:
           node preview/render.mjs stills --en
           node preview/render.mjs stills-ipad
           node preview/render.mjs stills-ipad --en
+      - name: Render the App Preview videos
+        if: ${{ inputs.preview }}
+        working-directory: tools/brand
+        env:
+          CHROMIUM_PATH: /Applications/Google Chrome.app/Contents/MacOS/Google Chrome
+        run: |
+          command -v ffmpeg || brew install ffmpeg
+          node preview/render.mjs video store
+          node preview/render.mjs video store --en
       - name: Prepare the listing
         run: node tools/store/prepare.mjs fastlane ${{ !inputs.screenshots && '--texts-only' || '' }}
       - name: App Store Connect API key
@@ -79,6 +92,11 @@ jobs:
             --automatic_release false \
             --run_precheck_before_submit false \
             --force true
+      - name: Upload the App Preview videos
+        if: ${{ inputs.preview }}
+        env:
+          ASC_KEY_JSON: ${{ runner.temp }}/asc.json
+        run: node tools/store/previews.mjs "${{ inputs.app_version }}"
       - name: Forget the key
         if: always()
         run: rm -f "$RUNNER_TEMP/asc.json"
