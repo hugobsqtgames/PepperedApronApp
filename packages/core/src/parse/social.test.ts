@@ -247,6 +247,16 @@ describe('reels whose recipe is only said out loud', () => {
       url,
     );
     expect(r2.draft.ingredients).toHaveLength(3);
-    expect(r2.videoUrl).toBeUndefined();
+    // Ingredients only, no steps: the video is listened to for them.
+    expect(r2).toMatchObject({ videoUrl: 'https://scontent.cdninstagram.com/r.mp4', listen: true });
+    // Ingredients and steps in the caption: the video only gives the photo.
+    const FULL =
+      '…: &quot;Crêpes&#10;- 250 g de farine&#10;- 3 oeufs&#10;- 50 cl de lait&#10;Préparation :&#10;1. Mélanger la farine et les oeufs.&#10;2. Ajouter le lait petit à petit.&#10;3. Cuire les crêpes à la poêle.&quot;.';
+    const r3 = await importFromUrl(
+      fake({ [url]: { body: page.replace(/: &quot;.*&quot;\./, FULL.slice(1)) } }),
+      url,
+    );
+    expect(r3.draft.steps.length).toBeGreaterThan(0);
+    expect(r3).toMatchObject({ listen: false });
   });
 });

@@ -129,9 +129,9 @@ export async function readVideoPictures(uri: string): Promise<VideoPictures> {
 }
 
 /**
- * Instagram reel whose recipe is only said out loud: download the public video to the cache,
- * transcribe it with the phone's on-device speech recognition, delete it, and complete the
- * draft with the foods and cooking steps heard. Returns the result unchanged when not needed.
+ * Instagram reel: download the public video to the cache, take its pictures (the photo, text
+ * written on it) and, when the caption lacks ingredients or steps, transcribe it with the
+ * phone's on-device speech recognition to complete them. The video is then deleted.
  */
 export async function listenToVideo(
   res: ImportResult,
@@ -148,6 +148,9 @@ export async function listenToVideo(
     const draft = { ...res.draft };
     draft.ingredients = mergeIngredients(draft.ingredients, pictures.ingredients);
     const seen = pictures.ingredients.length > 0;
+    // The caption has the whole recipe: the video only gives its pictures (the photo).
+    if (res.listen === false)
+      return { result: { ...res, draft }, error: null, frames: pictures.frames };
     const heard = await transcribeFile(video.uri, res.language);
     if ('error' in heard)
       return {
@@ -158,6 +161,7 @@ export async function listenToVideo(
     const spoken = recipeFromTranscript(heard.lines);
     // Quantities written on the video are more precise than what is said: they come first.
     draft.ingredients = mergeIngredients(draft.ingredients, spoken.ingredients);
+    // Steps said in the video when the caption only lists the ingredients.
     if (!draft.steps.length) draft.steps = spoken.steps;
     draft.notes = [draft.notes, `🎙️ ${spoken.text}`].filter(Boolean).join('\n\n').slice(0, 5000);
     const found = spoken.ingredients.length > 0 || spoken.steps.length > 0;

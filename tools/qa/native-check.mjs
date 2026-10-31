@@ -178,6 +178,15 @@ try {
     const versions = new Set([...pbx.matchAll(/MARKETING_VERSION = ([^;]+);/g)].map((m) => m[1]));
     check(versions.size === 1, `one version for every target (found ${[...versions].join(', ')})`);
   }
+  // The app writes widget data as JSON (ExtensionStorage): the extensions must decode JSON, a
+  // plain dictionary(forKey:) read never sees it (widgets stayed empty).
+  for (const f of ['targets/widgets/Widgets.swift', 'targets/intents/Intents.swift'])
+    check(
+      fs
+        .readFileSync(path.join(app, f), 'utf8')
+        .includes('JSONSerialization.jsonObject(with: data'),
+      `${f} reads the JSON written by the app`,
+    );
   // Timer widget and phone-to-watch link are compiled in.
   check(
     fs

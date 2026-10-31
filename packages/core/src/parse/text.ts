@@ -148,6 +148,27 @@ function cleanLine(line: string): string {
  * Deterministic parser for pasted / shared / OCR'd recipe text. Never invents data: anything it
  * cannot classify goes to `unparsed` so the editor can show it.
  */
+/**
+ * An ingredient line outside an ingredients section. A quantity written as a word ("Une quiche
+ * dorée…") is too ambiguous; a bulleted line next to other ingredients is one even without a
+ * quantity ("* sel, poivre").
+ */
+function looksLikeIngredient(
+  l: string,
+  ing: ReturnType<typeof parseIngredientLine>,
+  prevIngredient: boolean,
+): boolean {
+  const bullet = /^\s*[-–—•*·▪◦●✓✔]\s*\S/.test(l);
+  return (
+    ing !== null &&
+    l.length <= 80 &&
+    !looksLikeStep(l) &&
+    (bullet
+      ? ing.quantity !== null || prevIngredient
+      : ing.quantity !== null && /^\s*[\d½¼¾⅓⅔⅛]/.test(l))
+  );
+}
+
 export function parseRecipeText(input: string): RecipeDraft {
   const draft = emptyDraft();
   const text = input.replace(/\r\n?/g, '\n').slice(0, 20000);
@@ -311,16 +332,7 @@ export function parseRecipeText(input: string): RecipeDraft {
     let prevIngredient = false;
     for (const l of freeLines) {
       const ing = parseIngredientLine(l);
-      const bullet = /^\s*[-–—•*·▪◦●✓✔]\s*\S/.test(l);
-      // A quantity written as a word ("Une quiche dorée…") is too ambiguous without a header;
-      // a bulleted line next to other ingredients is one even without quantity ("* sel, poivre").
-      const isIngredient: boolean =
-        ing !== null &&
-        l.length <= 80 &&
-        !looksLikeStep(l) &&
-        (bullet
-          ? ing.quantity !== null || prevIngredient
-          : ing.quantity !== null && /^\s*[\d½¼¾⅓⅔⅛]/.test(l));
+      const isIngredient = looksLikeIngredient(l, ing, prevIngredient);
       prevIngredient = isIngredient;
       if (
         STEP_PREFIX.test(l) &&
@@ -346,6 +358,19 @@ export function parseRecipeText(input: string): RecipeDraft {
       } else {
         rest.push(l);
       }
+    }
+    freeLines.length = 0;
+    freeLines.push(...rest);
+  } else if (!draft.ingredients.length) {
+    // A method header but no ingredients header ("Crêpes / - 250 g de farine / … / Préparation :",
+    // common in captions): the ingredient lines written before it are the ingredients.
+    const rest: string[] = [];
+    let prevIngredient = false;
+    for (const l of freeLines) {
+      const ing = parseIngredientLine(l);
+      prevIngredient = looksLikeIngredient(l, ing, prevIngredient);
+      if (prevIngredient) draft.ingredients.push({ group: null, ...ing! });
+      else rest.push(l);
     }
     freeLines.length = 0;
     freeLines.push(...rest);

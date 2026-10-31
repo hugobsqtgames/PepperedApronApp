@@ -185,3 +185,103 @@ describe('Pinterest', () => {
     expect(r.draft.title).toBe('Pasta al limone');
   });
 });
+
+describe('Pinterest: the pin’s public data (regression: only the title was imported)', () => {
+  // Shape of widgets.pinterest.com/v3/pidgets/pins/info for a real Marmiton video pin whose
+  // recipe is in the description and whose link is an Instagram profile.
+  const INFO = {
+    status: 'success',
+    data: [
+      {
+        id: '90705379991978745',
+        link: 'https://www.instagram.com/marmiton_org/reels/',
+        description:
+          "Crispy Rice Tuna Burger &#10084;&#65039;\nEt si on rempla&#231;ait le pain de ton burger par du riz ultra-croustillant ? &#127843;&#127828; \nAttends de voir ce que &#231;a donne !\nIngr&#233;dients : \nPour le riz croustillant : \n500 g de riz &#224; sushi fra&#238;chement cuit\n45 g de vinaigre de riz\n25 g de sucre blanc\n5 g de sel\nHuile neutre pour la friture\nPour la garniture\n200 g de thon rouge gras (qualit&#233; adapt&#233;e &#224; une consommation crue)\n1 citron vert\n50 g de ciboule ou d'oignon nouveau finement &#233;minc&#233;\n2 avocats\n4 &#224; 5 g de sel\nPour la sauce\n30 g de sauce soja l&#233;g&#232;re\n7 &#224; 8 g de jus de citron vert\n7 g de miel\n5 g de wasabi",
+        images: {
+          '236x': {
+            width: 236,
+            height: 419,
+            url: 'https://i.pinimg.com/236x/f1/ec/4d/f1ec4d9fbcee8cca42fe130168b61f41.jpg',
+          },
+          '237x': {
+            width: 236,
+            height: 419,
+            url: 'https://i.pinimg.com/236x/f1/ec/4d/f1ec4d9fbcee8cca42fe130168b61f41.jpg',
+          },
+          '564x': {
+            width: 564,
+            height: 1002,
+            url: 'https://i.pinimg.com/564x/f1/ec/4d/f1ec4d9fbcee8cca42fe130168b61f41.jpg',
+          },
+        },
+        pinner: { full_name: 'Marmiton' },
+        videos: {
+          video_list: {
+            V_HLSV4: {
+              url: 'https://v1.pinimg.com/videos/iht/hls/a4/22/5a/a4225aec5949e6260366401151135fdc.m3u8',
+              width: 1080,
+              height: 1920,
+              duration: 67800.0,
+              thumbnail:
+                'https://i.pinimg.com/videos/thumbnails/originals/a4/22/5a/a4225aec5949e6260366401151135fdc.0000000.jpg',
+            },
+            V_720P: {
+              url: 'https://v1.pinimg.com/videos/iht/expMp4/a4/22/5a/a4225aec5949e6260366401151135fdc_720w.mp4',
+              width: 1080,
+              height: 1920,
+              duration: 67800.0,
+              thumbnail:
+                'https://i.pinimg.com/videos/thumbnails/originals/a4/22/5a/a4225aec5949e6260366401151135fdc.0000000.jpg',
+            },
+          },
+          id: '5526834726417079238',
+        },
+        story_pin_data: null,
+      },
+    ],
+  };
+  const api = 'https://widgets.pinterest.com/v3/pidgets/pins/info/?pin_ids=90705379991978745';
+
+  it('reads the recipe written in the description, the large picture and the video', async () => {
+    const r = await importFromUrl(
+      fetchFrom({ [api]: JSON.stringify(INFO) }),
+      'https://www.pinterest.com/pin/90705379991978745/',
+    );
+    expect(r.platform).toBe('pinterest');
+    expect(r.draft.title).toBe('Crispy Rice Tuna Burger');
+    expect(r.draft.ingredients.length).toBeGreaterThan(10);
+    expect(r.draft.ingredients[0]).toMatchObject({ quantity: 500, unit: 'g' });
+    expect(r.draft.imageUrl).toContain('/564x/');
+    expect(r.videoUrl).toMatch(/\.mp4$/);
+    // No steps in the description: the video is listened to for them.
+    expect(r.listen).toBe(true);
+  });
+
+  it('a pin saved from a recipe site gives that site’s recipe (link with &amp;)', async () => {
+    const origin = 'https://cooking.nytimes.com/recipes/1234-pasta-al-limone';
+    const pin = {
+      ...INFO.data[0],
+      link: `${origin}?utm_source=pinterest&amp;utm_medium=social`,
+      videos: null,
+    };
+    const r = await importFromUrl(
+      fetchFrom({
+        ...SITES,
+        [`${origin}?utm_source=pinterest&utm_medium=social`]: SITES[origin]!,
+        [api]: JSON.stringify({ data: [pin] }),
+      }),
+      'https://www.pinterest.fr/pin/titre-de-la-recette--90705379991978745/',
+    );
+    expect(r.completeness).toBe('full');
+    expect(r.draft.title).toBe('Pasta al Limone');
+  });
+
+  it('a pin.it short link: the pin number is found in the page', async () => {
+    const page = '<link rel="canonical" href="https://www.pinterest.com/pin/90705379991978745/">';
+    const r = await importFromUrl(
+      fetchFrom({ 'https://pin.it/AbC': page, [api]: JSON.stringify(INFO) }),
+      'https://pin.it/AbC',
+    );
+    expect(r.draft.ingredients.length).toBeGreaterThan(10);
+  });
+});

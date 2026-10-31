@@ -115,7 +115,8 @@ export async function prepareImport(
           title: result.draft.title ?? src.title,
         }),
         notice: 'text',
-        localImageUri: null,
+        // A video's own picture: the post image can carry the player's pause button.
+        localImageUri: frames[0] ?? null,
         platform: result.platform,
         offline: false,
         frames,
@@ -126,7 +127,8 @@ export async function prepareImport(
     return {
       draft,
       notice: linkNotice(result, listenError),
-      localImageUri: null,
+      // A video's own picture: the post image can carry the player's pause button.
+      localImageUri: frames[0] ?? null,
       platform: result.platform,
       offline,
       frames,

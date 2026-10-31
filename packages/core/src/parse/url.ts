@@ -14,6 +14,7 @@ import {
 } from './social';
 import { recipeFromTranscript, vttToLines } from './transcript';
 import { parseRecipeText } from './text';
+import { decodeHtmlEntities } from '../text';
 
 export type ImportPlatform = 'tiktok' | 'instagram' | 'youtube' | 'facebook' | 'pinterest' | 'web';
 
@@ -29,6 +30,11 @@ export interface ImportResult {
    * listen to it on the device (speech recognition) and complete the recipe.
    */
   videoUrl?: string;
+  /**
+   * The caption lacks ingredients or steps: listen to the video to complete them. When false,
+   * the video is only used for its pictures (a clean photo of the dish).
+   */
+  listen?: boolean;
   /** Language of the caption, to listen to the video in the right language. */
   language?: 'fr' | 'en' | 'es' | 'de' | 'it' | null;
 }
@@ -117,6 +123,12 @@ export async function importFromUrl(
     return importVideo(fetchPage, url, platform, draft);
   if (platform === 'instagram') return importInstagram(fetchPage, url, draft);
 
+  // A pin link carries the pin number: its public data does not need the page.
+  if (platform === 'pinterest' && !depth && pinterestPinId(url, null)) {
+    const pinned = await importPinterest(fetchPage, url, draft, null);
+    if (pinned) return pinned;
+  }
+
   let page: FetchedPage;
   try {
     page = await fetchPage(url.toString(), { accept: 'text/html,application/xhtml+xml' });
@@ -126,8 +138,10 @@ export async function importFromUrl(
   if (page.status >= 400 || !(page.contentType ?? '').includes('html'))
     return { draft, platform, completeness: 'minimal' };
 
-  // A pin links to the recipe it was saved from: import the recipe from there.
+  // A pin: its public data (description, image, video, original link) first.
   if (platform === 'pinterest' && !depth) {
+    const pinned = await importPinterest(fetchPage, url, draft, page.body);
+    if (pinned) return pinned;
     const origin = pinterestSourceUrl(page.body);
     if (origin) {
       const res = await importFromUrl(fetchPage, origin, 1);
@@ -162,6 +176,127 @@ export async function importFromUrl(
 }
 
 const PINTEREST_HOST = /(^|\.)(pinterest\.[a-z.]+|pin\.it|pinimg\.com)$/i;
+const SOCIAL_HOST =
+  /(^|\.)(instagram\.com|tiktok\.com|facebook\.com|fb\.watch|youtube\.com|youtu\.be|pinterest\.[a-z.]+|pin\.it)$/i;
+
+/** Pin number from a pin link ("/pin/123…/", "/pin/titre--123…/") or from its page. */
+export function pinterestPinId(url: URL, html: string | null): string | null {
+  return (
+    url.pathname.match(/\/pin\/(?:[^/]*--)?(\d{6,25})/)?.[1] ??
+    html?.match(/pinterest\.[a-z.]+\/pin\/(\d{6,25})/)?.[1] ??
+    html?.match(/"pin_id"\s*:\s*"(\d{6,25})"/)?.[1] ??
+    null
+  );
+}
+
+interface PinInfo {
+  description?: string | null;
+  link?: string | null;
+  images?: Record<string, { url?: string; width?: number }>;
+  pinner?: { full_name?: string } | null;
+  videos?: { video_list?: Record<string, { url?: string; thumbnail?: string }> } | null;
+  story_pin_data?: unknown;
+}
+
+/** Text blocks of an "idea pin" (several pages of text and pictures). */
+function storyTexts(data: unknown, out: string[] = [], depth = 0): string[] {
+  if (depth > 8 || !data || typeof data !== 'object') return out;
+  for (const [k, v] of Object.entries(data as Record<string, unknown>)) {
+    if (k === 'text' && typeof v === 'string' && v.trim()) out.push(v.trim());
+    else storyTexts(v, out, depth + 1);
+  }
+  return out;
+}
+
+/**
+ * Pinterest: pages show nothing of the pin without a login, but Pinterest publishes each pin's
+ * public data for its embeddable widgets (description, picture, video, original link). The
+ * recipe is often written in the description; a pin saved from a recipe site is imported from
+ * there. Null when the pin cannot be read (the page's own data is then used).
+ */
+async function importPinterest(
+  fetchPage: FetchPage,
+  url: URL,
+  draft: RecipeDraft,
+  html: string | null,
+): Promise<ImportResult | null> {
+  const id = pinterestPinId(url, html);
+  if (!id) return null;
+  const body = await getText(
+    fetchPage,
+    `https://widgets.pinterest.com/v3/pidgets/pins/info/?pin_ids=${id}`,
+    'application/json',
+  );
+  let pin: PinInfo | null;
+  try {
+    const parsed = body ? (JSON.parse(body) as { data?: unknown }) : null;
+    const first = Array.isArray(parsed?.data)
+      ? (parsed.data[0] as PinInfo & { error?: string })
+      : null;
+    pin = first && !first.error ? first : null;
+  } catch {
+    return null;
+  }
+  if (!pin) return null;
+  const description = decodeHtmlEntities(
+    [pin.description ?? '', ...storyTexts(pin.story_pin_data)].join('\n').trim(),
+  );
+  const images = Object.values(pin.images ?? {}).sort((a, b) => (b.width ?? 0) - (a.width ?? 0));
+  const video = pin.videos?.video_list
+    ? Object.values(pin.videos.video_list).find((v) => v.url && /\.mp4(\?|$)/.test(v.url))
+    : undefined;
+  const image = images[0]?.url ?? video?.thumbnail ?? null;
+  let link: URL | null;
+  try {
+    link = pin.link ? new URL(decodeHtmlEntities(pin.link)) : null;
+  } catch {
+    link = null;
+  }
+  // Saved from a recipe site: the recipe there is the most complete.
+  let origin: ImportResult | null = null;
+  if (link && !SOCIAL_HOST.test(link.hostname)) {
+    origin = await importFromUrl(fetchPage, link.toString(), 1);
+    if (origin.completeness === 'full') {
+      origin.draft.imageUrl ??= image;
+      return origin;
+    }
+  }
+  if (!description && !image) return null;
+  draft.author = pin.pinner?.full_name?.slice(0, 100) ?? null;
+  draft.imageUrl = image && /^https:\/\//.test(image) ? image : null;
+  mergeCaption(draft, description);
+  draft.title = (description ? captionTitle(description) : null) ?? draft.title;
+  // A pin of an Instagram or TikTok post: the post may have what the description lacks.
+  if (link && SOCIAL_HOST.test(link.hostname) && !PINTEREST_HOST.test(link.hostname)) {
+    const complete = draft.ingredients.length > 0 && draft.steps.length > 0;
+    if (!complete) {
+      const post = await importFromUrl(fetchPage, link.toString(), 1);
+      if (!draft.ingredients.length) draft.ingredients = post.draft.ingredients;
+      if (!draft.steps.length) draft.steps = post.draft.steps;
+      draft.title ??= post.draft.title;
+    }
+  }
+  // The original page has more than the pin's description (a partial recipe still counts).
+  if (
+    origin &&
+    origin.draft.ingredients.length + origin.draft.steps.length >
+      draft.ingredients.length + draft.steps.length
+  ) {
+    origin.draft.imageUrl ??= draft.imageUrl;
+    return origin;
+  }
+  const complete = draft.ingredients.length > 0 && draft.steps.length > 0;
+  return {
+    draft,
+    platform: 'pinterest',
+    completeness:
+      draft.ingredients.length || draft.steps.length || draft.title ? 'partial' : 'minimal',
+    // A video pin: listened to on the device when the description lacks ingredients or steps.
+    ...(video?.url
+      ? { videoUrl: video.url, listen: !complete, language: guessLanguage(description) }
+      : {}),
+  };
+}
 
 /**
  * Link of the page a pin was saved from: in the pin's data ("link":"https:\/\/…") or its
@@ -237,13 +372,16 @@ async function importInstagram(
     draft.title = captionTitle(caption) ?? draft.title;
   }
   const hasRecipe = draft.ingredients.length > 0 || draft.steps.length > 0;
+  // Many captions list the ingredients only (or the steps only): the rest is said in the video.
+  const complete = draft.ingredients.length > 0 && draft.steps.length > 0;
   return {
     draft,
     platform: 'instagram',
     completeness: hasRecipe || draft.title ? 'partial' : 'minimal',
-    // Recipe only said out loud: the app can listen to the public video on the device.
-    ...(videoUrl && !hasRecipe
-      ? { videoUrl, language: caption ? guessLanguage(caption) : null }
+    // The app reads the public video on the device: its pictures give a clean photo (the post
+    // image can carry the player's buttons), and its speech what the caption lacks.
+    ...(videoUrl
+      ? { videoUrl, listen: !complete, language: caption ? guessLanguage(caption) : null }
       : {}),
   };
 }

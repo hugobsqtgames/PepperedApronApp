@@ -174,3 +174,14 @@ Faites cuire les pâtes puis mélangez avec la crème et le zeste du citron, c'e
     expect(d.unparsed).toEqual([]);
   });
 });
+
+describe('regression: ingredients before a method header without an ingredients header', () => {
+  it('a caption "title / - ingredients / Préparation : / steps" keeps its ingredients', () => {
+    const d = parseRecipeText(
+      'Crêpes\n- 250 g de farine\n- 3 oeufs\n- 50 cl de lait\nPréparation :\n1. Mélanger la farine et les oeufs.\n2. Ajouter le lait petit à petit.\n3. Cuire à la poêle.',
+    );
+    expect(d.title).toBe('Crêpes');
+    expect(d.ingredients.map((i) => i.name)).toEqual(['farine', 'oeufs', 'lait']);
+    expect(d.steps).toHaveLength(3);
+  });
+});

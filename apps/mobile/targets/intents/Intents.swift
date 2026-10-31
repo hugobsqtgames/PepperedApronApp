@@ -11,7 +11,16 @@ private func appGroup() -> String {
 }
 
 private var defaults: UserDefaults? { UserDefaults(suiteName: appGroup()) }
-private func dict(_ key: String) -> [String: Any] { defaults?.dictionary(forKey: key) ?? [:] }
+/// The app writes objects as JSON data (@bacons/apple-targets ExtensionStorage), not as
+/// property lists: read both.
+private func dict(_ key: String) -> [String: Any] {
+  if let data = defaults?.data(forKey: key),
+    let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
+  {
+    return object
+  }
+  return defaults?.dictionary(forKey: key) ?? [:]
+}
 private func label(_ key: String, _ fallback: String) -> String {
   (dict("intentLabels")[key] as? String).flatMap { $0.isEmpty ? nil : $0 } ?? fallback
 }

@@ -11,8 +11,24 @@ private func appGroup() -> String {
   return "group." + parts.joined(separator: ".")
 }
 
+/// The app writes objects and arrays as JSON data (@bacons/apple-targets ExtensionStorage), not
+/// as property lists: read JSON first, then a property list (written by older versions).
+private func json(_ key: String) -> Any? {
+  guard let defaults = UserDefaults(suiteName: appGroup()) else { return nil }
+  if let data = defaults.data(forKey: key), let object = try? JSONSerialization.jsonObject(with: data) {
+    return object
+  }
+  return defaults.object(forKey: key)
+}
+
 private func dict(_ key: String) -> [String: Any] {
-  UserDefaults(suiteName: appGroup())?.dictionary(forKey: key) ?? [:]
+  json(key) as? [String: Any] ?? [:]
+}
+
+/// Writes in the same JSON format as the app.
+private func setJSON(_ value: Any, _ key: String) {
+  guard let data = try? JSONSerialization.data(withJSONObject: value) else { return }
+  UserDefaults(suiteName: appGroup())?.set(data, forKey: key)
 }
 
 /// A picture the app copied into the App Group container (tonight's dish), or nil.
@@ -25,7 +41,7 @@ private func sharedImage(_ name: String) -> UIImage? {
 
 /// Items of the active shopping list ([{id, name}]), written by the app.
 private func shoppingItems() -> [[String: Any]] {
-  UserDefaults(suiteName: appGroup())?.array(forKey: "shoppingItems") as? [[String: Any]] ?? []
+  json("shoppingItems") as? [[String: Any]] ?? []
 }
 
 /// Ticking an item in the widget (iOS 17 interactive widget). The widget cannot write the app's
@@ -49,10 +65,10 @@ struct ToggleShoppingItemIntent: AppIntent {
       defaults.set(String(data: data, encoding: .utf8), forKey: "pendingChecks")
     }
     let items = shoppingItems().filter { ($0["id"] as? String) != itemId }
-    defaults.set(items, forKey: "shoppingItems")
-    var shopping = defaults.dictionary(forKey: "shopping") ?? [:]
+    setJSON(items, "shoppingItems")
+    var shopping = dict("shopping")
     shopping["remaining"] = max(0, (shopping["remaining"] as? Int ?? 1) - 1)
-    defaults.set(shopping, forKey: "shopping")
+    setJSON(shopping, "shopping")
     return .result()
   }
 }
