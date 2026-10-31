@@ -24,6 +24,10 @@ export default function ProfileLayout() {
       <Stack.Screen name="data" options={{ title: t('profile.data') }} />
       <Stack.Screen name="help" options={{ title: t('profile.help') }} />
       <Stack.Screen name="my-recipes" options={{ title: t('profile.myRecipes') }} />
+      <Stack.Screen name="journal" options={{ title: t('delight.journal.title') }} />
+      <Stack.Screen name="badges" options={{ title: t('delight.badges.title') }} />
+      <Stack.Screen name="map" options={{ title: t('delight.map.title') }} />
+      <Stack.Screen name="review" options={{ title: t('delight.review.kicker') }} />
     </Stack>
   );
 }

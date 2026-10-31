@@ -2,6 +2,7 @@ import { Image, ScrollView, View } from 'react-native';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { cloudStatusIcon, cloudStatusText } from '../../../features/CloudStatus';
+import { badgesOf } from '../../../features/kitchen';
 import { useCloudStatus, useLive, useRepos, useSettings } from '../../../hooks/runtime';
 import { ENV } from '../../../services/env';
 import { useTheme } from '../../../theme/ThemeProvider';
@@ -30,6 +31,14 @@ export default function Settings() {
     favorites: r.favoriteRecipes().length,
     collections: r.collections().length,
   }));
+  const kitchen = useLive(['cookLog', 'recipe'], (r) => {
+    const b = badgesOf(r);
+    return {
+      cooks: r.allCookLogs().length,
+      won: b.filter((x) => x.wonOn).length,
+      badges: b.length,
+    };
+  });
 
   return (
     <ScrollView
@@ -85,6 +94,34 @@ export default function Settings() {
           title={t('pantry.title')}
           onPress={() => router.push('/pantry')}
           testID="open-pantry"
+        />
+      </Group>
+      <Group title={t('delight.journal.kicker')}>
+        <ListRow
+          icon="images-outline"
+          title={t('delight.journal.title')}
+          value={String(kitchen.cooks)}
+          onPress={() => router.push('/profile/journal')}
+          testID="open-journal"
+        />
+        <ListRow
+          icon="ribbon-outline"
+          title={t('delight.badges.title')}
+          value={t('delight.badges.count', { won: kitchen.won, total: kitchen.badges })}
+          onPress={() => router.push('/profile/badges')}
+          testID="open-badges"
+        />
+        <ListRow
+          icon="earth-outline"
+          title={t('delight.map.title')}
+          onPress={() => router.push('/profile/map')}
+          testID="open-map"
+        />
+        <ListRow
+          icon="sparkles-outline"
+          title={t('delight.review.open', { year: new Date().getFullYear() })}
+          onPress={() => router.push('/profile/review')}
+          testID="open-review"
         />
       </Group>
       <Group title={t('profile.settings')}>

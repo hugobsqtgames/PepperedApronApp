@@ -137,6 +137,17 @@ beforeEach(async () => {
   ids.list = repos.lists()[0]!.id;
   ids.item = repos.items(ids.list)[0]!.id;
   await repos.addPantryText('500 g de riz');
+  // A cooking history (journal, badges, year in review, cuisine map, leftovers), one photo.
+  const year = new Date().getFullYear();
+  const all = repos.recipes();
+  for (let i = 0; i < 14; i++) {
+    const log = await repos.logCooked(
+      all[i % all.length]!.id,
+      `${year}-${String((i % 10) + 1).padStart(2, '0')}-${String((i % 27) + 1).padStart(2, '0')}`,
+    );
+    if (i === 0) await repos.setCookPhoto(log.id, 'demo-photo.jpg');
+  }
+  if (r.data.steps[0]) await repos.setStepNote(r.id, r.data.steps[0].id, 'Baisser à 170 °C');
   const sc = await repos.saveSmartCollection(null, {
     name: 'Rapide',
     emoji: null,
@@ -230,6 +241,10 @@ const SCREENS: [string, () => { default: () => ReactElement }, () => Record<stri
   ['whats new', () => require('../src/app/(app)/whats-new'), () => ({})],
   ['qr link', () => require('../src/app/(app)/r/[data]'), () => ({ data: 'not-a-recipe' })],
   ['profile', () => require('../src/app/(app)/profile/index'), () => ({})],
+  ['journal', () => require('../src/app/(app)/profile/journal'), () => ({})],
+  ['badges', () => require('../src/app/(app)/profile/badges'), () => ({})],
+  ['cuisine map', () => require('../src/app/(app)/profile/map'), () => ({})],
+  ['year review', () => require('../src/app/(app)/profile/review'), () => ({})],
   ['appearance', () => require('../src/app/(app)/profile/appearance'), () => ({})],
   ['data', () => require('../src/app/(app)/profile/data'), () => ({})],
   ['help', () => require('../src/app/(app)/profile/help'), () => ({})],
@@ -284,6 +299,63 @@ const tap = async (el: Parameters<typeof fireEvent.press>[0]) => {
 const settle = () => act(async () => new Promise((r) => setTimeout(r, 30)));
 
 describe('journeys: what the user does is really saved', () => {
+  it('the week as a table of dish photos; a dish is dragged to another day', async () => {
+    const Planning = screenOf('../src/app/(app)/(tabs)/planning');
+    const today = new Date().toISOString().slice(0, 10);
+    await repos.planMeal({ date: today, slot: 'dinner', recipeId: ids.recipe! });
+    await render(wrap(<Planning />));
+    await tap(screen.getByTestId('plan-view-table'));
+    expect(screen.getAllByTestId('table-meal').length).toBeGreaterThan(0);
+    expect(screen.getByText(i18n.t('delight.plan.dragHint'))).toBeTruthy();
+    const { dayAt } = jest.requireActual<typeof import('../src/features/planning/WeekTable')>(
+      '../src/features/planning/WeekTable',
+    );
+    const rows = [
+      { date: '2026-11-02', top: 100, bottom: 240 },
+      { date: '2026-11-03', top: 252, bottom: 390 },
+    ];
+    expect([dayAt(120, rows), dayAt(300, rows), dayAt(245, rows), dayAt(900, rows)]).toEqual([
+      '2026-11-02',
+      '2026-11-03',
+      null,
+      null,
+    ]);
+  });
+
+  it('the note on a step shows on the recipe page and in cook mode', async () => {
+    mockParams.current = { id: ids.recipe! };
+    const Recipe = screenOf('../src/app/(app)/recipe/[id]/index');
+    await render(wrap(<Recipe />));
+    expect(screen.getByTestId('step-note-0')).toBeTruthy();
+    expect(screen.getAllByText('Baisser à 170 °C').length).toBeGreaterThan(0);
+    await cleanup();
+    const Cook = screenOf('../src/app/(app)/recipe/[id]/cook');
+    await render(wrap(<Cook />));
+    expect(screen.getAllByText('Baisser à 170 °C').length).toBeGreaterThan(0);
+  });
+
+  it('the cuisine of a recipe can be chosen; drink and side ideas are shown', async () => {
+    mockParams.current = { id: ids.recipe! };
+    mockChoice.next = () => 0.5;
+    const Recipe = screenOf('../src/app/(app)/recipe/[id]/index');
+    await render(wrap(<Recipe />));
+    expect(screen.getByText(i18n.t('delight.pairing.title'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('delight.pairing.soft'))).toBeTruthy();
+    await tap(screen.getByTestId('recipe-cuisine'));
+    await settle();
+    expect(repos.recipe(ids.recipe!)!.data.cuisine).not.toBeNull();
+  });
+
+  it('home: tonight’s planned dinner is the big card', async () => {
+    const today = new Date().toISOString().slice(0, 10);
+    await repos.planMeal({ date: today, slot: 'dinner', recipeId: ids.recipe2! });
+    const Home = screenOf('../src/app/(app)/(tabs)/index');
+    await render(wrap(<Home />));
+    expect(screen.getByTestId('tonight')).toBeTruthy();
+    expect(screen.getByText(i18n.t('delight.tonight.planned'))).toBeTruthy();
+    expect(screen.getAllByText(repos.recipe(ids.recipe2!)!.data.title).length).toBeGreaterThan(0);
+  });
+
   it('a new recipe typed in the editor is saved with its ingredient', async () => {
     mockParams.current = {};
     const Edit = screenOf('../src/app/(app)/recipe/edit');

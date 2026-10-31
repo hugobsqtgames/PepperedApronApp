@@ -34,6 +34,8 @@ import {
 } from '../../../ui';
 
 import { WeekSummary } from '../../../features/planning/WeekSummary';
+import { WeekTable } from '../../../features/planning/WeekTable';
+import { inBackground } from '../../../lib/errors';
 
 type Entry = LocalRecord<'mealPlanEntry'>;
 
@@ -46,6 +48,9 @@ export default function Planning() {
   const toast = useToast();
   const today = toIsoDate(new Date());
   const [weekStart, setWeekStart] = useState(() => startOfWeek(today));
+  // Phones: the week as a list of meals, or as a table of dish photos to drag around.
+  const [view, setView] = useState<'list' | 'table'>('list');
+  const [dragging, setDragging] = useState(false);
   const days = useMemo(() => weekDates(weekStart), [weekStart]);
   const end = days[6]!;
   const { entries, titles } = useLive(
@@ -194,6 +199,25 @@ export default function Planning() {
           onPress={() => setWeekStart(addDays(weekStart, 7))}
         />
       </View>
+      {!layout.wide ? (
+        <View style={{ flexDirection: 'row', gap: space.sm }} accessibilityRole="tablist">
+          {(['list', 'table'] as const).map((v) => (
+            <Button
+              key={v}
+              title={t(`delight.plan.${v}`)}
+              icon={v === 'list' ? 'list-outline' : 'grid-outline'}
+              variant={view === v ? 'primary' : 'secondary'}
+              size="sm"
+              onPress={() => {
+                haptic.selection();
+                setView(v);
+              }}
+              style={{ flex: 1 }}
+              testID={`plan-view-${v}`}
+            />
+          ))}
+        </View>
+      ) : null}
       <Button
         title={t('planning.toShopping')}
         icon="cart-outline"
@@ -291,70 +315,92 @@ export default function Planning() {
 
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.background }}>
-      <ScrollView contentContainerStyle={{ paddingBottom: space.huge * 2, gap: space.lg }}>
+      <ScrollView
+        scrollEnabled={!dragging}
+        contentContainerStyle={{ paddingBottom: space.huge * 2, gap: space.lg }}
+      >
         {header}
-        <View style={{ paddingHorizontal: layout.gutter, gap: space.md }}>
-          {days.map((d) => {
-            const count = entries.filter((e) => e.data.date === d).length;
-            return (
-              <View
-                key={d}
-                style={[
-                  styles.day,
-                  {
-                    backgroundColor: colors.surface,
-                    borderColor: d === today ? colors.primary : colors.line,
-                    borderWidth: d === today ? 1.5 : StyleSheet.hairlineWidth,
-                  },
-                ]}
-              >
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  <Text variant="title3" style={{ flex: 1 }} accessibilityRole="header">
-                    {dayLong(d, i18n.language)}
-                  </Text>
-                  {d === today ? (
-                    <Text variant="micro" color="primary" style={{ textTransform: 'uppercase' }}>
-                      {t('planning.today')}
+        {view === 'table' ? (
+          <View style={{ paddingHorizontal: layout.gutter, gap: space.md }}>
+            <WeekTable
+              days={days}
+              entries={entries}
+              info={(e) => titles.get(e.id)}
+              today={today}
+              onAdd={add}
+              onTap={(e) => entryActions(sheet, repos, t, i18n.language, e.id, weekStart)}
+              onMove={(e, date) => {
+                inBackground(repos.moveMeal(e.id, date, e.data.slot));
+                toast(t('delight.plan.moved', { day: dayLong(date, i18n.language) }));
+              }}
+              onDragging={setDragging}
+            />
+            <WeekSummary start={weekStart} end={end} />
+          </View>
+        ) : (
+          <View style={{ paddingHorizontal: layout.gutter, gap: space.md }}>
+            {days.map((d) => {
+              const count = entries.filter((e) => e.data.date === d).length;
+              return (
+                <View
+                  key={d}
+                  style={[
+                    styles.day,
+                    {
+                      backgroundColor: colors.surface,
+                      borderColor: d === today ? colors.primary : colors.line,
+                      borderWidth: d === today ? 1.5 : StyleSheet.hairlineWidth,
+                    },
+                  ]}
+                >
+                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    <Text variant="title3" style={{ flex: 1 }} accessibilityRole="header">
+                      {dayLong(d, i18n.language)}
                     </Text>
-                  ) : count ? (
-                    <Text variant="caption" color="textMuted">
-                      {t('planning.dayMeals', { count })}
-                    </Text>
-                  ) : null}
-                </View>
-                {MEAL_SLOTS.map((s) => {
-                  const items = cell(d, s);
-                  return (
-                    <View key={s} style={styles.slot}>
-                      <Text
-                        variant="caption"
-                        color="textMuted"
-                        style={{ width: 92 }}
-                        numberOfLines={1}
-                      >
-                        {t(`slots.${s}`)}
+                    {d === today ? (
+                      <Text variant="micro" color="primary" style={{ textTransform: 'uppercase' }}>
+                        {t('planning.today')}
                       </Text>
-                      <View style={{ flex: 1, gap: 6 }}>
-                        {items.map((e) => (
-                          <EntryChip key={e.id} e={e} />
-                        ))}
+                    ) : count ? (
+                      <Text variant="caption" color="textMuted">
+                        {t('planning.dayMeals', { count })}
+                      </Text>
+                    ) : null}
+                  </View>
+                  {MEAL_SLOTS.map((s) => {
+                    const items = cell(d, s);
+                    return (
+                      <View key={s} style={styles.slot}>
+                        <Text
+                          variant="caption"
+                          color="textMuted"
+                          style={{ width: 92 }}
+                          numberOfLines={1}
+                        >
+                          {t(`slots.${s}`)}
+                        </Text>
+                        <View style={{ flex: 1, gap: 6 }}>
+                          {items.map((e) => (
+                            <EntryChip key={e.id} e={e} />
+                          ))}
+                        </View>
+                        <IconButton
+                          icon="add"
+                          label={`${t('planning.addMeal')} — ${t(`slots.${s}`)}, ${dayLong(d, i18n.language)}`}
+                          variant="plain"
+                          size={40}
+                          onPress={() => add(d, s)}
+                          testID={`plan-add-${d}-${s}`}
+                        />
                       </View>
-                      <IconButton
-                        icon="add"
-                        label={`${t('planning.addMeal')} — ${t(`slots.${s}`)}, ${dayLong(d, i18n.language)}`}
-                        variant="plain"
-                        size={40}
-                        onPress={() => add(d, s)}
-                        testID={`plan-add-${d}-${s}`}
-                      />
-                    </View>
-                  );
-                })}
-              </View>
-            );
-          })}
-          <WeekSummary start={weekStart} end={end} />
-        </View>
+                    );
+                  })}
+                </View>
+              );
+            })}
+            <WeekSummary start={weekStart} end={end} />
+          </View>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
