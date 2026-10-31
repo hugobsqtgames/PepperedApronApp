@@ -10,6 +10,9 @@ import { sourcesFromShare } from '../../services/autoImport';
 import { importQueue } from '../../services/importQueue';
 import { shouldShowWhatsNew } from '../../services/appMoments';
 import { applyExtensionRequests, publishWidgetData } from '../../services/widgets';
+import { publishWatch } from '../../services/watch';
+import { timers } from '../../services/timers';
+import { onWatchRequest } from '../../../modules/ios-integration';
 import { refreshSpotlight } from '../../services/spotlight';
 import { useTheme } from '../../theme/ThemeProvider';
 
@@ -79,6 +82,7 @@ export default function AppLayout() {
         void rescheduleReminders(s.repos);
         void rescheduleExpiry(s.repos);
         void publishWidgetData(s.repos);
+        publishWatch(s.repos, timers.list());
         void refreshSpotlight(s.repos);
       }, 2000);
     };
@@ -99,10 +103,13 @@ export default function AppLayout() {
     const appState = AppState.addEventListener('change', (st) => {
       if (st === 'active') void applyExtensionRequests(s.repos);
     });
+    // An item checked on the Apple Watch while the app is open.
+    const offWatch = onWatchRequest(() => void applyExtensionRequests(s.repos));
     return () => {
       off1();
       off2();
       appState.remove();
+      offWatch();
       if (pending) clearTimeout(pending);
     };
   }, [rt.session, rt]);

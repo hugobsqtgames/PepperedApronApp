@@ -1,5 +1,6 @@
 import AppIntents
 import SwiftUI
+import UIKit
 import WidgetKit
 
 // Data written by the app (src/services/widgets.ts) into the shared App Group.
@@ -12,6 +13,14 @@ private func appGroup() -> String {
 
 private func dict(_ key: String) -> [String: Any] {
   UserDefaults(suiteName: appGroup())?.dictionary(forKey: key) ?? [:]
+}
+
+/// A picture the app copied into the App Group container (tonight's dish), or nil.
+private func sharedImage(_ name: String) -> UIImage? {
+  guard !name.isEmpty,
+    let dir = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: appGroup())
+  else { return nil }
+  return UIImage(contentsOfFile: dir.appendingPathComponent(name).path)
 }
 
 /// Items of the active shopping list ([{id, name}]), written by the app.
@@ -107,13 +116,28 @@ struct TonightView: View {
     }
   }
   private func home(title: String) -> some View {
-    VStack(alignment: .leading, spacing: 6) {
-      Header(text: entry.labels["tonight"] as? String ?? "Ce soir")
-      Spacer(minLength: 0)
-      Text(title.isEmpty ? (entry.labels["nothing"] as? String ?? "—") : title)
-        .font(.system(.headline, design: .serif)).foregroundStyle(Color("ink")).lineLimit(3)
+    // Medium widget: the dish's photo next to its name.
+    let photo = family == .systemSmall ? nil : sharedImage(entry.tonight["photo"] as? String ?? "")
+    let minutes = entry.tonight["minutes"] as? String ?? ""
+    return HStack(alignment: .center, spacing: 12) {
+      if let photo = photo {
+        Image(uiImage: photo)
+          .resizable()
+          .scaledToFill()
+          .frame(width: 112, height: 112)
+          .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+      }
+      VStack(alignment: .leading, spacing: 6) {
+        Header(text: entry.labels["tonight"] as? String ?? "Ce soir")
+        Spacer(minLength: 0)
+        Text(title.isEmpty ? (entry.labels["nothing"] as? String ?? "—") : title)
+          .font(.system(.headline, design: .serif)).foregroundStyle(Color("ink")).lineLimit(3)
+        if !minutes.isEmpty {
+          Label(minutes, systemImage: "clock").font(.caption).foregroundStyle(Color("muted"))
+        }
+      }
+      .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
     }
-    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
     .widgetURL(URL(string: entry.tonight["url"] as? String ?? "pepperedapron://planning"))
   }
 }
@@ -204,6 +228,100 @@ struct RandomView: View {
   }
 }
 
+// MARK: - Kitchen timer: a ring that empties, written by the app (src/services/widgets.ts).
+
+struct TimerEntry: TimelineEntry {
+  let date: Date
+  let label: String
+  let start: Date?
+  let end: Date?
+  let labels: [String: Any]
+}
+
+struct TimerProvider: TimelineProvider {
+  func placeholder(in context: Context) -> TimerEntry {
+    TimerEntry(date: Date(), label: "Pâtes", start: Date(), end: Date().addingTimeInterval(480), labels: [:])
+  }
+  func getSnapshot(in context: Context, completion: @escaping (TimerEntry) -> Void) {
+    completion(load(at: Date()))
+  }
+  func getTimeline(in context: Context, completion: @escaping (Timeline<TimerEntry>) -> Void) {
+    let now = Date()
+    let entry = load(at: now)
+    // The ring and the countdown move by themselves; one more entry when the timer ends.
+    if let end = entry.end, end > now {
+      let done = TimerEntry(date: end, label: entry.label, start: entry.start, end: entry.end, labels: entry.labels)
+      completion(Timeline(entries: [entry, done], policy: .never))
+    } else {
+      completion(Timeline(entries: [entry], policy: .never))
+    }
+  }
+  private func load(at now: Date) -> TimerEntry {
+    let d = dict("timer")
+    let end = d["end"] as? Double ?? 0
+    let start = min(d["start"] as? Double ?? end, end)
+    let running = end > now.timeIntervalSince1970
+    return TimerEntry(
+      date: now,
+      label: d["label"] as? String ?? "",
+      start: running ? Date(timeIntervalSince1970: start) : nil,
+      end: running ? Date(timeIntervalSince1970: end) : nil,
+      labels: dict("timerLabels"))
+  }
+}
+
+struct TimerView: View {
+  let entry: TimerEntry
+  @Environment(\.widgetFamily) var family
+  var body: some View {
+    let none = entry.labels["none"] as? String ?? "—"
+    if let start = entry.start, let end = entry.end, entry.date < end {
+      let range = start...end
+      switch family {
+      case .accessoryCircular:
+        ProgressView(timerInterval: range, countsDown: true) {
+          EmptyView()
+        } currentValueLabel: {
+          Image(systemName: "timer")
+        }
+        .progressViewStyle(.circular)
+        .widgetURL(URL(string: "pepperedapron://"))
+      case .accessoryRectangular:
+        VStack(alignment: .leading, spacing: 2) {
+          Label(entry.label, systemImage: "timer").font(.caption).lineLimit(1).widgetAccentable()
+          Text(timerInterval: range, countsDown: true).font(.title2).monospacedDigit()
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .widgetURL(URL(string: "pepperedapron://"))
+      default:
+        VStack(spacing: 8) {
+          ProgressView(timerInterval: range, countsDown: true) {
+            EmptyView()
+          } currentValueLabel: {
+            Text(timerInterval: range, countsDown: true)
+              .font(.system(.title3, design: .rounded)).monospacedDigit()
+          }
+          .progressViewStyle(.circular)
+          .tint(Color("paprika"))
+          Text(entry.label).font(.caption).foregroundStyle(Color("ink")).lineLimit(2)
+            .multilineTextAlignment(.center)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .widgetURL(URL(string: "pepperedapron://"))
+      }
+    } else {
+      VStack(spacing: 6) {
+        Image(systemName: entry.label.isEmpty ? "timer" : "checkmark.circle.fill")
+          .font(.title2).foregroundStyle(Color("forest"))
+        Text(entry.label.isEmpty ? none : entry.label).font(.caption).foregroundStyle(Color("muted"))
+          .lineLimit(2).multilineTextAlignment(.center)
+      }
+      .frame(maxWidth: .infinity, maxHeight: .infinity)
+      .widgetURL(URL(string: "pepperedapron://"))
+    }
+  }
+}
+
 private extension View {
   func paBackground() -> some View {
     containerBackground(for: .widget) { Color("background") }
@@ -242,6 +360,14 @@ struct RandomWidget: Widget {
   }
 }
 
+struct TimerWidget: Widget {
+  var body: some WidgetConfiguration {
+    StaticConfiguration(kind: "PATimer", provider: TimerProvider()) { TimerView(entry: $0).paBackground() }
+      .configurationDisplayName("Minuteur").description("Le minuteur en cours, qui se vide sous vos yeux.")
+      .supportedFamilies([.systemSmall, .accessoryCircular, .accessoryRectangular])
+  }
+}
+
 @main
 struct PepperedApronWidgets: WidgetBundle {
   var body: some Widget {
@@ -249,5 +375,6 @@ struct PepperedApronWidgets: WidgetBundle {
     NextMealWidget()
     ShoppingWidget()
     RandomWidget()
+    TimerWidget()
   }
 }

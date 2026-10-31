@@ -213,7 +213,11 @@ const buildConfig = ({ config }: ConfigContext): ExpoConfig => ({
       },
     ],
     // Order matters: apple-targets must create the widget target before expo-live-activity adds its own.
-    '@bacons/apple-targets',
+    // APPLE_WATCH=0 builds without the Apple Watch app (targets/watch).
+    [
+      '@bacons/apple-targets',
+      process.env.APPLE_WATCH === '0' ? { match: '{widgets,intents}' } : {},
+    ],
     'expo-live-activity',
   ],
   experiments: { typedRoutes: true },

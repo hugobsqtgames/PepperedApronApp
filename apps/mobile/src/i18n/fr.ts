@@ -740,6 +740,7 @@ const fr = {
     shopping: 'Liste de courses',
     random: 'Recette au hasard',
     nothing: 'Rien de prévu',
+    noTimer: 'Aucun minuteur en cours',
   },
   cloud: {
     title: 'iCloud',

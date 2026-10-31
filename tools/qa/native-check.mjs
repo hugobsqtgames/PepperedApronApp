@@ -163,6 +163,29 @@ try {
     'App Intents extension point',
   );
 
+  // Apple Watch app (targets/watch): its own bundle id, tied to this variant's iPhone app, and
+  // the same version (the App Store refuses a watch app whose version differs).
+  if (process.env.APPLE_WATCH !== '0') {
+    check(
+      pbx.includes(`PRODUCT_BUNDLE_IDENTIFIER = ${bundle}.watchkitapp;`),
+      'watch app bundle id',
+    );
+    check(
+      pbx.includes(`INFOPLIST_KEY_WKCompanionAppBundleIdentifier = ${bundle};`),
+      'watch app tied to this variant',
+    );
+    check(/SDKROOT = watchos;/.test(pbx), 'watch app built for watchOS');
+    const versions = new Set([...pbx.matchAll(/MARKETING_VERSION = ([^;]+);/g)].map((m) => m[1]));
+    check(versions.size === 1, `one version for every target (found ${[...versions].join(', ')})`);
+  }
+  // Timer widget and phone-to-watch link are compiled in.
+  check(
+    fs
+      .readFileSync(path.join(app, 'targets/widgets/Widgets.swift'), 'utf8')
+      .includes('TimerWidget()'),
+    'timer widget in the widget bundle',
+  );
+
   // Xcode's "Bundle React Native code and images" phase, run as on the build server: without
   // the package manager's shims (a dependency only reachable through them broke the EAS build).
   // Hermes compilation is skipped: hermesc ships with the pods.

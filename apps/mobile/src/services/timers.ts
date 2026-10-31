@@ -189,15 +189,38 @@ class TimerManager {
         .filter((t) => timerState(t, now) === 'running')
         .sort((a, b) => (a.endsAt ?? 0) - (b.endsAt ?? 0));
       const next = running[0];
+      // Loaded here: the runtime and the widgets import this module.
+      const [{ runtime }, { publishTimerWidget }] = await Promise.all([
+        import('./runtime'),
+        import('./widgets'),
+      ]);
+      void publishTimerWidget(next ?? null);
+      if (runtime.session) {
+        const { publishWatch } = await import('./watch');
+        publishWatch(runtime.session.repos, this.timers);
+      }
       if (!next) {
         if (this.liveActivityId)
           LA.stopActivity(this.liveActivityId, { title: '', progressBar: { progress: 1 } });
         this.liveActivityId = null;
         return;
       }
+      // Dynamic Island and lock screen: the timer's name, and what the step says.
+      const stepText =
+        next.recipeId && next.stepIndex !== null
+          ? runtime.session?.repos.recipe(next.recipeId)?.data.steps[next.stepIndex]?.text
+          : null;
+      const short = stepText
+        ? stepText.length > 60
+          ? `${stepText.slice(0, 59)}…`
+          : stepText
+        : null;
       const state = {
         title: next.label,
-        subtitle: running.length > 1 ? `+${running.length - 1}` : undefined,
+        subtitle:
+          [short, running.length > 1 ? `+${running.length - 1}` : null]
+            .filter(Boolean)
+            .join('  ·  ') || undefined,
         progressBar: { date: next.endsAt! },
         imageName: 'glyph',
         dynamicIslandImageName: 'glyph',

@@ -17,6 +17,8 @@ interface IosIntegrationNative {
   clearIndex(): Promise<void>;
   setActivity(type: 'recipe' | 'cook', title: string, url: string): void;
   clearActivity(): void;
+  sendToWatch(context: Record<string, unknown>): void;
+  addListener(event: 'onWatchRequest', cb: () => void): { remove(): void };
 }
 
 const native = requireOptionalNativeModule<IosIntegrationNative>('IosIntegration');
@@ -26,3 +28,11 @@ export const clearSpotlight = () => native?.clearIndex() ?? Promise.resolve();
 export const setActivity = (type: 'recipe' | 'cook', title: string, url: string) =>
   native?.setActivity(type, title, url);
 export const clearActivity = () => native?.clearActivity();
+
+/** The Apple Watch app's data (shopping list, timers). No-op without a paired watch. */
+export const sendToWatch = (context: Record<string, unknown>) => native?.sendToWatch(context);
+/** Something was done on the watch (an item checked): returns the unsubscribe function. */
+export function onWatchRequest(cb: () => void): () => void {
+  const sub = native?.addListener('onWatchRequest', cb);
+  return () => sub?.remove();
+}

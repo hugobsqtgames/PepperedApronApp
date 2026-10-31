@@ -735,6 +735,7 @@ const en: Translations = {
     shopping: 'Shopping list',
     random: 'Random recipe',
     nothing: 'Nothing planned',
+    noTimer: 'No timer running',
   },
   cloud: {
     title: 'iCloud',

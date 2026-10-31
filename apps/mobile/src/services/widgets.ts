@@ -1,5 +1,13 @@
 import { Platform } from 'react-native';
-import { addDays, nextMeal, toIsoDate } from '@pepperedapron/core';
+import {
+  addDays,
+  computeTotalMinutes,
+  formatMinutes,
+  nextMeal,
+  toIsoDate,
+  type Locale,
+} from '@pepperedapron/core';
+import { recipePhotoUri } from '../lib/media';
 import type { Repos } from '@pepperedapron/client';
 import i18n from '../i18n';
 import { ENV } from './env';
@@ -37,10 +45,15 @@ export async function publishWidgetData(repos: Repos, now = new Date()) {
       random: i18n.t('widgets.random'),
       nothing: i18n.t('widgets.nothing'),
     });
+    const tonightRecipe = tonight?.data.recipeId ? repos.recipe(tonight.data.recipeId) : null;
+    const minutes = tonightRecipe ? computeTotalMinutes(tonightRecipe.data) : null;
+    const photo = await tonightPhoto(tonightRecipe ? recipePhotoUri(tonightRecipe) : null);
     storage.set(
       'tonight',
       tonight
         ? {
+            photo: photo ?? '',
+            minutes: minutes ? formatMinutes(minutes, i18n.language as Locale) : '',
             title: title(tonight),
             url: tonight.data.recipeId
               ? `pepperedapron://recipe/${tonight.data.recipeId}`
@@ -122,5 +135,58 @@ export async function applyExtensionRequests(repos: Repos) {
     await publishWidgetData(repos);
   } catch {
     // Optional: the requests stay queued until the next try.
+  }
+}
+
+/**
+ * The next kitchen timer for the timer widget (a ring that empties, on the home and lock
+ * screens): its name, its start and its end. Null clears it.
+ */
+export async function publishTimerWidget(
+  t: { label: string; endsAt: number | null; durationSeconds: number } | null,
+) {
+  if (Platform.OS !== 'ios') return;
+  try {
+    const { ExtensionStorage } = await import('@bacons/apple-targets');
+    const storage = new ExtensionStorage(ENV.appGroup);
+    storage.set(
+      'timer',
+      t?.endsAt
+        ? {
+            label: t.label,
+            end: t.endsAt / 1000,
+            start: t.endsAt / 1000 - t.durationSeconds,
+          }
+        : { label: '', end: 0, start: 0 },
+    );
+    storage.set('timerLabels', {
+      title: i18n.t('delight.cook.timers'),
+      none: i18n.t('widgets.noTimer'),
+    });
+    ExtensionStorage.reloadWidget('PATimer');
+  } catch {
+    // Optional.
+  }
+}
+
+/**
+ * Tonight's dish photo for the widget: a small copy in the App Group container (widgets cannot
+ * read the app's files). Returns the file name, or null.
+ */
+async function tonightPhoto(uri: string | null): Promise<string | null> {
+  if (!uri) return null;
+  try {
+    const { Paths, File } = await import('expo-file-system');
+    const { ImageManipulator, SaveFormat } = await import('expo-image-manipulator');
+    const shared = Paths.appleSharedContainers[ENV.appGroup];
+    if (!shared) return null;
+    const img = await ImageManipulator.manipulate(uri).resize({ width: 360 }).renderAsync();
+    const saved = await img.saveAsync({ format: SaveFormat.JPEG, compress: 0.75 });
+    const dest = new File(shared, 'widget-tonight.jpg');
+    if (dest.exists) dest.delete();
+    new File(saved.uri).copy(dest);
+    return 'widget-tonight.jpg';
+  } catch {
+    return null;
   }
 }
