@@ -34,16 +34,8 @@ const meta = path.join(out, 'metadata');
 write(path.join(meta, 'copyright.txt'), `© ${new Date().getFullYear()} PepperedApron`);
 write(path.join(meta, 'primary_category.txt'), 'FOOD_AND_DRINK');
 write(path.join(meta, 'secondary_category.txt'), 'LIFESTYLE');
-// Review: no account to log in with, nothing to set up first.
-write(
-  path.join(meta, 'review_information', 'notes.txt'),
-  [
-    'No account and no server: open the app and use it directly.',
-    'The app starts empty: add a recipe with the + button, or share a public recipe link to it.',
-    'The share extension imports a public link and its public metadata; no AI; no ads.',
-    'Everything stays on the device and in the user’s own iCloud.',
-  ].join('\n'),
-);
+// The App Review notes and contact are filled by hand in App Store Connect: Apple refuses the
+// notes without the developer's contact details, which do not belong in this repository.
 
 let count = 0;
 for (const { store, lang, suffix } of LOCALES) {
