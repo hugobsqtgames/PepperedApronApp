@@ -14,6 +14,10 @@ on:
         description: Submit to TestFlight (production only)
         type: boolean
         default: false
+      submit_latest_only:
+        description: Do not build; send the latest finished production build to TestFlight
+        type: boolean
+        default: false
 
 jobs:
   build:
@@ -33,7 +37,11 @@ jobs:
         with:
           eas-version: latest
           token: ${{ secrets.EXPO_TOKEN }}
+      - name: Send the latest build to TestFlight
+        if: ${{ inputs.submit_latest_only }}
+        run: eas submit --non-interactive --platform ios --profile production --latest --no-wait
       - name: Build
+        if: ${{ !inputs.submit_latest_only }}
         run: >-
           eas build --non-interactive --no-wait
           --profile ${{ inputs.profile }} --platform ios
