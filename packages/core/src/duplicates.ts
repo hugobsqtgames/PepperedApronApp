@@ -61,6 +61,13 @@ export interface DuplicateCandidate {
   title: string;
   sourceUrl: string | null;
   ingredientNames: string[];
+  /** The steps' text, when known: the same steps word for word make the same recipe. */
+  stepTexts?: string[];
+}
+
+/** Words of the method, to compare two recipes' steps. */
+function stepWords(steps: string[] | undefined): Set<string> {
+  return new Set((steps ?? []).flatMap((s) => tokenize(s).map(singularize)));
 }
 
 export interface DuplicateMatch {
@@ -84,12 +91,25 @@ export function findDuplicate(
   const ings = new Set(candidate.ingredientNames.map(ingredientKey).filter(Boolean));
   let best: { id: string; score: number } | null = null;
   for (const r of existing) {
-    // Two different publications are two recipes, even with the same name.
-    const other = canonicalUrl(r.sourceUrl);
-    if (url && other && other !== url) continue;
     const t = jaccard(words, titleWords(r.title));
     if (t < 0.75) continue;
     const theirs = new Set(r.ingredientNames.map(ingredientKey).filter(Boolean));
+    // Two different publications are two recipes, even with the same name — unless they are
+    // the same recipe word for word (the same post imported from Instagram and from Pinterest).
+    const other = canonicalUrl(r.sourceUrl);
+    if (url && other && other !== url) {
+      const mySteps = stepWords(candidate.stepTexts);
+      const theirSteps = stepWords(r.stepTexts);
+      const sameContent =
+        t >= 0.9 &&
+        ings.size >= 3 &&
+        theirs.size >= 3 &&
+        jaccard(ings, theirs) >= 0.9 &&
+        mySteps.size >= 5 &&
+        theirSteps.size >= 5 &&
+        jaccard(mySteps, theirSteps) >= 0.8;
+      if (!sameContent) continue;
+    }
     // Without ingredients on one side, only an identical title counts.
     const sameTitle = normalizeText(r.title) === normalizeText(candidate.title);
     const i = ings.size >= 2 && theirs.size >= 2 ? jaccard(ings, theirs) : sameTitle ? 1 : 0;

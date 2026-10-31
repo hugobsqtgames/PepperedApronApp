@@ -282,6 +282,7 @@ export async function saveImport(
     title: p.draft.title?.trim() ? data.title : '',
     sourceUrl: data.sourceUrl,
     ingredientNames: data.ingredients.map((i) => i.name),
+    stepTexts: data.steps.map((st) => st.text),
   });
   if (duplicate && !opts.force) {
     const existing = repos.recipe(duplicate.id);

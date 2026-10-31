@@ -83,6 +83,10 @@ export default function ImportQueueScreen() {
   const jobs = wanted ? state.jobs.filter((j) => wanted.has(j.id)) : state.jobs;
   const single = wanted !== null && jobs.length === 1 ? jobs[0]! : null;
   const opened = useRef(false);
+  // Opening the screen gets the imports going if they were stopped (app closed meanwhile).
+  useEffect(() => {
+    void importQueue.start();
+  }, []);
   const running = state.jobs.some((j) => j.status === 'pending' || j.status === 'running');
 
   // VoiceOver: say when every import is finished.

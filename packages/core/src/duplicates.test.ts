@@ -78,4 +78,34 @@ describe('duplicates', () => {
       ),
     ).toBeNull();
   });
+  it('regression: the same recipe word for word from two links is a duplicate', () => {
+    const steps = [
+      'Faire revenir le poulet dans l’huile avec l’ail.',
+      'Ajouter le citron et cuire 10 minutes.',
+    ];
+    const one = {
+      id: 'a',
+      title: 'Poulet citron rapide',
+      sourceUrl: 'https://www.instagram.com/reel/ABC/',
+      ingredientNames: ['poulet', 'citron', 'ail', 'huile'],
+      stepTexts: steps,
+    };
+    expect(
+      findDuplicate({ ...one, sourceUrl: 'https://www.pinterest.com/pin/123456789/' }, [one]),
+    ).toEqual({ id: 'a', reason: 'similar' });
+    // Same name and ingredients, other steps: two recipes.
+    expect(
+      findDuplicate(
+        {
+          ...one,
+          sourceUrl: 'https://www.pinterest.com/pin/123456789/',
+          stepTexts: [
+            'Mariner le poulet une nuit au frigo.',
+            'Griller au barbecue et servir avec du riz.',
+          ],
+        },
+        [one],
+      ),
+    ).toBeNull();
+  });
 });

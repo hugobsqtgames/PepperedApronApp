@@ -142,6 +142,35 @@ describe('import queue', () => {
   });
 });
 
+describe('regression: shared twice, or an import that never ends', () => {
+  it('the same link shared twice (start + coming forward) is imported once', async () => {
+    mockPrepare.mockResolvedValue(prepared('partial'));
+    mockSave.mockResolvedValue({ recipeId: 'r1', title: 'Pâtes', duplicate: null });
+    const [a] = await importQueue.add([link('https://www.instagram.com/p/SAME/')]);
+    const [b] = await importQueue.add([link('https://www.instagram.com/p/SAME/')]);
+    expect(b).toBe(a);
+    await settle();
+    expect(importQueue.snapshot.jobs).toHaveLength(1);
+    expect(mockSave).toHaveBeenCalledTimes(1);
+  });
+
+  it('an import that never finishes does not leave the next ones waiting forever', async () => {
+    jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+    mockPrepare
+      .mockImplementationOnce(() => new Promise(() => undefined))
+      .mockResolvedValue(prepared('partial'));
+    mockSave.mockResolvedValue({ recipeId: 'r2', title: 'Soupe', duplicate: null });
+    const [stuck] = await importQueue.add([link('https://example.com/stuck')]);
+    const [next] = await importQueue.add([link('https://example.com/next')]);
+    await jest.advanceTimersByTimeAsync(5 * 60_000);
+    await settle();
+    const jobs = importQueue.snapshot.jobs;
+    expect(jobs.find((j) => j.id === next)).toMatchObject({ status: 'done', recipeId: 'r2' });
+    // The stuck one was tried again (then saved).
+    expect(jobs.find((j) => j.id === stuck)!.attempts).toBeGreaterThanOrEqual(2);
+  });
+});
+
 describe('regression: a damaged saved queue does not stop the imports', () => {
   it.each([
     'null',

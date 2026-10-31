@@ -282,7 +282,7 @@ export class Repos {
   }
   /** A recipe that looks like the same as this one (same link, or same title and ingredients). */
   findDuplicate(
-    c: { title: string; sourceUrl: string | null; ingredientNames: string[] },
+    c: { title: string; sourceUrl: string | null; ingredientNames: string[]; stepTexts?: string[] },
     excludeId?: string,
   ): DuplicateMatch | null {
     return findDuplicate(
@@ -294,6 +294,7 @@ export class Repos {
           title: r.data.title,
           sourceUrl: r.data.sourceUrl,
           ingredientNames: r.data.ingredients.map((i) => i.name),
+          stepTexts: r.data.steps.map((st) => st.text),
         })),
     );
   }

@@ -40,6 +40,34 @@ const INSTAGRAM_GAP_MS = 4000;
 const OTHER_GAP_MS = 1500;
 const BLOCKED_PAUSE_MS = 15 * 60_000;
 const OFFLINE_PAUSE_MS = 60_000;
+/** One import never takes longer (a video that never finishes downloading must not block the rest). */
+const JOB_TIMEOUT_MS = 4 * 60_000;
+/** The same thing shared again within this delay is the same share (iOS can deliver it twice). */
+const SAME_SHARE_MS = 2 * 60_000;
+
+/** What identifies a shared item: the same link, text or files. */
+function sourceKey(s: ImportSource): string {
+  if (s.kind === 'link') return `link:${s.url}`;
+  if (s.kind === 'text') return `text:${s.text.trim()}`;
+  if (s.kind === 'photos') return `photos:${s.uris.join('|')}`;
+  return `${s.kind}:${s.uri}`;
+}
+
+function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const t = setTimeout(() => reject(new Error('timeout')), ms);
+    p.then(
+      (v) => {
+        clearTimeout(t);
+        resolve(v);
+      },
+      (e: unknown) => {
+        clearTimeout(t);
+        reject(e instanceof Error ? e : new Error(String(e)));
+      },
+    );
+  });
+}
 
 const inbox = () => new Directory(Paths.document, 'import-inbox');
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -117,17 +145,20 @@ class ImportQueue {
       const raw = await s.store.meta(META_KEY);
       const saved = raw ? (JSON.parse(raw) as Partial<QueueState> | null) : null;
       // A damaged or older state must not stop the imports: keep only well-formed jobs.
-      if (saved && typeof saved === 'object')
+      if (saved && typeof saved === 'object') {
+        const kept = Array.isArray(saved.jobs)
+          ? saved.jobs.filter(
+              (j) => j && typeof j.id === 'string' && j.source && typeof j.source.kind === 'string',
+            )
+          : [];
+        // Something shared before the data was open stays (it was only in memory).
+        const ids = new Set(kept.map((j) => j.id));
         this.state = {
           ...this.state,
           ...saved,
-          jobs: Array.isArray(saved.jobs)
-            ? saved.jobs.filter(
-                (j) =>
-                  j && typeof j.id === 'string' && j.source && typeof j.source.kind === 'string',
-              )
-            : [],
+          jobs: [...kept, ...this.state.jobs.filter((j) => !ids.has(j.id))],
         };
+      }
     } catch {
       // Unreadable: start empty.
     }
@@ -180,7 +211,20 @@ class ImportQueue {
   ): Promise<string[]> {
     await this.load();
     const ids: string[] = [];
+    const now = Date.now();
     for (const { source, collection } of sources.slice(0, MAX_JOBS)) {
+      // Shared twice (iOS delivers the share when the app starts and again when it comes
+      // forward), or tapped twice: one import, not two.
+      const key = sourceKey(source);
+      const same = this.state.jobs.find(
+        (j) =>
+          sourceKey(j.source) === key &&
+          (j.status === 'pending' || j.status === 'running' || now - j.addedAt < SAME_SHARE_MS),
+      );
+      if (same) {
+        ids.push(same.id);
+        continue;
+      }
       const id = uuidv7();
       ids.push(id);
       this.state.jobs.push({
@@ -284,10 +328,13 @@ class ImportQueue {
     job.attempts++;
     this.emit();
     try {
-      const prepared = await prepareImport(job.source, (stage) => {
-        job.stage = stage;
-        this.emit();
-      });
+      const prepared = await withTimeout(
+        prepareImport(job.source, (stage) => {
+          job.stage = stage;
+          this.emit();
+        }),
+        JOB_TIMEOUT_MS,
+      );
       if (prepared.offline) {
         // No network: try again later rather than saving an empty recipe.
         Object.assign(job, { status: 'pending', stage: null, error: 'offline' });
