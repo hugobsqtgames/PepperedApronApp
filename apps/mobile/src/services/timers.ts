@@ -195,10 +195,6 @@ class TimerManager {
         import('./widgets'),
       ]);
       void publishTimerWidget(next ?? null);
-      if (runtime.session) {
-        const { publishWatch } = await import('./watch');
-        publishWatch(runtime.session.repos, this.timers);
-      }
       if (!next) {
         if (this.liveActivityId)
           LA.stopActivity(this.liveActivityId, { title: '', progressBar: { progress: 1 } });

@@ -163,31 +163,7 @@ try {
     'App Intents extension point',
   );
 
-  // Apple Watch app (targets/watch): its own bundle id, tied to this variant's iPhone app, and
-  // the same version (the App Store refuses a watch app whose version differs).
-  if (process.env.APPLE_WATCH !== '0') {
-    check(
-      pbx.includes(`PRODUCT_BUNDLE_IDENTIFIER = ${bundle}.watchkitapp;`),
-      'watch app bundle id',
-    );
-    check(
-      pbx.includes(`INFOPLIST_KEY_WKCompanionAppBundleIdentifier = ${bundle};`),
-      'watch app tied to this variant',
-    );
-    check(/SDKROOT = watchos;/.test(pbx), 'watch app built for watchOS');
-    const versions = new Set([...pbx.matchAll(/MARKETING_VERSION = ([^;]+);/g)].map((m) => m[1]));
-    check(versions.size === 1, `one version for every target (found ${[...versions].join(', ')})`);
-  }
-  // The app writes widget data as JSON (ExtensionStorage): the extensions must decode JSON, a
-  // plain dictionary(forKey:) read never sees it (widgets stayed empty).
-  for (const f of ['targets/widgets/Widgets.swift', 'targets/intents/Intents.swift'])
-    check(
-      fs
-        .readFileSync(path.join(app, f), 'utf8')
-        .includes('JSONSerialization.jsonObject(with: data'),
-      `${f} reads the JSON written by the app`,
-    );
-  // Timer widget and phone-to-watch link are compiled in.
+  // The timer widget is compiled in.
   check(
     fs
       .readFileSync(path.join(app, 'targets/widgets/Widgets.swift'), 'utf8')

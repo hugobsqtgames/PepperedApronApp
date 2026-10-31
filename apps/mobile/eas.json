@@ -44,17 +44,9 @@
       "env": {
         "APP_VARIANT": "production"
       }
-    },
-    "production-nowatch": {
-      "extends": "production",
-      "env": {
-        "APP_VARIANT": "production",
-        "APPLE_WATCH": "0"
-      }
     }
   },
   "submit": {
-    "production": {},
-    "production-nowatch": {}
+    "production": {}
   }
 }

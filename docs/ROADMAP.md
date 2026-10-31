@@ -60,5 +60,5 @@ Repères : modèle de données `packages/core/src/schemas.ts` (champs ajoutés a
 - [x] **Mode cuisine** : pas à pas en plein écran avec « Étape n sur N » (17), minuteurs en anneaux (20), « Pendant que ça cuit… » (23), photo du plat à la fin (24), notes par étape (27).
 - [x] **Recettes et planning** : journal de cuisine visuel (25), accords boisson et accompagnement (28), planning en table avec glisser-déposer (33), restes intelligents (38).
 - [x] **Motivation** : badges (40), rétrospective de l'année partageable (42), carte du monde des cuisines (43).
-- [x] **iPhone et montre** : widgets avec la photo du plat et un minuteur en anneau (45), étape du minuteur dans la Dynamic Island (47), app Apple Watch (courses à cocher, minuteurs) (50).
-- [ ] À vérifier sur appareil : compilation Swift (widgets, montre, WatchConnectivity) au premier build EAS, rendu des widgets et de la montre, transition zoom.
+- [x] **iPhone** : widgets avec la photo du plat et un minuteur en anneau (45), étape du minuteur dans la Dynamic Island (47). App Apple Watch (50) retirée à la demande.
+- [ ] À vérifier sur appareil : rendu des widgets, transition zoom.

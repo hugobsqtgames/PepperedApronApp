@@ -69,10 +69,6 @@ Depuis l'app (« + ») : lien(s) collé(s), texte, photo(s), dictée, enregistre
 
 `targets/widgets` (WidgetKit, SwiftUI) : **Ce soir** (en moyen, avec la photo du plat : une petite copie JPEG dans le conteneur de l'App Group, `widget-tonight.jpg`), **Prochain repas**, **Liste de courses**, **Recette au hasard**, **Minuteur** (anneau qui se vide et compte à rebours tenus par le système, `PATimer`, aussi sur l'écran verrouillé), en petit/moyen. L'app publie un instantané JSON dans l'App Group (`group.<bundleId>`) dès que le planning, les recettes ou la liste active changent, localement ou via iCloud (`services/widgets.ts`) ; les widgets fonctionnent hors ligne et ouvrent l'écran concerné.
 
-## Apple Watch
-
-`targets/watch` (watchOS 10, SwiftUI, `<bundle>.watchkitapp`) : deux pages, la liste de courses active à cocher et les minuteurs en cours (anneaux et compte à rebours). L'iPhone envoie ces données par WatchConnectivity (`updateApplicationContext`, `services/watch.ts` → `modules/ios-integration`) à chaque changement ; un article coché sur la montre revient par `transferUserInfo` (délivré même si l'iPhone n'est pas joignable), est mis dans la même file que les widgets (`pendingChecks`) et appliqué par l'app (tout de suite si elle est ouverte : évènement `onWatchRequest`). Rien ne passe par un serveur. `APPLE_WATCH=0` construit l'app sans la montre.
-
 ## Intégration iOS : Siri, Spotlight, widgets interactifs, écran verrouillé, Handoff
 
 - **Widgets interactifs** (iOS 17) : dans le widget « Liste de courses » (moyen/grand), toucher le rond d'un article le coche. L'App Intent `ToggleShoppingItemIntent` (cible `targets/widgets`) masque l'article tout de suite et met la demande en attente dans l'App Group (`pendingChecks`) ; l'app l'applique à l'ouverture ou au retour au premier plan (`applyExtensionRequests`).
