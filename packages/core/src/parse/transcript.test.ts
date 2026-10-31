@@ -125,6 +125,7 @@ describe('recipe explained out loud (automatic subtitles)', () => {
     expect(r.draft.title).toBe('Pâtes aux oignons');
     expect(r.draft.ingredients).toHaveLength(7);
     expect(r.draft.steps).toHaveLength(3);
-    expect(r.draft.notes).toContain('🎙️ Vous connaissez les pâtes aux oignons ?');
+    // The steps were found in what is said: the transcript is not copied into the notes again.
+    expect(r.draft.notes ?? '').not.toContain('🎙️');
   });
 });

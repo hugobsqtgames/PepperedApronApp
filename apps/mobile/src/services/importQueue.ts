@@ -116,7 +116,11 @@ function dropFiles(job: ImportJob) {
 class ImportQueue {
   private state: QueueState = { jobs: [], pausedUntil: 0, pauseReason: null };
   private loaded = false;
-  private running = false;
+  /**
+   * Two lanes: what the user shares by hand never waits behind a bulk import (an Instagram
+   * export of hundreds of posts, paced to avoid being blocked).
+   */
+  private running = { hand: false, batch: false };
   private wake: ReturnType<typeof setTimeout> | null = null;
   private saveTimer: ReturnType<typeof setTimeout> | null = null;
   private listeners = new Set<(s: QueueState) => void>();
@@ -227,9 +231,12 @@ class ImportQueue {
       }
       const id = uuidv7();
       ids.push(id);
+      // Copied before reading `this.state.jobs`: while the copy is awaited, a running import
+      // replaces the list (emit), and a push into the old one would lose this job.
+      const kept = await keepFiles(source, id);
       this.state.jobs.push({
         id,
-        source: await keepFiles(source, id),
+        source: kept,
         batch: opts.batch ?? false,
         collection: collection ?? null,
         force: false,
@@ -295,30 +302,38 @@ class ImportQueue {
   }
 
   private async run() {
-    if (this.running) return;
     await this.load();
     if (!this.loaded) return;
-    this.running = true;
+    void this.runLane(false);
+    void this.runLane(true);
+  }
+
+  private async runLane(batch: boolean) {
+    const lane = batch ? 'batch' : 'hand';
+    if (this.running[lane]) return;
+    this.running[lane] = true;
     try {
       for (;;) {
-        const wait = this.state.pausedUntil - Date.now();
-        if (wait > 0) {
+        // No network stops both lanes; Instagram slowing the phone down only stops bulk imports.
+        const paused =
+          this.state.pausedUntil > Date.now() && (batch || this.state.pauseReason === 'offline');
+        if (paused) {
           if (this.wake) clearTimeout(this.wake);
-          this.wake = setTimeout(() => void this.run(), wait + 500);
+          this.wake = setTimeout(() => void this.run(), this.state.pausedUntil - Date.now() + 500);
           break;
         }
-        if (this.state.pauseReason) {
+        if (this.state.pauseReason && this.state.pausedUntil <= Date.now()) {
           this.state.pauseReason = null;
           this.emit();
         }
-        const job = this.state.jobs.find((j) => j.status === 'pending');
+        const job = this.state.jobs.find((j) => j.status === 'pending' && j.batch === batch);
         if (!job) break;
         await this.process(job);
-        if (job.batch && this.state.jobs.some((j) => j.status === 'pending'))
+        if (batch && this.state.jobs.some((j) => j.status === 'pending' && j.batch))
           await sleep(isInstagram(job.source) ? INSTAGRAM_GAP_MS : OTHER_GAP_MS);
       }
     } finally {
-      this.running = false;
+      this.running[lane] = false;
     }
   }
 
@@ -327,13 +342,17 @@ class ImportQueue {
     job.stage = null;
     job.attempts++;
     this.emit();
+    // The whole import, saving included, has a time limit: past it, the job is given up (it can
+    // be retried by hand) and the next ones go on.
+    const deadline = Date.now() + JOB_TIMEOUT_MS;
+    const left = () => Math.max(1000, deadline - Date.now());
     try {
       const prepared = await withTimeout(
         prepareImport(job.source, (stage) => {
           job.stage = stage;
           this.emit();
         }),
-        JOB_TIMEOUT_MS,
+        left(),
       );
       if (prepared.offline) {
         // No network: try again later rather than saving an empty recipe.
@@ -357,7 +376,10 @@ class ImportQueue {
       }
       job.stage = 'saving';
       this.emit();
-      const saved = await saveImport(prepared, { force: job.force, collection: job.collection });
+      const saved = await withTimeout(
+        saveImport(prepared, { force: job.force, collection: job.collection }),
+        left(),
+      );
       Object.assign(job, {
         status: saved.duplicate ? 'duplicate' : 'done',
         stage: null,
@@ -369,8 +391,10 @@ class ImportQueue {
       dropFiles(job);
     } catch (e) {
       console.warn('[import] failed', (e as Error).message);
+      // Too long once: trying again would only block the queue as long again.
+      const timedOut = (e as Error).message === 'timeout';
       Object.assign(job, {
-        status: job.attempts >= MAX_ATTEMPTS ? 'failed' : 'pending',
+        status: timedOut || job.attempts >= MAX_ATTEMPTS ? 'failed' : 'pending',
         stage: null,
         error: 'failed',
       });

@@ -3,7 +3,11 @@ import {
   importFromUrl,
   ingredientsFromScreenText,
   mergeIngredients,
+  bestTitle,
+  isHook,
+  pruneCaptionNotes,
   recipeFromTranscript,
+  titleFromScreen,
   uuidv7,
   type DraftIngredient,
   type FetchPage,
@@ -90,14 +94,19 @@ export async function transcribeFile(
 export interface VideoPictures {
   /** Ingredients written on the video ("200 g de farine" in an overlay). */
   ingredients: DraftIngredient[];
+  /** The dish's name written on the video ("PENNE AU POULET"), if any. */
+  title?: string | null;
   /** Up to 6 pictures of the video for the recipe photo, sharpest and best exposed first. */
   frames: string[];
 }
 
-const FRAMES_PER_VIDEO = 60;
+/** Pictures taken from a video: about one every 2 s of a one-minute reel. */
+const FRAMES_PER_VIDEO = 30;
+/** Pictures whose text is read (the slow part): text on a reel stays several seconds. */
+const FRAMES_READ = 20;
 
 /**
- * Look at a video on the device: about one picture per second, the text written on each one read
+ * Look at a video on the device: about one picture every 2 seconds, the text written on 20 of them read
  * by the phone's text recognition. Only the 6 pictures offered as the photo are kept on disk.
  */
 export async function readVideoPictures(uri: string): Promise<VideoPictures> {
@@ -105,8 +114,11 @@ export async function readVideoPictures(uri: string): Promise<VideoPictures> {
   try {
     const frames = await videoFrames(uri, FRAMES_PER_VIDEO);
     const texts: string[][] = [];
+    // Evenly spread over the video, so a text shown only at the end is still seen.
+    const step = Math.max(1, frames.length / FRAMES_READ);
+    const toRead = frames.filter((_, i) => i % step < 1).slice(0, FRAMES_READ);
     if (await ocrSupported())
-      for (const f of frames) {
+      for (const f of toRead) {
         try {
           texts.push((await readTextFromImage(f.uri)).split('\n'));
         } catch {
@@ -122,7 +134,11 @@ export async function readVideoPictures(uri: string): Promise<VideoPictures> {
         // Caches folder: cleaned by the system anyway.
       }
     }
-    return { ingredients: ingredientsFromScreenText(texts), frames: kept };
+    return {
+      ingredients: ingredientsFromScreenText(texts),
+      title: titleFromScreen(texts),
+      frames: kept,
+    };
   } catch {
     return { ingredients: [], frames: [] };
   }
@@ -147,6 +163,8 @@ export async function listenToVideo(
     pictures = await readVideoPictures(video.uri);
     const draft = { ...res.draft };
     draft.ingredients = mergeIngredients(draft.ingredients, pictures.ingredients);
+    // The name written on the video beats the caption's hook.
+    if (pictures.title) draft.title = bestTitle({ screen: pictures.title });
     const seen = pictures.ingredients.length > 0;
     // The caption has the whole recipe: the video only gives its pictures (the photo).
     if (res.listen === false)
@@ -163,7 +181,15 @@ export async function listenToVideo(
     draft.ingredients = mergeIngredients(draft.ingredients, spoken.ingredients);
     // Steps said in the video when the caption only lists the ingredients.
     if (!draft.steps.length) draft.steps = spoken.steps;
-    draft.notes = [draft.notes, `🎙️ ${spoken.text}`].filter(Boolean).join('\n\n').slice(0, 5000);
+    // Still a hook as the title: the dish named in what is said ("je vous fais des pennes au…").
+    if (!pictures.title && (!draft.title || isHook(draft.title)))
+      draft.title = bestTitle({ captionFirst: draft.title, speech: spoken.text }) ?? draft.title;
+    if (draft.ingredients.length && draft.steps.length)
+      // Complete now: the notes keep only what the recipe does not already say.
+      draft.notes = pruneCaptionNotes(draft.notes, draft);
+    // Nothing usable heard: the transcript stays in the notes, to complete the recipe by hand.
+    else
+      draft.notes = [draft.notes, `🎙️ ${spoken.text}`].filter(Boolean).join('\n\n').slice(0, 5000);
     const found = spoken.ingredients.length > 0 || spoken.steps.length > 0;
     return {
       result: { ...res, draft, fromSpeech: found, completeness: 'partial' },

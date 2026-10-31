@@ -236,7 +236,8 @@ describe('reels whose recipe is only said out loud', () => {
       videoUrl: 'https://scontent.cdninstagram.com/r.mp4',
       language: 'fr',
       draft: {
-        title: 'Mes pâtes préférées de la semaine, regardez bien la vidéo pour tout savoir',
+        // The dish named in the caption, not the whole sentence.
+        title: 'Pâtes préférées de la semaine',
       },
     });
     // With the recipe in the caption, there is nothing to listen to.
@@ -258,5 +259,38 @@ describe('reels whose recipe is only said out loud', () => {
     );
     expect(r3.draft.steps.length).toBeGreaterThan(0);
     expect(r3).toMatchObject({ listen: false });
+  });
+});
+
+describe('regression: a reel shared from Instagram (hook as title, recipe in the notes)', () => {
+  it('the dish as the title, ingredients and steps read, notes not cluttered', async () => {
+    const url = 'https://www.instagram.com/reel/DPenne123/';
+    const caption = [
+      'Avec ces pennes au poulet je te jure tu vas te régaler 😍🔥',
+      '',
+      'Ingrédients pour 4 personnes 👇',
+      '🍝 400 g de pennes',
+      '🍗 2 escalopes de poulet',
+      '🥛 20 cl de crème fraîche',
+      '',
+      'Préparation 👇',
+      '1️⃣ Fais cuire les pennes dans l’eau bouillante salée.',
+      '2️⃣ Coupe le poulet en morceaux et fais-le dorer.',
+      '3️⃣ Ajoute la crème, laisse mijoter 5 min et mélange avec les pâtes.',
+      '',
+      '#pates #poulet',
+    ].join('\n');
+    const html = (s: string) =>
+      s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/\n/g, '&#10;');
+    const page = `<meta property="og:description" content="1 200 likes, 30 comments - chef le 1 mai 2026: &quot;${html(caption)}&quot;.">`;
+    const r = await importFromUrl(fake({ [url]: { body: page } }), url);
+    expect(r.draft.title).toBe('Pennes au poulet');
+    expect(r.draft.ingredients.map((i) => i.name)).toEqual([
+      'pennes',
+      'escalopes de poulet',
+      'crème fraîche',
+    ]);
+    expect(r.draft.steps).toHaveLength(3);
+    expect(r.draft.notes ?? '').not.toContain('Fais cuire');
   });
 });

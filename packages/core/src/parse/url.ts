@@ -1,5 +1,6 @@
 import { emptyDraft, type RecipeDraft } from './draft';
 import { parseHtmlMeta, parseJsonLdRecipe } from './jsonld';
+import { bestTitle, isHook } from './title';
 import {
   captionTitle,
   guessLanguage,
@@ -95,9 +96,22 @@ function mergeCaption(draft: RecipeDraft, raw: string | null) {
   draft.cookMinutes ??= parsed.cookMinutes;
   draft.totalMinutes ??= parsed.totalMinutes;
   draft.ovenTemperatureC ??= parsed.ovenTemperatureC;
-  // Keep the whole caption available in the editor: nothing is lost.
-  draft.notes = caption.slice(0, 5000);
+  draft.tips ??= parsed.tips;
+  if (parsed.ingredients.length && draft.steps.length) {
+    // Read in full: the notes only keep what was not used (a story, a tip), not the caption again.
+    draft.description ??= parsed.description;
+    const rest = [parsed.notes, ...(parsed.unparsed ?? [])].filter(Boolean).join('\n').trim();
+    draft.notes = rest ? rest.slice(0, 5000) : null;
+  } else {
+    // Something is missing: the whole caption stays in the notes, to complete the recipe by hand.
+    draft.notes = caption.slice(0, 5000);
+  }
   if (!draft.title && parsed.title) draft.title = parsed.title.slice(0, 200);
+}
+
+/** The dish's name rather than the caption's hook ("Avec ces pennes au poulet je te jure…"). */
+function titleOf(caption: string, first?: string | null): string | null {
+  return bestTitle({ captionFirst: first ?? captionTitle(caption), caption });
 }
 
 /**
@@ -265,7 +279,7 @@ async function importPinterest(
   draft.author = pin.pinner?.full_name?.slice(0, 100) ?? null;
   draft.imageUrl = image && /^https:\/\//.test(image) ? image : null;
   mergeCaption(draft, description);
-  draft.title = (description ? captionTitle(description) : null) ?? draft.title;
+  draft.title = (description ? titleOf(description) : null) ?? draft.title;
   // A pin of an Instagram or TikTok post: the post may have what the description lacks.
   if (link && SOCIAL_HOST.test(link.hostname) && !PINTEREST_HOST.test(link.hostname)) {
     const complete = draft.ingredients.length > 0 && draft.steps.length > 0;
@@ -369,7 +383,7 @@ async function importInstagram(
   }
   if (caption) {
     mergeCaption(draft, caption);
-    draft.title = captionTitle(caption) ?? draft.title;
+    draft.title = titleOf(caption) ?? draft.title;
   }
   const hasRecipe = draft.ingredients.length > 0 || draft.steps.length > 0;
   // Many captions list the ingredients only (or the steps only): the rest is said in the video.
@@ -442,8 +456,10 @@ async function importVideo(
   mergeCaption(draft, caption);
   // The parser's title guess is unreliable on captions: use the video title or first sentence.
   draft.title =
-    (platform === 'youtube' && oembed.title ? oembed.title.slice(0, 200) : null) ??
-    (caption ? captionTitle(caption) : null) ??
+    (platform === 'youtube' && oembed.title
+      ? titleOf(caption ?? oembed.title, oembed.title.slice(0, 200))
+      : null) ??
+    (caption ? titleOf(caption) : null) ??
     draft.title;
   // Recipe explained out loud: complete what the caption lacks with the spoken words.
   let fromSpeech = false;
@@ -460,8 +476,14 @@ async function importVideo(
         draft.steps = spoken.steps;
         fromSpeech = true;
       }
-      // The full transcript stays available to complete the recipe by hand.
-      draft.notes = [draft.notes, `🎙️ ${spoken.text}`].filter(Boolean).join('\n\n').slice(0, 5000);
+      // Nothing usable in it: the full transcript stays available to complete it by hand.
+      if (!draft.steps.length)
+        draft.notes = [draft.notes, `🎙️ ${spoken.text}`]
+          .filter(Boolean)
+          .join('\n\n')
+          .slice(0, 5000);
+      if (draft.title && isHook(draft.title))
+        draft.title = bestTitle({ captionFirst: draft.title, speech: spoken.text });
     }
   }
   const found = draft.ingredients.length > 0 || draft.steps.length > 0;

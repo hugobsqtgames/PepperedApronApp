@@ -83,11 +83,24 @@ export async function preparePhoto(uri: string): Promise<string> {
 }
 
 /** Download a remote picture (found by an importer) into the app's photo folder. */
+/** A picture that does not come in this time is skipped: the recipe is saved without it. */
+const PHOTO_TIMEOUT_MS = 20_000;
+
 export async function photoFromUrl(url: string): Promise<string | null> {
-  const res = await expoFetch(url);
-  if (!res.ok) return null;
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), PHOTO_TIMEOUT_MS);
+  let bytes: Uint8Array;
+  try {
+    const res = await expoFetch(url, { signal: ctrl.signal });
+    if (!res.ok) return null;
+    bytes = await res.bytes();
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
   const tmp = new File(Paths.cache, `${uuidv7()}.jpg`);
-  tmp.write(await res.bytes());
+  tmp.write(bytes);
   try {
     return await preparePhoto(tmp.uri);
   } finally {

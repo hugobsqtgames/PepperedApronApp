@@ -166,8 +166,41 @@ describe('regression: shared twice, or an import that never ends', () => {
     await settle();
     const jobs = importQueue.snapshot.jobs;
     expect(jobs.find((j) => j.id === next)).toMatchObject({ status: 'done', recipeId: 'r2' });
-    // The stuck one was tried again (then saved).
-    expect(jobs.find((j) => j.id === stuck)!.attempts).toBeGreaterThanOrEqual(2);
+    // The stuck one is given up after its time (retried by hand), not tried again on its own.
+    expect(jobs.find((j) => j.id === stuck)).toMatchObject({ status: 'failed', attempts: 1 });
+  });
+
+  // Also a regression: a job shared while another one was running could vanish from the queue.
+  it('a save that never ends (a photo that never downloads) does not block the queue', async () => {
+    jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+    mockPrepare.mockResolvedValue(prepared('partial'));
+    mockSave
+      .mockImplementationOnce(() => new Promise(() => undefined))
+      .mockResolvedValue({ recipeId: 'r3', title: 'Penne', duplicate: null });
+    const [stuck] = await importQueue.add([link('https://example.com/photo-stuck')]);
+    const [next] = await importQueue.add([link('https://example.com/after')]);
+    await jest.advanceTimersByTimeAsync(5 * 60_000);
+    await settle();
+    const jobs = importQueue.snapshot.jobs;
+    expect(jobs.find((j) => j.id === stuck)!.status).toBe('failed');
+    expect(jobs.find((j) => j.id === next)).toMatchObject({ status: 'done', recipeId: 'r3' });
+  });
+
+  it('something shared by hand does not wait behind a bulk import', async () => {
+    mockPrepare.mockImplementation((src: { url?: string }) =>
+      src.url?.includes('bulk') ? new Promise(() => undefined) : Promise.resolve(prepared('full')),
+    );
+    mockSave.mockResolvedValue({ recipeId: 'r4', title: 'Tarte', duplicate: null });
+    await importQueue.add(
+      [link('https://example.com/bulk-1'), link('https://example.com/bulk-2')],
+      { batch: true },
+    );
+    const [mine] = await importQueue.add([link('https://example.com/mine')]);
+    await settle();
+    expect(importQueue.snapshot.jobs.find((j) => j.id === mine)).toMatchObject({
+      status: 'done',
+      recipeId: 'r4',
+    });
   });
 });
 

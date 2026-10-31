@@ -7,7 +7,10 @@ import { parseIngredientLine } from './ingredient';
 type Section = 'none' | 'ingredients' | 'steps' | 'tips' | 'notes';
 
 const H = (words: string[]) =>
-  new RegExp(`^(?:${words.join('|')})\\s*(?:\\(.*\\))?\\s*[:：]?$`, 'i');
+  new RegExp(
+    `^(?:(?:les|la|l'|mes|nos|the|my)\\s*)?(?:${words.join('|')})\\s*(?:\\(.*\\))?\\s*[:：]?$`,
+    'i',
+  );
 
 const HEADERS: [Section, RegExp][] = [
   [
@@ -21,6 +24,11 @@ const HEADERS: [Section, RegExp][] = [
       'what you need',
       'vous aurez besoin de',
       'il vous faut',
+      'il te faut',
+      "ce qu'il (?:te|vous) faut",
+      'tu as besoin de',
+      'liste de courses',
+      'courses',
       'you will need',
       'necesitas',
       'du brauchst',
@@ -52,6 +60,10 @@ const HEADERS: [Section, RegExp][] = [
       'istruzioni',
       'realisation',
       'la recette',
+      'comment (?:la |le |les )?faire',
+      'deroule',
+      'marche a suivre',
+      'how to',
     ]),
   ],
   [
@@ -105,13 +117,16 @@ const GROUP_RE =
 
 /** "Ingrédients pour 2 personnes :", "Ingredients (serves 4):", "Zutaten für 6 Stück:" */
 const HEADER_WITH_YIELD =
-  /^(ingredients?|ingredientes|zutaten|ingredienti|liste des ingredients)\s+(?:pour|for|para|fur|per)\b[^:：]{0,50}[:：]$/;
+  /^(?:les\s+)?(ingredients?|ingredientes|zutaten|ingredienti|liste des ingredients)\s+(?:pour|for|para|fur|per)\b[^:：]{0,50}[:：]?$/;
 
 const SIGN_OFF = /^(?:bon appetit|enjoy|buen provecho|guten appetit|buon appetito)\b/;
 const NUMBERED_SENTENCE = /^\s*\d{1,2}\s*[.)]\s*\p{L}[^\n]{20,}/u;
 
 function detectHeader(line: string): Section | null {
-  const n = normalizeText(line).replace(/^[#*_\s\p{Extended_Pictographic}️]+|[*_\s]+$/gu, '');
+  const n = normalizeText(line)
+    .replace(/^(?:[#*_\s➡→⬇↓►▶-]|\p{Extended_Pictographic}|\ufe0f|\u20e3|\u200d)+/gu, '')
+    .replace(/(?:[#*_\s➡→⬇↓►▶]|\p{Extended_Pictographic}|\ufe0f|\u200d)+$/gu, '')
+    .replace(/\s*[:：]\s*$/, ':');
   for (const [section, re] of HEADERS) if (re.test(n)) return section;
   if (HEADER_WITH_YIELD.test(n)) return 'ingredients';
   return null;
@@ -138,10 +153,26 @@ function looksLikeStep(line: string): boolean {
 }
 
 function cleanLine(line: string): string {
-  return line
-    .replace(/\u00a0/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
+  return tidySocialLine(
+    line
+      .replace(/\u00a0/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim(),
+  );
+}
+
+/**
+ * Captions decorate lines with emoji: "1️⃣ Fais cuire…" is a numbered step, "🍗 2 escalopes" or
+ * "👉 Ajoute…" a bullet. Turned into the plain forms the parser knows ("1. ", "- ").
+ */
+function tidySocialLine(line: string): string {
+  const keycap = /^(\d{1,2})\s*\ufe0f?\u20e3\s*/u.exec(line);
+  if (keycap) return `${keycap[1]}. ${line.slice(keycap[0].length)}`;
+  if (/^🔟/u.test(line)) return `10. ${line.replace(/^🔟\s*/u, '')}`;
+  const deco =
+    /^(?:\p{Extended_Pictographic}|\u200d|\ufe0f|\p{Emoji_Modifier}|[➡→►▶▸➜➤⇒])+\s*/u.exec(line);
+  if (deco && deco[0].length < line.length) return `- ${line.slice(deco[0].length)}`;
+  return line;
 }
 
 /**
@@ -245,9 +276,12 @@ export function parseRecipeText(input: string): RecipeDraft {
       const o = extractOven(raw);
       if (o !== null) {
         draft.ovenTemperatureC = o;
+        // "Four : 180 °C" is information; "Enfourne 25 min à 180 °C." is a step.
         if (
           raw.length < 60 &&
-          /\b(four|oven|horno|ofen|backofen|forno|thermostat|th\.?|prechauff|preheat)/.test(norm)
+          /^\W*(four|oven|horno|ofen|backofen|forno|thermostat|th\.?|temperature|cuisson)\b/.test(
+            norm,
+          )
         )
           consumed = true;
       }
@@ -255,8 +289,16 @@ export function parseRecipeText(input: string): RecipeDraft {
     if (consumed && section !== 'steps') continue;
 
     if (section === 'ingredients' && SIGN_OFF.test(normalizeText(raw))) continue;
-    // Numbered sentences after the ingredients are the method, even without a header.
+    // Numbered sentences after the ingredients are the method, even without a header; so is a
+    // sentence that is not an ingredient ("Fais cuire les pennes 10 min. Pendant ce temps…").
     if (section === 'ingredients' && NUMBERED_SENTENCE.test(raw)) section = 'steps';
+    if (
+      section === 'ingredients' &&
+      draft.ingredients.length > 0 &&
+      looksLikeStep(raw) &&
+      !/^\s*[-–—•*·▪◦●✓✔]?\s*[\d½¼¾⅓⅔⅛]/.test(raw)
+    )
+      section = 'steps';
     if (section === 'ingredients') {
       const g = raw.match(GROUP_RE);
       if (g && !/\d/.test(raw) && raw.length < 60 && /[:：]$/.test(raw.trim()) === true) {
@@ -320,7 +362,7 @@ export function parseRecipeText(input: string): RecipeDraft {
   if (titleIdx >= 0) {
     draft.title =
       freeLines[titleIdx]!.replace(
-        /^[#*\s\p{Extended_Pictographic}️]+|[*\s\p{Extended_Pictographic}️]+$/gu,
+        /^[-–•#*\s\p{Extended_Pictographic}️]+|[*\s\p{Extended_Pictographic}️]+$/gu,
         '',
       ).trim() || null;
     freeLines.splice(titleIdx, 1);
@@ -348,7 +390,12 @@ export function parseRecipeText(input: string): RecipeDraft {
           });
       } else if (isIngredient) {
         draft.ingredients.push({ group: null, ...ing! });
-      } else if (looksLikeStep(l) && draft.ingredients.length > 0) {
+      } else if (
+        draft.ingredients.length > 0 &&
+        (looksLikeStep(l) || l.split(/\s+/).length >= 3) &&
+        !SIGN_OFF.test(normalizeText(l))
+      ) {
+        // After the ingredients, a sentence is the method (captions rarely title it).
         draft.steps.push({
           group: null,
           text: l,
@@ -384,7 +431,42 @@ export function parseRecipeText(input: string): RecipeDraft {
     const url = freeLines.find((l) => /^https?:\/\/\S+$/i.test(l));
     if (url) draft.sourceUrl = url;
   }
+  draft.steps = splitProse(draft.steps);
   if (tipLines.length) draft.tips = tipLines.join('\n');
   if (noteLines.length) draft.notes = noteLines.join('\n');
   return draft;
+}
+
+/**
+ * A method written as one paragraph becomes one step per sentence or two (short sentences are
+ * kept with the next one): "Fais cuire les pennes 10 min. Pendant ce temps, coupe le poulet…".
+ */
+function splitProse(steps: RecipeDraft['steps']): RecipeDraft['steps'] {
+  const out: RecipeDraft['steps'] = [];
+  for (const st of steps) {
+    const sentences =
+      st.text.length > 160 ? st.text.split(/(?<=[.!?])\s+(?=\p{Lu})/u).map((x) => x.trim()) : [];
+    if (sentences.length < 2) {
+      out.push(st);
+      continue;
+    }
+    const first = out.length;
+    let cur = '';
+    for (const sentence of sentences) {
+      cur = cur ? `${cur} ${sentence}` : sentence;
+      if (cur.length >= 40) {
+        out.push({ ...st, text: cur, timerSeconds: parseTimerSeconds(cur) });
+        cur = '';
+      }
+    }
+    if (cur) {
+      // A short last sentence ("Sers aussitôt.") stays with the step before it.
+      const last = out.length > first ? out[out.length - 1]! : null;
+      if (last) {
+        last.text = `${last.text} ${cur}`;
+        last.timerSeconds ??= parseTimerSeconds(cur);
+      } else out.push({ ...st, text: cur, timerSeconds: parseTimerSeconds(cur) });
+    }
+  }
+  return out;
 }
