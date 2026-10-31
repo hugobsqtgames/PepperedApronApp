@@ -1,0 +1,165 @@
+<!doctype html>
+<!--
+  App Store "header" (5244×2950) and "search result" (3840×2560) artwork, in the brand colours,
+  with the real screens of the store screenshots (out/screenshot-N[-en].png, see render.mjs).
+  banner.html?kind=header|search&lang=fr|en — rendered by `node preview/render.mjs banners`.
+-->
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      @font-face {
+        font-family: 'Fraunces';
+        src: url(../../../apps/mobile/assets/fonts/Fraunces_700Bold.ttf);
+        font-weight: 700;
+      }
+      :root {
+        --forest: #1f4d3a;
+        --forestDeep: #163a2b;
+        --paprika: #d2642a;
+        --paprikaLight: #e8894f;
+        --cream: #f7f1e6;
+        --ui: -apple-system, 'SF Pro Display', Inter, 'Helvetica Neue', sans-serif;
+        --display: 'Fraunces', Georgia, serif;
+      }
+      html,
+      body {
+        margin: 0;
+        overflow: hidden;
+      }
+      #stage {
+        position: relative;
+        overflow: hidden;
+        background:
+          radial-gradient(ellipse at 70% 40%, #2d6a50 0%, transparent 60%),
+          radial-gradient(ellipse at 10% 90%, #3b5a2a 0%, transparent 55%),
+          linear-gradient(160deg, var(--forest), var(--forestDeep));
+        font-family: var(--ui);
+        color: var(--cream);
+      }
+      .glow {
+        position: absolute;
+        border-radius: 50%;
+        filter: blur(120px);
+        opacity: 0.45;
+      }
+      /* A phone: the screen of a store screenshot, cropped to the phone and rounded again. */
+      .phone {
+        position: absolute;
+        border-radius: 7.5%/3.5%;
+        overflow: hidden;
+        box-shadow:
+          0 60px 140px rgba(0, 0, 0, 0.45),
+          0 0 0 14px #0f2219,
+          0 0 0 18px rgba(255, 255, 255, 0.12);
+        background-repeat: no-repeat;
+      }
+      h1 {
+        font-family: var(--display);
+        font-weight: 700;
+        line-height: 1.04;
+        margin: 0;
+        letter-spacing: -0.01em;
+      }
+      h1 em {
+        font-style: normal;
+        color: var(--paprikaLight);
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        font-weight: 700;
+        letter-spacing: 0.01em;
+      }
+      .pills {
+        display: flex;
+        flex-wrap: wrap;
+      }
+      .pill {
+        border: 3px solid rgba(247, 241, 230, 0.35);
+        border-radius: 999px;
+        color: var(--cream);
+        font-weight: 600;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="stage"></div>
+    <script>
+      const q = new URLSearchParams(location.search);
+      const kind = q.get('kind') === 'search' ? 'search' : 'header';
+      const lang = q.get('lang') === 'en' ? 'en' : 'fr';
+      const T = {
+        fr: {
+          title: 'Toutes vos recettes, <em>enfin</em> au même&nbsp;<em>endroit</em>',
+          sub: 'Importer, planifier, faire les courses, cuisiner.',
+          pills: ['Sans compte', 'Sans publicité', 'Gratuit', 'iPhone & iPad'],
+          search: 'Vos recettes, votre semaine, <em>vos courses</em>',
+        },
+        en: {
+          title: 'All your recipes, <em>finally</em> in one&nbsp;<em>place</em>',
+          sub: 'Import, plan, shop, cook.',
+          pills: ['No account', 'No ads', 'Free', 'iPhone & iPad'],
+          search: 'Your recipes, your week, <em>your groceries</em>',
+        },
+      }[lang];
+      const suffix = lang === 'en' ? '-en' : '';
+      // The phone in a 1320×2868 store screenshot.
+      const SHOT = { w: 1320, h: 2868, x: 205, y: 782, pw: 910, ph: 1970 };
+      const LOGO = `<svg viewBox="0 0 1024 1024" aria-hidden="true"><rect width="1024" height="1024" rx="230" fill="#F7F1E6"/><g transform="translate(0 -28)"><path d="M418 352 C410 250 614 250 606 352" fill="none" stroke="#1F4D3A" stroke-width="32" stroke-linecap="round"/><path d="M300 500 C250 500 212 516 194 558 M300 500 C262 520 244 562 248 610" fill="none" stroke="#1F4D3A" stroke-width="28" stroke-linecap="round"/><path d="M724 500 C774 500 812 516 830 558 M724 500 C762 520 780 562 776 610" fill="none" stroke="#1F4D3A" stroke-width="28" stroke-linecap="round"/><path d="M398 330 H626 Q648 330 650 352 L656 440 Q660 476 700 482 L716 484 Q740 488 742 514 L766 790 Q770 840 718 840 H306 Q254 840 258 790 L282 514 Q284 488 308 484 L324 482 Q364 476 368 440 L374 352 Q376 330 398 330 Z" fill="#1F4D3A"/><g transform="translate(-22 4) translate(512 660) rotate(-14) scale(1.12) translate(-512 -660)"><path d="M556 556 C640 574 650 668 596 730 C556 776 486 790 410 772 C472 752 530 716 548 660 C558 628 548 596 526 574 C532 562 544 556 556 556 Z" fill="#D2642A"/><path d="M512 566 C520 540 552 530 578 546 C570 566 546 578 522 578 Z" fill="#F7F1E6"/></g></g></svg>`;
+      const stage = document.getElementById('stage');
+      const W = kind === 'header' ? 5244 : 3840;
+      const H = kind === 'header' ? 2950 : 2560;
+      stage.style.width = `${W}px`;
+      stage.style.height = `${H}px`;
+      const add = (html) => stage.insertAdjacentHTML('beforeend', html);
+      const glow = (x, y, r, c) =>
+        add(
+          `<div class="glow" style="left:${x}px;top:${y}px;width:${r}px;height:${r}px;background:${c}"></div>`,
+        );
+      /** A phone `width` wide, its top left at (x, y), turned by `deg`. */
+      const phone = (n, x, y, width, deg = 0) => {
+        const k = width / SHOT.pw;
+        add(
+          `<div class="phone" style="left:${x}px;top:${y}px;width:${width}px;height:${SHOT.ph * k}px;` +
+            `transform:rotate(${deg}deg);background-image:url(out/screenshot-${n}${suffix}.png);` +
+            `background-size:${SHOT.w * k}px ${SHOT.h * k}px;background-position:${-SHOT.x * k}px ${-SHOT.y * k}px"></div>`,
+        );
+      };
+      if (kind === 'header') {
+        glow(3300, 300, 1900, 'rgba(232,137,79,0.35)');
+        glow(-300, 1900, 1500, 'rgba(134,193,162,0.25)');
+        // Text on the left, three phones on the right; the middle band stays readable when cropped.
+        add(`<div style="position:absolute;left:420px;top:780px;width:2350px">
+          <div class="brand" style="gap:48px;font-size:120px;margin-bottom:110px">
+            <div style="width:190px;height:190px">${LOGO}</div>PepperedApron</div>
+          <h1 style="font-size:250px">${T.title}</h1>
+          <p style="font-size:104px;margin:90px 0 0;opacity:.9">${T.sub}</p>
+          <div class="pills" style="gap:36px;margin-top:110px">${T.pills
+            .map((p) => `<span class="pill" style="font-size:66px;padding:26px 56px">${p}</span>`)
+            .join('')}</div></div>`);
+        phone(3, 2980, 560, 820, -8);
+        phone(6, 4330, 560, 820, 8);
+        phone(1, 3560, 300, 980, 0);
+      } else {
+        glow(1900, -400, 1800, 'rgba(232,137,79,0.32)');
+        glow(-400, 1500, 1400, 'rgba(134,193,162,0.25)');
+        add(`<div style="position:absolute;left:0;right:0;top:170px;text-align:center">
+          <div class="brand" style="justify-content:center;gap:34px;font-size:88px;margin-bottom:60px">
+            <div style="width:130px;height:130px">${LOGO}</div>PepperedApron</div>
+          <h1 style="font-size:150px;padding:0 260px">${T.search}</h1></div>`);
+        phone(2, 360, 1060, 940, -6);
+        phone(4, 2540, 1060, 940, 6);
+        phone(1, 1390, 860, 1060, 0);
+      }
+      window.ready = document.fonts.ready.then(
+        () =>
+          new Promise((r) => {
+            const img = new Image();
+            img.onload = r;
+            img.src = `out/screenshot-1${suffix}.png`;
+          }),
+      );
+    </script>
+  </body>
+</html>

@@ -176,9 +176,31 @@ async function srt(mode) {
   console.info(file);
 }
 
+/** App Store product page artwork: header (5244×2950) and search result (3840×2560), fr + en. */
+async function banners() {
+  const browser = await chromium.launch({ executablePath: chromiumPath() });
+  fs.mkdirSync(outDir, { recursive: true });
+  for (const [kind, width, height] of [
+    ['header', 5244, 2950],
+    ['search', 3840, 2560],
+  ])
+    for (const lang of ['fr', 'en']) {
+      const page = await browser.newPage({ viewport: { width, height }, deviceScaleFactor: 1 });
+      await page.goto(`file://${path.join(here, 'banner.html')}?kind=${kind}&lang=${lang}`);
+      await page.evaluate(() => window.ready);
+      await page.waitForTimeout(300);
+      const file = path.join(outDir, `store-${kind}${lang === 'en' ? '-en' : ''}.png`);
+      await page.screenshot({ path: file, type: 'png' });
+      await page.close();
+      console.info(file);
+    }
+  await browser.close();
+}
+
 const [cmd = 'video', mode = 'store'] = process.argv.slice(2).filter((a) => !a.startsWith('--'));
 if (cmd === 'stills') await stills();
 else if (cmd === 'stills-ipad') await stills(true);
+else if (cmd === 'banners') await banners();
 else if (cmd === 'srt') await srt(mode);
 else if (cmd === 'sound') sound();
 else await video(mode);
