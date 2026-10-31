@@ -673,6 +673,64 @@ async function backgroundChange(r: ReturnType<typeof rng>) {
   });
 }
 
+describe('journeys: a library saved by an older version of the app', () => {
+  // Regression: recipes saved before "step notes" existed made cook mode fail on the phone
+  // ("Cannot convert undefined value to object"). Every field that can be missing (it has a
+  // default) is removed from every record, the database is reopened, then every screen is shown.
+  it('every screen renders and reacts after an update', async () => {
+    const { ENTITY_SCHEMAS } =
+      jest.requireActual<typeof import('@pepperedapron/core')>('@pepperedapron/core');
+    const driver = betterSqliteDriver();
+    const first = await LocalStore.open(driver);
+    await importData(
+      first,
+      fs.readFileSync(path.resolve(__dirname, '../../../docs/store/demo-backup.json'), 'utf8'),
+    );
+    const rows = await driver.all<{ entity: string; id: string; data: string }>(
+      'SELECT entity, id, data FROM records WHERE deleted = 0',
+    );
+    let stripped = 0;
+    for (const row of rows) {
+      const data = JSON.parse(row.data) as Record<string, unknown>;
+      const schema = ENTITY_SCHEMAS[row.entity as keyof typeof ENTITY_SCHEMAS];
+      for (const k of Object.keys(data)) {
+        const copy = { ...data };
+        delete copy[k];
+        if (schema.safeParse(copy).success) {
+          delete data[k];
+          stripped++;
+        }
+      }
+      await driver.run('UPDATE records SET data = ? WHERE entity = ? AND id = ?', [
+        JSON.stringify(data),
+        row.entity,
+        row.id,
+      ]);
+    }
+    expect(stripped).toBeGreaterThan(50);
+    const store = await LocalStore.open(driver);
+    const old = new Repos(store);
+    (mockRuntime.session as { store: unknown; repos: unknown }).store = store;
+    (mockRuntime.session as { store: unknown; repos: unknown }).repos = old;
+    const r = rng(4242);
+    mockChoice.next = r.next;
+    for (const [name, load, params] of SCREENS) {
+      mockParams.current = params();
+      const Screen = load().default;
+      await render(wrap(<Screen />));
+      if (!screen.toJSON()) throw new Error(`${name}: nothing rendered`);
+      for (let k = 0; k < 5; k++) {
+        const buttons = screen.queryAllByRole('button');
+        if (!buttons.length) break;
+        await act(async () => {
+          fireEvent.press(r.pick(buttons));
+        });
+      }
+      await cleanup();
+    }
+  });
+});
+
 describe('stress: random navigation while data changes underneath', () => {
   it(`${STEPS} screens opened, tapped and closed in a random order`, async () => {
     const r = rng(400_000 + PART * 1000 + (process.env.APP_VARIANT ?? 'development').length);
