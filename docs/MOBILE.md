@@ -67,7 +67,11 @@ Depuis l'app (« + ») : lien(s) collé(s), texte, photo(s), dictée, enregistre
 
 ## Widgets (iOS)
 
-`targets/widgets` (WidgetKit, SwiftUI) : **Ce soir**, **Prochain repas**, **Liste de courses**, **Recette au hasard**, en petit/moyen. L'app publie un instantané JSON dans l'App Group (`group.<bundleId>`) dès que le planning, les recettes ou la liste active changent, localement ou via iCloud (`services/widgets.ts`) ; les widgets fonctionnent hors ligne et ouvrent l'écran concerné.
+`targets/widgets` (WidgetKit, SwiftUI) : **Ce soir** (en moyen, avec la photo du plat : une petite copie JPEG dans le conteneur de l'App Group, `widget-tonight.jpg`), **Prochain repas**, **Liste de courses**, **Recette au hasard**, **Minuteur** (anneau qui se vide et compte à rebours tenus par le système, `PATimer`, aussi sur l'écran verrouillé), en petit/moyen. L'app publie un instantané JSON dans l'App Group (`group.<bundleId>`) dès que le planning, les recettes ou la liste active changent, localement ou via iCloud (`services/widgets.ts`) ; les widgets fonctionnent hors ligne et ouvrent l'écran concerné.
+
+## Apple Watch
+
+`targets/watch` (watchOS 10, SwiftUI, `<bundle>.watchkitapp`) : deux pages, la liste de courses active à cocher et les minuteurs en cours (anneaux et compte à rebours). L'iPhone envoie ces données par WatchConnectivity (`updateApplicationContext`, `services/watch.ts` → `modules/ios-integration`) à chaque changement ; un article coché sur la montre revient par `transferUserInfo` (délivré même si l'iPhone n'est pas joignable), est mis dans la même file que les widgets (`pendingChecks`) et appliqué par l'app (tout de suite si elle est ouverte : évènement `onWatchRequest`). Rien ne passe par un serveur. `APPLE_WATCH=0` construit l'app sans la montre.
 
 ## Intégration iOS : Siri, Spotlight, widgets interactifs, écran verrouillé, Handoff
 
@@ -87,7 +91,19 @@ Texte agrandi et réglable (A−/A+, retenu dans les réglages), écran maintenu
 - **Commandes vocales** : bouton micro, seulement en mode cuisine, indicateur « À l'écoute » visible tant qu'il écoute, arrêt en quittant. Module local `modules/voice-commands` (Swift : `AVAudioEngine` + `SFSpeechAudioBufferRecognitionRequest`, `requiresOnDeviceRecognition`, tâche relancée après chaque phrase et toutes les 50 s). `voiceCommand` (core) reconnaît « suivant », « précédent », « répète », « lance le minuteur », « ingrédients », « stop » (fr/en) dans les derniers mots ; ce qui est entendu pendant que le téléphone parle est ignoré.
 - **Deux recettes à la fois** : « Cuisiner une autre recette en même temps » → onglets en haut, chacun à son étape ; les minuteurs portent le nom de leur recette ; « Terminer » sur l'une passe à l'autre.
 
-Fiche recette : nombre de personnes réglable, quantités recalculées et arrondies comme en cuisine (œufs entiers, demi-oignons, quarts de cuillère, « ≈ » quand l'arrondi se voit), « cups » de farine/sucre affichées en grammes en métrique, moule conseillé quand un moule est mentionné (surface proportionnelle), convertisseur (`tools/converter` : poids/volumes avec densités usuelles, °C/°F/thermostat), note (étoiles), « Mes remarques », historique « Cuisinée N fois », étiquettes automatiques (végétarien, vegan, sans gluten — déduites des ingrédients, `packages/core/src/diet.ts`) et saisons déduites des fruits et légumes (`seasonal.ts`) quand l'utilisateur n'en a pas choisi. La fin d'un minuteur est une notification locale ; sur iPhone, le minuteur le plus proche s'affiche en **Live Activity** (écran verrouillé, Dynamic Island) via `expo-live-activity`.
+Fiche recette : nombre de personnes réglable, quantités recalculées et arrondies comme en cuisine (œufs entiers, demi-oignons, quarts de cuillère, « ≈ » quand l'arrondi se voit), « cups » de farine/sucre affichées en grammes en métrique, moule conseillé quand un moule est mentionné (surface proportionnelle), convertisseur (`tools/converter` : poids/volumes avec densités usuelles, °C/°F/thermostat), note (étoiles), « Mes remarques », historique « Cuisinée N fois », étiquettes automatiques (végétarien, vegan, sans gluten — déduites des ingrédients, `packages/core/src/diet.ts`) et saisons déduites des fruits et légumes (`seasonal.ts`) quand l'utilisateur n'en a pas choisi. La fin d'un minuteur est une notification locale ; sur iPhone, le minuteur le plus proche s'affiche en **Live Activity** (écran verrouillé, Dynamic Island, avec le texte de son étape) via `expo-live-activity`.
+
+## Le plaisir de cuisiner
+
+- **Couleur du plat** : la fiche et le mode cuisine prennent la teinte de la photo (`lib/photoTint.ts` : image réduite à 16 px par `expo-image-manipulator`, lue par `jpeg-js` ; `lib/tint.ts` choisit la luminosité qui garde le contraste AA ; couleurs des photos de catégorie précalculées ; `TintScope`). Pas de teinte avec « Augmenter le contraste ».
+- **Grande photo** en tête de fiche (iPhone) : titre posé dessus, parallaxe et étirement au tiré (rien avec « Réduire les animations »), barre de titre qui apparaît au défilement ; **zoom iOS 18** des cartes vers la fiche (`Link.AppleZoom` / `AppleZoomTarget`).
+- **Typographie éditoriale** : Fraunces italique pour les chapôs (`lede`), citations et notes (`quote`), petites capitales au-dessus des titres (`kicker`).
+- **Accueil** : salutation selon le moment (`mealMoment`) et le jour ; carte **« Ce soir on mange… »** (dîner prévu, sinon l'idée du jour stable sur la journée : placard à finir, saison, favoris, oubliées — `pickOfTheDay`) ; bandeau des produits de saison de vos recettes (`seasonalHighlights`) ; **restes d'hier** (`leftoverIdeas`).
+- **Mode cuisine** : « Étape n sur N », **note par étape** (`stepNotes`, aussi sur la fiche), **« Pendant que ça cuit… »** (`parallelSteps`), minuteurs en **anneaux**, haptique douce à chaque étape, **photo du plat** proposée à la fin pour le journal.
+- **Cuisine d'origine** (24, avec drapeau ; déduite par `detectCuisine` ou choisie sur la fiche) et **accords** boisson (toujours avec une idée sans alcool) et accompagnement (`pairingsFor`).
+- **Ma cuisine** (profil) : **journal** (mur de photos mois par mois), **badges** (14, `computeBadges`), **carte du monde des cuisines** (grille de points tirée de Natural Earth, `lib/worldMap.ts`), **rétrospective de l'année** partageable en image (`yearReview`).
+- **Célébrations** : confettis, haptique « ta-da » et message pour le premier plat, les nombres ronds et chaque badge (`features/celebrate.ts`) ; haptiques distinctes pour la prise, le survol et la dépose d'un plat glissé, et la fin d'un minuteur.
+- **Planning en table** (iPhone) : chaque jour une rangée de photos ; appui long puis glisser vers un autre jour (`WeekTable`, VoiceOver garde le menu « Déplacer vers… »).
 
 ## Organisation et partage
 

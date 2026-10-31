@@ -53,3 +53,12 @@ Repères : modèle de données `packages/core/src/schemas.ts` (champs ajoutés a
 - [x] Sous-titres de la vidéo App Preview (fichier SRT pour le site).
 - [x] **Étiquettes d'accessibilité App Store** (App Store Connect) : remplir ce qui est réellement pris en charge ; documenter dans `docs/store/README.md`.
 - [x] Tests : contraste (existe), libellés manquants (test qui parcourt les écrans), Dynamic Type maximal.
+
+## Lot 8 — Le plaisir de cuisiner (24 idées choisies)
+- [x] **Look** : couleur tirée de la photo du plat (1), grande photo en tête de fiche (2), typographie éditoriale (5), zoom iOS 18 des cartes vers la fiche (7), haptiques soignées (8), confettis aux moments forts (10).
+- [x] **Accueil** : « Ce soir on mange… » (11), salutation selon le moment (12), bandeau des produits de saison (15).
+- [x] **Mode cuisine** : pas à pas en plein écran avec « Étape n sur N » (17), minuteurs en anneaux (20), « Pendant que ça cuit… » (23), photo du plat à la fin (24), notes par étape (27).
+- [x] **Recettes et planning** : journal de cuisine visuel (25), accords boisson et accompagnement (28), planning en table avec glisser-déposer (33), restes intelligents (38).
+- [x] **Motivation** : badges (40), rétrospective de l'année partageable (42), carte du monde des cuisines (43).
+- [x] **iPhone et montre** : widgets avec la photo du plat et un minuteur en anneau (45), étape du minuteur dans la Dynamic Island (47), app Apple Watch (courses à cocher, minuteurs) (50).
+- [ ] À vérifier sur appareil : compilation Swift (widgets, montre, WatchConnectivity) au premier build EAS, rendu des widgets et de la montre, transition zoom.
