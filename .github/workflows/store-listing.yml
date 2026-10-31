@@ -44,12 +44,24 @@ jobs:
           KEY_ID: ${{ secrets.ASC_KEY_ID }}
           ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
           KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+        # The .p8 is rebuilt from its base64 body, whatever happened to its line breaks when
+        # it was pasted, then checked locally before anything is sent to Apple.
         run: |
           node -e '
             const fs = require("fs");
+            const body = (process.env.KEY_P8 || "")
+              .replace(/\\n/g, "\n")
+              .replace(/-----[^-]+-----/g, "")
+              .replace(/[^A-Za-z0-9+/=]/g, "");
+            const pem = "-----BEGIN PRIVATE KEY-----\n" + body.match(/.{1,64}/g).join("\n") + "\n-----END PRIVATE KEY-----\n";
+            require("crypto").createPrivateKey(pem);
+            const id = (process.env.KEY_ID || "").trim();
+            const issuer = (process.env.ISSUER_ID || "").trim();
+            if (!/^[A-Z0-9]{10}$/.test(id)) throw new Error("ASC_KEY_ID should be 10 letters/digits");
+            if (!/^[0-9a-f-]{36}$/i.test(issuer)) throw new Error("ASC_ISSUER_ID should be a UUID");
             fs.writeFileSync(process.env.RUNNER_TEMP + "/asc.json", JSON.stringify({
-              key_id: process.env.KEY_ID, issuer_id: process.env.ISSUER_ID,
-              key: process.env.KEY_P8, in_house: false }));'
+              key_id: id, issuer_id: issuer, key: pem, in_house: false }));
+            console.log("API key OK");'
       - name: Upload to App Store Connect
         run: |
           brew install fastlane >/dev/null || gem install fastlane --no-document
