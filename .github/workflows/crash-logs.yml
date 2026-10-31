@@ -1,0 +1,36 @@
+name: TestFlight crash logs
+
+# Prints the latest crash reports sent from TestFlight, to find the cause of a crash.
+# Read-only: changes nothing on App Store Connect.
+on:
+  workflow_dispatch:
+    inputs:
+      count:
+        description: How many reports
+        default: '3'
+
+jobs:
+  crashes:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Crash logs
+        env:
+          KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+        run: |
+          node -e '
+            const fs = require("fs");
+            const body = (process.env.KEY_P8 || "")
+              .replace(/\\n/g, "\n")
+              .replace(/-----[^-]+-----/g, "")
+              .replace(/[^A-Za-z0-9+/=]/g, "");
+            const pem = "-----BEGIN PRIVATE KEY-----\n" + body.match(/.{1,64}/g).join("\n") + "\n-----END PRIVATE KEY-----\n";
+            fs.writeFileSync(process.env.RUNNER_TEMP + "/asc.json", JSON.stringify({
+              key_id: process.env.KEY_ID.trim(), issuer_id: process.env.ISSUER_ID.trim(), key: pem }));'
+          ASC_KEY_JSON="$RUNNER_TEMP/asc.json" node tools/store/crashes.mjs "${{ inputs.count }}"
+          rm -f "$RUNNER_TEMP/asc.json"
