@@ -1362,6 +1362,14 @@ const fr = {
     later: 'Plus tard',
     again: 'Revoir comment importer une recette',
   },
+  crash: {
+    title: 'Oups, quelque chose a coincé',
+    body: 'L’app continue. Envoyez-nous le détail pour qu’on corrige ça.',
+    screenBody: 'Cet écran n’a pas pu s’afficher. Vos recettes ne sont pas touchées.',
+    send: 'Envoyer le détail',
+    continue: 'Continuer',
+    last: 'Envoyer la dernière erreur',
+  },
 };
 
 export default fr;

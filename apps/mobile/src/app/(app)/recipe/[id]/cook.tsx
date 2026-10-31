@@ -63,6 +63,12 @@ import {
   useToast,
 } from '../../../../ui';
 import { Tip } from '../../../../ui/Tip';
+import { CrashNotice, RouteError } from '../../../../features/CrashNotice';
+
+/** Cook mode failing to draw shows the error and "Fermer", instead of closing the app. */
+export function ErrorBoundary(props: { error: Error; retry: () => Promise<void> }) {
+  return <RouteError {...props} />;
+}
 
 const TIMER_PRESETS = [1, 3, 5, 10, 15, 20, 30, 45, 60];
 const TEXT_SCALES = [0.85, 1, 1.15, 1.3, 1.5, 1.75];
@@ -94,6 +100,7 @@ export default function CookMode() {
       <ConfettiProvider>
         <ToastProvider>
           <CookModeBody />
+          <CrashNotice />
         </ToastProvider>
       </ConfettiProvider>
     </TintScope>

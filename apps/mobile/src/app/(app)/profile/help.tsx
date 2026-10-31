@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Linking, Platform, ScrollView, View } from 'react-native';
+import { Linking, Platform, ScrollView, Share, View } from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
 import { useTranslation } from 'react-i18next';
 import { ENV, sitePage } from '../../../services/env';
@@ -7,6 +7,7 @@ import { space } from '../../../theme/tokens';
 import { router } from 'expo-router';
 import { Button, Card, Text, useToast } from '../../../ui';
 import { resetTips } from '../../../ui/Tip';
+import { clearLastCrash, lastCrash } from '../../../lib/crashGuard';
 
 const FAQ = [1, 2, 3, 4, 5] as const;
 
@@ -14,6 +15,7 @@ export default function Help() {
   const { t, i18n } = useTranslation();
   const toast = useToast();
   const [open, setOpen] = useState<number | null>(null);
+  const [crash, setCrash] = useState(() => lastCrash());
 
   /** No server: messages go through the user's own mail app, with what support needs to help. */
   const write = async () => {
@@ -83,6 +85,21 @@ export default function Help() {
             toast(t('tips.againDone'));
           }}
         />
+        {crash ? (
+          <Button
+            title={t('crash.last')}
+            variant="ghost"
+            icon="bug-outline"
+            onPress={() => {
+              void Share.share({
+                message: `${crash.message}\n${crash.at}${crash.where ? ` · ${crash.where}` : ''}\n\n${crash.stack}`,
+              }).then(() => {
+                clearLastCrash();
+                setCrash(null);
+              });
+            }}
+          />
+        ) : null}
         <Button
           title={t('contact.website')}
           variant="secondary"

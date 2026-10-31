@@ -16,6 +16,16 @@ import { ThemeProvider, useTheme } from '../theme/ThemeProvider';
 import { ActionSheetProvider, ConfettiProvider, PromptProvider, ToastProvider } from '../ui';
 import { ErrorState } from '../ui/States';
 import type { SettingsData } from '@pepperedapron/core';
+import { installCrashGuard } from '../lib/crashGuard';
+import { CrashNotice, RouteError } from '../features/CrashNotice';
+
+// An error nothing caught is shown instead of closing the app.
+installCrashGuard();
+
+/** A screen that fails to draw shows the error and a way back (expo-router error boundary). */
+export function ErrorBoundary(props: { error: Error; retry: () => Promise<void> }) {
+  return <RouteError {...props} />;
+}
 
 void SplashScreen.preventAutoHideAsync();
 SplashScreen.setOptions({ duration: 250, fade: true });
@@ -109,6 +119,7 @@ export default function RootLayout() {
                     ) : (
                       <Navigator onboarded={settings?.onboardingDone === true} />
                     )}
+                    <CrashNotice />
                   </PromptProvider>
                 </ActionSheetProvider>
               </ToastProvider>

@@ -1351,6 +1351,14 @@ const en: Translations = {
     later: 'Later',
     again: 'See how to import a recipe again',
   },
+  crash: {
+    title: 'Oops, something got stuck',
+    body: 'The app goes on. Send us the detail so we can fix it.',
+    screenBody: 'This screen could not be shown. Your recipes are untouched.',
+    send: 'Send the detail',
+    continue: 'Continue',
+    last: 'Send the last error',
+  },
 };
 
 export default en;
