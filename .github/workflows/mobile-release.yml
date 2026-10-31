@@ -14,6 +14,10 @@ on:
         description: Submit to TestFlight (production only)
         type: boolean
         default: false
+      watch:
+        description: Include the Apple Watch app (its signing profile must exist, created once by an interactive build)
+        type: boolean
+        default: true
 
 jobs:
   build:
@@ -34,7 +38,10 @@ jobs:
           eas-version: latest
           token: ${{ secrets.EXPO_TOKEN }}
       - name: Build
+        env:
+          # Read when the app config is evaluated here (credentials) and on EAS (the profile).
+          APPLE_WATCH: ${{ inputs.watch && '1' || '0' }}
         run: >-
           eas build --non-interactive --no-wait
-          --profile ${{ inputs.profile }} --platform ios
+          --profile ${{ inputs.profile }}${{ !inputs.watch && inputs.profile == 'production' && '-nowatch' || '' }} --platform ios
           ${{ inputs.submit && inputs.profile == 'production' && '--auto-submit' || '' }}
