@@ -12,7 +12,7 @@ Lues au moment du build par `app.config.ts`. Les variables `EXPO_PUBLIC_*` sont 
 | `APPLE_TEAM_ID` | équipe Apple (signature des cibles, App Group, iCloud) ; par défaut `336SM4755V` |
 | `EAS_PROJECT_ID` | projet EAS (builds) |
 | `SITE_URL` | site public (défaut `https://hugobsqtgames.github.io/PepperedApronApp`, GitHub Pages gratuit) : l'app y ouvre l'aide et les pages légales |
-| `SUPPORT_EMAIL` | adresse affichée dans Aide (vide par défaut : l'Aide ouvre alors la page de contact du projet, les issues GitHub) |
+| `SUPPORT_EMAIL` | adresse affichée dans Aide (défaut `hugobsqt.collab@gmail.com` ; vide : l'Aide ouvre la page de contact du projet) |
 
 Pour les builds EAS, ces valeurs se définissent dans les **environnements EAS** (`development`, `preview`, `production`) : `eas env:create --environment production --name APPLE_TEAM_ID --value … --visibility plaintext`. Le seul secret côté GitHub est `EXPO_TOKEN`.
 

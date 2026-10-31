@@ -67,8 +67,8 @@ const PHOTOS_USAGE =
   'PepperedApron accesses your photos to illustrate your recipes or import a recipe from an image or your latest screenshot.';
 // Free GitHub Pages address of the website (apps/site); SITE_URL for a domain of its own.
 const siteUrl = process.env.SITE_URL ?? 'https://hugobsqtgames.github.io/PepperedApronApp';
-// Empty: the help screen sends people to the contact page instead of an e-mail address.
-const supportEmail = process.env.SUPPORT_EMAIL ?? '';
+// Support address shown in Help (mail app); empty → the project's contact page instead.
+const supportEmail = process.env.SUPPORT_EMAIL ?? 'hugobsqt.collab@gmail.com';
 
 const appName =
   variant === 'production'
