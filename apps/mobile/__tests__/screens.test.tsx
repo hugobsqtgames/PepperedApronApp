@@ -299,6 +299,25 @@ const tap = async (el: Parameters<typeof fireEvent.press>[0]) => {
 const settle = () => act(async () => new Promise((r) => setTimeout(r, 30)));
 
 describe('journeys: what the user does is really saved', () => {
+  it('regression: the first dish finished in cook mode shows confetti in cook mode', async () => {
+    for (const l of repos.allCookLogs()) await repos.removeCookLog(l.id);
+    // The confetti animation runs to its end at once in tests: keep it on screen to see it.
+    const { Animated } = jest.requireActual<typeof import('react-native')>('react-native');
+    const timing = jest
+      .spyOn(Animated, 'timing')
+      .mockReturnValue({ start: () => undefined, stop: () => undefined, reset: () => undefined });
+    const r = repos.recipes().find((x) => x.data.steps.length === 2)!;
+    mockParams.current = { id: r.id };
+    const Cook = screenOf('../src/app/(app)/recipe/[id]/cook');
+    await render(wrap(<Cook />));
+    await tap(screen.getByTestId('cook-next'));
+    await tap(screen.getByTestId('cook-finish'));
+    await settle();
+    expect(screen.getByText(i18n.t('delight.celebrate.first'))).toBeTruthy();
+    expect(screen.getByTestId('confetti')).toBeTruthy();
+    timing.mockRestore();
+  });
+
   it('the week as a table of dish photos; a dish is dragged to another day', async () => {
     const Planning = screenOf('../src/app/(app)/(tabs)/planning');
     const today = new Date().toISOString().slice(0, 10);

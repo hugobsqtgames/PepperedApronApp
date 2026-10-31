@@ -50,12 +50,14 @@ import { errorMessage, inBackground } from '../../../../lib/errors';
 import { radius, space } from '../../../../theme/tokens';
 import {
   Button,
+  ConfettiProvider,
   EmptyState,
   Icon,
   IconButton,
   Stars,
   Text,
   TextField,
+  ToastProvider,
   useActionSheet,
   usePrompt,
   useToast,
@@ -85,9 +87,14 @@ export default function CookMode() {
     [id],
   );
   const color = useDishColor(look?.uri ?? null, look?.category ?? null);
+  // Cook mode is a full-screen modal, above the app's own confetti and toasts: it has its own.
   return (
     <TintScope color={color}>
-      <CookModeBody />
+      <ConfettiProvider>
+        <ToastProvider>
+          <CookModeBody />
+        </ToastProvider>
+      </ConfettiProvider>
     </TintScope>
   );
 }
