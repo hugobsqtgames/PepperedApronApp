@@ -44,11 +44,13 @@ function ingredientLine(i: RecipeData['ingredients'][number]): string {
   return [q + qMax, i.unit ?? '', i.name, i.note ? `(${i.note})` : ''].filter(Boolean).join(' ');
 }
 
-const encode = (p: Packed) =>
-  LINK_PREFIX + toB64Url(deflateSync(strToU8(JSON.stringify(p)), { level: 9 }));
+const payload = (p: Packed) => toB64Url(deflateSync(strToU8(JSON.stringify(p)), { level: 9 }));
+const encode = (p: Packed) => LINK_PREFIX + payload(p);
 
-/** The link for a recipe, or null when even its ingredients and steps are too long. */
-export function recipeLink(r: RecipeData): { url: string; complete: boolean } | null {
+/** A web link holds more than a QR code can: messages carry several thousand characters. */
+export const MAX_WEB_LINK_LENGTH = 7000;
+
+function packs(r: RecipeData): { full: Packed; base: Packed } {
   const base: Packed = {
     v: 1,
     t: r.title,
@@ -65,10 +67,40 @@ export function recipeLink(r: RecipeData): { url: string; complete: boolean } | 
     n: r.tips,
     u: r.sourceUrl,
   };
+  return { full, base };
+}
+
+/** The link for a recipe, or null when even its ingredients and steps are too long. */
+export function recipeLink(r: RecipeData): { url: string; complete: boolean } | null {
+  const { full, base } = packs(r);
   const url = encode(full);
   if (url.length <= MAX_LINK_LENGTH) return { url, complete: true };
   const short = encode(base);
   return short.length <= MAX_LINK_LENGTH ? { url: short, complete: false } : null;
+}
+
+/**
+ * A web link to send in a message: the page of the website shows the recipe (it is in the part
+ * after "#", which browsers never send to a server) and opens it in the app in one tap.
+ */
+export function webRecipeLink(
+  r: RecipeData,
+  siteUrl: string,
+): { url: string; complete: boolean } | null {
+  const { full, base } = packs(r);
+  const at = `${siteUrl.replace(/\/+$/, '')}/r/#`;
+  const url = at + payload(full);
+  if (url.length <= MAX_WEB_LINK_LENGTH) return { url, complete: true };
+  const short = at + payload(base);
+  return short.length <= MAX_WEB_LINK_LENGTH ? { url: short, complete: false } : null;
+}
+
+/** The recipe data in a shared link (app link, or a web link of the website), or null. */
+export function linkPayload(url: string): string | null {
+  const app = url.startsWith(LINK_PREFIX) ? url.slice(LINK_PREFIX.length) : null;
+  if (app) return app.split(/[?#]/)[0] || null;
+  const m = /^https:\/\/(?:www\.)?pepperedapron\.app\/r\/?#([A-Za-z0-9_-]+)$/.exec(url.trim());
+  return m ? m[1]! : null;
 }
 
 /** The recipe in a scanned link, as a draft to review in the editor; null if unreadable. */

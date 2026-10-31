@@ -1,7 +1,10 @@
 import * as Notifications from 'expo-notifications';
 import {
   addDays,
+  currentSeason,
   emptyMainSlots,
+  fromIsoDate,
+  recipeSeasons,
   startOfWeek,
   toIsoDate,
   type NotificationCategory,
@@ -123,23 +126,56 @@ export async function rescheduleReminders(repos: Repos, now = new Date()) {
       .entries(nextWeek, addDays(nextWeek, 6))
       .map((e) => ({ id: e.id, date: e.data.date, slot: e.data.slot, position: e.data.position }));
     if (emptyMainSlots(entries, nextWeek) >= 12) {
-      const sunday = new Date(`${addDays(nextWeek, -1)}T18:00:00`);
-      if (sunday > now) {
+      // The chosen day before the week starts (Sunday by default), at the chosen time.
+      let day = addDays(nextWeek, -1);
+      for (let k = 1; k <= 7; k++) {
+        const d = addDays(nextWeek, -k);
+        if (fromIsoDate(d).getDay() === s.planningNudgeDay) {
+          day = d;
+          break;
+        }
+      }
+      const at = new Date(`${day}T${s.planningNudgeTime}:00`);
+      if (at > now) {
+        const list = weekIdeas(repos, nextWeek, now);
         await Notifications.scheduleNotificationAsync({
           identifier: `nudge-${nextWeek}`,
           content: {
             title: i18n.t('notifications.planningNudge'),
-            body: i18n.t('notifications.planningNudgeBody'),
+            body: list.length
+              ? i18n.t('notifications.planningNudgeIdeas', { list: list.join(', ') })
+              : i18n.t('notifications.planningNudgeBody'),
             data: { kind: 'nudge', url: '/planning' },
           },
           trigger: {
             type: Notifications.SchedulableTriggerInputTypes.DATE,
-            date: sunday,
+            date: at,
           },
         });
       }
     }
   }
+}
+
+/**
+ * Three ideas for the week in the reminder: dishes of the season and favourites, the ones not
+ * cooked for the longest first, varying from one week to the next.
+ */
+function weekIdeas(repos: Repos, weekStart: string, now: Date): string[] {
+  const season = currentSeason(now);
+  const favs = new Set(repos.favoriteRecipes().map((r) => r.id));
+  const lastCooked = new Map<string, string>();
+  for (const l of repos.allCookLogs())
+    if ((lastCooked.get(l.data.recipeId) ?? '') < l.data.date)
+      lastCooked.set(l.data.recipeId, l.data.date);
+  const pool = repos
+    .library()
+    .filter((r) => favs.has(r.id) || recipeSeasons(r.data).includes(season))
+    .sort((a, b) => (lastCooked.get(a.id) ?? '').localeCompare(lastCooked.get(b.id) ?? ''))
+    .slice(0, 9);
+  if (!pool.length) return [];
+  const shift = Number(weekStart.replace(/-/g, '')) % pool.length;
+  return [...pool.slice(shift), ...pool.slice(0, shift)].slice(0, 3).map((r) => r.data.title);
 }
 
 /**

@@ -2,7 +2,7 @@
  * Texts of the website, in French (reference version for legal documents) and English. Have them reviewed by a lawyer before
  * publication. `p` = publisher details (see build.mjs).
  */
-const UPDATED = '2026-10-29';
+const UPDATED = '2026-10-31';
 
 export const UI = {
   fr: {
@@ -59,7 +59,7 @@ export const FAQ = {
       ],
       [
         'Puis-je utiliser l’app hors ligne ?',
-        'Oui. Seuls l’import depuis un lien et la synchronisation iCloud ont besoin d’internet.',
+        'Oui. Seuls l’import depuis un lien, le scan d’un code-barres et la synchronisation iCloud ont besoin d’internet.',
       ],
       [
         'Comment importer depuis TikTok ou Instagram ?',
@@ -91,7 +91,7 @@ export const FAQ = {
       ],
       [
         'Can I use the app offline?',
-        'Yes. Only importing from a link and iCloud sync need the internet.',
+        'Yes. Only importing from a link, scanning a barcode and iCloud sync need the internet.',
       ],
       [
         'How do I import from TikTok or Instagram?',
@@ -131,6 +131,8 @@ export const LEGAL = {
 <h2>Données sur votre appareil et dans iCloud</h2><p>Vos contenus sont stockés localement. Sur iPhone et iPad, la synchronisation iCloud (activée par défaut, désactivable dans Réglages → Mes données) les copie dans le conteneur privé de l'app dans votre compte iCloud, géré par Apple (voir la politique de confidentialité d'Apple). L'éditeur n'y a pas accès. Elles sont aussi incluses dans la sauvegarde iCloud de l'appareil si vous l'avez activée.</p>
 <h2>Import depuis un lien</h2><p>Lorsque vous importez une recette depuis un lien, l'app contacte directement le site concerné (ou le service oEmbed de TikTok ou YouTube), comme le ferait un navigateur. Ce site reçoit alors votre adresse IP selon sa propre politique.</p>
 <h2>Photos et texte</h2><p>L'appareil photo et la photothèque ne sont utilisés que lorsque vous le demandez. La lecture du texte d'une photo se fait sur l'appareil ; rien n'est envoyé.</p>
+<h2>Codes-barres</h2><p>Lorsque vous scannez le code-barres d’un produit pour votre placard, l’app envoie uniquement ce numéro à Open Food Facts (base de données libre et gratuite) pour obtenir le nom et le format du produit. Ce service reçoit alors votre adresse IP selon sa propre politique. La caméra n’enregistre ni image ni son.</p>
+<h2>Recettes envoyées par lien</h2><p>Une recette envoyée « par un lien » est contenue dans le lien lui-même, après le signe « # ». Cette partie du lien n’est jamais transmise au serveur de ce site : la page la lit et l’affiche dans le navigateur de la personne qui l’ouvre.</p>
 <h2>Micro, voix et Rappels</h2><p>Le micro n'est utilisé que si vous dictez une recette. Votre voix, comme le son d'une vidéo importée, est transcrite par la reconnaissance vocale de l'iPhone, sur l'appareil, puis l'enregistrement est supprimé ; rien n'est envoyé. L'accès à l'app Rappels n'est demandé que si vous y envoyez votre liste de courses.</p>
 <h2>Nous contacter</h2><p>Si vous nous écrivez par e-mail, nous utilisons votre adresse et votre message uniquement pour vous répondre, et les conservons au plus 3 ans.</p>
 <h2>Vos droits</h2><p>Vos contenus sont sous votre contrôle : export et suppression dans Réglages → Mes données. Pour toute question ou pour exercer vos droits d'accès, de rectification, d'effacement, et d'opposition : ${mail(p)}. Réclamation possible auprès de la CNIL (cnil.fr).</p>
@@ -160,6 +162,8 @@ export const LEGAL = {
 <h2>Data on your device and in iCloud</h2><p>Your content is stored locally. On iPhone and iPad, iCloud sync (on by default, can be turned off in Settings → My data) copies it to the app's private container in your iCloud account, operated by Apple (see Apple's privacy policy). The publisher has no access to it. They are also included in the device's iCloud Backup if you turned it on.</p>
 <h2>Importing from a link</h2><p>When you import a recipe from a link, the app contacts that website (or the TikTok or YouTube oEmbed service) directly, like a browser would. That website then receives your IP address under its own policy.</p>
 <h2>Photos and text</h2><p>The camera and photo library are only used when you ask. Reading the text of a photo happens on the device; nothing is sent.</p>
+<h2>Barcodes</h2><p>When you scan a product’s barcode for your pantry, the app sends only that number to Open Food Facts (a free, open database) to get the product’s name and size. That service then receives your IP address under its own policy. The camera records no picture and no sound.</p>
+<h2>Recipes sent as a link</h2><p>A recipe sent “as a link” is contained in the link itself, after the “#” sign. That part of the link is never sent to this website’s server: the page reads it and shows it in the browser of the person who opens it.</p>
 <h2>Microphone, voice and Reminders</h2><p>The microphone is only used if you dictate a recipe. Your voice, like the sound of an imported video, is transcribed by the iPhone's speech recognition on the device, then the recording is deleted; nothing is sent. Access to the Reminders app is only requested if you send your shopping list there.</p>
 <h2>Contacting us</h2><p>If you e-mail us, we use your address and message only to answer you and keep them for at most 3 years.</p>
 <h2>Your rights</h2><p>Your content is under your control: export and deletion in Settings → My data. For any question, or to exercise your rights of access, rectification, erasure, and objection: ${mail(p)}. You may lodge a complaint with your data protection authority.</p>

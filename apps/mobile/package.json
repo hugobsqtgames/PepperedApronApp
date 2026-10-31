@@ -13,6 +13,7 @@
     "expo-asset": "~58.0.19",
     "expo-audio": "~58.0.10",
     "expo-calendar": "~58.0.6",
+    "expo-camera": "~58.0.14",
     "expo-clipboard": "~58.0.4",
     "expo-constants": "~58.0.14",
     "expo-crypto": "~58.0.7",
@@ -29,6 +30,7 @@
     "expo-linking": "~58.0.15",
     "expo-live-activity": "^0.4.2",
     "expo-localization": "~58.0.5",
+    "expo-media-library": "~58.0.13",
     "expo-notifications": "~58.1.7",
     "expo-print": "~58.0.8",
     "expo-router": "~58.0.28",
@@ -87,6 +89,7 @@
         "exclude": [
           "video-speech",
           "pdf-text",
+          "text-vision",
           "voice-commands",
           "ios-integration",
           "expo-text-extractor"

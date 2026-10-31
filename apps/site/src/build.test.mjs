@@ -38,3 +38,13 @@ test('publisher details are escaped and the policy describes a no-account app', 
 test('a production build refuses to publish without the legal details', () => {
   assert.throws(() => build(out, {}, true), /LEGAL_PUBLISHER/);
 });
+
+test('the shared recipe page reads the recipe from the link, with no HTML injection', () => {
+  build(out, {});
+  const html = fs.readFileSync(path.join(out, 'r/index.html'), 'utf8');
+  assert.match(html, /DecompressionStream\('deflate-raw'\)/);
+  assert.match(html, /pepperedapron:\/\/r\//);
+  assert.match(html, /apps\.apple\.com\/app\/id6829014530/);
+  assert.doesNotMatch(html, /innerHTML/);
+  assert.match(html, /noindex/);
+});

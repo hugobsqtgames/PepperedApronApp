@@ -191,6 +191,12 @@ export const settingsDataSchema = z
     cookTextScale: z.number().min(0.8).max(2).default(1),
     /** Cook mode reads each step aloud when it is shown. */
     cookReadAloud: z.boolean().default(false),
+    /** "Plan your week" reminder: day (0 = Sunday … 6 = Saturday) and time, before the week. */
+    planningNudgeDay: z.number().int().min(0).max(6).default(0),
+    planningNudgeTime: z
+      .string()
+      .regex(/^([01]\d|2[0-3]):[0-5]\d$/)
+      .default('18:00'),
   })
   .strict();
 export type SettingsData = z.infer<typeof settingsDataSchema>;
@@ -214,6 +220,8 @@ export const DEFAULT_SETTINGS: SettingsData = {
   firstName: null,
   cookTextScale: 1,
   cookReadAloud: false,
+  planningNudgeDay: 0,
+  planningNudgeTime: '18:00',
 };
 
 /** One time a recipe was cooked (cooking history). */

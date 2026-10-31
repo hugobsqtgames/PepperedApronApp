@@ -13,6 +13,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { FAQ, LEGAL, UI } from './content.mjs';
 import { esc, LANG_NAMES, LANGS, LOGO_SVG, page } from './layout.mjs';
+import { recipePage } from './recipePage.mjs';
 
 export const PAGES = ['support', 'privacy', 'terms', 'legal'];
 
@@ -99,6 +100,8 @@ export function build(out, env = process.env, production = false) {
       body: `<script>(function(){var l=(navigator.language||'en').slice(0,2);location.replace('/'+(${JSON.stringify(LANGS)}.indexOf(l)>=0?l:'en')+'/');})();</script><p>${LANGS.map((l) => `<a href="/${l}/">${LANG_NAMES[l]}</a>`).join(' · ')}</p>`,
     }),
   );
+  // A recipe shared from the app (the recipe is in the link, after "#").
+  write('r/index.html', recipePage());
   write(
     '404.html',
     page({ title: '404', lang: 'en', body: '<h1>404</h1><p><a href="/">PepperedApron</a></p>' }),

@@ -1,6 +1,8 @@
 import {
+  cleanScreenshotText,
   emptyDraft,
   extractUrls,
+  looksLikeScreenshot,
   mergeIngredients,
   parseRecipeText,
   recipeFromTranscript,
@@ -12,6 +14,7 @@ import {
 import { recipeFromDraft } from '@pepperedapron/client';
 import { readPdf } from '../../modules/pdf-text';
 import { linkNotice } from '../features/recipe/notices';
+import { draftFromLink, linkPayload } from '../lib/recipeLink';
 import i18n from '../i18n';
 import { importLinkFull, readVideoPictures, transcribeFile } from './importer';
 import { ocrSupported, readTextFromImage } from './ocr';
@@ -23,8 +26,11 @@ import { runtime } from './runtime';
 export type ImportSource =
   | { kind: 'link'; url: string; text: string | null; title: string | null }
   | { kind: 'text'; text: string; title: string | null }
-  /** Screenshots or photos of one recipe (a carousel, several pages of a book). */
-  | { kind: 'photos'; uris: string[] }
+  /**
+   * Screenshots or photos of one recipe (a carousel, several pages of a book). `keepPhoto`: a
+   * handwritten card is kept as the recipe photo, as a keepsake.
+   */
+  | { kind: 'photos'; uris: string[]; keepPhoto?: boolean }
   /** A video file (saved from TikTok or Instagram): its speech is transcribed. */
   | { kind: 'video'; uri: string; text: string | null }
   /** A PDF (a recipe saved from a site, a scanned page of a book): its text is read. */
@@ -99,6 +105,11 @@ export async function prepareImport(
     };
 
   if (src.kind === 'link') {
+    // A recipe sent from PepperedApron: it is inside the link itself, nothing to fetch.
+    const packed = linkPayload(src.url);
+    const shared = packed ? draftFromLink(packed) : null;
+    if (shared)
+      return { draft: shared, notice: 'text', localImageUri: null, platform: null, offline: false };
     onStage('fetching');
     const { result, listenError, offline, frames } = await importLinkFull(src.url, () =>
       onStage('listening'),
@@ -185,7 +196,9 @@ export async function prepareImport(
     const out: string[] = [];
     for (const uri of uris) {
       try {
-        out.push(await readTextFromImage(uri));
+        // A screenshot: the status bar, buttons and counters of the app are left out.
+        const text = await readTextFromImage(uri);
+        out.push(looksLikeScreenshot(text) ? cleanScreenshotText(text) : text);
       } catch {
         out.push('');
       }
@@ -230,7 +243,7 @@ export async function prepareImport(
   return {
     draft: fromText(texts.join('\n\n')),
     notice: 'text',
-    localImageUri: dish,
+    localImageUri: dish ?? (src.keepPhoto ? (src.uris[0] ?? null) : null),
     platform: null,
     offline: false,
   };

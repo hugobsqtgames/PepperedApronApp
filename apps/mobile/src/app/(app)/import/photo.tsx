@@ -8,7 +8,7 @@ import { prepareImport } from '../../../services/autoImport';
 import { ocrSupported } from '../../../services/ocr';
 import { pickImages, type PhotoSource } from '../../../services/photos';
 import { radius, space } from '../../../theme/tokens';
-import { Button, IconButton, LoadingState, Screen, Text, useToast } from '../../../ui';
+import { Button, IconButton, ListRow, LoadingState, Screen, Text, useToast } from '../../../ui';
 
 const MAX_PHOTOS = 10;
 
@@ -24,6 +24,8 @@ export default function ImportPhoto() {
   const [uris, setUris] = useState<string[]>(params.uri ? [params.uri] : []);
   const [ocr, setOcr] = useState(false);
   const [reading, setReading] = useState(false);
+  // A handwritten card (a grandmother's recipe): read, and kept as the recipe photo.
+  const [handwritten, setHandwritten] = useState(false);
   useEffect(() => {
     void ocrSupported().then(setOcr);
   }, []);
@@ -53,7 +55,7 @@ export default function ImportPhoto() {
     if (!uris.length) return;
     setReading(true);
     try {
-      const p = await prepareImport({ kind: 'photos', uris });
+      const p = await prepareImport({ kind: 'photos', uris, keepPhoto: handwritten });
       if (p.notice === 'photo') {
         toast(t('import.noText'), { tone: 'info' });
         return;
@@ -116,6 +118,16 @@ export default function ImportPhoto() {
           ) : null}
           {uris.length ? (
             <>
+              {ocr ? (
+                <ListRow
+                  icon="pencil-outline"
+                  title={t('import.handwritten')}
+                  subtitle={t('import.handwrittenBody')}
+                  toggle={handwritten}
+                  onToggle={setHandwritten}
+                  testID="photo-handwritten"
+                />
+              ) : null}
               {ocr ? (
                 <Button
                   title={

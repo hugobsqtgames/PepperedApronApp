@@ -1,8 +1,10 @@
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Alert, Linking, Pressable, StyleSheet, View } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
+import i18n from '../../i18n';
 import { importQueue } from '../../services/importQueue';
+import { latestScreenshot } from '../../services/screenshots';
 import { useTheme } from '../../theme/ThemeProvider';
 import { radius, space } from '../../theme/tokens';
 import { Icon, Text, type IconName } from '../../ui';
@@ -17,6 +19,24 @@ async function importPdf() {
   if (r.canceled || !r.assets[0]) return;
   const ids = await importQueue.add([{ source: { kind: 'pdf', uri: r.assets[0].uri } }]);
   router.replace({ pathname: '/import/queue', params: { ids: ids.join(',') } });
+}
+
+/** The screenshot just taken (a story, a message, a page): read like a shared picture. */
+async function importLatestScreenshot() {
+  const t = i18n.t.bind(i18n);
+  try {
+    const r = await latestScreenshot();
+    if (!r) return Alert.alert(t('add.noScreenshot'));
+    if ('denied' in r)
+      return Alert.alert(t('errors.photoPermission'), undefined, [
+        { text: t('common.cancel'), style: 'cancel' },
+        { text: t('errors.openSettings'), onPress: () => void Linking.openSettings() },
+      ]);
+    const ids = await importQueue.add([{ source: { kind: 'photos', uris: [r.uri] } }]);
+    router.replace({ pathname: '/import/queue', params: { ids: ids.join(',') } });
+  } catch {
+    Alert.alert(t('add.noScreenshot'));
+  }
 }
 
 export default function AddSheet() {
@@ -51,6 +71,13 @@ export default function AddSheet() {
         body: t('add.photoBody'),
         go: () => router.replace('/import/photo'),
         testID: 'add-photo',
+      },
+      {
+        icon: 'phone-portrait-outline',
+        title: t('add.screenshot'),
+        body: t('add.screenshotBody'),
+        go: () => void importLatestScreenshot(),
+        testID: 'add-screenshot',
       },
       {
         icon: 'document-text-outline',

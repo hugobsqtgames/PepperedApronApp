@@ -22,6 +22,9 @@ const LABELS: Record<
   expiry: ['notifExpiry', 'notifExpiryBody'],
 };
 const TIMES = ['11:00', '16:30', '17:00', '17:30', '18:00', '18:30', '19:00'];
+/** Days the weekly planning reminder can come (before a week that starts on Monday). */
+const NUDGE_DAYS = [5, 6, 0] as const;
+const NUDGE_TIMES = ['10:00', '17:00', '18:00', '19:00', '20:30'];
 
 /** Few, useful notifications — each category can be turned off. */
 export default function NotificationSettings() {
@@ -91,6 +94,42 @@ export default function NotificationSettings() {
               />
             ))}
           </View>
+        </View>
+      ) : null}
+      {s.notifications.planningNudge ? (
+        <View style={{ gap: space.sm }}>
+          <Text variant="caption" color="textMuted" weight="600">
+            {t('settings.nudgeWhen')}
+          </Text>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space.sm }}>
+            {NUDGE_DAYS.map((d) => (
+              <Chip
+                key={d}
+                label={t(`settings.weekday${d}`)}
+                selected={s.planningNudgeDay === d}
+                onPress={async () => {
+                  await repos.updateSettings({ planningNudgeDay: d });
+                  void rescheduleReminders(repos);
+                }}
+              />
+            ))}
+          </View>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space.sm }}>
+            {NUDGE_TIMES.map((time) => (
+              <Chip
+                key={time}
+                label={time}
+                selected={s.planningNudgeTime === time}
+                onPress={async () => {
+                  await repos.updateSettings({ planningNudgeTime: time });
+                  void rescheduleReminders(repos);
+                }}
+              />
+            ))}
+          </View>
+          <Text variant="caption" color="textMuted">
+            {t('settings.nudgeHint')}
+          </Text>
         </View>
       ) : null}
     </ScrollView>

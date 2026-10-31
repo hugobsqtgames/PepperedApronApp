@@ -1,8 +1,8 @@
 {
   "ios": {
     "CFBundleDisplayName": "PepperedApron",
-    "NSCameraUsageDescription": "PepperedApron utilise l'appareil photo pour ajouter une photo à vos recettes ou lire une recette imprimée.",
-    "NSPhotoLibraryUsageDescription": "PepperedApron accède à vos photos pour illustrer vos recettes ou importer une recette depuis une image.",
+    "NSCameraUsageDescription": "PepperedApron utilise l'appareil photo pour ajouter une photo à vos recettes, lire une recette imprimée ou manuscrite, un ticket de caisse ou le code-barres d'un produit de votre placard.",
+    "NSPhotoLibraryUsageDescription": "PepperedApron accède à vos photos pour illustrer vos recettes ou importer une recette depuis une image ou votre dernière capture d'écran.",
     "NSSpeechRecognitionUsageDescription": "PepperedApron écoute la vidéo de recette que vous importez, la recette que vous dictez, ou vos commandes vocales en mode cuisine, sur votre iPhone. Rien n'est envoyé.",
     "NSMicrophoneUsageDescription": "PepperedApron enregistre la recette que vous dictez et, si vous activez les commandes vocales en mode cuisine, écoute « suivant » ou « répète ». Tout reste sur votre iPhone.",
     "NSRemindersUsageDescription": "PepperedApron ajoute votre liste de courses à la liste Rappels que vous choisissez, pour la partager avec votre famille.",

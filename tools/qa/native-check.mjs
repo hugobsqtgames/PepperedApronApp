@@ -98,6 +98,19 @@ try {
     'NSRemindersFullAccessUsageDescription',
   ])
     check(typeof info[k] === 'string' && info[k].length > 20, `usage text ${k}`);
+  // The barcode scanner and "latest screenshot" read only: the photo library is never written to,
+  // and the camera never records sound.
+  check(!('NSPhotoLibraryAddUsageDescription' in info), 'no "add to photos" permission');
+  check(/barcode/i.test(info.NSCameraUsageDescription ?? ''), 'camera text mentions barcodes');
+  // Handwriting and French accents: Vision's accurate level with the languages set.
+  const vision = fs.readFileSync(
+    path.join(app, 'modules/text-vision/ios/TextVisionModule.swift'),
+    'utf8',
+  );
+  check(
+    vision.includes('recognitionLevel = .accurate') && vision.includes('recognitionLanguages'),
+    'text recognition reads handwriting in the languages asked',
+  );
   check(info.ITSAppUsesNonExemptEncryption === false, 'export compliance');
   check(
     info.NSUserActivityTypes?.includes(`${bundle}.recipe`) &&

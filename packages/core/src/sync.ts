@@ -133,4 +133,4 @@ export interface EntityDataMap {
  * the other devices once after an update (a file read by an older version may have had records
  * it could not understand yet).
  */
-export const DATA_VERSION = 4;
+export const DATA_VERSION = 5;

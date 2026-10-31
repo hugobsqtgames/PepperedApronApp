@@ -45,6 +45,18 @@ jest.mock('expo-router', () => {
   };
 });
 jest.mock('react-native-view-shot', () => ({ captureRef: jest.fn() }));
+// The barcode camera: permission given, no barcode seen (the journeys call the lookup directly).
+jest.mock('expo-camera', () => ({
+  CameraView: () => null,
+  useCameraPermissions: () => [{ granted: true, canAskAgain: true }, async () => ({})],
+}));
+jest.mock('expo-media-library/legacy', () => ({
+  requestPermissionsAsync: async () => ({ granted: false }),
+  getAssetsAsync: async () => ({ assets: [] }),
+  getAssetInfoAsync: async () => ({}),
+  MediaType: { photo: 'photo' },
+  SortBy: { creationTime: 'creationTime' },
+}));
 jest.mock('react-native-gesture-handler/ReanimatedSwipeable', () => {
   const { View } = jest.requireActual<typeof import('react-native')>('react-native');
   return { __esModule: true, default: View };
@@ -221,6 +233,28 @@ const SCREENS: [string, () => { default: () => ReactElement }, () => Record<stri
   ],
   ['smart rules', () => require('../src/app/(app)/collection/smart'), () => ({ id: ids.smart! })],
   ['pantry', () => require('../src/app/(app)/pantry'), () => ({})],
+  ['pantry receipt', () => require('../src/app/(app)/pantry-scan'), () => ({ mode: 'receipt' })],
+  ['pantry barcode', () => require('../src/app/(app)/pantry-scan'), () => ({ mode: 'barcode' })],
+  [
+    'batch cooking',
+    () => require('../src/app/(app)/cook-plan'),
+    () => ({ ids: `${ids.recipe},${ids.recipe2}`, mode: 'asap' }),
+  ],
+  [
+    'meal plan',
+    () => require('../src/app/(app)/cook-plan'),
+    () => ({ ids: `${ids.recipe},${ids.recipe2}`, mode: 'together' }),
+  ],
+  [
+    'cook (two recipes)',
+    () => require('../src/app/(app)/recipe/[id]/cook'),
+    () => ({ id: ids.recipe!, with: ids.recipe2! }),
+  ],
+  [
+    'search (fridge)',
+    () => require('../src/app/(app)/(tabs)/search'),
+    () => ({ mode: 'fridge', pantry: '1' }),
+  ],
   [
     'plan pick',
     () => require('../src/app/(app)/plan/pick'),
@@ -494,6 +528,91 @@ describe('journeys: what the user does is really saved', () => {
     const sc = repos.smartCollections().find((x) => x.data.name === 'Végé');
     expect(sc?.data.rules.diet).toBe('vegetarian');
     expect(repos.smartCollectionRecipes(sc!.id).length).toBeGreaterThan(0);
+  });
+});
+
+describe('journeys: cooking several dishes, the pantry, sharing', () => {
+  it('batch cooking: every step of every recipe in one order, ticked as it goes', async () => {
+    const two = repos
+      .recipes()
+      .filter((r) => r.data.steps.length >= 2)
+      .slice(0, 2);
+    mockParams.current = { ids: two.map((r) => r.id).join(','), mode: 'asap' };
+    const Plan = screenOf('../src/app/(app)/cook-plan');
+    await render(wrap(<Plan />));
+    const steps = two.reduce((n, r) => n + r.data.steps.length, 0);
+    expect(screen.getAllByTestId('plan-item')).toHaveLength(steps);
+    await tap(screen.getByTestId('plan-start'));
+    await tap(screen.getAllByLabelText(i18n.t('plan.markDone'))[0]!);
+    expect(screen.getAllByLabelText(i18n.t('plan.undo'))).toHaveLength(1);
+    // A meal: the same dishes, all ready at the time chosen.
+    await tap(screen.getByText(i18n.t('plan.modeMeal')));
+    expect(screen.getByText(i18n.t('readyAt.title'))).toBeTruthy();
+  });
+
+  it('cook mode: an ingredient ticked on a step stays ticked in the ingredient list', async () => {
+    const r = repos.recipes().find((x) => x.data.steps.length && x.data.ingredients.length > 2)!;
+    mockParams.current = { id: r.id };
+    const Cook = screenOf('../src/app/(app)/recipe/[id]/cook');
+    await render(wrap(<Cook />));
+    const total = r.data.ingredients.length;
+    const label = (n: number) =>
+      `${i18n.t('cook.ingredients')}, ${i18n.t('cook.ticked', { n, total })}`;
+    const boxes = screen.queryAllByRole('checkbox');
+    if (boxes.length) {
+      await tap(boxes[0]!);
+      expect(screen.getByLabelText(label(1))).toBeTruthy();
+    } else expect(screen.getByLabelText(label(0))).toBeTruthy();
+  });
+
+  it('a receipt photo becomes pantry items, checked before they are put away', async () => {
+    const photos =
+      jest.requireActual<typeof import('../src/services/photos')>('../src/services/photos');
+    const ocr = jest.requireActual<typeof import('../src/services/ocr')>('../src/services/ocr');
+    const pick = jest.spyOn(photos, 'pickImage').mockResolvedValue({ uri: 'file:///ticket.jpg' });
+    const read = jest
+      .spyOn(ocr, 'readTextLines')
+      .mockResolvedValue(
+        ['CARREFOUR', 'BEURRE DOUX 250G 2,49 €', 'LESSIVE 2L 8,99 €', 'TOTAL 11,48 €'].map(
+          (text, i) => ({ text, confidence: 1, x: 0.1, y: 0.1 * i, width: 0.8, height: 0.03 }),
+        ),
+      );
+    mockParams.current = { mode: 'receipt' };
+    const Scan = screenOf('../src/app/(app)/pantry-scan');
+    await render(wrap(<Scan />));
+    await tap(screen.getByTestId('receipt-camera'));
+    await settle();
+    // The washing powder is listed, not ticked: only the butter goes to the fridge.
+    expect(screen.getByText('Lessive')).toBeTruthy();
+    await tap(screen.getByTestId('receipt-save'));
+    await settle();
+    const butter = repos.pantryItems().find((p) => p.data.name === 'Beurre doux');
+    expect(butter?.data).toMatchObject({ quantity: 250, unit: 'g', place: 'fridge' });
+    expect(repos.pantryItems().some((p) => p.data.name === 'Lessive')).toBe(false);
+    pick.mockRestore();
+    read.mockRestore();
+  });
+
+  it('a recipe sent as a web link is read back whole, without fetching anything', async () => {
+    const { webRecipeLink, linkPayload, draftFromLink } =
+      jest.requireActual<typeof import('../src/lib/recipeLink')>('../src/lib/recipeLink');
+    const r = repos.recipes()[0]!;
+    const link = webRecipeLink(r.data, 'https://pepperedapron.app')!;
+    expect(link.url.startsWith('https://pepperedapron.app/r/#')).toBe(true);
+    const d = draftFromLink(linkPayload(link.url)!)!;
+    expect(d.title).toBe(r.data.title);
+    expect(d.steps.map((x) => x.text)).toEqual(r.data.steps.map((x) => x.text));
+    expect(linkPayload('https://evil.example/r/#abc')).toBeNull();
+  });
+
+  it('search: "sans four" leaves out the recipes that need the oven', async () => {
+    const { searchRecipes } =
+      jest.requireActual<typeof import('@pepperedapron/core')>('@pepperedapron/core');
+    const items = repos.searchable();
+    const withOven = items.filter((x) => x.equipment?.includes('oven'));
+    expect(withOven.length).toBeGreaterThan(0);
+    const res = searchRecipes(items, 'sans four');
+    expect(res.length).toBe(items.length - withOven.length);
   });
 });
 

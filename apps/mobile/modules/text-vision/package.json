@@ -1,0 +1,7 @@
+{
+  "name": "text-vision",
+  "version": "1.0.0",
+  "description": "Text recognition on the device (Apple Vision), handwriting and French included, with line positions.",
+  "main": "index.ts",
+  "private": true
+}

@@ -30,6 +30,11 @@ const PREP = words(
     'chop,slice,dice,mince,peel,grate,wash,rinse,prepare,mix,whisk,beat,cut,trim,zest,squeeze,drain,measure,weigh,season,toss',
 );
 
+/** The step bakes, simmers, rests…: the cook can walk away during it. */
+export function isPassiveText(text: string): boolean {
+  return hasAny(text, PASSIVE);
+}
+
 /**
  * "While it cooks…": when step `index` leaves the cook free (a timer of 5 minutes or more, or a
  * baking / simmering / resting step), the next preparation steps that can be done meanwhile.

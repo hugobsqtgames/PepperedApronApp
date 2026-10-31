@@ -22,15 +22,30 @@ export function IngredientList({
   factor,
   system,
   checkable = true,
+  checked: checkedProp,
+  onToggle,
 }: {
   ingredients: Ingredient[];
   factor: number;
   system: UnitSystem;
   checkable?: boolean;
+  /** Controlled ticks (cook mode keeps them while the list is closed and reopened). */
+  checked?: Set<string>;
+  onToggle?: (id: string) => void;
 }) {
   const { t, i18n } = useTranslation();
   const { colors } = useTheme();
-  const [checked, setChecked] = useState<Set<string>>(new Set());
+  const [own, setOwn] = useState<Set<string>>(new Set());
+  const checked = checkedProp ?? own;
+  const toggle = (id: string) => {
+    if (onToggle) return onToggle(id);
+    setOwn((s) => {
+      const n = new Set(s);
+      if (n.has(id)) n.delete(id);
+      else n.add(id);
+      return n;
+    });
+  };
   if (!ingredients.length) {
     return (
       <Text color="textMuted" variant="callout">
@@ -64,12 +79,7 @@ export function IngredientList({
               disabled={!checkable}
               onPress={() => {
                 haptic.selection();
-                setChecked((s) => {
-                  const n = new Set(s);
-                  if (n.has(ing.id)) n.delete(ing.id);
-                  else n.add(ing.id);
-                  return n;
-                });
+                toggle(ing.id);
               }}
               style={[styles.ingRow, { borderBottomColor: colors.line }]}
             >
@@ -107,47 +117,82 @@ export function StepIngredients({
   factor,
   system,
   large = false,
+  checked,
+  onToggle,
 }: {
   text: string;
   ingredients: Ingredient[];
   factor: number;
   system: UnitSystem;
   large?: boolean;
+  /** Cook mode: each ingredient can be ticked once it is weighed or added. */
+  checked?: Set<string>;
+  onToggle?: (id: string) => void;
 }) {
   const { t, i18n } = useTranslation();
   const { colors } = useTheme();
   const used = stepIngredients(text, ingredients);
   if (!used.length) return null;
+  const label = (i: Ingredient) => {
+    const f = formatIngredient(i, factor, i18n.language as Locale, system);
+    return [f.amount, f.name].filter(Boolean).join(' ');
+  };
   return (
     <View
       style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space.xs }}
-      accessible
-      accessibilityLabel={`${t('cook.stepIngredients')} : ${used
-        .map((i) => {
-          const f = formatIngredient(i, factor, i18n.language as Locale, system);
-          return [f.amount, f.name].filter(Boolean).join(' ');
-        })
-        .join(', ')}`}
+      accessible={!onToggle}
+      accessibilityLabel={
+        onToggle ? undefined : `${t('cook.stepIngredients')} : ${used.map(label).join(', ')}`
+      }
     >
       {used.map((i) => {
         const f = formatIngredient(i, factor, i18n.language as Locale, system);
-        return (
-          <View
-            key={i.id}
-            style={[
-              styles.stepIng,
-              { backgroundColor: colors.primarySoft },
-              large && { paddingVertical: 6, paddingHorizontal: 12 },
-            ]}
-          >
+        const done = checked?.has(i.id) ?? false;
+        const chip = (
+          <>
+            {onToggle ? (
+              <Icon
+                name={done ? 'checkmark-circle' : 'ellipse-outline'}
+                size={large ? 20 : 16}
+                color="primary"
+              />
+            ) : null}
             {f.amount ? (
               <Text variant={large ? 'bodyStrong' : 'caption'} weight="700" color="primary">
                 {f.amount}
               </Text>
             ) : null}
-            <Text variant={large ? 'body' : 'caption'} color="primary">
+            <Text
+              variant={large ? 'body' : 'caption'}
+              color="primary"
+              style={done ? { textDecorationLine: 'line-through' } : undefined}
+            >
               {f.name}
             </Text>
+          </>
+        );
+        const style = [
+          styles.stepIng,
+          { backgroundColor: colors.primarySoft, opacity: done ? 0.6 : 1 },
+          large && { paddingVertical: 6, paddingHorizontal: 12 },
+        ];
+        return onToggle ? (
+          <Pressable
+            key={i.id}
+            accessibilityRole="checkbox"
+            accessibilityState={{ checked: done }}
+            accessibilityLabel={label(i)}
+            onPress={() => {
+              haptic.selection();
+              onToggle(i.id);
+            }}
+            style={[style, { minHeight: 44, alignItems: 'center' }]}
+          >
+            {chip}
+          </Pressable>
+        ) : (
+          <View key={i.id} style={style}>
+            {chip}
           </View>
         );
       })}

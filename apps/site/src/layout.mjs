@@ -7,11 +7,11 @@ export const LANGS = ['fr', 'en'];
 export const LANG_NAMES = { fr: 'Français', en: 'English' };
 
 /** Minimal, dependency-free page shell sharing the app's palette (light + dark). */
-export function page({ title, lang, body, nav, description = '' }) {
+export function page({ title, lang, body, nav, description = '', head = '' }) {
   return `<!doctype html><html lang="${esc(lang)}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${esc(title)} · PepperedApron</title>
 <meta name="description" content="${esc(description)}">
-<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<link rel="icon" href="/icon.svg" type="image/svg+xml">${head}
 <style>
 :root{--bg:#F7F1E6;--card:#FFFDF8;--ink:#1F2A24;--muted:#646962;--primary:#1F4D3A;--accent:#A84A1A;--line:#E8DFCF}
 @media (prefers-color-scheme:dark){:root{--bg:#121814;--card:#1C241F;--ink:#F2ECE1;--muted:#A89F92;--primary:#86C1A2;--accent:#E8894F;--line:#2C362F}}

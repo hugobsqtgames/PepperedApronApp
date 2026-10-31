@@ -20,6 +20,7 @@ import {
   planTemplateDataSchema,
   priceDataSchema,
   priceId,
+  recipeEquipment,
   recipeSeasons,
   templateFromWeek,
   toIsoDate,
@@ -338,6 +339,7 @@ export class Repos {
       updatedAt: r.updatedAt,
       diets: dietTags(r.data.ingredients.map((i) => i.name)),
       notes: [r.data.notes, r.data.personalNote, r.data.tips].filter(Boolean).join(' '),
+      equipment: recipeEquipment(r.data),
       record: r,
     }));
   }

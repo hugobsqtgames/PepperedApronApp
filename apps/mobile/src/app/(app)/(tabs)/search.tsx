@@ -4,9 +4,14 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import {
+  addDays,
   DIET_TAGS,
   DIFFICULTIES,
   EMPTY_FILTERS,
+  EQUIPMENT,
+  ingredientKey,
+  toIsoDate,
+  type Equipment,
   isActiveSearch,
   RECIPE_CATEGORIES,
   searchRecipes,
@@ -32,8 +37,9 @@ import {
   Segmented,
   Text,
   TextField,
+  useToast,
 } from '../../../ui';
-import { inBackground } from '../../../lib/errors';
+import { errorMessage, inBackground } from '../../../lib/errors';
 
 const TIMES = [15, 30, 45, 60];
 
@@ -42,14 +48,20 @@ export default function Search() {
   const { colors } = useTheme();
   const repos = useRepos();
   const layout = useLayout();
+  const toast = useToast();
   const params = useLocalSearchParams<{
     category?: string;
     maxMinutes?: string;
     q?: string;
     season?: string;
+    mode?: string;
+    /** From the pantry: "what can I make with this?" */
+    pantry?: string;
   }>();
   const [excludeInput, setExcludeInput] = useState('');
-  const [mode, setMode] = useState<'search' | 'fridge'>('search');
+  const [mode, setMode] = useState<'search' | 'fridge'>(
+    params.mode === 'fridge' ? 'fridge' : 'search',
+  );
   const [query, setQuery] = useState(params.q ?? '');
   const [debounced, setDebounced] = useState(query);
   const [filters, setFilters] = useState<SearchFilters>(EMPTY_FILTERS);
@@ -76,6 +88,34 @@ export default function Search() {
     const id = setTimeout(() => setDebounced(query), 150);
     return () => clearTimeout(id);
   }, [query]);
+
+  // What is at home, the soonest to expire first: picked in one tap in "My fridge".
+  const pantry = useLive(['pantryItem'], (r) => {
+    const soon = addDays(toIsoDate(new Date()), 3);
+    const seen = new Set<string>();
+    return r
+      .pantryItems()
+      .filter((p) => {
+        const k = ingredientKey(p.data.name);
+        if (!k || seen.has(k)) return false;
+        seen.add(k);
+        return true;
+      })
+      .slice(0, 24)
+      .map((p) => ({
+        name: p.data.name,
+        soon: p.data.expiresOn !== null && p.data.expiresOn <= soon,
+      }));
+  });
+  useEffect(() => {
+    if (params.mode === 'fridge') setMode('fridge');
+    if (params.pantry !== '1') return;
+    // From the pantry: what expires soon, or else everything at home.
+    const soon = pantry.filter((p) => p.soon);
+    const pick = (soon.length ? soon : pantry).slice(0, 15).map((p) => p.name);
+    if (pick.length) setFilters((f) => ({ ...f, fridge: pick }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [params.mode, params.pantry]);
 
   const all = useLive(['recipe', 'favorite'], (r) => ({
     items: r.searchable(),
@@ -119,7 +159,54 @@ export default function Search() {
     haptic.selection();
   };
 
+  const toggleFridge = (name: string) => {
+    haptic.selection();
+    setFilters((f) => ({
+      ...f,
+      fridge: f.fridge.includes(name) ? f.fridge.filter((x) => x !== name) : [...f.fridge, name],
+    }));
+  };
+  /** Equipment: tap once to require it, twice to exclude it ("no oven"), a third time to clear. */
+  const cycleEquipment = (e: Equipment) => {
+    haptic.selection();
+    setFilters((f) => {
+      const need = f.equipment ?? [];
+      const without = f.withoutEquipment ?? [];
+      if (need.includes(e))
+        return {
+          ...f,
+          equipment: need.filter((x) => x !== e),
+          withoutEquipment: e === 'noCook' ? without : [...without, e],
+        };
+      if (without.includes(e)) return { ...f, withoutEquipment: without.filter((x) => x !== e) };
+      return { ...f, equipment: [...need, e] };
+    });
+  };
+  /** The missing ingredients of a recipe go to the shopping list, with their quantities. */
+  const addMissing = async (recipeId: string, missing: string[]) => {
+    try {
+      const rec = repos.recipe(recipeId);
+      if (!rec) return;
+      const list = await repos.ensureActiveList(t('shopping.defaultName'));
+      const names = new Set(missing);
+      const lines = rec.data.ingredients.filter((i) => names.has(i.name));
+      for (const i of lines)
+        await repos.addItem(list.id, {
+          name: i.name,
+          quantity: i.quantity,
+          unit: i.unit,
+          recipeIds: [recipeId],
+        });
+      haptic.success();
+      toast(t('fridge.addedMissing', { count: lines.length }));
+    } catch (e) {
+      toast(errorMessage(e, t), { tone: 'error' });
+    }
+  };
+
   const filterCount =
+    (filters.equipment?.length ?? 0) +
+    (filters.withoutEquipment?.length ?? 0) +
     filters.categories.length +
     filters.seasons.length +
     filters.diets.length +
@@ -188,20 +275,60 @@ export default function Search() {
                 size={48}
               />
             </View>
-            {filters.fridge.length ? (
+            {filters.fridge.filter((f) => !pantry.some((p) => p.name === f)).length ? (
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space.sm }}>
-                {filters.fridge.map((f) => (
-                  <Chip
-                    key={f}
-                    label={`${f}  ✕`}
-                    selected
-                    onPress={() =>
-                      setFilters((x) => ({ ...x, fridge: x.fridge.filter((y) => y !== f) }))
-                    }
-                  />
-                ))}
+                {filters.fridge
+                  .filter((f) => !pantry.some((p) => p.name === f))
+                  .map((f) => (
+                    <Chip key={f} label={`${f}  ✕`} selected onPress={() => toggleFridge(f)} />
+                  ))}
               </View>
             ) : null}
+            {pantry.length ? (
+              <View style={{ gap: space.sm }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <Text variant="bodyStrong" style={{ flex: 1 }}>
+                    {t('fridge.atHome')}
+                  </Text>
+                  <Button
+                    title={t('fridge.useAll')}
+                    variant="ghost"
+                    size="sm"
+                    onPress={() =>
+                      setFilters((f) => ({
+                        ...f,
+                        fridge: [...new Set([...f.fridge, ...pantry.map((p) => p.name)])],
+                      }))
+                    }
+                  />
+                </View>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space.sm }}>
+                  {pantry.map((p) => (
+                    <Chip
+                      key={p.name}
+                      icon={p.soon ? 'alarm-outline' : undefined}
+                      label={p.name}
+                      selected={filters.fridge.includes(p.name)}
+                      onPress={() => toggleFridge(p.name)}
+                    />
+                  ))}
+                </View>
+                {pantry.some((p) => p.soon) ? (
+                  <Text variant="caption" color="textMuted">
+                    {t('fridge.soonHint')}
+                  </Text>
+                ) : null}
+              </View>
+            ) : (
+              <Button
+                title={t('fridge.fillPantry')}
+                icon="file-tray-stacked-outline"
+                variant="ghost"
+                size="sm"
+                onPress={() => router.push('/pantry')}
+                style={{ alignSelf: 'flex-start' }}
+              />
+            )}
           </View>
         )}
       </View>
@@ -247,6 +374,26 @@ export default function Search() {
                 onPress={() => toggle('seasons', s)}
               />
             ))}
+          </ChipRow>
+          <ChipRow>
+            {EQUIPMENT.map((e: Equipment) => {
+              const need = filters.equipment?.includes(e) ?? false;
+              const without = filters.withoutEquipment?.includes(e) ?? false;
+              return (
+                <Chip
+                  key={e}
+                  icon={without ? 'close-circle-outline' : 'flame-outline'}
+                  label={
+                    without
+                      ? t('equipment.without', { name: t(`equipment.${e}`) })
+                      : t(`equipment.${e}`)
+                  }
+                  selected={need || without}
+                  onPress={() => cycleEquipment(e)}
+                  testID={`equipment-${e}`}
+                />
+              );
+            })}
           </ChipRow>
           <ChipRow>
             {DIET_TAGS.map((d: DietTag) => (
@@ -354,15 +501,33 @@ export default function Search() {
               onPress={() => router.push(`/recipe/${item.recipe.id}`)}
             />
             {mode === 'fridge' ? (
-              <Text
-                variant="caption"
-                color={item.missing.length ? 'accent' : 'primary'}
-                numberOfLines={2}
-              >
-                {item.missing.length
-                  ? t('search.missing', { list: item.missing.slice(0, 4).join(', ') })
-                  : t('search.haveAll')}
-              </Text>
+              <>
+                <Text variant="caption" weight="700" color="primary">
+                  {t('fridge.coverage', {
+                    n: item.matchedFridge,
+                    total: item.matchedFridge + item.missing.length,
+                  })}
+                </Text>
+                <Text
+                  variant="caption"
+                  color={item.missing.length ? 'accent' : 'primary'}
+                  numberOfLines={2}
+                >
+                  {item.missing.length
+                    ? t('search.missing', { list: item.missing.slice(0, 4).join(', ') })
+                    : t('search.haveAll')}
+                </Text>
+                {item.missing.length ? (
+                  <Button
+                    title={t('fridge.addMissing')}
+                    icon="cart-outline"
+                    variant="ghost"
+                    size="sm"
+                    onPress={() => void addMissing(item.recipe.id, item.missing)}
+                    style={{ alignSelf: 'flex-start' }}
+                  />
+                ) : null}
+              </>
             ) : null}
           </View>
         )}

@@ -15,6 +15,10 @@ import { Link, router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import {
+  clockOf,
+  cookingPlan,
+  readyTimeChoices,
+  startTimeFor,
   computeTotalMinutes,
   CUISINE_COUNTRY,
   CUISINES,
@@ -44,11 +48,19 @@ import { formatOven, recipeAsText } from '../../../../lib/format';
 import { useLayout } from '../../../../lib/layout';
 import { photoUri, recipePhotoUri } from '../../../../lib/media';
 import { printRecipes, shareRecipesPdf } from '../../../../lib/print';
+import { webRecipeLink } from '../../../../lib/recipeLink';
+import { ENV } from '../../../../services/env';
 import { ShareModal } from '../../../../features/share/ShareModal';
 import { pickImage, preparePhoto, type PhotoSource } from '../../../../services/photos';
 import { clearActivity, setActivity } from '../../../../../modules/ios-integration';
 import { haptic } from '../../../../services/haptics';
 import { timers } from '../../../../services/timers';
+import {
+  cancelStart,
+  pendingStart,
+  scheduleStart,
+  type StartReminder,
+} from '../../../../services/startReminder';
 import { TintScope, useTheme } from '../../../../theme/ThemeProvider';
 import { useDishColor } from '../../../../lib/photoTint';
 import { useCookCelebration } from '../../../../features/celebrate';
@@ -106,6 +118,15 @@ function RecipeDetailBody({ id }: { id: string }) {
   const insets = useSafeAreaInsets();
   const toast = useToast();
   const sheet = useActionSheet();
+  // "Ready at 8 pm": the reminder waiting to say when to start, shown above the cook button.
+  const [startAt, setStartAt] = useState<StartReminder | null>(null);
+  useEffect(() => {
+    let alive = true;
+    void pendingStart(id).then((r) => alive && setStartAt(r));
+    return () => {
+      alive = false;
+    };
+  }, [id]);
   const prompt = usePrompt();
   const locale = i18n.language as Locale;
 
@@ -289,11 +310,57 @@ function RecipeDetailBody({ id }: { id: string }) {
     });
   const results = cooked.filter((c) => c.data.photoKey);
 
+  /**
+   * "Ready at…": the time to start cooking for the meal to be ready at the chosen hour, with a
+   * reminder then; or a meal of several dishes all ready together (plan screen).
+   */
+  const readyAt = () => {
+    const minutes = cookingPlan(
+      [{ id: recipe.id, title: d.title, steps: d.steps, totalMinutes: computeTotalMinutes(d) }],
+      'together',
+    ).minutes;
+    const choose = async (time: string) => {
+      const when = startTimeFor(time, minutes);
+      if (!when) return;
+      const r = await scheduleStart({
+        key: recipe.id,
+        title: d.title,
+        start: when.start,
+        ready: when.ready,
+        url: `/recipe/${recipe.id}`,
+      });
+      if (r === 'denied') toast(t('readyAt.denied'), { tone: 'error' });
+      else if (r === 'now') toast(t('readyAt.startNow'));
+      else {
+        haptic.success();
+        setStartAt({ key: recipe.id, title: d.title, start: when.start, ready: when.ready });
+        toast(t('readyAt.scheduled', { time: clockOf(when.start) }));
+      }
+    };
+    sheet({
+      title: t('readyAt.title'),
+      message: t('readyAt.duration', { time: formatMinutes(minutes, locale) }),
+      options: [
+        ...readyTimeChoices(minutes, new Date(), 5).map((c) => ({
+          label: t('readyAt.option', { ready: c, start: clockOf(startTimeFor(c, minutes)!.start) }),
+          icon: 'time-outline' as const,
+          onPress: () => void choose(c),
+        })),
+        {
+          label: t('readyAt.withOthers'),
+          icon: 'git-network-outline' as const,
+          onPress: () => router.push(`/cook-plan?ids=${recipe.id}&mode=together`),
+        },
+      ],
+    });
+  };
+
   /** Several ways to share: text for any app, an image, a QR code, paper or PDF. */
   const share = () =>
     sheet({
       title: t('recipe.share'),
       options: [
+        { label: t('share.asLink'), icon: 'link-outline', onPress: shareLink },
         { label: t('share.asText'), icon: 'chatbubble-outline', onPress: shareText },
         { label: t('share.asImage'), icon: 'image-outline', onPress: () => setShareMode('card') },
         { label: t('share.asQr'), icon: 'qr-code-outline', onPress: () => setShareMode('qr') },
@@ -309,6 +376,16 @@ function RecipeDetailBody({ id }: { id: string }) {
         },
       ],
     });
+
+  /**
+   * A link to the website that shows the recipe and imports it into the app in one tap; the
+   * recipe is inside the link (after "#", never sent to a server). Too long: sent as text.
+   */
+  const shareLink = () => {
+    const link = webRecipeLink(d, ENV.siteUrl);
+    if (!link) return shareText();
+    void Share.share({ message: `${t('share.linkMessage', { title: d.title })}\n${link.url}` });
+  };
 
   /** Plain text: readable in any app (Messages, WhatsApp, Notes…), no account needed. */
   const shareText = () =>
@@ -898,20 +975,59 @@ function RecipeDetailBody({ id }: { id: string }) {
             },
           ]}
         >
-          <Button
-            title={t('recipe.startCooking')}
-            icon="play"
-            size="lg"
-            full
-            onPress={() =>
-              router.push({
-                pathname: '/recipe/[id]/cook',
-                params: { id: recipe.id, servings: String(current) },
-              })
-            }
-            style={{ maxWidth: 520, alignSelf: 'center', width: '100%' }}
-            testID="start-cooking"
-          />
+          {startAt ? (
+            <View
+              style={[styles.startAt, { backgroundColor: colors.accentSoft }]}
+              accessibilityLiveRegion="polite"
+            >
+              <Icon name="alarm-outline" size={18} color="accent" />
+              <Text variant="callout" style={{ flex: 1 }}>
+                {t('readyAt.banner', {
+                  start: clockOf(startAt.start),
+                  ready: clockOf(startAt.ready),
+                })}
+              </Text>
+              <IconButton
+                icon="close"
+                size={36}
+                label={t('readyAt.cancel')}
+                onPress={() => {
+                  void cancelStart(recipe.id);
+                  setStartAt(null);
+                }}
+              />
+            </View>
+          ) : null}
+          <View
+            style={{
+              flexDirection: 'row',
+              gap: space.sm,
+              maxWidth: 520,
+              alignSelf: 'center',
+              width: '100%',
+            }}
+          >
+            <Button
+              title={t('recipe.startCooking')}
+              icon="play"
+              size="lg"
+              onPress={() =>
+                router.push({
+                  pathname: '/recipe/[id]/cook',
+                  params: { id: recipe.id, servings: String(current) },
+                })
+              }
+              style={{ flex: 1 }}
+              testID="start-cooking"
+            />
+            <IconButton
+              icon="alarm-outline"
+              label={t('readyAt.title')}
+              onPress={readyAt}
+              size={56}
+              testID="ready-at"
+            />
+          </View>
         </View>
       ) : null}
     </View>
@@ -953,5 +1069,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: space.lg,
     paddingTop: space.md,
     borderTopWidth: StyleSheet.hairlineWidth,
+    gap: space.sm,
+  },
+  startAt: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.sm,
+    paddingLeft: space.md,
+    borderRadius: radius.lg,
+    maxWidth: 520,
+    alignSelf: 'center',
+    width: '100%',
   },
 });

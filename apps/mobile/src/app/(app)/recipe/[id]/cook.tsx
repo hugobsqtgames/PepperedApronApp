@@ -16,11 +16,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import {
   detectStepTimer,
-  EMPTY_FILTERS,
   parallelSteps,
   formatClock,
   scaleStepText,
-  searchRecipes,
   stepIngredients,
   voiceCommand,
   type KitchenTimer,
@@ -45,6 +43,8 @@ import { useDishColor } from '../../../../lib/photoTint';
 import { recipePhotoUri } from '../../../../lib/media';
 import { useCookCelebration } from '../../../../features/celebrate';
 import { TimerRings } from '../../../../features/cook/TimerRings';
+import { CookPlanView } from '../../../../features/cook/CookPlanView';
+import { RecipePicker } from '../../../../features/cook/RecipePicker';
 import { pickImage, preparePhoto, type PhotoSource } from '../../../../services/photos';
 import { errorMessage, inBackground } from '../../../../lib/errors';
 import { radius, space } from '../../../../theme/tokens';
@@ -56,7 +56,6 @@ import {
   IconButton,
   Stars,
   Text,
-  TextField,
   ToastProvider,
   useActionSheet,
   usePrompt,
@@ -101,7 +100,8 @@ export default function CookMode() {
 
 function CookModeBody() {
   useKeepAwake();
-  const { id, servings } = useLocalSearchParams<{ id: string; servings?: string }>();
+  const params = useLocalSearchParams<{ id: string; servings?: string; with?: string }>();
+  const { id, servings } = params;
   const celebrate = useCookCelebration();
   const [photoAsked, setPhotoAsked] = useState(false);
   const { t, i18n } = useTranslation();
@@ -114,7 +114,10 @@ function CookModeBody() {
   const insets = useSafeAreaInsets();
   const toast = useToast();
   // Several recipes can be cooked at once (a main and a side): one tab each, each at its step.
-  const [ids, setIds] = useState<string[]>([id]);
+  // Several recipes from the start: a meal or a batch planned on the plan screen.
+  const [ids, setIds] = useState<string[]>(() => [
+    ...new Set([id, ...(params.with ?? '').split(',').filter(Boolean)]),
+  ]);
   const [active, setActive] = useState(id);
   const [indexes, setIndexes] = useState<Record<string, number>>({});
   const { recipes, settings } = useLive(
@@ -128,6 +131,9 @@ function CookModeBody() {
   const [done, setDone] = useState(false);
   const [showIngredients, setShowIngredients] = useState(false);
   const [adding, setAdding] = useState(false);
+  const [showPlan, setShowPlan] = useState(false);
+  // Ingredients ticked while cooking, per recipe: kept when the list is closed and reopened.
+  const [ticked, setTicked] = useState<Record<string, string[]>>({});
   const [listening, setListening] = useState(false);
   const list = useRef<FlatList>(null);
   const running = useTimers();
@@ -239,6 +245,16 @@ function CookModeBody() {
   }
   const steps = recipe.data.steps;
   const total = steps.length;
+  const checked = new Set(ticked[recipe.id] ?? []);
+  const toggleIngredient = (ingId: string) =>
+    setTicked((m) => {
+      const cur = m[recipe.id] ?? [];
+      return {
+        ...m,
+        [recipe.id]: cur.includes(ingId) ? cur.filter((x) => x !== ingId) : [...cur, ingId],
+      };
+    });
+  const ingredientCount = recipe.data.ingredients.length;
   // The number of servings chosen on the recipe: quantities follow, in the steps too.
   const people = Number(servings) > 0 && recipe.id === id ? Number(servings) : recipe.data.servings;
   const factor = people / recipe.data.servings;
@@ -465,11 +481,16 @@ function CookModeBody() {
     <View style={{ gap: space.md }}>
       <Text variant="callout" color="textMuted">
         {t('cook.forPeople', { count: people })}
+        {ingredientCount
+          ? `  ·  ${t('cook.ticked', { n: checked.size, total: ingredientCount })}`
+          : ''}
       </Text>
       <IngredientList
         ingredients={recipe.data.ingredients}
         factor={factor}
         system={settings.unitSystem}
+        checked={checked}
+        onToggle={toggleIngredient}
       />
     </View>
   );
@@ -503,8 +524,8 @@ function CookModeBody() {
         </View>
         {!layout.wide ? (
           <IconButton
-            icon="list-outline"
-            label={t('cook.ingredients')}
+            icon={checked.size && checked.size === ingredientCount ? 'checkbox' : 'list-outline'}
+            label={`${t('cook.ingredients')}, ${t('cook.ticked', { n: checked.size, total: ingredientCount })}`}
             onPress={() => setShowIngredients(true)}
           />
         ) : (
@@ -628,6 +649,8 @@ function CookModeBody() {
                   factor={factor}
                   system={settings.unitSystem}
                   large
+                  checked={checked}
+                  onToggle={toggleIngredient}
                 />
                 {detectStepTimer(item) ? (
                   <Button
@@ -690,6 +713,14 @@ function CookModeBody() {
           onPress={() => setAdding(true)}
           testID="cook-add-recipe"
         />
+        {ids.length > 1 ? (
+          <IconButton
+            icon="git-network-outline"
+            label={t('plan.mealTitle')}
+            onPress={() => setShowPlan(true)}
+            testID="cook-plan"
+          />
+        ) : null}
         <View style={{ flex: 1 }} />
         <Button
           title={t('cook.newTimer')}
@@ -767,75 +798,43 @@ function CookModeBody() {
         presentationStyle="pageSheet"
         onRequestClose={() => setAdding(false)}
       >
-        <AddRecipeSheet exclude={ids} onPick={addRecipe} onClose={() => setAdding(false)} />
-      </Modal>
-    </View>
-  );
-}
-
-/** Choose a second recipe to cook at the same time (a side, a dessert). */
-function AddRecipeSheet({
-  exclude,
-  onPick,
-  onClose,
-}: {
-  exclude: string[];
-  onPick: (id: string) => void;
-  onClose: () => void;
-}) {
-  const { t } = useTranslation();
-  const { colors } = useTheme();
-  const [query, setQuery] = useState('');
-  const items = useLive(['recipe'], (r) => r.searchable(r.library()));
-  const results = (
-    query.trim() ? searchRecipes(items, query, EMPTY_FILTERS).map((x) => x.recipe) : items
-  )
-    .map((r) => r.record)
-    .filter((r) => !exclude.includes(r.id) && r.data.steps.length);
-  return (
-    <View style={{ flex: 1, backgroundColor: colors.background }}>
-      <View style={[styles.top, { paddingTop: space.lg }]}>
-        <Text variant="title2" style={{ flex: 1 }} accessibilityRole="header">
-          {t('cook.addRecipe')}
-        </Text>
-        <IconButton icon="close" label={t('common.close')} onPress={onClose} />
-      </View>
-      <View style={{ paddingHorizontal: space.lg, gap: space.sm }}>
-        <Text variant="callout" color="textMuted">
-          {t('cook.addRecipeHint')}
-        </Text>
-        <TextField
-          icon="search"
-          placeholder={t('search.placeholder')}
-          value={query}
-          onChangeText={setQuery}
-          autoCorrect={false}
+        <RecipePicker
+          title={t('cook.addRecipe')}
+          hint={t('cook.addRecipeHint')}
+          exclude={ids}
+          onPick={addRecipe}
+          onClose={() => setAdding(false)}
         />
-      </View>
-      <FlatList
-        data={results}
-        keyExtractor={(r) => r.id}
-        contentContainerStyle={{ padding: space.lg }}
-        keyboardShouldPersistTaps="handled"
-        renderItem={({ item }) => (
-          <Pressable
-            accessibilityRole="button"
-            onPress={() => onPick(item.id)}
-            style={({ pressed }) => [
-              styles.pickRow,
-              { borderBottomColor: colors.line, opacity: pressed ? 0.7 : 1 },
-            ]}
-          >
-            <Text variant="body" style={{ flex: 1 }} numberOfLines={2}>
-              {item.data.title}
+      </Modal>
+      <Modal
+        visible={showPlan}
+        animationType={a11y.reduceMotion ? 'fade' : 'slide'}
+        presentationStyle="pageSheet"
+        onRequestClose={() => setShowPlan(false)}
+      >
+        <View style={{ flex: 1, backgroundColor: colors.background }}>
+          <View style={[styles.top, { paddingTop: space.lg }]}>
+            <Text variant="title2" style={{ flex: 1 }} accessibilityRole="header">
+              {t('plan.mealTitle')}
             </Text>
-            <Text variant="caption" color="textMuted">
-              {t('cook.stepsCount', { count: item.data.steps.length })}
+            <IconButton icon="close" label={t('common.close')} onPress={() => setShowPlan(false)} />
+          </View>
+          <ScrollView contentContainerStyle={{ padding: space.lg, gap: space.md }}>
+            <Text variant="callout" color="textMuted">
+              {t('plan.mealHint')}
             </Text>
-          </Pressable>
-        )}
-        ListEmptyComponent={<EmptyState emoji="🔎" title={t('search.noResultsTitle')} />}
-      />
+            <CookPlanView
+              recipes={recipes.filter((r): r is NonNullable<typeof r> => !!r)}
+              mode="together"
+              onOpenStep={(item) => {
+                setShowPlan(false);
+                setActive(item.recipeId);
+                setIndexes((m) => ({ ...m, [item.recipeId]: item.stepIndex }));
+              }}
+            />
+          </ScrollView>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -930,14 +929,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: space.md,
     paddingVertical: space.sm,
     borderRadius: radius.lg,
-  },
-  pickRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space.md,
-    minHeight: 56,
-    paddingVertical: space.sm,
-    borderBottomWidth: StyleSheet.hairlineWidth,
   },
   nav: { flexDirection: 'row', gap: space.md, paddingHorizontal: space.lg, paddingTop: space.md },
   tools: {

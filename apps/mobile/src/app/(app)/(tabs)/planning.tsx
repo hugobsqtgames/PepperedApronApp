@@ -67,6 +67,19 @@ export default function Planning() {
     [weekStart, end],
   );
 
+  // Batch cooking: the week's recipes to cook (not leftovers), each once, up to six.
+  const batchIds = [
+    ...new Set(
+      entries
+        .filter((e) => e.data.recipeId && !e.data.leftover && e.data.date >= today)
+        .map((e) => e.data.recipeId!),
+    ),
+  ]
+    .filter((rid) =>
+      [...titles.values()].some((x) => x.recipe?.id === rid && x.recipe.data.steps.length),
+    )
+    .slice(0, 6);
+
   const cell = (d: string, s: MealSlot) =>
     entries.filter((e) => e.data.date === d && e.data.slot === s);
   const add = (d: string, s: MealSlot) =>
@@ -218,13 +231,26 @@ export default function Planning() {
           ))}
         </View>
       ) : null}
-      <Button
-        title={t('planning.toShopping')}
-        icon="cart-outline"
-        variant="secondary"
-        onPress={toShopping}
-        testID="plan-to-shopping"
-      />
+      <View style={{ flexDirection: 'row', gap: space.sm, flexWrap: 'wrap' }}>
+        <Button
+          title={t('planning.toShopping')}
+          icon="cart-outline"
+          variant="secondary"
+          onPress={toShopping}
+          style={{ flexGrow: 1 }}
+          testID="plan-to-shopping"
+        />
+        {batchIds.length >= 2 ? (
+          <Button
+            title={t('plan.batchButton')}
+            icon="layers-outline"
+            variant="secondary"
+            onPress={() => router.push(`/cook-plan?ids=${batchIds.join(',')}&mode=asap`)}
+            style={{ flexGrow: 1 }}
+            testID="plan-batch"
+          />
+        ) : null}
+      </View>
       {entries.length === 0 ? (
         <View style={[styles.hint, { backgroundColor: colors.primarySoft }]}>
           <Text variant="bodyStrong">{t('planning.emptyWeekTitle')}</Text>

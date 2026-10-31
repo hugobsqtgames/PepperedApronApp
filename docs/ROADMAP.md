@@ -62,3 +62,10 @@ Repères : modèle de données `packages/core/src/schemas.ts` (champs ajoutés a
 - [x] **Motivation** : badges (40), rétrospective de l'année partageable (42), carte du monde des cuisines (43).
 - [x] **iPhone** : widgets avec la photo du plat et un minuteur en anneau (45), étape du minuteur dans la Dynamic Island (47). App Apple Watch (50) retirée à la demande.
 - [ ] À vérifier sur appareil : rendu des widgets, transition zoom.
+
+## Lot 9 — Cuisiner plusieurs plats, placard sans saisie (11 idées choisies)
+- [x] **Cuisine** : plusieurs recettes prêtes en même temps (2), « Prêt à quelle heure ? » avec rappel (3), ingrédients cochés en cuisine (6), batch cooking (17).
+- [x] **Placard** : ticket de caisse et codes-barres (10), « Qu'est-ce que je fais avec ça ? » (11).
+- [x] **Imports** : écriture manuscrite (29), captures d'écran nettoyées et « Ma dernière capture » (31).
+- [x] **Recherche** par ingrédient, temps et ustensile (32) ; **partage par lien** ouvrable sans l'app (37) ; **rappel du planning** réglable avec des idées (49).
+- [ ] À vérifier sur appareil : lecture manuscrite et tickets réels, scanner de codes-barres, page `r/` une fois le site publié depuis `main`.

@@ -1,4 +1,5 @@
 import type { DietTag } from './diet';
+import { equipmentMatches, parseEquipmentQuery, type Equipment } from './equipment';
 import type { Difficulty, RecipeCategory, Season } from './enums';
 import { normalizeText, singularize, tokenize } from './text';
 
@@ -17,6 +18,8 @@ export interface SearchableRecipe {
   diets?: DietTag[];
   /** Notes, personal note and tips: searched too, with a low weight. */
   notes?: string;
+  /** Kitchen equipment the recipe needs (see equipment.ts). */
+  equipment?: Equipment[];
 }
 
 export interface SearchFilters {
@@ -30,6 +33,9 @@ export interface SearchFilters {
   /** Ingredients to avoid ("champignons", "lait de coco"). */
   excluded: string[];
   diets: DietTag[];
+  /** Equipment the recipe must use ("air fryer") or must not use ("no oven"). */
+  equipment?: Equipment[];
+  withoutEquipment?: Equipment[];
 }
 
 export const EMPTY_FILTERS: SearchFilters = {
@@ -41,6 +47,8 @@ export const EMPTY_FILTERS: SearchFilters = {
   fridge: [],
   excluded: [],
   diets: [],
+  equipment: [],
+  withoutEquipment: [],
 };
 
 export interface ParsedQuery {
@@ -593,7 +601,10 @@ export function searchRecipes<T extends SearchableRecipe>(
   filters: SearchFilters = EMPTY_FILTERS,
   now: Date = new Date(),
 ): SearchResult<T>[] {
-  const pq = parseSearchQuery(query, now);
+  const eq = parseEquipmentQuery(query);
+  const pq = parseSearchQuery(eq.rest, now);
+  const needEquipment = [...new Set([...(filters.equipment ?? []), ...eq.equipment])];
+  const noEquipment = [...new Set([...(filters.withoutEquipment ?? []), ...eq.without])];
   const maxMinutes = [pq.maxMinutes, filters.maxMinutes].filter((x): x is number => x !== null);
   const maxM = maxMinutes.length ? Math.min(...maxMinutes) : null;
   const difficulty = filters.difficulty ?? pq.difficulty;
@@ -636,6 +647,11 @@ export function searchRecipes<T extends SearchableRecipe>(
     if (pq.excluded.some((x) => tokenMatch([...ix.title, ...ix.ingredients], x) >= 0.8)) continue;
     if (excluded.some((x) => mentions(r, x))) continue;
     if (filters.diets.length && !filters.diets.every((d) => r.diets?.includes(d))) continue;
+    if (
+      (needEquipment.length || noEquipment.length) &&
+      !equipmentMatches(r.equipment ?? [], needEquipment, noEquipment)
+    )
+      continue;
 
     if (pq.categories.length) {
       const catHit = r.category !== null && pq.categories.includes(r.category);
@@ -687,6 +703,8 @@ export function isActiveSearch(query: string, filters: SearchFilters): boolean {
     filters.tags.length > 0 ||
     filters.fridge.length > 0 ||
     (filters.excluded?.length ?? 0) > 0 ||
-    (filters.diets?.length ?? 0) > 0
+    (filters.diets?.length ?? 0) > 0 ||
+    (filters.equipment?.length ?? 0) > 0 ||
+    (filters.withoutEquipment?.length ?? 0) > 0
   );
 }

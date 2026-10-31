@@ -16,6 +16,7 @@ import { errorMessage, inBackground } from '../../lib/errors';
 import { haptic } from '../../services/haptics';
 import { space } from '../../theme/tokens';
 import {
+  Button,
   EmptyState,
   Group,
   IconButton,
@@ -47,6 +48,7 @@ export default function Pantry() {
   const [place, setPlace] = useState<PantryPlace>('pantry');
   const [text, setText] = useState('');
   const items = useLive(['pantryItem'], (r) => r.pantryItems(place), [place]);
+  const total = useLive(['pantryItem'], (r) => r.pantryItems().length);
   const today = toIsoDate(new Date());
   const locale = i18n.language as Locale;
 
@@ -114,6 +116,38 @@ export default function Pantry() {
         <Text variant="callout" color="textMuted">
           {t('pantry.hint')}
         </Text>
+        <View style={{ flexDirection: 'row', gap: space.sm, flexWrap: 'wrap' }}>
+          <Button
+            title={t('pantryScan.receiptButton')}
+            icon="receipt-outline"
+            variant="secondary"
+            size="sm"
+            onPress={() => router.push('/pantry-scan?mode=receipt')}
+            style={{ flexGrow: 1 }}
+            testID="pantry-receipt"
+          />
+          <Button
+            title={t('pantryScan.barcodeButton')}
+            icon="barcode-outline"
+            variant="secondary"
+            size="sm"
+            onPress={() => router.push('/pantry-scan?mode=barcode')}
+            style={{ flexGrow: 1 }}
+            testID="pantry-barcode"
+          />
+        </View>
+        {total ? (
+          <Button
+            title={t('fridge.whatCanIMake')}
+            icon="sparkles-outline"
+            onPress={() => {
+              // The pantry is a modal over the tabs: close it, then show the search tab.
+              router.back();
+              setTimeout(() => router.navigate('/search?mode=fridge&pantry=1'), 50);
+            }}
+            testID="pantry-what-can-i-make"
+          />
+        ) : null}
         <Segmented
           value={place}
           onChange={setPlace}
