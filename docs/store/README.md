@@ -20,8 +20,8 @@ Le texte ne promet que ce que l'app fait réellement (import TikTok/Instagram li
 | Catégorie | Cuisine et boissons (*Food & Drink*, secondaire *Lifestyle*) |
 | Âge | 4+ — aucun contenu généré par d'autres utilisateurs, aucune publicité |
 | Prix | Gratuit, sans publicité, aucun achat intégré |
-| URL d'assistance | `https://pepperedapron.app/<langue>/support/` (FAQ en français et anglais + contact) |
-| Politique de confidentialité | `https://pepperedapron.app/<langue>/privacy/` |
+| URL d'assistance | `https://hugobsqtgames.github.io/PepperedApronApp/<langue>/support/` (FAQ en français et anglais + contact) |
+| Politique de confidentialité | `https://hugobsqtgames.github.io/PepperedApronApp/<langue>/privacy/` |
 | Copyright | © 2026 PepperedApron |
 
 ## Visuels

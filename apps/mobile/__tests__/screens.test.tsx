@@ -597,8 +597,8 @@ describe('journeys: cooking several dishes, the pantry, sharing', () => {
     const { webRecipeLink, linkPayload, draftFromLink } =
       jest.requireActual<typeof import('../src/lib/recipeLink')>('../src/lib/recipeLink');
     const r = repos.recipes()[0]!;
-    const link = webRecipeLink(r.data, 'https://pepperedapron.app')!;
-    expect(link.url.startsWith('https://pepperedapron.app/r/#')).toBe(true);
+    const link = webRecipeLink(r.data, 'https://hugobsqtgames.github.io/PepperedApronApp')!;
+    expect(link.url.startsWith('https://hugobsqtgames.github.io/PepperedApronApp/r/#')).toBe(true);
     const d = draftFromLink(linkPayload(link.url)!)!;
     expect(d.title).toBe(r.data.title);
     expect(d.steps.map((x) => x.text)).toEqual(r.data.steps.map((x) => x.text));

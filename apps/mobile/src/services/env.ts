@@ -10,8 +10,14 @@ const extra = (Constants.expoConfig?.extra ?? {}) as {
 export const ENV = {
   variant: (extra.variant ?? 'development') as 'development' | 'staging' | 'production',
   /** Public website: privacy policy, terms, help (static pages, no server). */
-  siteUrl: (extra.siteUrl ?? 'https://pepperedapron.app').replace(/\/+$/, ''),
-  supportEmail: extra.supportEmail ?? 'support@pepperedapron.app',
+  siteUrl: (extra.siteUrl ?? 'https://hugobsqtgames.github.io/PepperedApronApp').replace(
+    /\/+$/,
+    '',
+  ),
+  /** Empty when there is no support address: the contact page is used instead. */
+  supportEmail: extra.supportEmail ?? '',
+  /** Where to write without e-mail (public page of the project). */
+  supportUrl: 'https://github.com/hugobsqtgames/PepperedApronApp/issues',
   appGroup: extra.appGroup ?? 'group.app.pepperedapron.com.dev',
   appVersion: Constants.expoConfig?.version ?? '2.0.0',
 };

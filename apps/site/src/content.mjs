@@ -106,13 +106,25 @@ export const FAQ = {
   },
 };
 
-const mail = (p) => `<a href="mailto:${p.email}">${p.email}</a>`;
+/** How to write to the publisher: their e-mail address, or else the contact page. */
+export const contactLink = (p, lang = 'fr') =>
+  p.email
+    ? `<a href="mailto:${p.email}">${p.email}</a>`
+    : `<a href="${p.url}">${lang === 'fr' ? 'formulaire de contact' : 'contact page'}</a>`;
+const mail = (p) => contactLink(p, 'fr');
+const mailEn = (p) => contactLink(p, 'en');
+/** No address published: a non-professional publisher, known to the host (LCEN art. 6-III-2). */
+const addr = (p, lang) =>
+  p.address ||
+  (lang === 'fr'
+    ? 'Éditeur non professionnel : coordonnées communiquées à l’hébergeur (art. 6-III-2 de la LCEN)'
+    : 'Non-professional publisher: contact details given to the host (French LCEN, art. 6-III-2)');
 
 export const LEGAL = {
   fr: {
     legal: (p) => ({
       title: 'Mentions légales',
-      html: `<h1>Mentions légales</h1><div class="card"><p><b>Éditeur :</b> ${p.publisher}<br>${p.address}<br>Contact : ${mail(p)}</p><p><b>Hébergement du site :</b> ${p.hosting}</p><p>L’application PepperedApron ne dispose d’aucun serveur : les données des utilisateurs sont stockées sur leurs appareils et, s’ils l’activent, dans leur propre iCloud (Apple).</p><p>L’application, ce site et leur contenu graphique sont protégés par le droit de la propriété intellectuelle.</p></div>`,
+      html: `<h1>Mentions légales</h1><div class="card"><p><b>Éditeur :</b> ${p.publisher}<br>${addr(p, 'fr')}<br>Contact : ${mail(p)}</p><p><b>Hébergement du site :</b> ${p.hosting}</p><p>L’application PepperedApron ne dispose d’aucun serveur : les données des utilisateurs sont stockées sur leurs appareils et, s’ils l’activent, dans leur propre iCloud (Apple).</p><p>L’application, ce site et leur contenu graphique sont protégés par le droit de la propriété intellectuelle.</p></div>`,
     }),
     terms: (p) => ({
       title: "Conditions d'utilisation",
@@ -127,7 +139,7 @@ export const LEGAL = {
       title: 'Politique de confidentialité',
       html: `<h1>Politique de confidentialité</h1><p class="muted">Mise à jour : ${UPDATED}</p><div class="card">
 <h2>En bref</h2><p>PepperedApron n'a ni compte, ni serveur, ni publicité, ni mesure d'audience. Vos recettes, photos, listes, planning et réglages restent sur votre appareil et, si vous l'activez, dans votre iCloud privé. L'éditeur ne reçoit, ne stocke et ne vend aucune de ces données.</p>
-<h2>Responsable de traitement</h2><p>${p.publisher}, ${p.address} — ${mail(p)}</p>
+<h2>Responsable de traitement</h2><p>${p.publisher}, ${addr(p, 'fr')} — ${mail(p)}</p>
 <h2>Données sur votre appareil et dans iCloud</h2><p>Vos contenus sont stockés localement. Sur iPhone et iPad, la synchronisation iCloud (activée par défaut, désactivable dans Réglages → Mes données) les copie dans le conteneur privé de l'app dans votre compte iCloud, géré par Apple (voir la politique de confidentialité d'Apple). L'éditeur n'y a pas accès. Elles sont aussi incluses dans la sauvegarde iCloud de l'appareil si vous l'avez activée.</p>
 <h2>Import depuis un lien</h2><p>Lorsque vous importez une recette depuis un lien, l'app contacte directement le site concerné (ou le service oEmbed de TikTok ou YouTube), comme le ferait un navigateur. Ce site reçoit alors votre adresse IP selon sa propre politique.</p>
 <h2>Photos et texte</h2><p>L'appareil photo et la photothèque ne sont utilisés que lorsque vous le demandez. La lecture du texte d'une photo se fait sur l'appareil ; rien n'est envoyé.</p>
@@ -143,7 +155,7 @@ export const LEGAL = {
   en: {
     legal: (p) => ({
       title: 'Legal notice',
-      html: `<h1>Legal notice</h1><div class="card"><p><b>Publisher:</b> ${p.publisher}<br>${p.address}<br>Contact: ${mail(p)}</p><p><b>Website hosting:</b> ${p.hosting}</p><p>The PepperedApron app has no server: user data is stored on their devices and, if they turn it on, in their own iCloud (Apple).</p><p>The app, this website and their artwork are protected by intellectual property law.</p></div>`,
+      html: `<h1>Legal notice</h1><div class="card"><p><b>Publisher:</b> ${p.publisher}<br>${addr(p, 'en')}<br>Contact: ${mailEn(p)}</p><p><b>Website hosting:</b> ${p.hosting}</p><p>The PepperedApron app has no server: user data is stored on their devices and, if they turn it on, in their own iCloud (Apple).</p><p>The app, this website and their artwork are protected by intellectual property law.</p></div>`,
     }),
     terms: (p) => ({
       title: 'Terms of use',
@@ -152,13 +164,13 @@ export const LEGAL = {
 <h2>2. Your data</h2><p>Your content is stored only on your device and, if you turn on sync, in your iCloud, a service provided by Apple under its own terms. The publisher has no access to it and cannot restore it: keep iCloud on or export a backup regularly (Settings → My data).</p>
 <h2>3. Content</h2><p>You keep ownership of the recipes and photos you add. Content imported from other services remains subject to its authors' rights and is meant for your personal use.</p>
 <h2>4. Liability</h2><p>Check allergens, cooking times and temperatures. The app is provided "as is", without any availability guarantee; the publisher cannot be held liable for the loss of data stored on your device or in your iCloud.</p>
-<h2>5. Governing law</h2><p>French law. Contact: ${mail(p)}.</p></div>`,
+<h2>5. Governing law</h2><p>French law. Contact: ${mailEn(p)}.</p></div>`,
     }),
     privacy: (p) => ({
       title: 'Privacy policy',
       html: `<h1>Privacy policy</h1><p class="muted">Updated: ${UPDATED}</p><div class="card">
 <h2>In short</h2><p>PepperedApron has no account, no server, no ads and no analytics. Your recipes, photos, lists, meal plan and settings stay on your device and, if you turn it on, in your private iCloud. The publisher never receives, stores or sells any of this data.</p>
-<h2>Controller</h2><p>${p.publisher}, ${p.address} — ${mail(p)}</p>
+<h2>Controller</h2><p>${p.publisher}, ${addr(p, 'en')} — ${mailEn(p)}</p>
 <h2>Data on your device and in iCloud</h2><p>Your content is stored locally. On iPhone and iPad, iCloud sync (on by default, can be turned off in Settings → My data) copies it to the app's private container in your iCloud account, operated by Apple (see Apple's privacy policy). The publisher has no access to it. They are also included in the device's iCloud Backup if you turned it on.</p>
 <h2>Importing from a link</h2><p>When you import a recipe from a link, the app contacts that website (or the TikTok or YouTube oEmbed service) directly, like a browser would. That website then receives your IP address under its own policy.</p>
 <h2>Photos and text</h2><p>The camera and photo library are only used when you ask. Reading the text of a photo happens on the device; nothing is sent.</p>
@@ -166,7 +178,7 @@ export const LEGAL = {
 <h2>Recipes sent as a link</h2><p>A recipe sent “as a link” is contained in the link itself, after the “#” sign. That part of the link is never sent to this website’s server: the page reads it and shows it in the browser of the person who opens it.</p>
 <h2>Microphone, voice and Reminders</h2><p>The microphone is only used if you dictate a recipe. Your voice, like the sound of an imported video, is transcribed by the iPhone's speech recognition on the device, then the recording is deleted; nothing is sent. Access to the Reminders app is only requested if you send your shopping list there.</p>
 <h2>Contacting us</h2><p>If you e-mail us, we use your address and message only to answer you and keep them for at most 3 years.</p>
-<h2>Your rights</h2><p>Your content is under your control: export and deletion in Settings → My data. For any question, or to exercise your rights of access, rectification, erasure, and objection: ${mail(p)}. You may lodge a complaint with your data protection authority.</p>
+<h2>Your rights</h2><p>Your content is under your control: export and deletion in Settings → My data. For any question, or to exercise your rights of access, rectification, erasure, and objection: ${mailEn(p)}. You may lodge a complaint with your data protection authority.</p>
 <h2>Children</h2><p>The app does not knowingly collect personal data from children.</p>
 <h2>This website</h2><p>This website uses no cookies or trackers.</p></div>`,
     }),

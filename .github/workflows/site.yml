@@ -1,10 +1,12 @@
 name: Website
 
-# Static pages required by the stores (privacy policy, support URL), published with GitHub Pages.
-# Repository variables: LEGAL_PUBLISHER, LEGAL_ADDRESS, LEGAL_HOSTING, SUPPORT_EMAIL, SITE_DOMAIN.
+# Static pages required by the stores (privacy policy, support URL), published with GitHub Pages
+# at https://<owner>.github.io/<repo>/ (or at SITE_DOMAIN when one is set).
+# Optional repository variables: LEGAL_PUBLISHER (default "PepperedApron"), LEGAL_ADDRESS,
+# LEGAL_HOSTING (default GitHub), SUPPORT_EMAIL (else the repository's issues page), SITE_DOMAIN.
 on:
   push:
-    branches: [main]
+    branches: [main, claude/pepperedapron-mobile-app-5vzcqv]
     paths: ['apps/site/**', '.github/workflows/site.yml']
   workflow_dispatch:
 
@@ -31,11 +33,14 @@ jobs:
       - name: Build
         working-directory: apps/site
         env:
-          LEGAL_PUBLISHER: ${{ vars.LEGAL_PUBLISHER }}
+          LEGAL_PUBLISHER: ${{ vars.LEGAL_PUBLISHER || 'PepperedApron' }}
           LEGAL_ADDRESS: ${{ vars.LEGAL_ADDRESS }}
           LEGAL_HOSTING: ${{ vars.LEGAL_HOSTING }}
           SUPPORT_EMAIL: ${{ vars.SUPPORT_EMAIL }}
+          SUPPORT_URL: ${{ format('https://github.com/{0}/issues', github.repository) }}
           SITE_DOMAIN: ${{ vars.SITE_DOMAIN }}
+          # Without a domain of its own the site lives under /<repo>/.
+          SITE_BASE: ${{ vars.SITE_DOMAIN == '' && format('/{0}', github.event.repository.name) || '' }}
         run: node src/build.mjs --out dist --production
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3

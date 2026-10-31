@@ -55,7 +55,9 @@ export async function lookupBarcode(
       {
         signal: ctrl.signal,
         // Open Food Facts asks apps to name themselves.
-        headers: { 'User-Agent': `PepperedApron/${ENV.appVersion} (${ENV.supportEmail})` },
+        headers: {
+          'User-Agent': `PepperedApron/${ENV.appVersion} (${ENV.supportEmail || ENV.siteUrl})`,
+        },
       },
     );
     if (res.status === 404) return null;

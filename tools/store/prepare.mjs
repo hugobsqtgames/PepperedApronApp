@@ -1,6 +1,6 @@
 // Prepares the App Store listing for fastlane deliver, from the repository's single source:
 // docs/store/listings.json (texts) and tools/brand/preview/out (screenshots, see tools/brand).
-//   SITE_URL=https://pepperedapron.app node tools/store/prepare.mjs [outDir] [--texts-only]
+//   SITE_URL=https://example.org node tools/store/prepare.mjs [outDir] [--texts-only]
 // Writes <outDir>/metadata/<locale>/*.txt and <outDir>/screenshots/<locale>/*.png.
 import fs from 'node:fs';
 import path from 'node:path';
@@ -12,7 +12,10 @@ const textsOnly = args.includes('--texts-only');
 const out = path.resolve(
   args.find((a) => !a.startsWith('--')) ?? path.join(root, 'tools/store/out'),
 );
-const site = (process.env.SITE_URL ?? 'https://pepperedapron.app').replace(/\/+$/, '');
+const site = (process.env.SITE_URL ?? 'https://hugobsqtgames.github.io/PepperedApronApp').replace(
+  /\/+$/,
+  '',
+);
 const listings = JSON.parse(fs.readFileSync(path.join(root, 'docs/store/listings.json'), 'utf8'));
 const shots = path.join(root, 'tools/brand/preview/out');
 

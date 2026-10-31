@@ -612,6 +612,9 @@ const fr = {
     deleteAllDone: 'Toutes vos données ont été effacées.',
   },
   contact: {
+    bodyPage:
+      'Une question, un bug, une idée ? Écrivez-nous sur la page de contact du projet (message public, sans données personnelles), nous répondons à chaque message.',
+    writePage: 'Ouvrir la page de contact',
     title: 'Nous écrire',
     faq: 'Questions fréquentes',
     q1: 'Mes recettes sont-elles privées ?',

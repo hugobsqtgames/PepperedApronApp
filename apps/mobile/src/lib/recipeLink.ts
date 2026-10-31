@@ -95,11 +95,15 @@ export function webRecipeLink(
   return short.length <= MAX_WEB_LINK_LENGTH ? { url: short, complete: false } : null;
 }
 
+/** The website's recipe page, on its free GitHub Pages address or on a domain of its own. */
+const WEB_LINK =
+  /^https:\/\/(?:(?:www\.)?pepperedapron\.app|hugobsqtgames\.github\.io\/PepperedApronApp)\/r\/?#([A-Za-z0-9_-]+)$/;
+
 /** The recipe data in a shared link (app link, or a web link of the website), or null. */
 export function linkPayload(url: string): string | null {
   const app = url.startsWith(LINK_PREFIX) ? url.slice(LINK_PREFIX.length) : null;
   if (app) return app.split(/[?#]/)[0] || null;
-  const m = /^https:\/\/(?:www\.)?pepperedapron\.app\/r\/?#([A-Za-z0-9_-]+)$/.exec(url.trim());
+  const m = WEB_LINK.exec(url.trim());
   return m ? m[1]! : null;
 }
 

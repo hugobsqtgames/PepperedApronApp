@@ -11,8 +11,8 @@ Lues au moment du build par `app.config.ts`. Les variables `EXPO_PUBLIC_*` sont 
 | `APP_VARIANT` | `development`, `staging`, `production` (identifiant, nom, App Group, conteneur iCloud) |
 | `APPLE_TEAM_ID` | équipe Apple (signature des cibles, App Group, iCloud) ; par défaut `336SM4755V` |
 | `EAS_PROJECT_ID` | projet EAS (builds) |
-| `SITE_URL` | site public (défaut `https://pepperedapron.app`) : l'app y ouvre l'aide et les pages légales |
-| `SUPPORT_EMAIL` | adresse affichée dans Aide (défaut `support@pepperedapron.app`) |
+| `SITE_URL` | site public (défaut `https://hugobsqtgames.github.io/PepperedApronApp`, GitHub Pages gratuit) : l'app y ouvre l'aide et les pages légales |
+| `SUPPORT_EMAIL` | adresse affichée dans Aide (vide par défaut : l'Aide ouvre alors la page de contact du projet, les issues GitHub) |
 
 Pour les builds EAS, ces valeurs se définissent dans les **environnements EAS** (`development`, `preview`, `production`) : `eas env:create --environment production --name APPLE_TEAM_ID --value … --visibility plaintext`. Le seul secret côté GitHub est `EXPO_TOKEN`.
 
@@ -26,7 +26,7 @@ Variables du dépôt GitHub (*Settings → Secrets and variables → Actions →
 | `LEGAL_ADDRESS` | adresse postale de l'éditeur |
 | `LEGAL_HOSTING` | hébergeur du site (ex. « GitHub, Inc., 88 Colin P. Kelly Jr. Street, San Francisco, CA 94107, États-Unis ») |
 | `SUPPORT_EMAIL` | contact (aide, confidentialité) |
-| `SITE_DOMAIN` | domaine personnalisé (`pepperedapron.app`) → fichier `CNAME` |
+| `SITE_DOMAIN` | domaine personnalisé (facultatif) → fichier `CNAME` ; sans domaine, le site est servi sous `/<dépôt>/` (`SITE_BASE`) |
 
 Le build de production (`--production`) **échoue** si l'une des quatre premières manque.
 

@@ -1,6 +1,6 @@
 # Données personnelles et RGPD
 
-Principe : **l'éditeur ne détient aucune donnée des utilisateurs.** Pas de compte, pas de serveur, pas de publicité, pas de mesure d'audience. Les contenus restent sur l'appareil et, sur iPhone/iPad, dans l'iCloud privé de l'utilisateur (opéré par Apple, inaccessible à l'éditeur). Texte public : `https://pepperedapron.app/<langue>/privacy/` (FR/EN, généré par `apps/site` à partir des variables `LEGAL_*`).
+Principe : **l'éditeur ne détient aucune donnée des utilisateurs.** Pas de compte, pas de serveur, pas de publicité, pas de mesure d'audience. Les contenus restent sur l'appareil et, sur iPhone/iPad, dans l'iCloud privé de l'utilisateur (opéré par Apple, inaccessible à l'éditeur). Texte public : `https://hugobsqtgames.github.io/PepperedApronApp/<langue>/privacy/` (FR/EN, généré par `apps/site` à partir des variables `LEGAL_*`).
 
 ## Inventaire
 

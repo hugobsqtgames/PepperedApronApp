@@ -65,8 +65,10 @@ const CAMERA_USAGE =
   'PepperedApron uses the camera to add a photo to your recipes, read a printed or handwritten recipe, a receipt, or the barcode of a product in your pantry.';
 const PHOTOS_USAGE =
   'PepperedApron accesses your photos to illustrate your recipes or import a recipe from an image or your latest screenshot.';
-const siteUrl = process.env.SITE_URL ?? 'https://pepperedapron.app';
-const supportEmail = process.env.SUPPORT_EMAIL ?? 'support@pepperedapron.app';
+// Free GitHub Pages address of the website (apps/site); SITE_URL for a domain of its own.
+const siteUrl = process.env.SITE_URL ?? 'https://hugobsqtgames.github.io/PepperedApronApp';
+// Empty: the help screen sends people to the contact page instead of an e-mail address.
+const supportEmail = process.env.SUPPORT_EMAIL ?? '';
 
 const appName =
   variant === 'production'

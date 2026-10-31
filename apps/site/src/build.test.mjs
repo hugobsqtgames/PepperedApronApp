@@ -48,3 +48,34 @@ test('the shared recipe page reads the recipe from the link, with no HTML inject
   assert.doesNotMatch(html, /innerHTML/);
   assert.match(html, /noindex/);
 });
+
+test('on the free GitHub Pages address, every link stays under the repository path', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pa-site-base-'));
+  build(
+    dir,
+    {
+      SITE_BASE: '/PepperedApronApp',
+      LEGAL_PUBLISHER: 'PepperedApron',
+      SUPPORT_URL: 'https://github.com/x/y/issues',
+    },
+    true,
+  );
+  for (const f of [
+    'index.html',
+    'fr/index.html',
+    'en/privacy/index.html',
+    'fr/legal/index.html',
+    'r/index.html',
+    '404.html',
+  ]) {
+    const html = fs.readFileSync(path.join(dir, f), 'utf8');
+    for (const [, href] of html.matchAll(/(?:href|src)="(\/[^"]*)"/g))
+      assert.ok(href.startsWith('/PepperedApronApp/'), `${f}: ${href}`);
+  }
+  assert.match(fs.readFileSync(path.join(dir, 'index.html'), 'utf8'), /"\/PepperedApronApp\/"\+/);
+  // No published address: the non-professional mention, and the contact page instead of e-mail.
+  const legal = fs.readFileSync(path.join(dir, 'fr/legal/index.html'), 'utf8');
+  assert.match(legal, /non professionnel/);
+  assert.match(legal, /github\.com\/x\/y\/issues/);
+  assert.match(legal, /GitHub, Inc\., 88 Colin/);
+});

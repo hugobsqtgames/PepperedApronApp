@@ -15,7 +15,7 @@ Dans *Certificates, Identifiers & Profiles* (EAS peut les créer automatiquement
 
 ### Site
 - Activer GitHub Pages (*Settings → Pages → Source : GitHub Actions*), renseigner les variables `LEGAL_*`, `SUPPORT_EMAIL`, `SITE_DOMAIN` ([ENVIRONMENT](ENVIRONMENT.md#site-appssite)) puis lancer *Actions → Website*.
-- Domaine `pepperedapron.app` : enregistrements DNS GitHub Pages, HTTPS forcé. Vérifier `https://pepperedapron.app/fr/privacy/`.
+- Site : GitHub Pages (Settings → Pages → Source « GitHub Actions »), publié à chaque push qui touche `apps/site`. Vérifier `https://hugobsqtgames.github.io/PepperedApronApp/fr/privacy/`. Un domaine à soi plus tard : variable `SITE_DOMAIN` + DNS, puis `SITE_URL` du build et URLs de la fiche.
 
 ### Variables EAS
 `eas env:create` pour chaque environnement (`development`, `preview` = staging, `production`) : voir [ENVIRONMENT.md](ENVIRONMENT.md#application-mobile-appsmobile).
@@ -39,7 +39,7 @@ Build local (Mac) : `APP_VARIANT=production npx expo prebuild --clean && npx exp
 2. Ajouter `"ios": { "ascAppId": "<id numérique>" }` sous `submit.production` dans `eas.json` pour la soumission non interactive.
 3. `eas build -p ios --profile production --auto-submit` → TestFlight.
 4. TestFlight : tests internes, puis groupe externe (revue bêta) — [checklist](#checklist-avant-soumission).
-5. Fiche : textes en français et en anglais, captures iPhone 6,9″ et iPad 13″, URL d'assistance `https://pepperedapron.app/fr/support/`, confidentialité `https://pepperedapron.app/fr/privacy/`, catégorie, classification (4+).
+5. Fiche : textes en français et en anglais, captures iPhone 6,9″ et iPad 13″, URL d'assistance `https://hugobsqtgames.github.io/PepperedApronApp/fr/support/`, confidentialité `https://hugobsqtgames.github.io/PepperedApronApp/fr/privacy/`, catégorie, classification (4+).
 6. **Confidentialité de l'app** (étiquettes) : voir [PRIVACY.md](PRIVACY.md#étiquettes-app-store). Doit correspondre au manifeste `NSPrivacyCollectedDataTypes` d'`app.config.ts`.
 7. Informations pour la revue : aucun compte nécessaire ; notes (import, synchro iCloud, aucune publicité, effacement des données dans Réglages → Mes données).
 8. Soumettre ; publication manuelle ou progressive (*phased release*, 7 jours).

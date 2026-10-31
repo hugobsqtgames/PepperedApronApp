@@ -15,6 +15,8 @@ export default function Help() {
 
   /** No server: messages go through the user's own mail app, with what support needs to help. */
   const write = async () => {
+    // No support address yet: the project's public contact page.
+    if (!ENV.supportEmail) return void WebBrowser.openBrowserAsync(ENV.supportUrl);
     const body = `\n\n—\nPepperedApron ${ENV.appVersion} · ${Platform.OS} ${Platform.Version}`;
     const url = `mailto:${ENV.supportEmail}?subject=${encodeURIComponent('PepperedApron')}&body=${encodeURIComponent(body)}`;
     try {
@@ -54,8 +56,16 @@ export default function Help() {
       </View>
       <View style={{ gap: space.md }}>
         <Text variant="title2">{t('contact.title')}</Text>
-        <Text color="textMuted">{t('contact.body', { email: ENV.supportEmail })}</Text>
-        <Button title={t('contact.write')} icon="mail-outline" onPress={() => void write()} />
+        <Text color="textMuted">
+          {ENV.supportEmail
+            ? t('contact.body', { email: ENV.supportEmail })
+            : t('contact.bodyPage')}
+        </Text>
+        <Button
+          title={ENV.supportEmail ? t('contact.write') : t('contact.writePage')}
+          icon={ENV.supportEmail ? 'mail-outline' : 'chatbubbles-outline'}
+          onPress={() => void write()}
+        />
         <Button
           title={t('contact.website')}
           variant="secondary"

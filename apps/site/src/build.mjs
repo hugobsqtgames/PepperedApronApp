@@ -11,34 +11,36 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { FAQ, LEGAL, UI } from './content.mjs';
-import { esc, LANG_NAMES, LANGS, LOGO_SVG, page } from './layout.mjs';
+import { contactLink, FAQ, LEGAL, UI } from './content.mjs';
+import { base, esc, LANG_NAMES, LANGS, LOGO_SVG, page, setBase } from './layout.mjs';
 import { recipePage } from './recipePage.mjs';
 
 export const PAGES = ['support', 'privacy', 'terms', 'legal'];
 
+/** GitHub Pages, the site's host (name and address required in the legal notice). */
+export const DEFAULT_HOSTING =
+  'GitHub Pages — GitHub, Inc., 88 Colin P. Kelly Jr. Street, San Francisco, CA 94107, USA';
+
+/**
+ * Publisher details. A non-professional publisher may give only a name (their identity is known
+ * to the host): the address is then optional. A way to write is required: an e-mail address
+ * (SUPPORT_EMAIL) or a contact page (SUPPORT_URL).
+ */
 export function publisherFrom(env, production) {
-  const p = {
-    publisher: env.LEGAL_PUBLISHER,
-    address: env.LEGAL_ADDRESS,
-    hosting: env.LEGAL_HOSTING,
-    email: env.SUPPORT_EMAIL,
-  };
-  const missing = Object.entries(p)
-    .filter(([, v]) => !v)
-    .map(([k]) => k);
+  const missing = [
+    !env.LEGAL_PUBLISHER && 'LEGAL_PUBLISHER',
+    !env.SUPPORT_EMAIL && !env.SUPPORT_URL && 'SUPPORT_EMAIL or SUPPORT_URL',
+  ].filter(Boolean);
   if (production && missing.length)
-    throw new Error(
-      `Production site requires LEGAL_PUBLISHER, LEGAL_ADDRESS, LEGAL_HOSTING and SUPPORT_EMAIL (missing: ${missing.join(', ')})`,
-    );
-  return Object.fromEntries(
-    Object.entries({
-      publisher: p.publisher || 'PepperedApron',
-      address: p.address || '—',
-      hosting: p.hosting || 'GitHub Pages (GitHub, Inc.)',
-      email: p.email || 'support@pepperedapron.app',
-    }).map(([k, v]) => [k, esc(v)]),
-  );
+    throw new Error(`Production site requires ${missing.join(' and ')}`);
+  const url = env.SUPPORT_URL && /^https:\/\//.test(env.SUPPORT_URL) ? env.SUPPORT_URL : '';
+  return {
+    publisher: esc(env.LEGAL_PUBLISHER || 'PepperedApron'),
+    address: env.LEGAL_ADDRESS ? esc(env.LEGAL_ADDRESS) : '',
+    hosting: esc(env.LEGAL_HOSTING || DEFAULT_HOSTING),
+    email: env.SUPPORT_EMAIL ? esc(env.SUPPORT_EMAIL) : '',
+    url: esc(url),
+  };
 }
 
 function nav(lang, current) {
@@ -47,13 +49,13 @@ function nav(lang, current) {
     .map(([href, label]) =>
       href.replace('/', '') === current
         ? `<b>${esc(label)}</b>`
-        : `<a href="/${lang}/${href}">${esc(label)}</a>`,
+        : `<a href="${base()}/${lang}/${href}">${esc(label)}</a>`,
     )
     .join('');
   const langs = LANGS.map((l) =>
     l === lang
       ? `<b>${LANG_NAMES[l]}</b>`
-      : `<a href="/${l}/${current ? `${current}/` : ''}" hreflang="${l}">${LANG_NAMES[l]}</a>`,
+      : `<a href="${base()}/${l}/${current ? `${current}/` : ''}" hreflang="${l}">${LANG_NAMES[l]}</a>`,
   ).join('');
   return `<nav>${links}</nav><nav class="langs">${langs}</nav>`;
 }
@@ -70,9 +72,7 @@ export function render(lang, pageName, p) {
     const f = FAQ[lang];
     const body = `<h1>${esc(f.title)}</h1><p class="muted">${esc(f.intro)}</p>${f.qa
       .map(([q, a]) => `<div class="card"><h2>${esc(q)}</h2><p class="muted">${esc(a)}</p></div>`)
-      .join(
-        '',
-      )}<div class="card"><p>${esc(f.contact)} <a href="mailto:${p.email}">${p.email}</a></p></div>`;
+      .join('')}<div class="card"><p>${esc(f.contact)} ${contactLink(p, lang)}</p></div>`;
     return page({ title: f.title, lang, body, nav: nav(lang, 'support'), description: f.intro });
   }
   const doc = LEGAL[lang][pageName](p);
@@ -80,6 +80,7 @@ export function render(lang, pageName, p) {
 }
 
 export function build(out, env = process.env, production = false) {
+  setBase(env.SITE_BASE);
   const p = publisherFrom(env, production);
   fs.rmSync(out, { recursive: true, force: true });
   const write = (rel, content) => {
@@ -97,14 +98,18 @@ export function build(out, env = process.env, production = false) {
     page({
       title: 'PepperedApron',
       lang: 'en',
-      body: `<script>(function(){var l=(navigator.language||'en').slice(0,2);location.replace('/'+(${JSON.stringify(LANGS)}.indexOf(l)>=0?l:'en')+'/');})();</script><p>${LANGS.map((l) => `<a href="/${l}/">${LANG_NAMES[l]}</a>`).join(' · ')}</p>`,
+      body: `<script>(function(){var l=(navigator.language||'en').slice(0,2);location.replace(${JSON.stringify(`${base()}/`)}+(${JSON.stringify(LANGS)}.indexOf(l)>=0?l:'en')+'/');})();</script><p>${LANGS.map((l) => `<a href="${base()}/${l}/">${LANG_NAMES[l]}</a>`).join(' · ')}</p>`,
     }),
   );
   // A recipe shared from the app (the recipe is in the link, after "#").
   write('r/index.html', recipePage());
   write(
     '404.html',
-    page({ title: '404', lang: 'en', body: '<h1>404</h1><p><a href="/">PepperedApron</a></p>' }),
+    page({
+      title: '404',
+      lang: 'en',
+      body: `<h1>404</h1><p><a href="${base()}/">PepperedApron</a></p>`,
+    }),
   );
   write(
     'icon.svg',

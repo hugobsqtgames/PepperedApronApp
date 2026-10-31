@@ -607,6 +607,9 @@ const en: Translations = {
     deleteAllDone: 'All your data has been deleted.',
   },
   contact: {
+    bodyPage:
+      'A question, a bug, an idea? Write to us on the project’s contact page (a public message, no personal data), we answer every message.',
+    writePage: 'Open the contact page',
     title: 'Write to us',
     faq: 'Frequently asked questions',
     q1: 'Are my recipes private?',
