@@ -15,7 +15,7 @@ import type { TFunction } from 'i18next';
 import { useImportQueue } from '../../../hooks/importQueue';
 import { useLayout } from '../../../lib/layout';
 import type { ImportSource } from '../../../services/autoImport';
-import { importQueue, type ImportJob } from '../../../services/importQueue';
+import { importQueue, sourceKey, type ImportJob } from '../../../services/importQueue';
 import { useTheme } from '../../../theme/ThemeProvider';
 import { radius, space } from '../../../theme/tokens';
 import {
@@ -81,7 +81,18 @@ export default function ImportQueueScreen() {
   const state = useImportQueue();
   const wanted = ids ? new Set(ids.split(',')) : null;
   const jobs = wanted ? state.jobs.filter((j) => wanted.has(j.id)) : state.jobs;
-  const single = wanted !== null && jobs.length === 1 ? jobs[0]! : null;
+  const own = wanted !== null && jobs.length === 1 ? jobs[0]! : null;
+  // The same post already imported by another job (shared twice): show that one, it is done.
+  const twin =
+    own && own.status === 'pending'
+      ? state.jobs.find(
+          (j) =>
+            j.id !== own.id &&
+            (j.status === 'done' || j.status === 'duplicate') &&
+            sourceKey(j.source) === sourceKey(own.source),
+        )
+      : undefined;
+  const single = twin ?? own;
   const opened = useRef(false);
   // Opening the screen gets the imports going if they were stopped (app closed meanwhile).
   useEffect(() => {
@@ -112,6 +123,8 @@ export default function ImportQueueScreen() {
     if (!single || opened.current) return;
     if (single.status !== 'done' && single.status !== 'duplicate') return;
     opened.current = true;
+    // Its twin waiting for nothing is dropped.
+    if (own && own.id !== single.id) void importQueue.remove(own.id);
     router.replace(`/recipe/${single.recipeId}`);
     if (single.status === 'done') toast(t('import.savedToast'));
     else
@@ -125,7 +138,7 @@ export default function ImportQueueScreen() {
           },
         },
       });
-  }, [single, t, toast]);
+  }, [single, own, t, toast]);
 
   const close = () => (router.canGoBack() ? router.back() : router.replace('/'));
   const back = sourceApp(jobs);

@@ -1,4 +1,5 @@
 import {
+  canonicalUrl,
   cleanScreenshotText,
   emptyDraft,
   extractUrls,
@@ -67,7 +68,15 @@ export function sourcesFromShare(p: {
   if (p.pdfs?.[0]) return [{ kind: 'pdf', uri: p.pdfs[0] }];
   if (p.images.length) return [{ kind: 'photos', uris: p.images.slice(0, 10) }];
   if (p.videos[0]) return [{ kind: 'video', uri: p.videos[0], text: p.text }];
-  const urls = [...new Set([...(p.url ? [p.url] : []), ...extractUrls(p.text ?? '')])];
+  // The same post often comes twice (the shared link, and again in the text, with other
+  // tracking parameters): one post, one import.
+  const seen = new Set<string>();
+  const urls = [...(p.url ? [p.url] : []), ...extractUrls(p.text ?? '')].filter((u) => {
+    const k = canonicalUrl(u) ?? u;
+    if (seen.has(k)) return false;
+    seen.add(k);
+    return true;
+  });
   if (urls.length > 1) return urls.map((url) => ({ kind: 'link', url, text: null, title: null }));
   if (urls[0]) return [{ kind: 'link', url: urls[0], text: p.text, title: p.title }];
   if (p.text?.trim()) return [{ kind: 'text', text: p.text, title: p.title }];

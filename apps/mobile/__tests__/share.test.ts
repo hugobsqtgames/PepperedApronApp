@@ -112,3 +112,17 @@ describe('pictures of a video offered as the photo', () => {
     expect(pickFrames([], 6)).toEqual([]);
   });
 });
+
+describe('regression: a reel shared from Instagram stayed "waiting" for 30 minutes', () => {
+  it('the same post received twice (link and text, other tracking) is one import', () => {
+    const sources = sourcesFromShare({
+      url: 'https://www.instagram.com/reel/DPenne123/?igsh=MWx0dW',
+      text: 'Regarde ce reel https://www.instagram.com/reel/DPenne123/?utm_source=ig_web_copy_link',
+      title: null,
+      images: [],
+      videos: [],
+    });
+    expect(sources).toHaveLength(1);
+    expect(sources[0]).toMatchObject({ kind: 'link' });
+  });
+});

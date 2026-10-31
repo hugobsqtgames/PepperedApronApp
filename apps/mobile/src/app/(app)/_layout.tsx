@@ -37,7 +37,8 @@ function useShareIntentRouting() {
     void importQueue
       .add(
         sources.map((source) => ({ source })),
-        { batch: sources.length > 1 },
+        // A few links shared by hand are imported at once; only long lists are paced.
+        { batch: sources.length > 3 },
       )
       .then((ids) => router.push({ pathname: '/import/queue', params: { ids: ids.join(',') } }));
   }, [hasShareIntent, shareIntent, resetShareIntent]);

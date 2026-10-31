@@ -1,6 +1,6 @@
 import { AppState } from 'react-native';
 import { Directory, File, Paths } from 'expo-file-system';
-import { uuidv7, type ReviewNotice } from '@pepperedapron/core';
+import { canonicalUrl, uuidv7, type ReviewNotice } from '@pepperedapron/core';
 import { prepareImport, saveImport, type ImportSource, type ImportStage } from './autoImport';
 import { runtime } from './runtime';
 
@@ -46,8 +46,8 @@ const JOB_TIMEOUT_MS = 4 * 60_000;
 const SAME_SHARE_MS = 2 * 60_000;
 
 /** What identifies a shared item: the same link, text or files. */
-function sourceKey(s: ImportSource): string {
-  if (s.kind === 'link') return `link:${s.url}`;
+export function sourceKey(s: ImportSource): string {
+  if (s.kind === 'link') return `link:${canonicalUrl(s.url) ?? s.url}`;
   if (s.kind === 'text') return `text:${s.text.trim()}`;
   if (s.kind === 'photos') return `photos:${s.uris.join('|')}`;
   return `${s.kind}:${s.uri}`;
