@@ -124,6 +124,8 @@ Cas générés exécutés à chaque `pnpm test`. Toutes les seeds sont fixes et 
 
 ### 5.1 Campagne de stress dev et prod (`pnpm qa:stress`)
 
+Dernière exécution complète : 31 octobre 2026, sur le code du build 10 (après le défaut n° 25). Les 25 étapes sont passées : **933 tests réussis, 0 échec, 98 456 exécutions générées**. Le monkey testing compte 9 600 appuis par variante, et la navigation aléatoire 10 399 écrans en dev et 10 726 en prod. Le nouveau parcours « bibliothèque d'une ancienne version » est inclus. Le tableau ci-dessous est celui de la première campagne (30 octobre).
+
 Exécutée le 30 octobre 2026, après les corrections ci-dessus, avec `STRESS=1`. Chaque étape tourne dans son propre processus. L'app est testée deux fois, avec `APP_VARIANT=development` puis `APP_VARIANT=production` : identifiants, App Group, conteneur iCloud et textes de la variante.
 
 | Étape (par variante pour l'app) | Exécutions | Résultat |
