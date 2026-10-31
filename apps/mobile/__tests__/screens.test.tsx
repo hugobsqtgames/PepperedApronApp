@@ -342,6 +342,9 @@ describe('journeys: what the user does is really saved', () => {
     await tap(screen.getByTestId('cook-finish'));
     await settle();
     expect(repos.cookLogs(r.id).length).toBeGreaterThan(0);
+    // The dish photo is offered first ("Plus tard" goes on).
+    expect(screen.getByText(i18n.t('delight.cook.resultTitle'))).toBeTruthy();
+    await tap(screen.getByTestId('cook-result-later'));
     expect(screen.getByText(i18n.t('cook.doneTitle'))).toBeTruthy();
   });
 

@@ -17,11 +17,11 @@ import { useTranslation } from 'react-i18next';
 import {
   detectStepTimer,
   EMPTY_FILTERS,
+  parallelSteps,
   formatClock,
   scaleStepText,
   searchRecipes,
   stepIngredients,
-  timerState,
   voiceCommand,
   type KitchenTimer,
   type Locale,
@@ -40,7 +40,13 @@ import { useLayout } from '../../../../lib/layout';
 import { haptic } from '../../../../services/haptics';
 import { maybeAskForReview } from '../../../../services/appMoments';
 import { timers } from '../../../../services/timers';
-import { useTheme } from '../../../../theme/ThemeProvider';
+import { TintScope, useTheme } from '../../../../theme/ThemeProvider';
+import { useDishColor } from '../../../../lib/photoTint';
+import { recipePhotoUri } from '../../../../lib/media';
+import { useCookCelebration } from '../../../../features/celebrate';
+import { TimerRings } from '../../../../features/cook/TimerRings';
+import { pickImage, preparePhoto, type PhotoSource } from '../../../../services/photos';
+import { errorMessage, inBackground } from '../../../../lib/errors';
 import { radius, space } from '../../../../theme/tokens';
 import {
   Button,
@@ -54,7 +60,6 @@ import {
   usePrompt,
   useToast,
 } from '../../../../ui';
-import { inBackground } from '../../../../lib/errors';
 
 const TIMER_PRESETS = [1, 3, 5, 10, 15, 20, 30, 45, 60];
 const TEXT_SCALES = [0.85, 1, 1.15, 1.3, 1.5, 1.75];
@@ -68,9 +73,30 @@ function useTimers() {
   return list;
 }
 
+/** Cook mode takes on the colour of the dish, like its recipe page. */
 export default function CookMode() {
+  const { id } = useLocalSearchParams<{ id: string }>();
+  const look = useLive(
+    ['recipe'],
+    (r) => {
+      const x = r.recipe(id);
+      return x ? { uri: recipePhotoUri(x), category: x.data.category } : null;
+    },
+    [id],
+  );
+  const color = useDishColor(look?.uri ?? null, look?.category ?? null);
+  return (
+    <TintScope color={color}>
+      <CookModeBody />
+    </TintScope>
+  );
+}
+
+function CookModeBody() {
   useKeepAwake();
   const { id, servings } = useLocalSearchParams<{ id: string; servings?: string }>();
+  const celebrate = useCookCelebration();
+  const [photoAsked, setPhotoAsked] = useState(false);
   const { t, i18n } = useTranslation();
   const repos = useRepos();
   const sheet = useActionSheet();
@@ -244,7 +270,7 @@ export default function CookMode() {
   const go = (i: number) => {
     const n = Math.max(0, Math.min(total - 1, i));
     if (n === index) return;
-    haptic.light();
+    haptic.tick();
     setIndex(n);
     list.current?.scrollToIndex({ index: n, animated: true });
   };
@@ -262,9 +288,8 @@ export default function CookMode() {
     return true;
   };
   const finish = () => {
-    haptic.success();
-    // Cooking history: one entry per recipe and day.
-    inBackground(repos.logCooked(recipe.id));
+    // Cooking history: one entry per recipe and day (celebrated when it is worth it).
+    void celebrate(() => repos.logCooked(recipe.id)).catch(() => undefined);
     // Another recipe still cooking: carry on with it.
     const next = others[0];
     if (next) {
@@ -304,6 +329,80 @@ export default function CookMode() {
       );
     } else if (cmd === 'stop') void Speech.stop();
   };
+
+  /** "My result": the photo of the dish, on today's entry of the cooking journal. */
+  const resultPhoto = async (source: PhotoSource) => {
+    try {
+      const r = await pickImage(source);
+      if (!r || 'denied' in r) {
+        if (r)
+          toast(t(source === 'camera' ? 'errors.cameraPermission' : 'errors.photoPermission'), {
+            tone: 'error',
+          });
+        return;
+      }
+      const key = await preparePhoto(r.uri);
+      await celebrate(async () => {
+        const log = await repos.logCooked(recipe.id);
+        await repos.setCookPhoto(log.id, key);
+      });
+      setPhotoAsked(true);
+      toast(t('delight.cook.photoSaved'));
+    } catch (e) {
+      toast(errorMessage(e, t), { tone: 'error' });
+    }
+  };
+
+  if (done && !photoAsked) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: colors.background,
+          paddingTop: insets.top,
+          paddingHorizontal: space.xxl,
+          justifyContent: 'center',
+          gap: space.lg,
+        }}
+        testID="cook-result"
+      >
+        <Text style={{ fontSize: 64, textAlign: 'center' }} maxFontSizeMultiplier={1}>
+          📸
+        </Text>
+        <Text variant="title1" align="center" accessibilityRole="header">
+          {t('delight.cook.resultTitle')}
+        </Text>
+        <Text variant="lede" color="textMuted" align="center">
+          {t('delight.cook.resultBody')}
+        </Text>
+        <View style={{ gap: space.sm, marginTop: space.md }}>
+          <Button
+            title={t('delight.cook.takePhoto')}
+            icon="camera"
+            size="lg"
+            full
+            onPress={() => void resultPhoto('camera')}
+            testID="cook-result-camera"
+          />
+          <Button
+            title={t('delight.cook.choosePhoto')}
+            icon="images-outline"
+            variant="secondary"
+            size="lg"
+            full
+            onPress={() => void resultPhoto('library')}
+          />
+          <Button
+            title={t('delight.cook.later')}
+            variant="ghost"
+            full
+            onPress={() => setPhotoAsked(true)}
+            testID="cook-result-later"
+          />
+        </View>
+      </View>
+    );
+  }
 
   if (done) {
     return (
@@ -477,7 +576,7 @@ export default function CookMode() {
             onMomentumScrollEnd={(e) => {
               const i = Math.round(e.nativeEvent.contentOffset.x / paneWidth);
               if (i !== index) {
-                haptic.light();
+                haptic.tick();
                 setIndex(i);
               }
             }}
@@ -486,11 +585,11 @@ export default function CookMode() {
                 style={{ width: paneWidth }}
                 contentContainerStyle={{ padding: space.xxl, gap: space.xl }}
               >
-                {item.group ? (
-                  <Text variant="title3" color="accent">
-                    {item.group}
-                  </Text>
-                ) : null}
+                <Text variant="kicker" color="accent">
+                  {item.group
+                    ? `${t('delight.cook.stepOf', { n: i + 1, total })}  ·  ${item.group}`
+                    : t('delight.cook.stepOf', { n: i + 1, total })}
+                </Text>
                 <Text
                   variant="cook"
                   maxFontSizeMultiplier={1.6}
@@ -499,6 +598,23 @@ export default function CookMode() {
                 >
                   {scaleStepText(item.text, factor, i18n.language as Locale)}
                 </Text>
+                {recipe.data.stepNotes[item.id] ? (
+                  <View
+                    style={[
+                      styles.note,
+                      { borderLeftColor: colors.accent, backgroundColor: colors.accentSoft },
+                    ]}
+                    accessible
+                    accessibilityLabel={`${t('delight.stepNote')}: ${recipe.data.stepNotes[item.id]}`}
+                  >
+                    <Text variant="kicker" color="accent">
+                      {t('delight.stepNote')}
+                    </Text>
+                    <Text variant="quote" style={{ fontSize: 19 * scale, lineHeight: 27 * scale }}>
+                      {recipe.data.stepNotes[item.id]}
+                    </Text>
+                  </View>
+                ) : null}
                 <StepIngredients
                   text={item.text}
                   ingredients={recipe.data.ingredients}
@@ -516,6 +632,7 @@ export default function CookMode() {
                     style={{ alignSelf: 'flex-start' }}
                   />
                 ) : null}
+                <WhileItCooks steps={steps} index={i} factor={factor} onGo={(n) => go(n)} />
               </ScrollView>
             )}
           />
@@ -576,7 +693,7 @@ export default function CookMode() {
           testID="cook-new-timer"
         />
       </View>
-      {running.length ? <TimerTray timers={running} /> : null}
+      {running.length ? <TimerRings list={running} /> : null}
 
       <View
         style={[
@@ -716,100 +833,71 @@ function AddRecipeSheet({
   );
 }
 
-function TimerTray({ timers: list }: { timers: KitchenTimer[] }) {
-  const { t } = useTranslation();
+/**
+ * "Pendant que ça cuit…": during a step that bakes, simmers or rests, the next preparation steps
+ * that can be done meanwhile, one tap away.
+ */
+function WhileItCooks({
+  steps,
+  index,
+  factor,
+  onGo,
+}: {
+  steps: { id: string; text: string; timerSeconds: number | null }[];
+  index: number;
+  factor: number;
+  onGo: (n: number) => void;
+}) {
+  const { t, i18n } = useTranslation();
   const { colors } = useTheme();
-  const now = Date.now();
+  const next = parallelSteps(steps, index);
+  if (!next.length) return null;
   return (
-    <ScrollView
-      horizontal
-      showsHorizontalScrollIndicator={false}
-      contentContainerStyle={{
-        gap: space.sm,
-        paddingHorizontal: space.lg,
-        paddingVertical: space.sm,
-      }}
-    >
-      {list.map((tm) => {
-        const state = timerState(tm, now);
-        const doneT = state === 'done';
-        return (
-          <View
-            key={tm.id}
-            style={[
-              styles.timer,
-              {
-                backgroundColor: doneT ? colors.accent : colors.surfaceRaised,
-                borderColor: colors.line,
-              },
-            ]}
-            accessibilityLiveRegion={doneT ? 'assertive' : 'none'}
-          >
-            <View style={{ gap: 2, maxWidth: 170 }}>
-              <Text
-                variant="caption"
-                numberOfLines={1}
-                style={{ color: doneT ? colors.onAccent : colors.textMuted }}
-              >
-                {tm.label}
-              </Text>
-              <Text
-                variant="title2"
-                style={{
-                  color: doneT ? colors.onAccent : colors.text,
-                  fontVariant: ['tabular-nums'],
-                }}
-              >
-                {doneT ? '✓ 00:00' : formatClock(timers.remaining(tm))}
-              </Text>
-            </View>
-            <View style={{ flexDirection: 'row', gap: 4 }}>
-              {!doneT ? (
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel={state === 'paused' ? t('cook.resume') : t('cook.pause')}
-                  onPress={() =>
-                    void (state === 'paused' ? timers.resume(tm.id) : timers.pause(tm.id))
-                  }
-                  style={styles.timerBtn}
-                  hitSlop={6}
-                >
-                  <Icon name={state === 'paused' ? 'play' : 'pause'} size={20} tint={colors.text} />
-                </Pressable>
-              ) : null}
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel={t('cook.plusMinute')}
-                onPress={() => void timers.extend(tm.id, 60)}
-                style={styles.timerBtn}
-                hitSlop={6}
-              >
-                <Text
-                  variant="caption"
-                  weight="700"
-                  style={{ color: doneT ? colors.onAccent : colors.text }}
-                >
-                  +1
-                </Text>
-              </Pressable>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel={t('cook.stop')}
-                onPress={() => void timers.stop(tm.id)}
-                style={styles.timerBtn}
-                hitSlop={6}
-              >
-                <Icon name="close" size={20} tint={doneT ? colors.onAccent : colors.text} />
-              </Pressable>
-            </View>
-          </View>
-        );
-      })}
-    </ScrollView>
+    <View style={[styles.while, { backgroundColor: colors.primarySoft }]} testID="while-it-cooks">
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.sm }}>
+        <Icon name="hourglass-outline" size={20} color="primary" />
+        <Text variant="title3" color="primary">
+          {t('delight.cook.whileCooking')}
+        </Text>
+      </View>
+      <Text variant="callout" color="textMuted">
+        {t('delight.cook.whileHint')}
+      </Text>
+      {next.map(({ index: n, step }) => (
+        <Pressable
+          key={step.id}
+          accessibilityRole="button"
+          accessibilityLabel={`${t('delight.cook.goTo', { n: n + 1 })}: ${step.text}`}
+          onPress={() => onGo(n)}
+          style={({ pressed }) => [
+            styles.whileRow,
+            { backgroundColor: colors.surface, opacity: pressed ? 0.8 : 1 },
+          ]}
+        >
+          <Text variant="bodyStrong" color="primary">
+            {n + 1}
+          </Text>
+          <Text variant="callout" style={{ flex: 1 }} numberOfLines={3}>
+            {scaleStepText(step.text, factor, i18n.language as Locale)}
+          </Text>
+          <Icon name="arrow-forward" size={18} color="primary" />
+        </Pressable>
+      ))}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  note: { borderLeftWidth: 4, borderRadius: radius.md, padding: space.md, gap: space.xs },
+  while: { gap: space.sm, padding: space.lg, borderRadius: radius.xl },
+  whileRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.md,
+    padding: space.md,
+    borderRadius: radius.lg,
+    minHeight: 48,
+  },
   top: {
     flexDirection: 'row',
     alignItems: 'center',
