@@ -650,20 +650,20 @@ function CookModeBody() {
                 >
                   {scaleStepText(item.text, factor, i18n.language as Locale)}
                 </Text>
-                {recipe.data.stepNotes[item.id] ? (
+                {recipe.data.stepNotes?.[item.id] ? (
                   <View
                     style={[
                       styles.note,
                       { borderLeftColor: colors.accent, backgroundColor: colors.accentSoft },
                     ]}
                     accessible
-                    accessibilityLabel={`${t('delight.stepNote')}: ${recipe.data.stepNotes[item.id]}`}
+                    accessibilityLabel={`${t('delight.stepNote')}: ${recipe.data.stepNotes?.[item.id]}`}
                   >
                     <Text variant="kicker" color="accent">
                       {t('delight.stepNote')}
                     </Text>
                     <Text variant="quote" style={{ fontSize: 19 * scale, lineHeight: 27 * scale }}>
-                      {recipe.data.stepNotes[item.id]}
+                      {recipe.data.stepNotes?.[item.id]}
                     </Text>
                   </View>
                 ) : null}

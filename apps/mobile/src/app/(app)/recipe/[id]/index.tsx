@@ -236,7 +236,7 @@ function RecipeDetailBody({ id }: { id: string }) {
     prompt({
       title: t('delight.stepNoteTitle', { n: i + 1 }),
       message: t('delight.stepNoteHint'),
-      initial: d.stepNotes[s.id] ?? '',
+      initial: d.stepNotes?.[s.id] ?? '',
       multiline: true,
       maxLength: 500,
       allowEmpty: true,

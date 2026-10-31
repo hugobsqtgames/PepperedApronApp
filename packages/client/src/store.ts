@@ -142,10 +142,15 @@ export class LocalStore {
   }
 
   private fromRow(r: RecordRow): LocalRecord {
+    const raw: unknown = JSON.parse(r.data ?? 'null');
+    // Saved by an older version of the app: the fields added since get their default values
+    // (a recipe without "stepNotes" gets {}), so the screens never meet a missing field.
+    // A record the schema refuses is kept as it is rather than lost.
+    const parsed = ENTITY_SCHEMAS[r.entity as SyncEntity]?.safeParse(raw);
     return {
       entity: r.entity as SyncEntity,
       id: r.id,
-      data: JSON.parse(r.data ?? 'null'),
+      data: (parsed?.success ? parsed.data : raw) as LocalRecord['data'],
       hlc: r.hlc,
       updatedAt: hlcToIso(r.hlc),
     };

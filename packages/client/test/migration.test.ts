@@ -13,7 +13,7 @@ import { betterSqliteDriver } from './betterSqliteDriver';
 
 /** Fields added after the first version, per entity (each has a default in the schema). */
 const ADDED: Record<string, string[]> = {
-  recipe: ['rating', 'personalNote', 'review'],
+  recipe: ['rating', 'personalNote', 'review', 'cuisine', 'stepNotes'],
   mealPlanEntry: ['leftover'],
   shoppingItem: ['price'],
   settings: ['firstName', 'cookTextScale', 'cookReadAloud'],
@@ -83,6 +83,42 @@ describe('older data formats', () => {
     store = await LocalStore.open(driver);
     expect((await store.snapshot()).length).toBe(before);
     expect(new Repos(store).recipes().length).toBeGreaterThan(10);
+    driver.close();
+  });
+
+  it('recipes saved on the phone by an older version get the fields added since', async () => {
+    // A recipe saved before step notes existed made cook mode fail ("stepNotes" undefined).
+    const file = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'pa-old-')), 'db.sqlite');
+    let driver = betterSqliteDriver(file);
+    let store = await LocalStore.open(driver);
+    await importData(store, JSON.stringify(demo));
+    const ids = new Repos(store).recipes().map((r) => r.id);
+    const rows = await driver.all<{ id: string; data: string }>(
+      "SELECT id, data FROM records WHERE entity = 'recipe'",
+    );
+    for (const row of rows) {
+      const data = JSON.parse(row.data) as Record<string, unknown>;
+      for (const k of ADDED.recipe!) delete data[k];
+      await driver.run("UPDATE records SET data = ? WHERE entity = 'recipe' AND id = ?", [
+        JSON.stringify(data),
+        row.id,
+      ]);
+    }
+    driver.close();
+    driver = betterSqliteDriver(file);
+    store = await LocalStore.open(driver);
+    const repos = new Repos(store);
+    expect(
+      repos
+        .recipes()
+        .map((r) => r.id)
+        .sort(),
+    ).toEqual([...ids].sort());
+    for (const r of repos.recipes()) {
+      expect(r.data.stepNotes).toEqual({});
+      expect(r.data.rating).toBeNull();
+      expect(r.data.cuisine).toBeNull();
+    }
     driver.close();
   });
 });
