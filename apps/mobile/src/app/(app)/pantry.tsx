@@ -29,6 +29,7 @@ import {
   useToast,
   type IconName,
 } from '../../ui';
+import { Tip } from '../../ui/Tip';
 
 const PLACE_ICONS: Record<PantryPlace, IconName> = {
   pantry: 'file-tray-stacked-outline',
@@ -116,6 +117,7 @@ export default function Pantry() {
         <Text variant="callout" color="textMuted">
           {t('pantry.hint')}
         </Text>
+        <Tip id="pantry" icon="receipt-outline" />
         <View style={{ flexDirection: 'row', gap: space.sm, flexWrap: 'wrap' }}>
           <Button
             title={t('pantryScan.receiptButton')}

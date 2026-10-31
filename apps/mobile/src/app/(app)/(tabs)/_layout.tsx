@@ -5,6 +5,7 @@ import { TabList, TabSlot, TabTrigger, Tabs, type TabTriggerSlotProps } from 'ex
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { useLayout } from '../../../lib/layout';
+import { ImportPill } from '../../../features/ImportPill';
 import { useTheme } from '../../../theme/ThemeProvider';
 import { radius, space } from '../../../theme/tokens';
 import { Icon, Text, type IconName } from '../../../ui';
@@ -212,6 +213,7 @@ export default function TabsLayout() {
         ) : null}
         <View style={{ flex: 1 }}>
           <TabSlot />
+          <ImportPill />
         </View>
         {!layout.sidebar ? (
           <View

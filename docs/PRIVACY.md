@@ -8,6 +8,8 @@ Principe : **l'éditeur ne détient aucune donnée des utilisateurs.** Pas de co
 |---|---|---|---|---|
 | Recettes, photos, favoris, collections, planning, listes, réglages | SQLite + `Documents/photos` sur l'appareil ; conteneur iCloud privé (si activé) ; sauvegarde iCloud de l'appareil (si activée) | l'utilisateur seul (et Apple/Google comme hébergeurs de ses sauvegardes) | — (aucun traitement par l'éditeur) | jusqu'à effacement par l'utilisateur |
 | Page web importée (adresse IP de l'appareil) | site importé, au moment de l'import | ce site | — (requête directe de l'appareil) | selon ce site |
+| Sauvegardes automatiques (copie JSON hebdomadaire des recettes) | `Documents/backups` sur l'appareil (5 dernières) ; sauvegarde iCloud de l'appareil (si activée) | l'utilisateur seul | — | 5 semaines, ou jusqu'à suppression / désactivation |
+| Publication Facebook ou Threads partagée (adresse IP de l'appareil) | Facebook / Threads, au moment de l'import (page publique lue comme un navigateur) | Meta | — (requête directe de l'appareil) | selon Meta |
 | Fichier d'export Instagram choisi par l'utilisateur | lu sur l'appareil (liens des publications enregistrées), non conservé | l'utilisateur seul | — | le temps de l'import |
 | Numéro du code-barres scanné (et adresse IP de l'appareil) | Open Food Facts (base de données libre), au moment du scan | Open Food Facts | — (requête directe de l'appareil, aucune donnée de l'utilisateur) | selon Open Food Facts |
 | Recette envoyée par lien | dans le lien lui-même (après « # ») ; la page `r/` du site l'affiche dans le navigateur du destinataire | l'expéditeur et le destinataire | — | aucune côté éditeur (le serveur ne reçoit jamais cette partie du lien) |

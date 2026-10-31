@@ -272,6 +272,13 @@ const SCREENS: [string, () => { default: () => ReactElement }, () => Record<stri
   ['import link', () => require('../src/app/(app)/import/link'), () => ({})],
   ['import text', () => require('../src/app/(app)/import/text'), () => ({})],
   ['import queue', () => require('../src/app/(app)/import/queue'), () => ({})],
+  ['import review', () => require('../src/app/(app)/import/review'), () => ({ id: ids.recipe! })],
+  [
+    'import review (missing)',
+    () => require('../src/app/(app)/import/review'),
+    () => ({ id: 'nope' }),
+  ],
+  ['tutorial', () => require('../src/app/(app)/tutorial'), () => ({})],
   ['whats new', () => require('../src/app/(app)/whats-new'), () => ({})],
   ['qr link', () => require('../src/app/(app)/r/[data]'), () => ({ data: 'not-a-recipe' })],
   ['profile', () => require('../src/app/(app)/profile/index'), () => ({})],

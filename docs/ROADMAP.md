@@ -69,3 +69,9 @@ Repères : modèle de données `packages/core/src/schemas.ts` (champs ajoutés a
 - [x] **Imports** : écriture manuscrite (29), captures d'écran nettoyées et « Ma dernière capture » (31).
 - [x] **Recherche** par ingrédient, temps et ustensile (32) ; **partage par lien** ouvrable sans l'app (37) ; **rappel du planning** réglable avec des idées (49).
 - [ ] À vérifier sur appareil : lecture manuscrite et tickets réels, scanner de codes-barres, page `r/` une fois le site publié depuis `main`.
+
+## Lot 10 — Premiers pas et imports plus sûrs (9 idées choisies)
+- [x] **Premiers pas** : démarrage guidé en 60 s avec essai de partage réel (1), 10 recettes de bienvenue (2), astuces contextuelles une seule fois (3).
+- [x] **Imports** : écran « Vérifiez la recette » après un partage (5), Facebook et Threads (8), pastille des imports visible partout (10) ; un même reel partagé avec deux liens ne crée plus deux imports (cause du « en attente » sans fin).
+- [x] **Cuisine** : minuteurs intelligents « retournez à mi-cuisson / remuez / arrosez » (23).
+- [x] **Confort** : listes compactes (47), sauvegarde automatique hebdomadaire avec restauration en un toucher (48).

@@ -12,9 +12,23 @@ import {
 } from '@pepperedapron/core';
 import {
   cancelNotification,
+  cancelTimerReminders,
   ensureNotificationPermission,
   scheduleTimerNotification,
+  scheduleTimerReminder,
 } from './notifications';
+
+/** When each reminder of a running timer falls (ms), counted back from its end. */
+function reminderTimes(
+  t: KitchenTimer,
+): { n: number; at: number; kind: 'flip' | 'stir' | 'baste' }[] {
+  if (!t.endsAt || !t.reminders?.length) return [];
+  return t.reminders.map((r, n) => ({
+    n,
+    kind: r.kind,
+    at: t.endsAt! - (t.durationSeconds - r.after) * 1000,
+  }));
+}
 import i18n from '../i18n';
 import { haptic } from './haptics';
 
@@ -29,6 +43,7 @@ const file = () => new File(Paths.document, 'kitchen-timers.json');
 class TimerManager {
   private timers: KitchenTimer[] = [];
   private listeners = new Set<Listener>();
+  private reminderListeners = new Set<(t: KitchenTimer, kind: 'flip' | 'stir' | 'baste') => void>();
   private tick: ReturnType<typeof setInterval> | null = null;
   private notified = new Set<string>();
   private liveActivityId: string | null = null;
@@ -57,6 +72,18 @@ class TimerManager {
   list() {
     return this.timers;
   }
+  /** Reminders during a timer, for the screen to show them ("Retournez maintenant"). */
+  onReminder(l: (t: KitchenTimer, kind: 'flip' | 'stir' | 'baste') => void) {
+    this.reminderListeners.add(l);
+    return () => {
+      this.reminderListeners.delete(l);
+    };
+  }
+  private async scheduleReminders(t: KitchenTimer) {
+    await cancelTimerReminders(t.id);
+    for (const r of reminderTimes(t))
+      await scheduleTimerReminder(t.id, r.n, t.label, r.kind, r.at).catch(() => null);
+  }
   subscribe(l: Listener) {
     this.listeners.add(l);
     return () => {
@@ -78,6 +105,19 @@ class TimerManager {
     this.tick = setInterval(() => {
       const now = Date.now();
       for (const t of this.timers) {
+        // "Turn it over": while the app is open, felt and heard (VoiceOver) at the right time.
+        if (timerState(t, now) === 'running')
+          for (const r of reminderTimes(t)) {
+            const key = `${t.id}:r${r.n}:${r.at}`;
+            if (now >= r.at && now - r.at < 5000 && !this.notified.has(key)) {
+              this.notified.add(key);
+              haptic.timerDone();
+              AccessibilityInfo.announceForAccessibility(
+                i18n.t(`timerReminders.${r.kind}`, { label: t.label }),
+              );
+              for (const l of this.reminderListeners) l(t, r.kind);
+            }
+          }
         if (timerState(t, now) === 'done' && !this.notified.has(t.id)) {
           this.notified.add(t.id);
           haptic.timerDone();
@@ -108,6 +148,7 @@ class TimerManager {
     seconds: number;
     recipeId?: string | null;
     stepIndex?: number | null;
+    reminders?: KitchenTimer['reminders'];
   }) {
     await ensureNotificationPermission();
     const t = createTimer(
@@ -120,7 +161,9 @@ class TimerManager {
       },
       Date.now(),
     );
+    if (p.reminders?.length) t.reminders = p.reminders;
     t.notificationId = await scheduleTimerNotification(t.id, t.label, t.endsAt!);
+    await this.scheduleReminders(t);
     haptic.light();
     await this.update([...this.timers, t]);
     return t;
@@ -132,6 +175,7 @@ class TimerManager {
       this.timers.map(async (t) => {
         if (t.id !== id) return t;
         await cancelNotification(t.notificationId);
+        await cancelTimerReminders(t.id);
         return { ...pauseTimer(t, now), notificationId: null };
       }),
     );
@@ -144,6 +188,7 @@ class TimerManager {
       this.timers.map(async (t) => {
         if (t.id !== id) return t;
         const r = resumeTimer(t, now);
+        await this.scheduleReminders(r);
         return { ...r, notificationId: await scheduleTimerNotification(r.id, r.label, r.endsAt!) };
       }),
     );
@@ -158,6 +203,7 @@ class TimerManager {
         await cancelNotification(t.notificationId);
         this.notified.delete(t.id);
         const r = addTime(timerState(t, now) === 'done' ? { ...t, endsAt: now } : t, seconds, now);
+        await this.scheduleReminders(r);
         return {
           ...r,
           notificationId: r.endsAt
@@ -172,6 +218,7 @@ class TimerManager {
   async stop(id: string) {
     const t = this.timers.find((x) => x.id === id);
     if (t) await cancelNotification(t.notificationId);
+    await cancelTimerReminders(id);
     this.notified.delete(id);
     await this.update(this.timers.filter((x) => x.id !== id));
   }

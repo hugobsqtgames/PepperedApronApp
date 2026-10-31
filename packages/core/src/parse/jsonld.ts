@@ -186,6 +186,8 @@ export function parseHtmlMeta(html: string): {
   image: string | null;
   siteName: string | null;
   author: string | null;
+  /** A public video of the page (og:video), https only. */
+  video?: string | null;
 } {
   const head = html.slice(0, 300_000);
   const meta = (names: string[]): string | null => {
@@ -210,5 +212,8 @@ export function parseHtmlMeta(html: string): {
     image: image && /^https?:\/\//i.test(image) ? image : null,
     siteName: meta(['og:site_name', 'application-name']),
     author: meta(['author', 'article:author']),
+    video: ((v) => (v && /^https:\/\//i.test(v) ? v : null))(
+      meta(['og:video:secure_url', 'og:video:url', 'og:video']),
+    ),
   };
 }

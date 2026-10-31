@@ -51,6 +51,7 @@ import {
   usePrompt,
   useToast,
 } from '../../../ui';
+import { Tip } from '../../../ui/Tip';
 
 type Item = LocalRecord<'shoppingItem'>;
 
@@ -467,6 +468,7 @@ export default function Shopping() {
           testID="shopping-menu"
         />
       </View>
+      <Tip id="shopping" />
       <View style={{ flexDirection: 'row', gap: space.sm, alignItems: 'center', flexWrap: 'wrap' }}>
         {items.length ? (
           <Badge

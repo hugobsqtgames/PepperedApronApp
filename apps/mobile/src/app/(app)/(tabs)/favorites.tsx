@@ -12,6 +12,7 @@ import { radius, space } from '../../../theme/tokens';
 import {
   Button,
   EmptyState,
+  IconButton,
   RecipeCard,
   RecipePhoto,
   Segmented,
@@ -45,6 +46,7 @@ export default function Favorites() {
       ],
     }),
   );
+  const compact = useLive(['settings'], (r) => r.settings().compactLists);
   const cols = layout.sidebar ? Math.max(2, layout.columns - 1) : layout.columns;
   const w = tileWidth(
     layout.sidebar ? layout.width - 260 : layout.width,
@@ -69,9 +71,22 @@ export default function Favorites() {
         paddingBottom: space.md,
       }}
     >
-      <Text variant="title1" accessibilityRole="header">
-        {t('favorites.title')}
-      </Text>
+      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+        <Text variant="title1" accessibilityRole="header" style={{ flex: 1 }}>
+          {t('favorites.title')}
+        </Text>
+        {tab === 'favorites' ? (
+          <IconButton
+            icon={compact ? 'grid-outline' : 'list-outline'}
+            label={compact ? t('compact.tiles') : t('compact.rows')}
+            onPress={() => {
+              haptic.selection();
+              inBackground(repos.updateSettings({ compactLists: !compact }));
+            }}
+            testID="favorites-compact"
+          />
+        ) : null}
+      </View>
       <Segmented
         value={tab}
         onChange={setTab}
@@ -115,28 +130,41 @@ export default function Favorites() {
     return (
       <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.background }}>
         <FlatList
-          key={`f${cols}`}
+          key={compact ? 'f-rows' : `f${cols}`}
           data={data.favorites}
-          numColumns={cols}
+          numColumns={compact ? 1 : cols}
           keyExtractor={(r) => r.id}
           ListHeaderComponent={header}
           columnWrapperStyle={
-            cols > 1 ? { gap: space.md, paddingHorizontal: layout.gutter } : undefined
+            !compact && cols > 1 ? { gap: space.md, paddingHorizontal: layout.gutter } : undefined
           }
-          contentContainerStyle={{ gap: space.lg, paddingBottom: space.huge * 2 }}
-          renderItem={({ item }) => (
-            <RecipeCard
-              zoom
-              recipe={item}
-              width={w}
-              favorite
-              onToggleFavorite={() => {
-                haptic.light();
-                inBackground(repos.toggleFavorite(item.id));
-              }}
-              onPress={() => router.push(`/recipe/${item.id}`)}
-            />
-          )}
+          contentContainerStyle={{
+            gap: compact ? space.xs : space.lg,
+            paddingBottom: space.huge * 2,
+          }}
+          renderItem={({ item }) =>
+            compact ? (
+              <View style={{ paddingHorizontal: layout.gutter }}>
+                <RecipeCard
+                  recipe={item}
+                  variant="row"
+                  onPress={() => router.push(`/recipe/${item.id}`)}
+                />
+              </View>
+            ) : (
+              <RecipeCard
+                zoom
+                recipe={item}
+                width={w}
+                favorite
+                onToggleFavorite={() => {
+                  haptic.light();
+                  inBackground(repos.toggleFavorite(item.id));
+                }}
+                onPress={() => router.push(`/recipe/${item.id}`)}
+              />
+            )
+          }
           ListEmptyComponent={
             <EmptyState
               emoji="💚"

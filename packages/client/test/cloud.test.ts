@@ -1,5 +1,12 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { emptyRecipe, exportData, importData, ImportFormatError, removeOrphanPhotos } from '../src';
+import {
+  emptyRecipe,
+  exportData,
+  importData,
+  ImportFormatError,
+  removeOrphanPhotos,
+  restoreData,
+} from '../src';
 import { FakeCloud, SimDevice, syncAll, TestTime } from './fakes';
 
 const photo = (n: number) => `0190a6f2-0000-7000-8000-${String(n).padStart(12, '0')}.jpg`;
@@ -300,6 +307,22 @@ describe('export and import (backup, moving to a phone without iCloud)', () => {
     expect(newPhone.repos.favoriteRecipes().map((x) => x.data.title)).toEqual(['Couscous']);
     // Importing twice changes nothing.
     expect(await importData(newPhone.store, json)).toBe(0);
+  });
+
+  it('restoring a backup brings back what was deleted since, keeps what was edited', async () => {
+    const kept = await iphone.repos.createRecipe(recipe('Tarte'));
+    const lost = await iphone.repos.createRecipe(recipe('Gratin'));
+    const json = JSON.stringify(await exportData(iphone.store, () => time.ms));
+    await iphone.repos.deleteRecipe(lost.id);
+    await iphone.repos.updateRecipe(kept.id, { title: 'Tarte tatin' });
+    // A plain import does not bring back a recipe deleted after the backup…
+    await importData(iphone.store, json);
+    expect(iphone.repos.recipe(lost.id)).toBeNull();
+    // …a restore does, and the newer title stays.
+    expect(await restoreData(iphone.store, json)).toBeGreaterThanOrEqual(1);
+    expect(iphone.repos.recipe(lost.id)?.data.title).toBe('Gratin');
+    expect(iphone.repos.recipe(kept.id)?.data.title).toBe('Tarte tatin');
+    await expect(restoreData(iphone.store, '{"x":1}')).rejects.toBeInstanceOf(ImportFormatError);
   });
 
   it('rejects files that are not a PepperedApron backup', async () => {

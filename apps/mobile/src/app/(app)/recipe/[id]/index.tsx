@@ -33,6 +33,7 @@ import {
   type Locale,
   type MoldSize,
   type Step,
+  stepReminders,
 } from '@pepperedapron/core';
 import { noticeText, WARNING_NOTICES } from '../../../../features/recipe/notices';
 import { dayMonth } from '../../../../lib/dates';
@@ -83,6 +84,7 @@ import {
   usePrompt,
   useToast,
 } from '../../../../ui';
+import { Tip } from '../../../../ui/Tip';
 
 function moldLabel(m: MoldSize): string {
   return m.shape === 'round' ? `Ø ${m.diameter} cm` : `${m.width} × ${m.length} cm`;
@@ -466,6 +468,7 @@ function RecipeDetailBody({ id }: { id: string }) {
       seconds,
       recipeId: recipe.id,
       stepIndex: i,
+      reminders: stepReminders(s.text, seconds),
     });
     toast(t('recipe.timer', { time: `${Math.round(seconds / 60)} min` }), { tone: 'info' });
   };
@@ -686,6 +689,7 @@ function RecipeDetailBody({ id }: { id: string }) {
 
   const extras = (
     <View style={{ gap: space.md }}>
+      <Tip id="recipe" icon="alarm-outline" />
       <Pressable
         accessibilityRole="button"
         onPress={editNote}

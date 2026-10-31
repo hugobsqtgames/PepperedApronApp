@@ -12,6 +12,7 @@ import {
   startTimeFor,
   type Locale,
   type PlanItem,
+  stepReminders,
 } from '@pepperedapron/core';
 import type { Recipe } from '@pepperedapron/client';
 import { haptic } from '../../services/haptics';
@@ -255,6 +256,7 @@ export function CookPlanView({
                         seconds: i.timerSeconds!,
                         recipeId: i.recipeId,
                         stepIndex: i.stepIndex,
+                        reminders: stepReminders(i.text, i.timerSeconds!),
                       });
                     }}
                   />

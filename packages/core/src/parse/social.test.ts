@@ -294,3 +294,39 @@ describe('regression: a reel shared from Instagram (hook as title, recipe in the
     expect(r.draft.notes ?? '').not.toContain('Fais cuire');
   });
 });
+
+describe('Facebook and Threads posts', () => {
+  const post = [
+    'Avec ce gratin de pâtes tu vas te régaler 😍',
+    'Ingrédients :',
+    '- 300 g de macaronis',
+    '- 20 cl de crème',
+    '- 100 g de gruyère',
+    'Préparation :',
+    '1. Cuire les pâtes 8 min.',
+    '2. Mélanger avec la crème et le gruyère.',
+    '3. Gratiner 15 min à 200 °C.',
+  ].join('&#10;');
+
+  it('a Threads post: the text is the recipe, the dish is the title', async () => {
+    const url = 'https://www.threads.net/@chef/post/C8abcDEF';
+    const page = `<meta property="og:title" content="Chef (@chef) on Threads"><meta property="og:description" content="${post}">`;
+    const r = await importFromUrl(fake({ [url]: { body: page } }), url);
+    expect(r.platform).toBe('threads');
+    expect(r.draft.title).toBe('Gratin de pâtes');
+    expect(r.draft.ingredients).toHaveLength(3);
+    expect(r.draft.steps).toHaveLength(3);
+  });
+
+  it('a Facebook reel: its public video is listened to when the text lacks the method', async () => {
+    const url = 'https://www.facebook.com/reel/123456789';
+    const page =
+      '<meta property="og:title" content="Gratin de pâtes | Facebook">' +
+      '<meta property="og:description" content="Avec ce gratin de pâtes tu vas te régaler 😍">' +
+      '<meta property="og:video" content="https://video.xx.fbcdn.net/v/r.mp4">';
+    const r = await importFromUrl(fake({ [url]: { body: page } }), url);
+    expect(r.platform).toBe('facebook');
+    expect(r.draft.title).toBe('Gratin de pâtes');
+    expect(r).toMatchObject({ videoUrl: 'https://video.xx.fbcdn.net/v/r.mp4', listen: true });
+  });
+});

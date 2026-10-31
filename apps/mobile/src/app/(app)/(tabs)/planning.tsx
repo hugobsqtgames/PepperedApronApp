@@ -32,6 +32,7 @@ import {
   useActionSheet,
   useToast,
 } from '../../../ui';
+import { Tip } from '../../../ui/Tip';
 
 import { WeekSummary } from '../../../features/planning/WeekSummary';
 import { WeekTable } from '../../../features/planning/WeekTable';
@@ -251,6 +252,7 @@ export default function Planning() {
           />
         ) : null}
       </View>
+      <Tip id="planning" />
       {entries.length === 0 ? (
         <View style={[styles.hint, { backgroundColor: colors.primarySoft }]}>
           <Text variant="bodyStrong">{t('planning.emptyWeekTitle')}</Text>

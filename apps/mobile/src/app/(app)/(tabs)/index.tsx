@@ -41,6 +41,7 @@ import {
   Text,
   useToast,
 } from '../../../ui';
+import { Tip } from '../../../ui/Tip';
 
 /** Greeting and question for the moment of the day ("Une idée pour le goûter ?"). */
 function greeting(t: TFunction, firstName: string | null, d = new Date()) {
@@ -261,6 +262,7 @@ export default function Home() {
               {hello.flavor}
             </Text>
           ) : null}
+          <Tip id="home" icon="share-outline" />
         </View>
         {!layout.sidebar ? (
           <IconButton

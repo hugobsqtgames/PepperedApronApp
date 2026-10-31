@@ -17,7 +17,8 @@ import { recipeFromTranscript, vttToLines } from './transcript';
 import { parseRecipeText } from './text';
 import { decodeHtmlEntities } from '../text';
 
-export type ImportPlatform = 'tiktok' | 'instagram' | 'youtube' | 'facebook' | 'pinterest' | 'web';
+export type ImportPlatform =
+  'tiktok' | 'instagram' | 'youtube' | 'facebook' | 'threads' | 'pinterest' | 'web';
 
 export interface ImportResult {
   draft: RecipeDraft;
@@ -76,6 +77,7 @@ export function detectPlatform(url: URL): ImportPlatform {
   if (h.endsWith('instagram.com')) return 'instagram';
   if (h.endsWith('youtube.com') || h === 'youtu.be') return 'youtube';
   if (h.endsWith('facebook.com') || h === 'fb.watch') return 'facebook';
+  if (h.endsWith('threads.net') || h.endsWith('threads.com')) return 'threads';
   if (h.endsWith('pinterest.com') || h.endsWith('pinterest.fr') || h === 'pin.it')
     return 'pinterest';
   return 'web';
@@ -178,8 +180,28 @@ export async function importFromUrl(
   draft.imageUrl = meta.image;
   draft.author = meta.author;
   if (meta.siteName && platform === 'web') draft.source = meta.siteName.slice(0, 100);
+  if ((platform === 'facebook' || platform === 'threads') && meta.description) {
+    // A post: its text is the recipe, read like an Instagram caption; its video, if public, is
+    // listened to on the phone when the text lacks ingredients or steps.
+    const caption = meta.description;
+    mergeCaption(draft, caption);
+    const ogTitle = meta.title
+      ?.replace(/\s*[|·-]\s*(facebook|threads)\s*$/i, '')
+      .replace(/^.*\bon threads$/i, '')
+      .trim();
+    draft.title = titleOf(caption, ogTitle && ogTitle !== caption ? ogTitle : null) ?? draft.title;
+    const complete = draft.ingredients.length > 0 && draft.steps.length > 0;
+    return {
+      draft,
+      platform,
+      completeness: draft.ingredients.length || draft.steps.length ? 'partial' : 'minimal',
+      ...(meta.video
+        ? { videoUrl: meta.video, listen: !complete, language: guessLanguage(caption) }
+        : {}),
+    };
+  }
   if (meta.description) {
-    if (platform === 'facebook' || platform === 'pinterest') mergeCaption(draft, meta.description);
+    if (platform === 'pinterest') mergeCaption(draft, meta.description);
     else draft.description = meta.description.slice(0, 2000);
   }
   return {
@@ -191,7 +213,7 @@ export async function importFromUrl(
 
 const PINTEREST_HOST = /(^|\.)(pinterest\.[a-z.]+|pin\.it|pinimg\.com)$/i;
 const SOCIAL_HOST =
-  /(^|\.)(instagram\.com|tiktok\.com|facebook\.com|fb\.watch|youtube\.com|youtu\.be|pinterest\.[a-z.]+|pin\.it)$/i;
+  /(^|\.)(instagram\.com|tiktok\.com|facebook\.com|fb\.watch|threads\.net|threads\.com|youtube\.com|youtu\.be|pinterest\.[a-z.]+|pin\.it)$/i;
 
 /** Pin number from a pin link ("/pin/123…/", "/pin/titre--123…/") or from its page. */
 export function pinterestPinId(url: URL, html: string | null): string | null {

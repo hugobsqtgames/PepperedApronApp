@@ -1,5 +1,5 @@
 import { DATA_VERSION } from '@pepperedapron/core';
-import type { LocalStore, SyncRecord } from './store';
+import { parseSyncRecord, type LocalStore, type SyncRecord } from './store';
 
 /**
  * A private cloud folder shared by the user's devices (iCloud Drive app container on iOS).
@@ -285,4 +285,34 @@ export async function importData(store: LocalStore, json: string): Promise<numbe
   )
     throw new ImportFormatError();
   return store.merge(parsed.records);
+}
+
+/**
+ * Restore a backup: what it holds and is missing here now (deleted since, or lost with the
+ * phone) comes back; what exists here is kept as it is (newer edits win). Returns the number of
+ * records brought back.
+ */
+export async function restoreData(store: LocalStore, json: string): Promise<number> {
+  let parsed: { format?: unknown; records?: unknown } | null;
+  try {
+    parsed = JSON.parse(json) as typeof parsed;
+  } catch {
+    throw new ImportFormatError();
+  }
+  if (
+    !parsed ||
+    typeof parsed !== 'object' ||
+    (parsed.format !== EXPORT_FORMAT && parsed.format !== SYNC_FORMAT) ||
+    !Array.isArray(parsed.records)
+  )
+    throw new ImportFormatError();
+  let restored = 0;
+  for (const raw of parsed.records) {
+    const r = parseSyncRecord(raw);
+    if (!r || r.deleted || !r.data || r.entity === 'settings') continue;
+    if (store.get(r.entity, r.id)) continue;
+    await store.write(r.entity, r.id, r.data as never);
+    restored++;
+  }
+  return restored;
 }

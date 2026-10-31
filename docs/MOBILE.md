@@ -117,6 +117,17 @@ Fiche recette : nombre de personnes réglable, quantités recalculées et arrond
 - **Partage par lien** : « Par un lien » envoie `https://hugobsqtgames.github.io/PepperedApronApp/r/#<recette compressée>` ; la page `r/` du site (`apps/site/src/recipePage.mjs`) affiche la recette (texte DOM uniquement, rien n'est envoyé au serveur : la partie après « # » reste dans le navigateur) avec « Ouvrir dans PepperedApron » (`pepperedapron://r/…`) et le lien App Store ; un tel lien partagé ou collé dans l'app s'importe sans réseau.
 - **Rappel du planning** : jour (vendredi, samedi, dimanche) et heure réglables, seulement si la semaine suivante est presque vide, avec trois idées (saison et favoris, les moins récemment cuisinées d'abord).
 
+## Premiers pas, vérification des imports, sauvegardes (lot 10)
+
+- **Démarrage guidé** (`app/onboarding.tsx`) : présentation → prénom → 10 recettes de bienvenue proposées (`lib/starterRecipes.ts`, FR/EN, écrites en texte et passées par le même analyseur que les imports) → tutoriel « Partager → PepperedApron » en 3 étapes (`features/onboarding/ImportTutorial`) avec « Essayer avec Instagram ». Rejouable depuis Aide (`/tutorial`) ; recettes de bienvenue ajoutables depuis Données (sans doublon de titre).
+- **Astuces** (`ui/Tip.tsx`) : une par écran (accueil, planning, courses, recherche, cuisine, placard, fiche), affichée jusqu'à fermeture (méta `tip_seen_<id>`), « Revoir les astuces » dans Aide.
+- **« Vérifiez la recette »** (`import/review`) : ouvert à la fin d'un import partagé ; nom (renommer), photo choisie parmi les images de la vidéo, ingrédient ↔ étape, suppression d'une ligne, notes → étapes, « C'est bon » / « Tout modifier ».
+- **Facebook et Threads** : `og:` + légende complète, vidéo (`og:video` https) transcrite comme les autres réseaux.
+- **Pastille des imports** (`features/ImportPill`) au-dessus des onglets tant qu'un import tourne, est en pause ou a échoué ; un toucher ouvre la file. Un partage contenant deux fois le même lien (paramètres de suivi différents) ne crée qu'un import (`canonicalUrl`).
+- **Minuteurs intelligents** (`stepReminders`, core) : « retourner à mi-cuisson », « remuer de temps en temps / toutes les N min », « arroser » → rappels en cours de minuteur (notification, vibration, toast et lecture à voix haute en mode cuisine).
+- **Listes compactes** (réglage `compactLists`) : favoris, collections, résultats de recherche.
+- **Sauvegardes automatiques** (`services/autoBackup.ts`) : une fois par semaine, JSON complet dans `Documents/backups` (5 gardées) ; Données → restaurer (ne remet que ce qui manque, `restoreData`), enregistrer dans Fichiers, supprimer, sauvegarder maintenant.
+
 ## Organisation et partage
 
 - **Recherche** : notes, « Mes remarques » et astuces sont aussi cherchées, avec un poids faible (après titre, ingrédients, étiquettes).

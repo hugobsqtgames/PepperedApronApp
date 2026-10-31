@@ -197,6 +197,8 @@ export const settingsDataSchema = z
       .string()
       .regex(/^([01]\d|2[0-3]):[0-5]\d$/)
       .default('18:00'),
+    /** Recipe lists as compact rows instead of photo tiles (large libraries). */
+    compactLists: z.boolean().default(false),
   })
   .strict();
 export type SettingsData = z.infer<typeof settingsDataSchema>;
@@ -222,6 +224,7 @@ export const DEFAULT_SETTINGS: SettingsData = {
   cookReadAloud: false,
   planningNudgeDay: 0,
   planningNudgeTime: '18:00',
+  compactLists: false,
 };
 
 /** One time a recipe was cooked (cooking history). */

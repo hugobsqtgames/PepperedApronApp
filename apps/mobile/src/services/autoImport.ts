@@ -263,6 +263,7 @@ const PLATFORM_NAMES: Record<ImportPlatform, string> = {
   tiktok: 'TikTok',
   youtube: 'YouTube',
   facebook: 'Facebook',
+  threads: 'Threads',
   pinterest: 'Pinterest',
   web: '',
 };

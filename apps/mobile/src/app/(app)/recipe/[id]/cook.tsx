@@ -24,6 +24,7 @@ import {
   type KitchenTimer,
   type Locale,
   type VoiceCommand,
+  stepReminders,
 } from '@pepperedapron/core';
 import {
   onSpeech,
@@ -61,6 +62,7 @@ import {
   usePrompt,
   useToast,
 } from '../../../../ui';
+import { Tip } from '../../../../ui/Tip';
 
 const TIMER_PRESETS = [1, 3, 5, 10, 15, 20, 30, 45, 60];
 const TEXT_SCALES = [0.85, 1, 1.15, 1.3, 1.5, 1.75];
@@ -174,6 +176,17 @@ function CookModeBody() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [readAloud, index, active, done]);
   useEffect(() => () => void Speech.stop(), []);
+  // "Retournez maintenant" during a timer: shown, and said when steps are read aloud.
+  useEffect(
+    () =>
+      timers.onReminder((tm, kind) => {
+        const msg = t(`timerReminders.${kind}`, { label: tm.label });
+        toast(msg, { tone: 'info' });
+        if (readAloud) speak(msg);
+      }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [readAloud],
+  );
   // VoiceOver: the new step is read when it changes (unless it is already read aloud).
   useEffect(() => {
     if (a11y.screenReader && !readAloud && !done) {
@@ -306,6 +319,7 @@ function CookModeBody() {
       seconds,
       recipeId: recipe.id,
       stepIndex: i,
+      reminders: stepReminders(s.text, seconds),
     });
     haptic.success();
     return true;
@@ -589,6 +603,9 @@ function CookModeBody() {
         </View>
       ) : null}
 
+      <View style={{ paddingHorizontal: space.lg }}>
+        <Tip id="cook" icon="mic-outline" />
+      </View>
       <View style={{ flex: 1, flexDirection: 'row' }}>
         <View style={{ width: paneWidth }}>
           <FlatList

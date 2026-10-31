@@ -39,6 +39,7 @@ import {
   TextField,
   useToast,
 } from '../../../ui';
+import { Tip } from '../../../ui/Tip';
 import { errorMessage, inBackground } from '../../../lib/errors';
 
 const TIMES = [15, 30, 45, 60];
@@ -117,6 +118,7 @@ export default function Search() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.mode, params.pantry]);
 
+  const compact = useLive(['settings'], (r) => r.settings().compactLists);
   const all = useLive(['recipe', 'favorite'], (r) => ({
     items: r.searchable(),
     favs: new Set(r.favoriteRecipes().map((x) => x.id)),
@@ -228,6 +230,7 @@ export default function Search() {
             { value: 'fridge', label: t('search.fridge') },
           ]}
         />
+        <Tip id="search" icon="search-outline" />
         {mode === 'search' ? (
           <View style={{ flexDirection: 'row', gap: space.sm, alignItems: 'flex-start' }}>
             <TextField
@@ -475,22 +478,25 @@ export default function Search() {
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.background }}>
       <FlatList
-        key={cols}
+        key={compact ? 'rows' : cols}
         data={results}
-        numColumns={cols}
+        numColumns={compact ? 1 : cols}
         keyExtractor={(item) => item.recipe.id}
         ListHeaderComponent={header}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
         onScrollBeginDrag={Keyboard.dismiss}
         columnWrapperStyle={
-          cols > 1 ? { gap: space.md, paddingHorizontal: layout.gutter } : undefined
+          !compact && cols > 1 ? { gap: space.md, paddingHorizontal: layout.gutter } : undefined
         }
         contentContainerStyle={{ gap: space.lg, paddingBottom: space.huge * 2 }}
         renderItem={({ item }) => (
-          <View style={{ width: w, gap: 4 }}>
+          <View
+            style={compact ? { paddingHorizontal: layout.gutter, gap: 2 } : { width: w, gap: 4 }}
+          >
             <RecipeCard
-              zoom
+              variant={compact ? 'row' : 'tile'}
+              zoom={!compact}
               recipe={item.recipe.record}
               width={w}
               favorite={all.favs.has(item.recipe.id)}

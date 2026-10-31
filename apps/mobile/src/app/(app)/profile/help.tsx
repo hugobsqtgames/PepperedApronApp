@@ -4,7 +4,9 @@ import * as WebBrowser from 'expo-web-browser';
 import { useTranslation } from 'react-i18next';
 import { ENV, sitePage } from '../../../services/env';
 import { space } from '../../../theme/tokens';
+import { router } from 'expo-router';
 import { Button, Card, Text, useToast } from '../../../ui';
+import { resetTips } from '../../../ui/Tip';
 
 const FAQ = [1, 2, 3, 4, 5] as const;
 
@@ -65,6 +67,21 @@ export default function Help() {
           title={ENV.supportEmail ? t('contact.write') : t('contact.writePage')}
           icon={ENV.supportEmail ? 'mail-outline' : 'chatbubbles-outline'}
           onPress={() => void write()}
+        />
+        <Button
+          title={t('tutorial.again')}
+          variant="secondary"
+          icon="play-circle-outline"
+          onPress={() => router.push('/tutorial')}
+        />
+        <Button
+          title={t('tips.again')}
+          variant="ghost"
+          icon="bulb-outline"
+          onPress={() => {
+            void resetTips();
+            toast(t('tips.againDone'));
+          }}
         />
         <Button
           title={t('contact.website')}

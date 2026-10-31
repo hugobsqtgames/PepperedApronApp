@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { useRuntime } from '../../hooks/runtime';
 import { rescheduleExpiry, rescheduleReminders } from '../../services/notifications';
 import { sourcesFromShare } from '../../services/autoImport';
+import { maybeAutoBackup } from '../../services/autoBackup';
 import { importQueue } from '../../services/importQueue';
 import { shouldShowWhatsNew } from '../../services/appMoments';
 import { applyExtensionRequests, publishWidgetData } from '../../services/widgets';
@@ -59,9 +60,11 @@ export default function AppLayout() {
   useShareIntentRouting();
   useNotificationRouting();
 
-  // Imports interrupted when the app was closed resume on their own.
+  // Imports interrupted when the app was closed resume on their own; the weekly backup.
   useEffect(() => {
-    if (rt.session) void importQueue.start();
+    if (!rt.session) return;
+    void importQueue.start();
+    void maybeAutoBackup(rt.session.store, rt.session.repos.recipes().length > 0);
   }, [rt.session]);
 
   // After an update: what changed, once.
@@ -144,6 +147,11 @@ export default function AppLayout() {
       <Stack.Screen name="pantry" options={{ presentation: 'modal' }} />
       <Stack.Screen name="pantry-scan" options={{ presentation: 'modal' }} />
       <Stack.Screen name="cook-plan" options={{ presentation: 'modal' }} />
+      <Stack.Screen name="tutorial" options={{ presentation: 'modal' }} />
+      <Stack.Screen
+        name="import/review"
+        options={{ presentation: 'modal', gestureEnabled: false }}
+      />
       <Stack.Screen name="recipe/merge" options={{ presentation: 'modal' }} />
       <Stack.Screen name="collection/smart" options={{ presentation: 'modal' }} />
       <Stack.Screen name="import/instagram" options={{ presentation: 'modal' }} />

@@ -125,7 +125,12 @@ export default function ImportQueueScreen() {
     opened.current = true;
     // Its twin waiting for nothing is dropped.
     if (own && own.id !== single.id) void importQueue.remove(own.id);
-    router.replace(`/recipe/${single.recipeId}`);
+    // A new recipe: checked at a glance first; one already saved: opened as it is.
+    router.replace(
+      single.status === 'done'
+        ? `/import/review?id=${single.recipeId}`
+        : `/recipe/${single.recipeId}`,
+    );
     if (single.status === 'done') toast(t('import.savedToast'));
     else
       toast(t('import.duplicateToast'), {

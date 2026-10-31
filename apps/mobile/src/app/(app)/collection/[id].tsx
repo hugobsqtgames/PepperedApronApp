@@ -43,6 +43,8 @@ export default function CollectionScreen() {
     },
     [id, isSmart],
   );
+  // Compact rows (setting shared with the favourites screen), for large collections.
+  const compact = useLive(['settings'], (r) => r.settings().compactLists);
   const cols = layout.sidebar ? Math.max(2, layout.columns - 1) : layout.columns;
   const w = tileWidth(
     layout.sidebar ? layout.width - 260 : layout.width,
@@ -154,17 +156,22 @@ export default function CollectionScreen() {
         }}
       />
       <FlatList
-        key={cols}
+        key={compact ? 'rows' : cols}
         data={recipes}
-        numColumns={cols}
+        numColumns={compact ? 1 : cols}
         keyExtractor={(r) => r.id}
         columnWrapperStyle={
-          cols > 1 ? { gap: space.md, paddingHorizontal: layout.gutter } : undefined
+          !compact && cols > 1 ? { gap: space.md, paddingHorizontal: layout.gutter } : undefined
         }
-        contentContainerStyle={{ gap: space.lg, paddingVertical: space.lg }}
+        contentContainerStyle={{
+          gap: compact ? space.xs : space.lg,
+          paddingVertical: space.lg,
+          paddingHorizontal: compact ? layout.gutter : 0,
+        }}
         renderItem={({ item }) => (
           <RecipeCard
-            zoom
+            zoom={!compact}
+            variant={compact ? 'row' : 'tile'}
             recipe={item}
             width={w}
             favorite={favs.has(item.id)}

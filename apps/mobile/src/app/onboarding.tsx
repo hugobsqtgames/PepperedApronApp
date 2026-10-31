@@ -12,6 +12,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { useRepos } from '../hooks/runtime';
+import { ImportTutorial, openInstagram } from '../features/onboarding/ImportTutorial';
+import { addStarterRecipes, STARTER_COUNT } from '../lib/starterRecipes';
 import { ONBOARDING_PHOTOS } from '../lib/categories';
 import { useTheme } from '../theme/ThemeProvider';
 import { radius, space } from '../theme/tokens';
@@ -24,7 +26,10 @@ const SLIDES = [
   { key: 's4', photo: ONBOARDING_PHOTOS.import },
 ] as const;
 
-/** Four short slides — recipes, planning, shopping, import — then the first name, then the app. */
+/**
+ * Four short slides — recipes, planning, shopping, import — then the first name, ten classics
+ * to start with (or not), and how to import a recipe from Instagram in 10 seconds.
+ */
 export default function Welcome() {
   const { t } = useTranslation();
   const repos = useRepos();
@@ -38,8 +43,69 @@ export default function Welcome() {
   const last = index === SLIDES.length - 1;
   const [askName, setAskName] = useState(false);
   const [name, setName] = useState('');
-  const start = (firstName: string | null) =>
-    repos.updateSettings({ firstName, onboardingDone: true });
+  const [step, setStep] = useState<'slides' | 'starter' | 'tutorial'>('slides');
+  const [busy, setBusy] = useState(false);
+  const { i18n } = useTranslation();
+  // The name is kept at once; the app opens after the last step.
+  const start = async (firstName: string | null) => {
+    await repos.updateSettings({ firstName });
+    setAskName(false);
+    setStep('starter');
+  };
+  const finish = async (tryIt: boolean) => {
+    await repos.updateSettings({ onboardingDone: true });
+    if (tryIt) setTimeout(() => void openInstagram(), 600);
+  };
+
+  if (step === 'starter') {
+    return (
+      <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
+        <View style={styles.nameWrap}>
+          <View style={{ gap: space.lg, width: '100%', maxWidth: 480 }}>
+            <Text style={{ fontSize: 48, lineHeight: 58 }} maxFontSizeMultiplier={1}>
+              📖
+            </Text>
+            <Text variant="hero" accessibilityRole="header">
+              {t('starter.title', { count: STARTER_COUNT })}
+            </Text>
+            <Text variant="body" color="textMuted">
+              {t('starter.body')}
+            </Text>
+            <Button
+              title={t('starter.yes', { count: STARTER_COUNT })}
+              size="lg"
+              loading={busy}
+              onPress={async () => {
+                setBusy(true);
+                try {
+                  await addStarterRecipes(repos, i18n.language);
+                } finally {
+                  setBusy(false);
+                  setStep('tutorial');
+                }
+              }}
+              testID="onboarding-starter-yes"
+            />
+            <Button
+              title={t('starter.no')}
+              variant="ghost"
+              onPress={() => setStep('tutorial')}
+              testID="onboarding-starter-no"
+            />
+          </View>
+        </View>
+      </SafeAreaView>
+    );
+  }
+  if (step === 'tutorial') {
+    return (
+      <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
+        <View style={styles.nameWrap}>
+          <ImportTutorial onDone={(tryIt) => void finish(tryIt)} />
+        </View>
+      </SafeAreaView>
+    );
+  }
   const photoH = Math.min(height * 0.5, 520);
 
   if (askName) {
@@ -70,20 +136,20 @@ export default function Welcome() {
               textContentType="givenName"
               returnKeyType="done"
               maxLength={40}
-              onSubmitEditing={() => name.trim() && void start(name)}
+              onSubmitEditing={() => void (name.trim() && start(name))}
               testID="onboarding-name"
             />
             <Button
               title={t('onboarding.start')}
               size="lg"
               disabled={!name.trim()}
-              onPress={() => start(name)}
+              onPress={() => void start(name)}
               testID="onboarding-name-submit"
             />
             <Button
               title={t('common.skip')}
               variant="ghost"
-              onPress={() => start(null)}
+              onPress={() => void start(null)}
               testID="onboarding-name-skip"
             />
           </View>

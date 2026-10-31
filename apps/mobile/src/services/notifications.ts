@@ -65,6 +65,40 @@ export async function scheduleTimerNotification(
   });
 }
 
+/** "Turn the chicken over": a reminder during a timer, at `at` (ms). */
+export async function scheduleTimerReminder(
+  timerId: string,
+  n: number,
+  label: string,
+  kind: 'flip' | 'stir' | 'baste',
+  at: number,
+): Promise<string | null> {
+  const repos = runtime.session?.repos;
+  if (repos && !pref(repos, 'timers')) return null;
+  if (!(await notificationsAllowed()) || at <= Date.now()) return null;
+  return Notifications.scheduleNotificationAsync({
+    identifier: `timer-${timerId}-r${n}`,
+    content: {
+      title: i18n.t(`timerReminders.${kind}`, { label }),
+      body: i18n.t('timerReminders.body'),
+      sound: 'default',
+      data: { kind: 'timer', timerId },
+      interruptionLevel: 'timeSensitive',
+    },
+    trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: new Date(at) },
+  });
+}
+
+/** The reminders of a timer (paused, stopped, changed). */
+export async function cancelTimerReminders(timerId: string) {
+  const all = await Notifications.getAllScheduledNotificationsAsync().catch(() => []);
+  await Promise.all(
+    all
+      .filter((n) => n.identifier.startsWith(`timer-${timerId}-r`))
+      .map((n) => Notifications.cancelScheduledNotificationAsync(n.identifier)),
+  );
+}
+
 export async function cancelNotification(id: string | null) {
   if (id) await Notifications.cancelScheduledNotificationAsync(id).catch(() => undefined);
 }
