@@ -18,7 +18,7 @@ import { linkNotice } from '../features/recipe/notices';
 import { draftFromLink, linkPayload } from '../lib/recipeLink';
 import i18n from '../i18n';
 import { importLinkFull, readVideoPictures, transcribeFile } from './importer';
-import { ocrSupported, readTextFromImage } from './ocr';
+import { ocrSupported, readRecipeTextFromImage } from './ocr';
 import { keepFramesFor } from './videoFrames';
 import { photoFromUrl, preparePhoto } from './photos';
 import { runtime } from './runtime';
@@ -209,7 +209,7 @@ export async function prepareImport(
     for (const uri of uris) {
       try {
         // A screenshot: the status bar, buttons and counters of the app are left out.
-        const text = await readTextFromImage(uri);
+        const text = await readRecipeTextFromImage(uri);
         out.push(looksLikeScreenshot(text) ? cleanScreenshotText(text) : text);
       } catch {
         out.push('');

@@ -1,3 +1,4 @@
+import { paragraphsFromLines } from '@pepperedapron/core';
 import i18n from '../i18n';
 import { recognizeText, textVisionAvailable, type VisionLine } from '../../modules/text-vision';
 
@@ -38,4 +39,13 @@ export async function readTextFromImage(uri: string): Promise<string> {
   const m = await import('expo-text-extractor');
   const lines = await m.extractTextFromImage(uri);
   return lines.join('\n').trim();
+}
+
+/**
+ * The text of a recipe page (a book, a card, a magazine, a scanned PDF), in paragraphs: a step
+ * printed over several lines is one line of text again, so it becomes one step and not five.
+ */
+export async function readRecipeTextFromImage(uri: string): Promise<string> {
+  if (textVisionAvailable) return paragraphsFromLines(await recognizeText(uri, languages())).trim();
+  return readTextFromImage(uri);
 }

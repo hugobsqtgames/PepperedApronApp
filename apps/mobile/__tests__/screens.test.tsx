@@ -497,6 +497,32 @@ describe('journeys: what the user does is really saved', () => {
     }
   });
 
+  it('the + sheet closes before opening a screen, never replaced by it (TestFlight: app frozen)', async () => {
+    const Add = screenOf('../src/app/(app)/add');
+    for (const [id, path] of [
+      ['add-instagram', '/import/instagram'],
+      ['add-link', '/import/link'],
+      ['add-text', '/import/text'],
+      ['add-photo', '/import/photo'],
+      ['add-dictate', '/import/dictate'],
+      ['add-blank', '/recipe/edit'],
+    ] as const) {
+      mockNav.back.mockClear();
+      mockNav.push.mockClear();
+      mockNav.replace.mockClear();
+      await render(wrap(<Add />));
+      await tap(screen.getByTestId(id));
+      expect(mockNav.back).toHaveBeenCalledTimes(1);
+      expect(mockNav.push).not.toHaveBeenCalled();
+      await act(async () => {
+        await new Promise((r) => setTimeout(r, 600));
+      });
+      expect(mockNav.push).toHaveBeenCalledWith(path);
+      expect(mockNav.replace).not.toHaveBeenCalled();
+      await cleanup();
+    }
+  });
+
   it('an import finished while its screen is open opens the recipe (TestFlight feedback)', async () => {
     // The queue updates a job in place (the same object goes pending → running → done): the
     // screen must notice, not stay on "Waiting…" with the recipe saved.

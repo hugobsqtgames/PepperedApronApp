@@ -14,6 +14,7 @@ export * from './sync';
 export * from './parse/draft';
 export * from './parse/ingredient';
 export * from './parse/text';
+export * from './parse/ocrLayout';
 export * from './parse/jsonld';
 export * from './parse/url';
 export * from './parse/social';

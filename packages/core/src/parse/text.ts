@@ -391,6 +391,15 @@ export function parseRecipeText(input: string): RecipeDraft {
       } else if (isIngredient) {
         draft.ingredients.push({ group: null, ...ing! });
       } else if (
+        draft.steps.length > 0 &&
+        /^\p{Ll}/u.test(l) &&
+        !/[.!?]$/.test(draft.steps[draft.steps.length - 1]!.text)
+      ) {
+        // A printed line that goes on with the sentence above: the same step.
+        const prev = draft.steps[draft.steps.length - 1]!;
+        prev.text = `${prev.text} ${l}`;
+        prev.timerSeconds ??= parseTimerSeconds(l);
+      } else if (
         draft.ingredients.length > 0 &&
         (looksLikeStep(l) || l.split(/\s+/).length >= 3) &&
         !SIGN_OFF.test(normalizeText(l))
@@ -442,6 +451,8 @@ export function parseRecipeText(input: string): RecipeDraft {
  * kept with the next one): "Fais cuire les pennes 10 min. Pendant ce temps, coupe le poulet…".
  */
 function splitProse(steps: RecipeDraft['steps']): RecipeDraft['steps'] {
+  // Already written in several paragraphs (a book, a site): the author's steps are kept.
+  if (steps.length >= 3) return steps;
   const out: RecipeDraft['steps'] = [];
   for (const st of steps) {
     const sentences =

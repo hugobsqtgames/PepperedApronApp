@@ -9,6 +9,23 @@ import { useTheme } from '../../theme/ThemeProvider';
 import { radius, space } from '../../theme/tokens';
 import { Icon, Text, type IconName } from '../../ui';
 
+/**
+ * Leaving the sheet for another screen: the sheet is closed first, the screen opened once it is
+ * gone. Replacing a sheet with a modal while iOS is still dismissing it could leave an invisible
+ * layer over the app that took every touch (TestFlight: "+ → Instagram", app frozen).
+ */
+const SHEET_CLOSE_MS = 550;
+let leaving = false;
+export function leaveSheetFor(href: Parameters<typeof router.push>[0]) {
+  if (leaving) return;
+  leaving = true;
+  if (router.canGoBack()) router.back();
+  setTimeout(() => {
+    leaving = false;
+    router.push(href);
+  }, SHEET_CLOSE_MS);
+}
+
 /** One sheet, every way to add a recipe. The share extension tip teaches the TikTok/Instagram flow. */
 /** A PDF from Files (a recipe saved from a site, a scanned page): read like a shared one. */
 async function importPdf() {
@@ -18,7 +35,7 @@ async function importPdf() {
   });
   if (r.canceled || !r.assets[0]) return;
   const ids = await importQueue.add([{ source: { kind: 'pdf', uri: r.assets[0].uri } }]);
-  router.replace({ pathname: '/import/queue', params: { ids: ids.join(',') } });
+  leaveSheetFor({ pathname: '/import/queue', params: { ids: ids.join(',') } });
 }
 
 /** The screenshot just taken (a story, a message, a page): read like a shared picture. */
@@ -33,7 +50,7 @@ async function importLatestScreenshot() {
         { text: t('errors.openSettings'), onPress: () => void Linking.openSettings() },
       ]);
     const ids = await importQueue.add([{ source: { kind: 'photos', uris: [r.uri] } }]);
-    router.replace({ pathname: '/import/queue', params: { ids: ids.join(',') } });
+    leaveSheetFor({ pathname: '/import/queue', params: { ids: ids.join(',') } });
   } catch {
     Alert.alert(t('add.noScreenshot'));
   }
@@ -48,28 +65,28 @@ export default function AddSheet() {
         icon: 'create-outline',
         title: t('add.blank'),
         body: t('add.blankBody'),
-        go: () => router.replace('/recipe/edit'),
+        go: () => leaveSheetFor('/recipe/edit'),
         testID: 'add-blank',
       },
       {
         icon: 'link-outline',
         title: t('add.link'),
         body: t('add.linkBody'),
-        go: () => router.replace('/import/link'),
+        go: () => leaveSheetFor('/import/link'),
         testID: 'add-link',
       },
       {
         icon: 'document-text-outline',
         title: t('add.text'),
         body: t('add.textBody'),
-        go: () => router.replace('/import/text'),
+        go: () => leaveSheetFor('/import/text'),
         testID: 'add-text',
       },
       {
         icon: 'camera-outline',
         title: t('add.photo'),
         body: t('add.photoBody'),
-        go: () => router.replace('/import/photo'),
+        go: () => leaveSheetFor('/import/photo'),
         testID: 'add-photo',
       },
       {
@@ -90,14 +107,14 @@ export default function AddSheet() {
         icon: 'mic-outline',
         title: t('add.dictate'),
         body: t('add.dictateBody'),
-        go: () => router.replace('/import/dictate'),
+        go: () => leaveSheetFor('/import/dictate'),
         testID: 'add-dictate',
       },
       {
         icon: 'logo-instagram',
         title: t('add.instagram'),
         body: t('add.instagramBody'),
-        go: () => router.replace('/import/instagram'),
+        go: () => leaveSheetFor('/import/instagram'),
         testID: 'add-instagram',
       },
     ];
