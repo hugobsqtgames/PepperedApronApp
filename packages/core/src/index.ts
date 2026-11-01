@@ -29,6 +29,7 @@ export * from './parse/links';
 export * from './pantry';
 export * from './smart';
 export * from './cuisine';
+export * from './category';
 export * from './pairings';
 export * from './kitchen';
 export * from './badges';

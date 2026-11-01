@@ -16,6 +16,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import {
   detectStepTimer,
+  timerState,
   parallelSteps,
   formatClock,
   scaleStepText,
@@ -145,7 +146,12 @@ function CookModeBody() {
   const [ticked, setTicked] = useState<Record<string, string[]>>({});
   const [listening, setListening] = useState(false);
   const list = useRef<FlatList>(null);
-  const running = useTimers();
+  const allTimers = useTimers();
+  // A timer that is over belongs to the dish it was for: another recipe's finished timer is not
+  // shown here (it looked like this recipe's timer was already done).
+  const running = allTimers.filter(
+    (tm) => timerState(tm, Date.now()) !== 'done' || !tm.recipeId || ids.includes(tm.recipeId),
+  );
   const readAloud = settings.cookReadAloud;
   const speechLang = i18n.language.startsWith('en') ? 'en-US' : 'fr-FR';
   // While the phone speaks, the microphone hears it: what is recognised then is ignored.
@@ -711,7 +717,13 @@ function CookModeBody() {
         ) : null}
       </View>
 
-      <View style={styles.tools}>
+      {/* Scrolls sideways when the buttons do not fit (small iPhones, larger text). */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={{ flexGrow: 0 }}
+        contentContainerStyle={styles.tools}
+      >
         <IconButton icon="remove" label={t('cook.smallerText')} onPress={() => setScale(-1)} />
         <Text variant="bodyStrong" accessibilityElementsHidden>
           Aa
@@ -750,16 +762,14 @@ function CookModeBody() {
             testID="cook-plan"
           />
         ) : null}
-        <View style={{ flex: 1 }} />
-        <Button
-          title={t('cook.newTimer')}
+        <IconButton
           icon="timer-outline"
-          variant="secondary"
-          size="sm"
+          label={t('cook.newTimer')}
+          variant="primary"
           onPress={newTimer}
           testID="cook-new-timer"
         />
-      </View>
+      </ScrollView>
       {running.length ? <TimerRings list={running} /> : null}
 
       <View

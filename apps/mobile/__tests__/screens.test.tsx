@@ -406,6 +406,25 @@ describe('journeys: what the user does is really saved', () => {
     expect(repos.recipe(ids.recipe!)!.data.cuisine).not.toBeNull();
   });
 
+  it('cook mode does not show a finished timer of another recipe (TestFlight feedback)', async () => {
+    const { timers } =
+      jest.requireActual<typeof import('../src/services/timers')>('../src/services/timers');
+    // Timers still running from earlier tests are shown on purpose: start from none.
+    for (const t of timers.list()) await timers.stop(t.id);
+    await timers.start({ label: 'Udon', seconds: 1, recipeId: ids.recipe2!, stepIndex: 1 });
+    await new Promise((r) => setTimeout(r, 1300));
+    mockParams.current = { id: ids.recipe! };
+    const Cook = screenOf('../src/app/(app)/recipe/[id]/cook');
+    await render(wrap(<Cook />));
+    expect(screen.queryAllByTestId('timer-ring')).toHaveLength(0);
+    // Its own timers are shown, and the toolbar's new-timer button is there.
+    await timers.start({ label: 'Poisson', seconds: 600, recipeId: ids.recipe!, stepIndex: 0 });
+    await settle();
+    expect(screen.getAllByTestId('timer-ring')).toHaveLength(1);
+    expect(screen.getByTestId('cook-new-timer')).toBeTruthy();
+    for (const t of timers.list()) await timers.stop(t.id);
+  });
+
   it('wine, beer or cider are suggested only once turned on (age rating)', async () => {
     const { pairingsFor } =
       jest.requireActual<typeof import('@pepperedapron/core')>('@pepperedapron/core');

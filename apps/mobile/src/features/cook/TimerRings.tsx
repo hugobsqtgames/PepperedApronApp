@@ -81,6 +81,9 @@ export function TimerRings({ list }: { list: KitchenTimer[] }) {
     <ScrollView
       horizontal
       showsHorizontalScrollIndicator={false}
+      // A horizontal list in a column would otherwise stretch to fill the height (a tall,
+      // empty panel under the toolbar).
+      style={{ flexGrow: 0 }}
       contentContainerStyle={styles.row}
       accessibilityLabel={t('delight.cook.timers')}
     >
@@ -163,6 +166,7 @@ const styles = StyleSheet.create({
   card: {
     flexDirection: 'row',
     alignItems: 'center',
+    alignSelf: 'flex-start',
     gap: space.sm,
     padding: space.sm,
     paddingRight: space.md,

@@ -13,6 +13,7 @@ import {
   dietTags,
   estimateLinePrice,
   findDuplicate,
+  guessCategory,
   ingredientKey,
   leftoverSlot,
   LIMITS,
@@ -144,7 +145,9 @@ export function recipeFromDraft(d: RecipeDraft, defaultServings = 4): RecipeData
     totalMinutes: minutes(d.totalMinutes),
     yieldLabel: clip(d.yieldLabel, 40),
     difficulty: d.difficulty,
-    category: d.category,
+    // Filed on its own when the source gave no category (a post, a photo): "Pennes au
+    // poulet" goes into Pasta.
+    category: d.category ?? guessCategory({ title: d.title ?? '', ingredients: d.ingredients }),
     ovenTemperatureC: intIn(d.ovenTemperatureC, LIMITS.ovenMinC, LIMITS.ovenMaxC),
     notes: clip(
       [d.notes, d.unparsed.length ? d.unparsed.join('\n') : null].filter(Boolean).join('\n\n'),
@@ -318,6 +321,21 @@ export class Repos {
     });
   }
   /** The user's choice of cuisine (null: deduced again from the recipe). */
+  /**
+   * Recipes saved without a category (imported before categories were guessed) are filed by
+   * their name and ingredients; those it cannot tell stay as they are. Returns how many moved.
+   */
+  async fileUncategorized(): Promise<number> {
+    let n = 0;
+    for (const r of this.recipes()) {
+      if (r.data.category) continue;
+      const category = guessCategory(r.data);
+      if (!category) continue;
+      await this.updateRecipe(r.id, { category });
+      n++;
+    }
+    return n;
+  }
   setCuisine(id: string, cuisine: RecipeData['cuisine']) {
     return this.updateRecipe(id, { cuisine });
   }

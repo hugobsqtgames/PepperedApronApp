@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { addDays, parseJsonLdRecipe } from '@pepperedapron/core';
+import { addDays, emptyDraft, parseJsonLdRecipe } from '@pepperedapron/core';
 import { emptyRecipe, LocalStore, recipeFromDraft, Repos } from '../src';
 import { betterSqliteDriver } from './betterSqliteDriver';
 
@@ -292,5 +292,40 @@ describe('regression: operations started twice at once (double tap)', () => {
     expect(repos.items(list.id).map((i) => [i.data.name, i.data.quantity])).toEqual([
       ['gros sel', null],
     ]);
+  });
+});
+
+describe('categories guessed for imports (TestFlight feedback)', () => {
+  it('a post without a category is filed by its name, then by its ingredients', () => {
+    const d = { ...emptyDraft(), title: 'Pennes au poulet crémeuses' };
+    expect(recipeFromDraft(d).category).toBe('pasta');
+    const hook = {
+      ...emptyDraft(),
+      title: 'Une tuerie je vous jure',
+      ingredients: [
+        {
+          group: null,
+          name: 'filets de cabillaud',
+          quantity: 4,
+          quantityMax: null,
+          unit: null,
+          note: null,
+        },
+      ],
+    };
+    expect(recipeFromDraft(hook as never).category).toBe('fish');
+    // The source's own category wins.
+    expect(recipeFromDraft({ ...d, category: 'main' }).category).toBe('main');
+  });
+
+  it('recipes imported before are filed once; unknown ones stay as they are', async () => {
+    const { repos } = await open();
+    const pasta = await repos.createRecipe({ ...emptyRecipe(), title: 'Spaghetti bolognaise' });
+    const unsure = await repos.createRecipe({ ...emptyRecipe(), title: 'Recette du dimanche' });
+    const mine = await repos.createRecipe({ ...emptyRecipe(), title: 'Saumon', category: 'main' });
+    expect(await repos.fileUncategorized()).toBe(1);
+    expect(repos.recipe(pasta.id)!.data.category).toBe('pasta');
+    expect(repos.recipe(unsure.id)!.data.category).toBeNull();
+    expect(repos.recipe(mine.id)!.data.category).toBe('main');
   });
 });

@@ -53,6 +53,9 @@ function useNotificationRouting() {
   }, [last]);
 }
 
+/** Device-local flag: the one-time filing of uncategorized recipes was done. */
+const AUTO_CATEGORY_KEY = 'auto_category_v1';
+
 export default function AppLayout() {
   const rt = useRuntime();
   const { colors, a11y } = useTheme();
@@ -65,6 +68,13 @@ export default function AppLayout() {
     if (!rt.session) return;
     void importQueue.start();
     void maybeAutoBackup(rt.session.store, rt.session.repos.recipes().length > 0);
+    // Once: recipes imported before categories were guessed are filed (pasta into Pasta…).
+    const { store, repos } = rt.session;
+    void (async () => {
+      if (await store.meta(AUTO_CATEGORY_KEY)) return;
+      await repos.fileUncategorized();
+      await store.setMeta(AUTO_CATEGORY_KEY, '1');
+    })().catch(() => undefined);
   }, [rt.session]);
 
   // After an update: what changed, once.

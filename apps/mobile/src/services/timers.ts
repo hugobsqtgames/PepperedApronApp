@@ -34,6 +34,8 @@ import { haptic } from './haptics';
 
 type Listener = (timers: KitchenTimer[]) => void;
 const file = () => new File(Paths.document, 'kitchen-timers.json');
+/** How long a finished timer stays on screen before it is put away. */
+const STALE_MS = 15 * 60_000;
 /** Live Activities started and not yet ended, kept across launches so none is left behind. */
 const activitiesFile = () => new File(Paths.document, 'live-activities.json');
 
@@ -122,6 +124,16 @@ class TimerManager {
     if (this.tick || !this.timers.length) return;
     this.tick = setInterval(() => {
       const now = Date.now();
+      // A timer over for a while is put away, before anything is announced (a timer that ended
+      // while the app was closed must not ring again when it reopens).
+      const stale = this.timers.filter(
+        (t) => timerState(t, now) === 'done' && (t.endsAt ?? now) < now - STALE_MS,
+      );
+      if (stale.length) {
+        for (const t of stale) this.notified.delete(t.id);
+        void this.update(this.timers.filter((t) => !stale.includes(t)));
+        return;
+      }
       for (const t of this.timers) {
         // "Turn it over": while the app is open, felt and heard (VoiceOver) at the right time.
         if (timerState(t, now) === 'running')

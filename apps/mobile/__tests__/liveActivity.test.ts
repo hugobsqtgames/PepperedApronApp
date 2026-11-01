@@ -100,3 +100,18 @@ it('an activity the user swiped away is replaced by a new one', async () => {
   await flush();
   expect(mockLA.started.length).toBe(n + 1);
 });
+
+it('a timer over for a while is put away (and ends its activity)', async () => {
+  const t = await timers.start({ label: 'Riz', seconds: 1, recipeId: 'r9', stepIndex: null });
+  await flush();
+  expect(timers.list().some((x) => x.id === t.id)).toBe(true);
+  const real = Date.now;
+  const spy = jest.spyOn(Date, 'now').mockImplementation(() => real() + 20 * 60_000);
+  try {
+    await new Promise((r) => setTimeout(r, 1500));
+    await flush();
+    expect(timers.list().some((x) => x.id === t.id)).toBe(false);
+  } finally {
+    spy.mockRestore();
+  }
+});
