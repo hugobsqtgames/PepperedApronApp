@@ -27,10 +27,14 @@ const MAX_CHARS = 3_000_000;
  * the phone could not reach the site at all (offline), as opposed to a page without a recipe.
  */
 const pageFetcher =
-  (onNetworkError?: () => void): FetchPage =>
+  (
+    onNetworkError?: () => void,
+    onFailure?: () => void,
+    timeoutMs: number = TIMEOUT_MS,
+  ): FetchPage =>
   async (url, opts) => {
     const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), TIMEOUT_MS);
+    const timer = setTimeout(() => ctrl.abort(), timeoutMs);
     try {
       const res = await fetch(url, {
         signal: ctrl.signal,
@@ -43,7 +47,9 @@ const pageFetcher =
       const body = (await res.text()).slice(0, MAX_CHARS);
       return { status: res.status, contentType: res.headers.get('content-type'), body };
     } catch (e) {
-      // A site that is slow to answer (12 s) is not the phone being offline.
+      // Any page not read (slow or refused): the import is tried again before being saved.
+      onFailure?.();
+      // A site that is slow to answer is not the phone being offline.
       if ((e as Error).name !== 'AbortError') onNetworkError?.();
       throw e;
     } finally {
@@ -181,7 +187,14 @@ export async function listenToVideo(
   let pictures: VideoPictures = { ingredients: [], frames: [] };
   try {
     if (!dir.exists) dir.create({ intermediates: true });
-    await File.downloadFileAsync(res.videoUrl, video);
+    // The video too can fail on the first try: once more before giving up on what it says.
+    try {
+      await File.downloadFileAsync(res.videoUrl, video);
+    } catch {
+      await new Promise((r) => setTimeout(r, 1500));
+      if (video.exists) video.delete();
+      await File.downloadFileAsync(res.videoUrl, video);
+    }
     pictures = await readVideoPictures(video.uri);
     const draft = { ...res.draft };
     draft.ingredients = mergeIngredients(draft.ingredients, pictures.ingredients);
@@ -229,6 +242,21 @@ export async function listenToVideo(
   }
 }
 
+/** A link read again when a page failed: right away, then a little later, with more time. */
+const LINK_RETRY_DELAYS_MS = [1500, 4000];
+const RETRY_TIMEOUT_MS = 20_000;
+
+/** Nothing more to hope from reading the page again. */
+const isComplete = (r: ImportResult) => r.draft.ingredients.length > 0 && r.draft.steps.length > 0;
+
+/** How much a reading of the link gives: a video to listen to counts as much as steps. */
+const richness = (r: ImportResult) =>
+  (r.draft.steps.length ? 4 : 0) +
+  (r.draft.ingredients.length ? 4 : 0) +
+  (r.videoUrl ? 4 : 0) +
+  (r.draft.title ? 1 : 0) +
+  (r.draft.imageUrl ? 1 : 0);
+
 /**
  * Full link import: the page first, then — for a reel whose recipe is only said out loud —
  * listening to the video (`onListening` lets the screen say so, it takes a few seconds).
@@ -237,6 +265,7 @@ export async function listenToVideo(
 export async function importLinkFull(
   url: string,
   onListening: () => void,
+  retryDelaysMs: number[] = LINK_RETRY_DELAYS_MS,
 ): Promise<{
   result: ImportResult;
   listenError: VideoListenError | null;
@@ -244,10 +273,33 @@ export async function importLinkFull(
   frames: string[];
 }> {
   let networkErrors = 0;
-  const res = await importFromUrl(
-    pageFetcher(() => networkErrors++),
+  let failures = 0;
+  let res = await importFromUrl(
+    pageFetcher(
+      () => networkErrors++,
+      () => failures++,
+    ),
     url,
   );
+  // A page of the post not read (the site slow or cutting the connection, often on the first
+  // try): the video, its subtitles, the caption may all be missing. It is read again at once,
+  // with more time, before saving anything — the best reading is kept.
+  for (const delay of retryDelaysMs) {
+    if (!failures || isComplete(res)) break;
+    if (networkErrors && !(await internetReachable())) break;
+    await new Promise((r) => setTimeout(r, delay));
+    failures = 0;
+    networkErrors = 0;
+    const again = await importFromUrl(
+      pageFetcher(
+        () => networkErrors++,
+        () => failures++,
+        RETRY_TIMEOUT_MS,
+      ),
+      url,
+    );
+    if (richness(again) >= richness(res)) res = again;
+  }
   // A site refusing the connection looks like no network: the phone is only called offline
   // when it cannot reach Apple's own connectivity check either. Otherwise what could be read is
   // saved now, instead of waiting minutes for a site that will not answer.

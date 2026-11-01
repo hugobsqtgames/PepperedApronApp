@@ -126,14 +126,17 @@ export async function prepareImport(
     // Text shared alongside the link (a caption) complements what the page exposes.
     const extra = src.text?.replace(src.url, '').trim();
     if (extra && extra.length > 20 && !result.draft.ingredients.length) {
+      const fromCaption = fromText(extra, {
+        sourceUrl: result.draft.sourceUrl ?? src.url,
+        source: result.draft.source,
+        imageUrl: result.draft.imageUrl,
+        author: result.draft.author,
+        title: result.draft.title ?? src.title,
+      });
+      // Steps heard in the video are kept when the text only lists the ingredients.
+      if (!fromCaption.steps.length) fromCaption.steps = result.draft.steps;
       return {
-        draft: fromText(extra, {
-          sourceUrl: result.draft.sourceUrl ?? src.url,
-          source: result.draft.source,
-          imageUrl: result.draft.imageUrl,
-          author: result.draft.author,
-          title: result.draft.title ?? src.title,
-        }),
+        draft: fromCaption,
         notice: 'text',
         // A video's own picture: the post image can carry the player's pause button.
         localImageUri: frames[0] ?? null,
