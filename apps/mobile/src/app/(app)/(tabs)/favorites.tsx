@@ -249,7 +249,7 @@ export default function Favorites() {
                 />
               ))}
               {item.recipes.length === 0 ? (
-                <Text style={{ fontSize: 34 }} maxFontSizeMultiplier={1}>
+                <Text style={{ fontSize: 34, lineHeight: 42 }} maxFontSizeMultiplier={1}>
                   {item.c.data.emoji ?? '📁'}
                 </Text>
               ) : null}

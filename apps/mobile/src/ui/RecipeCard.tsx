@@ -124,14 +124,20 @@ function RecipeCardBase({
       onPress={zoom ? undefined : onPress}
       onLongPress={onLongPress}
       {...longPressActions(moreLabel, onLongPress)}
-      style={({ pressed }) => [
-        {
-          width: w,
-          gap: space.sm,
-          opacity: pressed ? 0.9 : 1,
-          transform: [{ scale: pressed ? 0.985 : 1 }],
-        },
-      ]}
+      // Through a zoom link (Link asChild), a style function is dropped: the card then lost
+      // its width and its title ran across the whole screen. A plain style there.
+      style={
+        zoom
+          ? { width: w, gap: space.sm }
+          : ({ pressed }) => [
+              {
+                width: w,
+                gap: space.sm,
+                opacity: pressed ? 0.9 : 1,
+                transform: [{ scale: pressed ? 0.985 : 1 }],
+              },
+            ]
+      }
     >
       <View>
         {zoom ? <Link.AppleZoom>{photo}</Link.AppleZoom> : photo}

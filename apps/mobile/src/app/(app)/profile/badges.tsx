@@ -72,7 +72,10 @@ export default function Badges() {
                 borderColor: b.wonOn ? colors.accent : colors.line,
               }}
             >
-              <Text style={{ fontSize: 40, opacity: b.wonOn ? 1 : 0.35 }} maxFontSizeMultiplier={1}>
+              <Text
+                style={{ fontSize: 40, lineHeight: 50, opacity: b.wonOn ? 1 : 0.35 }}
+                maxFontSizeMultiplier={1}
+              >
                 {BADGE_EMOJI[b.id]}
               </Text>
               <Text variant="bodyStrong">{name}</Text>

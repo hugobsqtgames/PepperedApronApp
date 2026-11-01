@@ -334,6 +334,8 @@ function CookModeBody() {
   const finish = () => {
     // Cooking history: one entry per recipe and day (celebrated when it is worth it).
     void celebrate(() => repos.logCooked(recipe.id)).catch(() => undefined);
+    // Its timers are over with it: none is left in the Dynamic Island.
+    void timers.stopRecipe(recipe.id);
     // Another recipe still cooking: carry on with it.
     const next = others[0];
     if (next) {
@@ -410,7 +412,10 @@ function CookModeBody() {
         }}
         testID="cook-result"
       >
-        <Text style={{ fontSize: 64, textAlign: 'center' }} maxFontSizeMultiplier={1}>
+        <Text
+          style={{ fontSize: 64, lineHeight: 80, textAlign: 'center' }}
+          maxFontSizeMultiplier={1}
+        >
           📸
         </Text>
         <Text variant="title1" align="center" accessibilityRole="header">

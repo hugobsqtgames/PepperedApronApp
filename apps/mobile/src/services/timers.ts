@@ -34,6 +34,8 @@ import { haptic } from './haptics';
 
 type Listener = (timers: KitchenTimer[]) => void;
 const file = () => new File(Paths.document, 'kitchen-timers.json');
+/** Live Activities started and not yet ended, kept across launches so none is left behind. */
+const activitiesFile = () => new File(Paths.document, 'live-activities.json');
 
 /**
  * Kitchen timers stored as absolute end times (survive navigation, backgrounding and restarts).
@@ -47,6 +49,8 @@ class TimerManager {
   private tick: ReturnType<typeof setInterval> | null = null;
   private notified = new Set<string>();
   private liveActivityId: string | null = null;
+  /** Every Live Activity started and not ended yet (an older launch's included). */
+  private activityIds: string[] = [];
 
   constructor() {
     try {
@@ -65,8 +69,22 @@ class TimerManager {
     } catch {
       this.timers = [];
     }
+    try {
+      const f = activitiesFile();
+      const ids: unknown = f.exists ? JSON.parse(f.textSync()) : [];
+      this.activityIds = Array.isArray(ids) ? ids.filter((x) => typeof x === 'string') : [];
+      this.liveActivityId = this.activityIds[this.activityIds.length - 1] ?? null;
+    } catch {
+      this.activityIds = [];
+    }
     this.ensureTick();
-    AppState.addEventListener('change', (s) => s === 'active' && this.emit());
+    // A Live Activity left by an earlier launch (timer over, app closed) is ended at start.
+    if (this.activityIds.length) setTimeout(() => void this.syncLiveActivity(), 0);
+    AppState.addEventListener('change', (s) => {
+      if (s !== 'active') return;
+      this.emit();
+      void this.syncLiveActivity();
+    });
   }
 
   list() {
@@ -120,6 +138,8 @@ class TimerManager {
           }
         if (timerState(t, now) === 'done' && !this.notified.has(t.id)) {
           this.notified.add(t.id);
+          // Over: the Dynamic Island moves to the next timer, or goes away.
+          void this.syncLiveActivity();
           haptic.timerDone();
           // VoiceOver says it too, whatever screen is shown.
           AccessibilityInfo.announceForAccessibility(
@@ -223,29 +243,61 @@ class TimerManager {
     await this.update(this.timers.filter((x) => x.id !== id));
   }
 
+  /** The recipe is finished: its timers go (and the Dynamic Island with them). */
+  async stopRecipe(recipeId: string) {
+    const mine = this.timers.filter((t) => t.recipeId === recipeId);
+    if (!mine.length) return;
+    for (const t of mine) {
+      await cancelNotification(t.notificationId);
+      await cancelTimerReminders(t.id);
+      this.notified.delete(t.id);
+    }
+    await this.update(this.timers.filter((t) => t.recipeId !== recipeId));
+  }
+
+  private saveActivities() {
+    try {
+      activitiesFile().write(JSON.stringify(this.activityIds));
+    } catch {
+      /* non critical */
+    }
+  }
+
   remaining(t: KitchenTimer) {
     return remainingSeconds(t, Date.now());
   }
 
-  private async syncLiveActivity() {
+  private laQueue: Promise<void> = Promise.resolve();
+  /** One update of the Live Activity at a time (the tick and a change can ask together). */
+  private syncLiveActivity(): Promise<void> {
+    this.laQueue = this.laQueue.then(() => this.doSyncLiveActivity()).catch(() => undefined);
+    return this.laQueue;
+  }
+  private async doSyncLiveActivity() {
     if (Platform.OS !== 'ios') return;
     try {
-      const LA = await import('expo-live-activity');
+      // Loaded when first needed (lazy require: also works under Jest, unlike import()); the
+      // runtime and the widgets import this module, so they are loaded here too.
+      const LA = require('expo-live-activity') as typeof import('expo-live-activity');
+      const { runtime } = require('./runtime') as typeof import('./runtime');
+      const { publishTimerWidget } = require('./widgets') as typeof import('./widgets');
       const now = Date.now();
       const running = this.timers
         .filter((t) => timerState(t, now) === 'running')
         .sort((a, b) => (a.endsAt ?? 0) - (b.endsAt ?? 0));
       const next = running[0];
-      // Loaded here: the runtime and the widgets import this module.
-      const [{ runtime }, { publishTimerWidget }] = await Promise.all([
-        import('./runtime'),
-        import('./widgets'),
-      ]);
       void publishTimerWidget(next ?? null);
       if (!next) {
-        if (this.liveActivityId)
-          LA.stopActivity(this.liveActivityId, { title: '', progressBar: { progress: 1 } });
+        // Every activity still known is ended, an older launch's too.
+        for (const id of this.activityIds)
+          try {
+            LA.stopActivity(id, { title: '', progressBar: { progress: 1 } });
+          } catch {
+            // Already ended (by the user, or by iOS).
+          }
+        this.activityIds = [];
         this.liveActivityId = null;
+        this.saveActivities();
         return;
       }
       // Dynamic Island and lock screen: the timer's name, and what the step says.
@@ -268,17 +320,27 @@ class TimerManager {
         imageName: 'glyph',
         dynamicIslandImageName: 'glyph',
       };
-      if (this.liveActivityId) LA.updateActivity(this.liveActivityId, state);
-      else
-        this.liveActivityId =
-          LA.startActivity(state, {
-            backgroundColor: '#1F4D3A',
-            titleColor: '#F7F1E6',
-            subtitleColor: '#E8DFCF',
-            progressViewTint: '#E8894F',
-            timerType: 'circular',
-            deepLinkUrl: next.recipeId ? `/recipe/${next.recipeId}/cook` : '/',
-          }) ?? null;
+      if (this.liveActivityId) {
+        try {
+          LA.updateActivity(this.liveActivityId, state);
+          return;
+        } catch {
+          // Swiped away by the user, or ended by iOS: a new one is started below.
+          this.activityIds = this.activityIds.filter((x) => x !== this.liveActivityId);
+          this.liveActivityId = null;
+        }
+      }
+      this.liveActivityId =
+        LA.startActivity(state, {
+          backgroundColor: '#1F4D3A',
+          titleColor: '#F7F1E6',
+          subtitleColor: '#E8DFCF',
+          progressViewTint: '#E8894F',
+          timerType: 'circular',
+          deepLinkUrl: next.recipeId ? `/recipe/${next.recipeId}/cook` : '/',
+        }) ?? null;
+      if (this.liveActivityId) this.activityIds.push(this.liveActivityId);
+      this.saveActivities();
     } catch {
       // Live Activities unavailable (older iOS, disabled by the user): notifications still fire.
     }
