@@ -8,7 +8,7 @@ on:
     inputs:
       count:
         description: How many reports
-        default: '3'
+        default: '50'
 
 jobs:
   crashes:
@@ -34,5 +34,5 @@ jobs:
             fs.writeFileSync(process.env.RUNNER_TEMP + "/asc.json", JSON.stringify({
               key_id: process.env.KEY_ID.trim(), issuer_id: process.env.ISSUER_ID.trim(), key: pem }));'
           ASC_KEY_JSON="$RUNNER_TEMP/asc.json" node tools/store/builds.mjs 5
-          ASC_KEY_JSON="$RUNNER_TEMP/asc.json" node tools/store/crashes.mjs "${{ inputs.count }}"
+          ASC_KEY_JSON="$RUNNER_TEMP/asc.json" node tools/store/feedback.mjs "${{ inputs.count }}"
           rm -f "$RUNNER_TEMP/asc.json"
