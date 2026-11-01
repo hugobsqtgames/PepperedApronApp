@@ -264,6 +264,13 @@ export default function Home() {
           ) : null}
           <Tip id="home" icon="share-outline" />
         </View>
+        {/* The pantry, one tap away (it was only in the groceries menu and the profile). */}
+        <IconButton
+          icon="basket-outline"
+          label={t('pantry.title')}
+          onPress={() => router.push('/pantry')}
+          testID="open-pantry"
+        />
         {!layout.sidebar ? (
           <IconButton
             icon="heart-outline"

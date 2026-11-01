@@ -182,6 +182,16 @@ export default function ImportQueueScreen() {
   // ---------------------------------------------------------------- one shared recipe
   if (single) {
     const failed = single.status === 'failed';
+    // Waiting: say for what — another import finishing first, or the network.
+    const ahead = state.jobs.find(
+      (j) => j.id !== single.id && j.status === 'running' && j.batch === single.batch,
+    );
+    const offlinePause = state.pauseReason === 'offline' && state.pausedUntil > Date.now();
+    const waitLabel = ahead
+      ? t('import.waitingFor', { what: ahead.title ?? sourceLabel(ahead.source, t) })
+      : offlinePause
+        ? t('import.waitingNetwork')
+        : t('import.waiting');
     return (
       <Screen scroll={false} edges={['top', 'bottom']} maxWidth={560}>
         {header}
@@ -200,11 +210,20 @@ export default function ImportQueueScreen() {
           ) : (
             <>
               <LoadingState
-                label={single.status === 'running' ? stageLabel(single, t) : t('import.waiting')}
+                label={single.status === 'running' ? stageLabel(single, t) : waitLabel}
               />
               <Text variant="callout" color="textMuted" align="center">
                 {t('import.autoSaveHint')}
               </Text>
+              {single.status === 'pending' && offlinePause ? (
+                <Button
+                  title={t('import.retryNow')}
+                  icon="refresh"
+                  variant="secondary"
+                  onPress={() => void importQueue.start()}
+                  testID="import-retry-now"
+                />
+              ) : null}
             </>
           )}
         </View>

@@ -462,6 +462,12 @@ export default function Shopping() {
           </View>
         </Pressable>
         <IconButton
+          icon="basket-outline"
+          label={t('pantry.title')}
+          onPress={() => router.push('/pantry')}
+          testID="shopping-pantry"
+        />
+        <IconButton
           icon="ellipsis-horizontal"
           label={t('common.more')}
           onPress={menu}

@@ -43,12 +43,34 @@ const pageFetcher =
       const body = (await res.text()).slice(0, MAX_CHARS);
       return { status: res.status, contentType: res.headers.get('content-type'), body };
     } catch (e) {
-      onNetworkError?.();
+      // A site that is slow to answer (12 s) is not the phone being offline.
+      if ((e as Error).name !== 'AbortError') onNetworkError?.();
       throw e;
     } finally {
       clearTimeout(timer);
     }
   };
+
+/**
+ * Whether the phone can reach the internet at all, checked with Apple's own connectivity page
+ * (the one iOS uses for Wi-Fi portals): nothing is sent but the request itself.
+ */
+export async function internetReachable(): Promise<boolean> {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 5000);
+  try {
+    const res = await fetch('https://captive.apple.com/hotspot-detect.html', {
+      method: 'HEAD',
+      signal: ctrl.signal,
+      credentials: 'omit',
+    });
+    return res.status > 0;
+  } catch {
+    return false;
+  } finally {
+    clearTimeout(timer);
+  }
+}
 
 /** Recipe draft from a link; offline or unreadable pages still give a draft with the link. */
 export function importLink(url: string): Promise<ImportResult> {
@@ -226,7 +248,11 @@ export async function importLinkFull(
     pageFetcher(() => networkErrors++),
     url,
   );
-  const offline = networkErrors > 0 && res.completeness === 'minimal';
+  // A site refusing the connection looks like no network: the phone is only called offline
+  // when it cannot reach Apple's own connectivity check either. Otherwise what could be read is
+  // saved now, instead of waiting minutes for a site that will not answer.
+  const offline =
+    networkErrors > 0 && res.completeness === 'minimal' && !(await internetReachable());
   if (!res.videoUrl) return { result: res, listenError: null, offline, frames: [] };
   onListening();
   const { result, error, frames } = await listenToVideo(res);

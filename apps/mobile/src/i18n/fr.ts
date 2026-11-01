@@ -318,6 +318,9 @@ const fr = {
       'Astuce : dans TikTok, Instagram ou Safari, touchez Partager puis PepperedApron : la recette s’enregistre toute seule.',
   },
   import: {
+    waitingFor: 'En attente : un autre import se termine d’abord ({{what}})',
+    waitingNetwork: 'En attente de connexion internet…',
+    retryNow: 'Réessayer maintenant',
     handwritten: 'Recette écrite à la main',
     handwrittenBody:
       'L’écriture est lue sur l’iPhone et la photo de la fiche est gardée en souvenir.',

@@ -40,6 +40,7 @@ const INSTAGRAM_GAP_MS = 4000;
 const OTHER_GAP_MS = 1500;
 const BLOCKED_PAUSE_MS = 15 * 60_000;
 const OFFLINE_PAUSE_MS = 60_000;
+const HAND_OFFLINE_PAUSE_MS = 15_000;
 /** One import never takes longer (a video that never finishes downloading must not block the rest). */
 const JOB_TIMEOUT_MS = 4 * 60_000;
 /** The same thing shared again within this delay is the same share (iOS can deliver it twice). */
@@ -358,7 +359,9 @@ class ImportQueue {
         // No network: try again later rather than saving an empty recipe.
         Object.assign(job, { status: 'pending', stage: null, error: 'offline' });
         if (job.attempts >= MAX_ATTEMPTS * 3) job.status = 'failed';
-        this.state.pausedUntil = Date.now() + OFFLINE_PAUSE_MS;
+        // Shared by hand: tried again soon (the person is waiting for it).
+        this.state.pausedUntil =
+          Date.now() + (job.batch ? OFFLINE_PAUSE_MS : HAND_OFFLINE_PAUSE_MS);
         this.state.pauseReason = 'offline';
         return;
       }

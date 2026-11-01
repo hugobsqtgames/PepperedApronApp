@@ -425,6 +425,78 @@ describe('journeys: what the user does is really saved', () => {
     for (const t of timers.list()) await timers.stop(t.id);
   });
 
+  it('the pantry is one tap away, from home and from the groceries (TestFlight feedback)', async () => {
+    mockNav.push.mockClear();
+    const Home = screenOf('../src/app/(app)/(tabs)/index');
+    await render(wrap(<Home />));
+    await tap(screen.getByTestId('open-pantry'));
+    expect(mockNav.push).toHaveBeenCalledWith('/pantry');
+    await cleanup();
+    mockNav.push.mockClear();
+    const Shopping = screenOf('../src/app/(app)/(tabs)/shopping');
+    await render(wrap(<Shopping />));
+    await tap(screen.getByTestId('shopping-pantry'));
+    expect(mockNav.push).toHaveBeenCalledWith('/pantry');
+  });
+
+  it('a waiting import says what it waits for (TestFlight feedback)', async () => {
+    const { importQueue } = jest.requireActual<typeof import('../src/services/importQueue')>(
+      '../src/services/importQueue',
+    );
+    const q = importQueue as unknown as {
+      state: Record<string, unknown>;
+      loaded: boolean;
+      start: () => Promise<void>;
+      emit: () => void;
+    };
+    const job = (id: string, status: string, title: string | null) => ({
+      id,
+      source: { kind: 'link', url: `https://www.tiktok.com/@a/video/${id}` },
+      batch: false,
+      collection: null,
+      force: false,
+      status,
+      stage: null,
+      attempts: 0,
+      recipeId: null,
+      title,
+      notice: null,
+      error: null,
+      addedAt: Date.now(),
+    });
+    const start = q.start;
+    q.start = async () => undefined;
+    q.loaded = true;
+    try {
+      q.state = {
+        jobs: [job('1', 'running', 'Pâtes au pesto'), job('2', 'pending', null)],
+        pausedUntil: 0,
+        pauseReason: null,
+      };
+      q.emit();
+      mockParams.current = { ids: '2' };
+      const Queue = screenOf('../src/app/(app)/import/queue');
+      await render(wrap(<Queue />));
+      expect(
+        screen.getByText(i18n.t('import.waitingFor', { what: 'Pâtes au pesto' })),
+      ).toBeTruthy();
+      await cleanup();
+      q.state = {
+        jobs: [job('2', 'pending', null)],
+        pausedUntil: Date.now() + 15_000,
+        pauseReason: 'offline',
+      };
+      q.emit();
+      await render(wrap(<Queue />));
+      expect(screen.getByText(i18n.t('import.waitingNetwork'))).toBeTruthy();
+      expect(screen.getByTestId('import-retry-now')).toBeTruthy();
+    } finally {
+      q.start = start;
+      q.state = { jobs: [], pausedUntil: 0, pauseReason: null };
+      q.emit();
+    }
+  });
+
   it('wine, beer or cider are suggested only once turned on (age rating)', async () => {
     const { pairingsFor } =
       jest.requireActual<typeof import('@pepperedapron/core')>('@pepperedapron/core');

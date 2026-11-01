@@ -317,6 +317,9 @@ const en: Translations = {
       'Tip: in TikTok, Instagram or Safari, tap Share then PepperedApron: the recipe saves itself.',
   },
   import: {
+    waitingFor: 'Waiting: another import finishes first ({{what}})',
+    waitingNetwork: 'Waiting for an internet connection…',
+    retryNow: 'Try again now',
     handwritten: 'Handwritten recipe',
     handwrittenBody:
       'The handwriting is read on your iPhone and the photo of the card is kept as a keepsake.',

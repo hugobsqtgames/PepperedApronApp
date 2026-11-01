@@ -11,6 +11,7 @@ Date : 1er novembre 2026. Méthode : lecture du code (`apps/mobile/src`, `packag
 | Lien partagé (URL) | Requête HTTPS directe, sans cookie (`credentials: 'omit'`) | Oui | Le site ou le réseau concerné (IP de l'appareil) | Import demandé |
 | Vidéo publique d'une publication | Cache de l'app, **supprimée après lecture** | Non (téléchargement) | — | Import quand la recette manque |
 | Images fixes tirées de la vidéo | Cache, puis photo de la recette si choisie | Non | — | Import |
+| Vérification de connexion (requête `HEAD` vide) | Requête HTTPS | Oui | Apple (`captive.apple.com`, la page qu'iOS utilise lui-même) : seulement si un site ne répond pas pendant un import | Import |
 | Code-barres (numéro seul) | Requête HTTPS | Oui | Open Food Facts (IP), User-Agent honnête « PepperedApron/version (contact) » | Scan demandé |
 | Voix, son des vidéos | Reconnaissance Apple **sur l'appareil** (`requiresOnDeviceRecognition = true`, vérifié dans `VoiceCommandsModule.swift` et `VideoSpeechModule.swift`) | Non | — | Dictée, commandes vocales, import vidéo |
 | Texte des photos | Apple Vision sur l'appareil | Non | — | Import photo, ticket |
