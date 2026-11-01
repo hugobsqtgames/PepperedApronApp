@@ -1,6 +1,7 @@
 name: TestFlight crash logs
 
-# Prints the latest crash reports sent from TestFlight, to find the cause of a crash.
+# Prints the latest builds received by App Store Connect (and their processing state) and the
+# latest crash reports sent from TestFlight, to find the cause of a crash.
 # Read-only: changes nothing on App Store Connect.
 on:
   workflow_dispatch:
@@ -32,5 +33,6 @@ jobs:
             const pem = "-----BEGIN PRIVATE KEY-----\n" + body.match(/.{1,64}/g).join("\n") + "\n-----END PRIVATE KEY-----\n";
             fs.writeFileSync(process.env.RUNNER_TEMP + "/asc.json", JSON.stringify({
               key_id: process.env.KEY_ID.trim(), issuer_id: process.env.ISSUER_ID.trim(), key: pem }));'
+          ASC_KEY_JSON="$RUNNER_TEMP/asc.json" node tools/store/builds.mjs 5
           ASC_KEY_JSON="$RUNNER_TEMP/asc.json" node tools/store/crashes.mjs "${{ inputs.count }}"
           rm -f "$RUNNER_TEMP/asc.json"
