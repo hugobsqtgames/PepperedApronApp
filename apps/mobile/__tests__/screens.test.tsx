@@ -497,6 +497,65 @@ describe('journeys: what the user does is really saved', () => {
     }
   });
 
+  it('an import finished while its screen is open opens the recipe (TestFlight feedback)', async () => {
+    // The queue updates a job in place (the same object goes pending → running → done): the
+    // screen must notice, not stay on "Waiting…" with the recipe saved.
+    const { importQueue } = jest.requireActual<typeof import('../src/services/importQueue')>(
+      '../src/services/importQueue',
+    );
+    const q = importQueue as unknown as {
+      state: { jobs: Record<string, unknown>[]; pausedUntil: number; pauseReason: null };
+      loaded: boolean;
+      start: () => Promise<void>;
+      emit: () => void;
+    };
+    const job: Record<string, unknown> = {
+      id: 'live',
+      source: { kind: 'link', url: 'https://www.tiktok.com/@a/video/42' },
+      batch: false,
+      collection: null,
+      force: false,
+      status: 'pending',
+      stage: null,
+      attempts: 0,
+      recipeId: null,
+      title: null,
+      notice: null,
+      error: null,
+      addedAt: Date.now(),
+    };
+    const start = q.start;
+    q.start = async () => undefined;
+    q.loaded = true;
+    mockNav.replace.mockClear();
+    try {
+      q.state = { jobs: [job], pausedUntil: 0, pauseReason: null };
+      q.emit();
+      mockParams.current = { ids: 'live' };
+      const Queue = screenOf('../src/app/(app)/import/queue');
+      await render(wrap(<Queue />));
+      await act(async () => {
+        Object.assign(job, { status: 'running', stage: 'fetching' });
+        q.emit();
+      });
+      expect(mockNav.replace).not.toHaveBeenCalled();
+      await act(async () => {
+        Object.assign(job, { status: 'done', stage: null, recipeId: 'r-42', title: 'Pâtes' });
+        q.emit();
+      });
+      expect(mockNav.replace).toHaveBeenCalledWith('/import/review?id=r-42');
+      expect(screen.queryByText(i18n.t('import.waiting'))).toBeNull();
+      expect(screen.getByText(i18n.t('import.savedTitle'))).toBeTruthy();
+      await tap(screen.getByText(i18n.t('import.openSaved')));
+      expect(mockNav.replace).toHaveBeenCalledWith('/recipe/r-42');
+    } finally {
+      q.start = start;
+      q.state = { jobs: [], pausedUntil: 0, pauseReason: null };
+      q.emit();
+      mockParams.current = {};
+    }
+  });
+
   it('wine, beer or cider are suggested only once turned on (age rating)', async () => {
     const { pairingsFor } =
       jest.requireActual<typeof import('@pepperedapron/core')>('@pepperedapron/core');

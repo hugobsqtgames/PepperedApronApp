@@ -119,7 +119,11 @@ export default function ImportQueueScreen() {
     return () => void deactivateKeepAwake('imports').catch(() => undefined);
   }, [running]);
 
-  useEffect(() => {
+  // Read by value (status, recipe), not by the job object: the queue may update it in place.
+  const singleId = single?.id;
+  const singleStatus = single?.status;
+  const singleRecipe = single?.recipeId;
+  const openSingle = () => {
     if (!single || opened.current) return;
     if (single.status !== 'done' && single.status !== 'duplicate') return;
     opened.current = true;
@@ -143,7 +147,12 @@ export default function ImportQueueScreen() {
           },
         },
       });
-  }, [single, own, t, toast]);
+  };
+  const openRef = useRef(openSingle);
+  openRef.current = openSingle;
+  useEffect(() => {
+    openRef.current();
+  }, [singleId, singleStatus, singleRecipe]);
 
   const close = () => (router.canGoBack() ? router.back() : router.replace('/'));
 
@@ -219,7 +228,18 @@ export default function ImportQueueScreen() {
         {header}
         {pause}
         <View style={{ flex: 1, justifyContent: 'center', gap: space.xl }}>
-          {failed ? (
+          {(single.status === 'done' || single.status === 'duplicate') && single.recipeId ? (
+            // Saved: never "Waiting…" — the recipe opens on its own, and here if it did not.
+            <EmptyState
+              emoji="✅"
+              title={t('import.savedTitle')}
+              body={single.title ?? undefined}
+              action={t('import.openSaved')}
+              onAction={() => router.replace(`/recipe/${single.recipeId}`)}
+              secondary={t('common.close')}
+              onSecondary={close}
+            />
+          ) : failed ? (
             <EmptyState
               emoji="😕"
               title={t('import.failedTitle')}

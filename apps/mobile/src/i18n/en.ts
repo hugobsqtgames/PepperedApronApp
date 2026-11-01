@@ -328,6 +328,8 @@ const en: Translations = {
       'The handwriting is read on your iPhone and the photo of the card is kept as a keepsake.',
     saving: 'Saving the recipe…',
     waiting: 'Waiting…',
+    savedTitle: 'Recipe saved',
+    openSaved: 'See the recipe',
     savedToast: 'Recipe saved ✓',
     duplicateToast: 'Already in your recipes',
     saveAnyway: 'Add anyway',

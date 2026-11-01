@@ -329,6 +329,8 @@ const fr = {
       'L’écriture est lue sur l’iPhone et la photo de la fiche est gardée en souvenir.',
     saving: 'Enregistrement de la recette…',
     waiting: 'En attente…',
+    savedTitle: 'Recette enregistrée',
+    openSaved: 'Voir la recette',
     savedToast: 'Recette enregistrée ✓',
     duplicateToast: 'Déjà dans votre carnet',
     saveAnyway: 'Ajouter quand même',
