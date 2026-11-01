@@ -12,7 +12,7 @@
 - ✅ Phase de bundle JavaScript d'Xcode exécutée comme sur EAS (`qa:native`)
 - ✅ Aucun code de débogage accessible, aucun écran caché, aucun secret dans le dépôt
 - ✅ Télémétrie Expo désactivée, pas de mises à jour OTA
-- ⬜ Lancer un build de production qui contient ces corrections (je peux le lancer : il part sur TestFlight, sans soumission)
+- ✅ Build de production avec ces corrections lancé sur EAS → TestFlight (sans soumission)
 
 ## Qualité
 
