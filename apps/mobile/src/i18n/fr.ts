@@ -560,6 +560,9 @@ const fr = {
     firstNameEmpty: 'Ajouter',
   },
   settings: {
+    alcoholPairings: 'Suggérer aussi du vin, de la bière ou du cidre',
+    alcoholPairingsBody:
+      'Dans « Pour accompagner », à côté de la boisson sans alcool. Réservé aux adultes.',
     nudgeWhen: 'Rappel « planning de la semaine »',
     weekday0: 'Dimanche',
     weekday5: 'Vendredi',

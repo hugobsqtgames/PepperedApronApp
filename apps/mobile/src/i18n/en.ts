@@ -554,6 +554,8 @@ const en: Translations = {
     firstNameEmpty: 'Add',
   },
   settings: {
+    alcoholPairings: 'Also suggest wine, beer or cider',
+    alcoholPairingsBody: 'In “To go with it”, next to the alcohol-free drink. For adults only.',
     nudgeWhen: '“Plan your week” reminder',
     weekday0: 'Sunday',
     weekday5: 'Friday',

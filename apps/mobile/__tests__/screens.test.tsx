@@ -406,6 +406,26 @@ describe('journeys: what the user does is really saved', () => {
     expect(repos.recipe(ids.recipe!)!.data.cuisine).not.toBeNull();
   });
 
+  it('wine, beer or cider are suggested only once turned on (age rating)', async () => {
+    const { pairingsFor } =
+      jest.requireActual<typeof import('@pepperedapron/core')>('@pepperedapron/core');
+    // A savoury dish that has an alcoholic pairing.
+    const withDrink = repos
+      .recipes()
+      .find((r) => pairingsFor({ ...r.data, cuisine: r.data.cuisine }).drink !== null)!;
+    expect(withDrink).toBeTruthy();
+    mockParams.current = { id: withDrink.id };
+    const Recipe = screenOf('../src/app/(app)/recipe/[id]/index');
+    expect(repos.settings().alcoholPairings).toBe(false);
+    await render(wrap(<Recipe />));
+    expect(screen.getByText(i18n.t('delight.pairing.soft'))).toBeTruthy();
+    expect(screen.queryByText(i18n.t('delight.pairing.drink'))).toBeNull();
+    await cleanup();
+    await repos.updateSettings({ alcoholPairings: true });
+    await render(wrap(<Recipe />));
+    expect(screen.getByText(i18n.t('delight.pairing.drink'))).toBeTruthy();
+  });
+
   it('home: tonight’s planned dinner is the big card', async () => {
     const today = new Date().toISOString().slice(0, 10);
     await repos.planMeal({ date: today, slot: 'dinner', recipeId: ids.recipe2! });

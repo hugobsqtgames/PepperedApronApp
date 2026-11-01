@@ -199,6 +199,8 @@ export const settingsDataSchema = z
       .default('18:00'),
     /** Recipe lists as compact rows instead of photo tiles (large libraries). */
     compactLists: z.boolean().default(false),
+    /** Wine, beer or cider among the pairings of a dish: off unless the user turns it on. */
+    alcoholPairings: z.boolean().default(false),
   })
   .strict();
 export type SettingsData = z.infer<typeof settingsDataSchema>;
@@ -225,6 +227,7 @@ export const DEFAULT_SETTINGS: SettingsData = {
   planningNudgeDay: 0,
   planningNudgeTime: '18:00',
   compactLists: false,
+  alcoholPairings: false,
 };
 
 /** One time a recipe was cooked (cooking history). */

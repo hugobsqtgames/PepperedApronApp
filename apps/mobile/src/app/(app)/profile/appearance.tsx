@@ -42,6 +42,13 @@ export default function Appearance() {
           onToggle={(v) => inBackground(repos.updateSettings({ hapticsEnabled: v }))}
         />
         <ListRow
+          title={t('settings.alcoholPairings')}
+          subtitle={t('settings.alcoholPairingsBody')}
+          toggle={s.alcoholPairings}
+          onToggle={(v) => inBackground(repos.updateSettings({ alcoholPairings: v }))}
+          testID="alcohol-pairings-toggle"
+        />
+        <ListRow
           title={t('settings.defaultServings')}
           chevron={false}
           right={

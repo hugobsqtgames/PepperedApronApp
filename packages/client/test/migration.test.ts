@@ -16,7 +16,7 @@ const ADDED: Record<string, string[]> = {
   recipe: ['rating', 'personalNote', 'review', 'cuisine', 'stepNotes'],
   mealPlanEntry: ['leftover'],
   shoppingItem: ['price'],
-  settings: ['firstName', 'cookTextScale', 'cookReadAloud'],
+  settings: ['firstName', 'cookTextScale', 'cookReadAloud', 'compactLists', 'alcoholPairings'],
   cookLog: ['photoKey'],
   pantryItem: ['place', 'expiresOn'],
 };

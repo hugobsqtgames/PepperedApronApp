@@ -661,7 +661,8 @@ function RecipeDetailBody({ id }: { id: string }) {
       <View style={[styles.pairing, { backgroundColor: colors.surface, borderColor: colors.line }]}>
         {(
           [
-            pairing.drink
+            // Alcohol only when the user asked for it (Settings → Appearance).
+            pairing.drink && settings.alcoholPairings
               ? ['wine-outline', 'drink', t(`delight.pairing.drinks.${pairing.drink}`)]
               : null,
             ['cafe-outline', 'soft', t(`delight.pairing.drinks.${pairing.soft}`)],
