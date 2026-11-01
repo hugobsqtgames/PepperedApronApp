@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
 import {
   AccessibilityInfo,
@@ -146,6 +146,28 @@ export default function ImportQueueScreen() {
   }, [single, own, t, toast]);
 
   const close = () => (router.canGoBack() ? router.back() : router.replace('/'));
+
+  // Still waiting: the queue is nudged every few seconds (it may have stopped), and if the
+  // recipe from this link is already in the library (saved by another share of the same post),
+  // it is opened instead of waiting for nothing.
+  const waitingId = single && single.status === 'pending' ? single.id : null;
+  const [waitedS, setWaitedS] = useState(0);
+  useEffect(() => {
+    if (!waitingId) return;
+    const startedAt = Date.now();
+    const tick = setInterval(() => {
+      setWaitedS(Math.round((Date.now() - startedAt) / 1000));
+      const saved = importQueue.savedRecipeFor(waitingId);
+      if (saved && !opened.current) {
+        opened.current = true;
+        void importQueue.remove(waitingId);
+        router.replace(`/recipe/${saved}`);
+        return;
+      }
+      void importQueue.start();
+    }, 5000);
+    return () => clearInterval(tick);
+  }, [waitingId]);
   const back = sourceApp(jobs);
   const goBack = back ? () => void Linking.openURL(back.url).catch(() => undefined) : undefined;
 
@@ -215,6 +237,22 @@ export default function ImportQueueScreen() {
               <Text variant="callout" color="textMuted" align="center">
                 {t('import.autoSaveHint')}
               </Text>
+              {single.status === 'pending' && waitedS >= 10 ? (
+                <Text variant="caption" color="textSubtle" align="center">
+                  {t('import.waitingSince', { count: waitedS })}
+                </Text>
+              ) : null}
+              {single.status === 'pending' && waitedS >= 20 ? (
+                <Button
+                  title={t('import.cancel')}
+                  variant="ghost"
+                  onPress={() => {
+                    void importQueue.remove(single.id);
+                    close();
+                  }}
+                  testID="import-cancel"
+                />
+              ) : null}
               {single.status === 'pending' && offlinePause ? (
                 <Button
                   title={t('import.retryNow')}

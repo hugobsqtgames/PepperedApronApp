@@ -1,8 +1,10 @@
 /* The queue logic with the import steps replaced: what is saved, skipped, paused or retried. */
 const mockMeta = new Map<string, string>();
+const mockRecipes: { id: string; updatedAt: string; data: { sourceUrl: string | null } }[] = [];
 jest.mock('../src/services/runtime', () => ({
   runtime: {
     session: {
+      repos: { recipes: () => mockRecipes },
       store: {
         meta: async (k: string) => mockMeta.get(k) ?? null,
         setMeta: async (k: string, v: string) => void mockMeta.set(k, v),
@@ -273,4 +275,70 @@ describe('stress: many imports with random outcomes', () => {
     expect(mockSave.mock.calls.length).toBeLessThanOrEqual(N * 3);
     console.info(`QA-COUNT mobile.importqueue.jobs ${N}`);
   }, 3_600_000);
+});
+
+describe('an import that never finished on screen (TestFlight feedback)', () => {
+  it('finds the recipe already saved from the same post, even through a short link', async () => {
+    mockPrepare.mockImplementation(() => new Promise(() => undefined)); // never ends here
+    const [a] = await importQueue.add([
+      link('https://www.tiktok.com/@chef/video/42?is_from_webapp=1'),
+    ]);
+    const [b] = await importQueue.add([link('https://vm.tiktok.com/ZNabc/')]);
+    expect(importQueue.savedRecipeFor(a!)).toBeNull();
+    mockRecipes.push({
+      id: 'r-pain',
+      updatedAt: new Date().toISOString(),
+      data: { sourceUrl: 'https://www.tiktok.com/@chef/video/42' },
+    });
+    expect(importQueue.savedRecipeFor(a!)).toBe('r-pain');
+    // The short link: the only recipe from that site saved since the share.
+    expect(importQueue.savedRecipeFor(b!)).toBe('r-pain');
+    mockRecipes.length = 0;
+  });
+
+  it('a job saved by an older version without its lane is still run', async () => {
+    mockMeta.set(
+      'import_queue',
+      JSON.stringify({
+        jobs: [
+          {
+            id: 'old1',
+            source: { kind: 'link', url: 'https://example.com/r', text: null, title: null },
+            status: 'pending',
+            attempts: 0,
+            addedAt: Date.now(),
+          },
+        ],
+        pausedUntil: 0,
+        pauseReason: null,
+      }),
+    );
+    mockPrepare.mockResolvedValue(prepared('partial'));
+    mockSave.mockResolvedValue({ recipeId: 'r1', title: 'Old', duplicate: null });
+    await importQueue.start();
+    await settle();
+    expect(importQueue.snapshot.jobs.find((j) => j.id === 'old1')?.status).toBe('done');
+    expect(importQueue.importLog().some((l) => l.includes('run old1'))).toBe(true);
+  });
+});
+
+it('a post waiting in a paused bulk import, shared again by hand, runs now', async () => {
+  mockPrepare.mockResolvedValueOnce(prepared('instagram'));
+  await importQueue.add(
+    [
+      link('https://www.instagram.com/p/A1/'),
+      link('https://www.instagram.com/p/A2/'),
+      link('https://www.instagram.com/p/A3/'),
+      link('https://www.instagram.com/p/A4/'),
+    ],
+    { batch: true },
+  );
+  await jest.advanceTimersByTimeAsync(100);
+  // Instagram asked to slow down: the bulk import is paused for 15 minutes.
+  expect(importQueue.snapshot.pauseReason).toBe('blocked');
+  mockPrepare.mockResolvedValue(prepared('partial'));
+  mockSave.mockResolvedValue({ recipeId: 'r3', title: 'A3', duplicate: null });
+  const [id] = await importQueue.add([link('https://www.instagram.com/p/A3/')]);
+  await settle();
+  expect(importQueue.snapshot.jobs.find((j) => j.id === id)?.status).toBe('done');
 });

@@ -8,6 +8,7 @@ import { router } from 'expo-router';
 import { Button, Card, Text, useToast } from '../../../ui';
 import { resetTips } from '../../../ui/Tip';
 import { clearLastCrash, lastCrash } from '../../../lib/crashGuard';
+import { importQueue } from '../../../services/importQueue';
 
 const FAQ = [1, 2, 3, 4, 5] as const;
 
@@ -100,6 +101,20 @@ export default function Help() {
             }}
           />
         ) : null}
+        <Button
+          title={t('importLog.send')}
+          variant="ghost"
+          icon="document-text-outline"
+          onPress={() => {
+            const lines = importQueue.importLog();
+            void Share.share({
+              message: `PepperedApron ${ENV.appVersion} · ${Platform.OS} ${Platform.Version}\n\n${
+                lines.length ? lines.join('\n') : t('importLog.empty')
+              }`,
+            });
+          }}
+          testID="send-import-log"
+        />
         <Button
           title={t('contact.website')}
           variant="secondary"

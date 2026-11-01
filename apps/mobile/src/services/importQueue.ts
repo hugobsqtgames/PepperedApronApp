@@ -33,6 +33,7 @@ export interface QueueState {
 }
 
 const META_KEY = 'import_queue';
+const LOG_KEY = 'import_log';
 const MAX_JOBS = 2000;
 const MAX_ATTEMPTS = 3;
 /** Instagram blocks a phone that reads too many posts too fast: pace and back off. */
@@ -117,6 +118,8 @@ function dropFiles(job: ImportJob) {
 class ImportQueue {
   private state: QueueState = { jobs: [], pausedUntil: 0, pauseReason: null };
   private loaded = false;
+  /** What the queue did, newest last (Help → "Send the import log"), to find why one waited. */
+  private logLines: string[] = [];
   /**
    * Two lanes: what the user shares by hand never waits behind a bulk import (an Instagram
    * export of hundreds of posts, paced to avoid being blocked).
@@ -145,8 +148,17 @@ class ImportQueue {
   private async load() {
     if (this.loaded) return;
     const s = runtime.session;
-    if (!s) return;
+    if (!s) {
+      this.log('load: data not open yet');
+      return;
+    }
     try {
+      const rawLog = await s.store.meta(LOG_KEY);
+      const oldLog: unknown = rawLog ? JSON.parse(rawLog) : [];
+      if (Array.isArray(oldLog))
+        this.logLines = [...oldLog.filter((l) => typeof l === 'string'), ...this.logLines].slice(
+          -300,
+        );
       const raw = await s.store.meta(META_KEY);
       const saved = raw ? (JSON.parse(raw) as Partial<QueueState> | null) : null;
       // A damaged or older state must not stop the imports: keep only well-formed jobs.
@@ -167,9 +179,57 @@ class ImportQueue {
     } catch {
       // Unreadable: start empty.
     }
-    // A job interrupted by the app being closed starts again.
-    for (const j of this.state.jobs) if (j.status === 'running') j.status = 'pending';
+    // A job interrupted by the app being closed starts again; an older saved job without its
+    // lane is a hand-shared one (it would otherwise be picked by no lane and wait for ever).
+    for (const j of this.state.jobs) {
+      if (j.status === 'running') j.status = 'pending';
+      j.batch = j.batch === true;
+    }
+    this.log(`loaded ${this.state.jobs.length} jobs`);
     this.loaded = true;
+  }
+
+  private log(msg: string) {
+    this.logLines.push(`${new Date().toISOString().slice(5, 19)} ${msg}`);
+    if (this.logLines.length > 300) this.logLines.splice(0, this.logLines.length - 300);
+  }
+
+  /** The import log, oldest first (shown nowhere: sent by the user from Help when asked). */
+  importLog(): string[] {
+    return [...this.logLines];
+  }
+
+  /**
+   * The recipe an import already led to, when its job never finished on screen (the same post
+   * saved by another share of it): same link, or — for a short link that the site redirected —
+   * the only recipe from that site saved since the share. Null when unsure.
+   */
+  savedRecipeFor(id: string): string | null {
+    const s = runtime.session;
+    const job = this.state.jobs.find((j) => j.id === id);
+    if (!s || !job || job.source.kind !== 'link') return null;
+    const want = canonicalUrl(job.source.url) ?? job.source.url;
+    const recipes = s.repos.recipes();
+    const same = recipes.find(
+      (r) => r.data.sourceUrl && (canonicalUrl(r.data.sourceUrl) ?? r.data.sourceUrl) === want,
+    );
+    if (same) return same.id;
+    let host: string;
+    try {
+      host = new URL(job.source.url).hostname.replace(/^(www|vm|vt|m)\./, '');
+    } catch {
+      return null;
+    }
+    const since = job.addedAt - 60_000;
+    const recent = recipes.filter((r) => {
+      if (!r.data.sourceUrl || Date.parse(r.updatedAt) < since) return false;
+      try {
+        return new URL(r.data.sourceUrl).hostname.replace(/^(www|vm|vt|m)\./, '') === host;
+      } catch {
+        return false;
+      }
+    });
+    return recent.length === 1 ? recent[0]!.id : null;
   }
 
   private emit() {
@@ -204,6 +264,7 @@ class ImportQueue {
         this.state.jobs = this.state.jobs.filter((j) => !old.has(j.id));
       }
       await s.store.setMeta(META_KEY, JSON.stringify(this.state));
+      await s.store.setMeta(LOG_KEY, JSON.stringify(this.logLines));
     } catch {
       // Not critical: the jobs in memory still run.
     }
@@ -227,6 +288,10 @@ class ImportQueue {
           (j.status === 'pending' || j.status === 'running' || now - j.addedAt < SAME_SHARE_MS),
       );
       if (same) {
+        this.log(`add: same as ${same.id.slice(-6)} (${same.status}) ${key.slice(0, 80)}`);
+        // Shared again by hand while it waits among a bulk import (paced, maybe paused): it
+        // moves to the hand lane and runs now.
+        if (!opts.batch && same.batch && same.status === 'pending') same.batch = false;
         ids.push(same.id);
         continue;
       }
@@ -250,6 +315,7 @@ class ImportQueue {
         error: null,
         addedAt: Date.now(),
       });
+      this.log(`add ${id.slice(-6)}${opts.batch ? ' (bulk)' : ''} ${key.slice(0, 80)}`);
     }
     // Something shared by hand is worth retrying now, even after a pause.
     if (!opts.batch && this.state.pauseReason === 'offline') this.state.pausedUntil = 0;
@@ -304,7 +370,10 @@ class ImportQueue {
 
   private async run() {
     await this.load();
-    if (!this.loaded) return;
+    if (!this.loaded) {
+      this.log('run: not loaded');
+      return;
+    }
     void this.runLane(false);
     void this.runLane(true);
   }
@@ -313,12 +382,16 @@ class ImportQueue {
     const lane = batch ? 'batch' : 'hand';
     if (this.running[lane]) return;
     this.running[lane] = true;
+    this.log(`${lane}: start`);
     try {
       for (;;) {
         // No network stops both lanes; Instagram slowing the phone down only stops bulk imports.
         const paused =
           this.state.pausedUntil > Date.now() && (batch || this.state.pauseReason === 'offline');
         if (paused) {
+          this.log(
+            `${lane}: paused (${this.state.pauseReason}) ${Math.round((this.state.pausedUntil - Date.now()) / 1000)} s`,
+          );
           if (this.wake) clearTimeout(this.wake);
           this.wake = setTimeout(() => void this.run(), this.state.pausedUntil - Date.now() + 500);
           break;
@@ -335,6 +408,7 @@ class ImportQueue {
       }
     } finally {
       this.running[lane] = false;
+      this.log(`${lane}: idle`);
     }
   }
 
@@ -342,6 +416,7 @@ class ImportQueue {
     job.status = 'running';
     job.stage = null;
     job.attempts++;
+    this.log(`run ${job.id.slice(-6)} try ${job.attempts}`);
     this.emit();
     // The whole import, saving included, has a time limit: past it, the job is given up (it can
     // be retried by hand) and the next ones go on.
@@ -350,12 +425,14 @@ class ImportQueue {
     try {
       const prepared = await withTimeout(
         prepareImport(job.source, (stage) => {
+          this.log(`${job.id.slice(-6)} ${stage}`);
           job.stage = stage;
           this.emit();
         }),
         left(),
       );
       if (prepared.offline) {
+        this.log(`${job.id.slice(-6)} offline`);
         // No network: try again later rather than saving an empty recipe.
         Object.assign(job, { status: 'pending', stage: null, error: 'offline' });
         if (job.attempts >= MAX_ATTEMPTS * 3) job.status = 'failed';
@@ -392,8 +469,10 @@ class ImportQueue {
         error: null,
       });
       dropFiles(job);
+      this.log(`${job.id.slice(-6)} ${job.status}`);
     } catch (e) {
       console.warn('[import] failed', (e as Error).message);
+      this.log(`${job.id.slice(-6)} error: ${(e as Error).message}`.slice(0, 200));
       // Too long once: trying again would only block the queue as long again.
       const timedOut = (e as Error).message === 'timeout';
       Object.assign(job, {

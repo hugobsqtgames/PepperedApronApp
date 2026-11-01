@@ -318,6 +318,9 @@ const fr = {
       'Astuce : dans TikTok, Instagram ou Safari, touchez Partager puis PepperedApron : la recette s’enregistre toute seule.',
   },
   import: {
+    waitingSince_one: 'Depuis {{count}} seconde',
+    waitingSince_other: 'Depuis {{count}} secondes',
+    cancel: 'Annuler cet import',
     waitingFor: 'En attente : un autre import se termine d’abord ({{what}})',
     waitingNetwork: 'En attente de connexion internet…',
     retryNow: 'Réessayer maintenant',
@@ -1375,6 +1378,10 @@ const fr = {
     send: 'Envoyer le détail',
     continue: 'Continuer',
     last: 'Envoyer la dernière erreur',
+  },
+  importLog: {
+    send: 'Envoyer le journal des imports',
+    empty: 'Aucun import depuis l’ouverture de l’app.',
   },
 };
 

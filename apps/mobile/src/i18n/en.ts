@@ -317,6 +317,9 @@ const en: Translations = {
       'Tip: in TikTok, Instagram or Safari, tap Share then PepperedApron: the recipe saves itself.',
   },
   import: {
+    waitingSince_one: 'For {{count}} second',
+    waitingSince_other: 'For {{count}} seconds',
+    cancel: 'Cancel this import',
     waitingFor: 'Waiting: another import finishes first ({{what}})',
     waitingNetwork: 'Waiting for an internet connection…',
     retryNow: 'Try again now',
@@ -1363,6 +1366,10 @@ const en: Translations = {
     send: 'Send the detail',
     continue: 'Continue',
     last: 'Send the last error',
+  },
+  importLog: {
+    send: 'Send the import log',
+    empty: 'No import since the app was opened.',
   },
 };
 

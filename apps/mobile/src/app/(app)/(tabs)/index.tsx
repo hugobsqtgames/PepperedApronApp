@@ -242,51 +242,46 @@ export default function Home() {
 
   return (
     <Screen refreshing={refreshing} onRefresh={refresh} testID="home">
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'flex-start',
-          gap: space.md,
-          paddingTop: space.lg,
-        }}
-      >
-        <View style={{ flex: 1, gap: space.xs }}>
-          <Text variant="callout" color="textMuted">
+      {/* Greeting and shortcuts on one line; the question and the tip use the whole width (they
+          were squeezed into a narrow column next to the three buttons). */}
+      <View style={{ gap: space.xs, paddingTop: space.lg }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.sm }}>
+          <Text variant="callout" color="textMuted" style={{ flex: 1 }}>
             {hello.hello}
           </Text>
-          <Text variant="hero" accessibilityRole="header">
-            {hello.question}
-          </Text>
-          {hello.flavor ? (
-            <Text variant="lede" color="textMuted">
-              {hello.flavor}
-            </Text>
+          {/* The pantry, one tap away (it was only in the groceries menu and the profile). */}
+          <IconButton
+            icon="basket-outline"
+            label={t('pantry.title')}
+            onPress={() => router.push('/pantry')}
+            testID="open-pantry"
+          />
+          {!layout.sidebar ? (
+            <IconButton
+              icon="heart-outline"
+              label={t('tabs.favorites')}
+              onPress={() => router.push('/favorites')}
+              testID="open-favorites"
+            />
           ) : null}
-          <Tip id="home" icon="share-outline" />
+          {!layout.sidebar ? (
+            <IconButton
+              icon="person-circle-outline"
+              label={t('tabs.profile')}
+              onPress={() => router.push('/profile')}
+              testID="open-profile"
+            />
+          ) : null}
         </View>
-        {/* The pantry, one tap away (it was only in the groceries menu and the profile). */}
-        <IconButton
-          icon="basket-outline"
-          label={t('pantry.title')}
-          onPress={() => router.push('/pantry')}
-          testID="open-pantry"
-        />
-        {!layout.sidebar ? (
-          <IconButton
-            icon="heart-outline"
-            label={t('tabs.favorites')}
-            onPress={() => router.push('/favorites')}
-            testID="open-favorites"
-          />
+        <Text variant="hero" accessibilityRole="header">
+          {hello.question}
+        </Text>
+        {hello.flavor ? (
+          <Text variant="lede" color="textMuted">
+            {hello.flavor}
+          </Text>
         ) : null}
-        {!layout.sidebar ? (
-          <IconButton
-            icon="person-circle-outline"
-            label={t('tabs.profile')}
-            onPress={() => router.push('/profile')}
-            testID="open-profile"
-          />
-        ) : null}
+        <Tip id="home" icon="share-outline" />
       </View>
 
       <View style={{ gap: space.xxxl, marginTop: space.xl }}>
