@@ -107,3 +107,15 @@ export async function photoFromUrl(url: string): Promise<string | null> {
     if (tmp.exists) tmp.delete();
   }
 }
+
+/**
+ * A video from the library (one saved from TikTok or Instagram): its file, to be listened to
+ * on the phone. The system picker shows only what the user chooses: no permission is needed.
+ */
+export async function pickVideo(): Promise<string | null> {
+  const r = await ImagePicker.launchImageLibraryAsync({
+    mediaTypes: ['videos'],
+    allowsMultipleSelection: false,
+  });
+  return r.canceled || !r.assets[0] ? null : r.assets[0].uri;
+}

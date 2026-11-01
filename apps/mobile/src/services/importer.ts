@@ -119,6 +119,49 @@ export async function transcribeFile(
   }
 }
 
+/**
+ * What a video says, in the language that understands it best: the language guessed from the
+ * caption first, then the app's language. A French reel captioned "#pasta #recipe" was listened
+ * to in English, and nothing usable came out of it.
+ */
+export async function transcribeBest(
+  uri: string,
+  guessed?: string | null,
+): Promise<
+  | { lines: string[]; spoken: ReturnType<typeof recipeFromTranscript>; language: string }
+  | { error: VideoListenError }
+> {
+  const app = i18n.language.slice(0, 2);
+  const tries = [...new Set([guessed ?? app, app])].filter((l) => l in SPEECH_LOCALES);
+  let best: {
+    lines: string[];
+    spoken: ReturnType<typeof recipeFromTranscript>;
+    language: string;
+  } | null = null;
+  let firstError: VideoListenError | null = null;
+  for (const language of tries) {
+    const heard = await transcribeFile(uri, language);
+    if ('error' in heard) {
+      firstError ??= heard.error;
+      // No permission, no speech at all: another language will not change it.
+      if (
+        heard.error === 'permission' ||
+        heard.error === 'unsupported' ||
+        heard.error === 'noAudio'
+      )
+        break;
+      continue;
+    }
+    const spoken = recipeFromTranscript(heard.lines);
+    const score = spoken.steps.length * 2 + spoken.ingredients.length;
+    if (!best || score > best.spoken.steps.length * 2 + best.spoken.ingredients.length)
+      best = { lines: heard.lines, spoken, language };
+    // Heard in the app's language with steps: that is the one (another would only cost time).
+    if (language === app && best.language === app && best.spoken.steps.length) break;
+  }
+  return best ?? { error: firstError ?? 'failed' };
+}
+
 export interface VideoPictures {
   /** Ingredients written on the video ("200 g de farine" in an overlay). */
   ingredients: DraftIngredient[];
@@ -204,14 +247,14 @@ export async function listenToVideo(
     // The caption has the whole recipe: the video only gives its pictures (the photo).
     if (res.listen === false)
       return { result: { ...res, draft }, error: null, frames: pictures.frames };
-    const heard = await transcribeFile(video.uri, res.language);
+    const heard = await transcribeBest(video.uri, res.language);
     if ('error' in heard)
       return {
         result: seen ? { ...res, draft, completeness: 'partial' } : res,
         error: heard.error,
         frames: pictures.frames,
       };
-    const spoken = recipeFromTranscript(heard.lines);
+    const spoken = heard.spoken;
     // Quantities written on the video are more precise than what is said: they come first.
     draft.ingredients = mergeIngredients(draft.ingredients, spoken.ingredients);
     // Steps said in the video when the caption only lists the ingredients.
@@ -271,9 +314,13 @@ export async function importLinkFull(
   listenError: VideoListenError | null;
   offline: boolean;
   frames: string[];
+  /** What was found, for the import log (Help → "Send the import log"). */
+  trace: string[];
 }> {
+  const trace: string[] = [];
   let networkErrors = 0;
   let failures = 0;
+  let reads = 1;
   let res = await importFromUrl(
     pageFetcher(
       () => networkErrors++,
@@ -288,6 +335,8 @@ export async function importLinkFull(
     if (!failures || isComplete(res)) break;
     if (networkErrors && !(await internetReachable())) break;
     await new Promise((r) => setTimeout(r, delay));
+    trace.push(`read ${reads}: ${failures} page(s) not read`);
+    reads++;
     failures = 0;
     networkErrors = 0;
     const again = await importFromUrl(
@@ -305,8 +354,20 @@ export async function importLinkFull(
   // saved now, instead of waiting minutes for a site that will not answer.
   const offline =
     networkErrors > 0 && res.completeness === 'minimal' && !(await internetReachable());
-  if (!res.videoUrl) return { result: res, listenError: null, offline, frames: [] };
+  const d = res.draft;
+  trace.push(
+    `${res.platform} ${res.completeness}: ${d.ingredients.length} ingr, ${d.steps.length} steps` +
+      `${res.fromSpeech ? ' (from subtitles)' : ''}, video ${res.videoUrl ? 'yes' : 'no'}` +
+      `${res.videoUrl ? `, listen ${res.listen === false ? 'no' : 'yes'} (${res.language ?? '?'})` : ''}` +
+      `${failures ? `, ${failures} page(s) not read` : ''}${offline ? ', offline' : ''}`,
+  );
+  if (!res.videoUrl) return { result: res, listenError: null, offline, frames: [], trace };
   onListening();
   const { result, error, frames } = await listenToVideo(res);
-  return { result, listenError: error, offline, frames };
+  trace.push(
+    error
+      ? `video: ${error}`
+      : `video: ${result.draft.ingredients.length} ingr, ${result.draft.steps.length} steps, ${frames.length} pictures`,
+  );
+  return { result, listenError: error, offline, frames, trace };
 }

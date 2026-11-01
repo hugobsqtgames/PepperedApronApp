@@ -68,7 +68,12 @@ export function tiktokCaption(html: string): SocialCaption | null {
     const subs = (item.video?.subtitleInfos ?? []).filter(
       (x) => x.Url && /^https:\/\//.test(x.Url) && (x.Format ?? 'webvtt') === 'webvtt',
     );
-    const sub = subs.find((x) => x.Source === 'ASR') ?? subs[0];
+    // Machine translations ("MT") last: an English translation of a French video gives nothing.
+    const sub =
+      subs.find((x) => x.Source === 'ASR') ??
+      subs.find((x) => x.Source !== 'MT') ??
+      subs.find((x) => /^fr/i.test(x.LanguageCodeName ?? '')) ??
+      subs[0];
     return {
       caption: caption?.trim() || null,
       author: item.author?.nickname || item.author?.uniqueId || null,

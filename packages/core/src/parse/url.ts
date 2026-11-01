@@ -459,8 +459,21 @@ async function importVideo(
   let author = oembed.author_name ?? null;
   let image = oembed.thumbnail_url ?? null;
   let subtitles: Subtitles | null = null;
-  if (pageHtml && platform === 'tiktok') {
-    const tt = tiktokCaption(pageHtml);
+  if (platform === 'tiktok') {
+    let tt = pageHtml ? tiktokCaption(pageHtml) : null;
+    // The video page came without what was said (not read, or without its subtitles): TikTok's
+    // mobile page of the same video, which carries the same public data.
+    const videoId = url.pathname.match(/\/video\/(\d{8,25})/)?.[1];
+    if (videoId && !tt?.subtitles) {
+      const mobile = await getText(
+        fetchPage,
+        `https://m.tiktok.com/v/${videoId}.html`,
+        'text/html,application/xhtml+xml',
+      );
+      const fromMobile = mobile ? tiktokCaption(mobile) : null;
+      if (fromMobile && (fromMobile.subtitles || !tt))
+        tt = { ...fromMobile, caption: fromMobile.caption ?? tt?.caption ?? null };
+    }
     caption = tt?.caption ?? null;
     author ??= tt?.author ?? null;
     image ??= tt?.image ?? null;

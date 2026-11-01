@@ -1324,6 +1324,16 @@ const fr = {
     noIngredients: 'Aucun ingrédient trouvé.',
     noSteps: 'Aucune étape trouvée.',
     notesToSteps: 'Transformer les notes en étapes',
+    fromVideo: 'Compléter avec la vidéo',
+    fromVideoHint:
+      'Les étapes sont dites à l’oral ? Dans TikTok ou Instagram, touchez Partager puis « Enregistrer la vidéo » (ou « Télécharger »), revenez ici et choisissez-la : l’iPhone l’écoute et ajoute les étapes. Rien n’est envoyé.',
+    listening: 'Écoute de la vidéo…',
+    fromVideoDone_one: '{{count}} étape ajoutée',
+    fromVideoDone_other: '{{count}} étapes ajoutées',
+    fromVideoNothing:
+      'Aucune étape entendue dans cette vidéo. Ce qui est dit a été ajouté aux notes.',
+    fromVideoPermission: 'Autorisez la reconnaissance vocale dans Réglages pour écouter la vidéo.',
+    fromVideoFailed: 'Impossible d’écouter cette vidéo.',
     isStep: 'C’est une étape',
     isIngredient: 'C’est un ingrédient',
     fixHint: 'Corriger cette ligne',

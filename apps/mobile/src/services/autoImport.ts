@@ -17,7 +17,12 @@ import { readPdf } from '../../modules/pdf-text';
 import { linkNotice } from '../features/recipe/notices';
 import { draftFromLink, linkPayload } from '../lib/recipeLink';
 import i18n from '../i18n';
-import { importLinkFull, readVideoPictures, transcribeFile } from './importer';
+import {
+  importLinkFull,
+  readVideoPictures,
+  transcribeBest,
+  type VideoListenError,
+} from './importer';
 import { ocrSupported, readRecipeTextFromImage } from './ocr';
 import { keepFramesFor } from './videoFrames';
 import { photoFromUrl, preparePhoto } from './photos';
@@ -48,6 +53,8 @@ export interface PreparedImport {
   offline: boolean;
   /** Pictures of the video (best first), offered as the recipe photo. */
   frames?: string[];
+  /** What the import found at each stage, for the import log. */
+  trace?: string[];
 }
 
 /** Below this many characters, a shared picture is the dish, not a screenshot of the recipe. */
@@ -120,7 +127,7 @@ export async function prepareImport(
     if (shared)
       return { draft: shared, notice: 'text', localImageUri: null, platform: null, offline: false };
     onStage('fetching');
-    const { result, listenError, offline, frames } = await importLinkFull(src.url, () =>
+    const { result, listenError, offline, frames, trace } = await importLinkFull(src.url, () =>
       onStage('listening'),
     );
     // Text shared alongside the link (a caption) complements what the page exposes.
@@ -143,6 +150,7 @@ export async function prepareImport(
         platform: result.platform,
         offline: false,
         frames,
+        trace,
       };
     }
     const draft = result.draft;
@@ -155,6 +163,7 @@ export async function prepareImport(
       platform: result.platform,
       offline,
       frames,
+      trace,
     };
   }
 
@@ -167,8 +176,9 @@ export async function prepareImport(
     onStage('reading');
     const pictures = await readVideoPictures(src.uri);
     onStage('listening');
-    const heard = await transcribeFile(src.uri);
     const caption = src.text?.trim() ? fromText(src.text) : null;
+    const best = await transcribeBest(src.uri);
+    const heard = 'error' in best ? best : { lines: best.lines };
     // A video file has no other picture: its best frame is the photo (changeable in the editor).
     const photo = pictures.frames[0] ?? null;
     if ('error' in heard) {
@@ -346,4 +356,25 @@ export function draftFromDictation(lines: string[]): RecipeDraft {
   const [first = '', ...rest] = lines.map((l) => l.trim()).filter(Boolean);
   const title = first.replace(/[.,;:!?…]+$/, '').slice(0, 120) || null;
   return fromSpeech(rest.length ? rest : [first], { title });
+}
+
+/**
+ * What a video file says, turned into steps and ingredients: used to complete a recipe imported
+ * without its steps (the creator said them out loud and the post did not give them).
+ */
+export async function recipeFromVideoFile(uri: string): Promise<
+  | {
+      steps: RecipeDraft['steps'];
+      ingredients: RecipeDraft['ingredients'];
+      text: string;
+    }
+  | { error: VideoListenError }
+> {
+  const heard = await transcribeBest(uri);
+  if ('error' in heard) return heard;
+  return {
+    steps: heard.spoken.steps,
+    ingredients: heard.spoken.ingredients,
+    text: heard.spoken.text,
+  };
 }

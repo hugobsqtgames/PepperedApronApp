@@ -15,7 +15,8 @@ import { errorMessage } from '../../../lib/errors';
 import { formatIngredient } from '../../../lib/format';
 import { recipePhotoUri } from '../../../lib/media';
 import { haptic } from '../../../services/haptics';
-import { preparePhoto } from '../../../services/photos';
+import { recipeFromVideoFile } from '../../../services/autoImport';
+import { pickVideo, preparePhoto } from '../../../services/photos';
 import { framesFor } from '../../../services/videoFrames';
 import { useTheme } from '../../../theme/ThemeProvider';
 import { radius, space } from '../../../theme/tokens';
@@ -47,6 +48,7 @@ export default function ImportReview() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const recipe = useLive(['recipe'], (r) => r.recipe(id), [id]);
   const [frames] = useState(() => (id ? framesFor(id) : []));
+  const [listening, setListening] = useState(false);
   const locale = i18n.language as Locale;
   const system = useLive(['settings'], (r) => r.settings().unitSystem);
 
@@ -155,6 +157,45 @@ export default function ImportReview() {
       notes: null,
     });
   };
+  /**
+   * Steps said out loud and not found by the import: the video saved from TikTok or Instagram is
+   * chosen in the library and listened to on the phone; what is said fills in the recipe.
+   */
+  const completeFromVideo = async () => {
+    const uri = await pickVideo().catch(() => null);
+    if (!uri) return;
+    setListening(true);
+    try {
+      const heard = await recipeFromVideoFile(uri);
+      if ('error' in heard) {
+        toast(
+          heard.error === 'permission'
+            ? t('review.fromVideoPermission')
+            : t('review.fromVideoFailed'),
+          { tone: 'error' },
+        );
+        return;
+      }
+      const steps = heard.steps.map((st) => ({ ...st, id: uuidv7() }));
+      const known = new Set(d.ingredients.map((i) => i.name.toLowerCase()));
+      const ingredients = heard.ingredients
+        .filter((i) => !known.has(i.name.toLowerCase()))
+        .map((i) => ({ ...i, id: uuidv7() }));
+      await save({
+        ...(steps.length && !d.steps.length ? { steps } : {}),
+        ...(ingredients.length ? { ingredients: [...d.ingredients, ...ingredients] } : {}),
+        ...(!steps.length && heard.text
+          ? { notes: [d.notes, `🎙️ ${heard.text}`].filter(Boolean).join('\n\n').slice(0, 5000) }
+          : {}),
+      });
+      if (steps.length) {
+        haptic.success();
+        toast(t('review.fromVideoDone', { count: steps.length }));
+      } else toast(t('review.fromVideoNothing'), { tone: 'info' });
+    } finally {
+      setListening(false);
+    }
+  };
   const choosePhoto = async (uri: string) => {
     try {
       await repos.updateRecipe(recipe.id, { photoKey: await preparePhoto(uri) });
@@ -241,6 +282,21 @@ export default function ImportReview() {
             <Icon name="alert-circle-outline" size={20} color="accent" />
             <Text variant="callout" style={{ flex: 1 }}>
               {missing.join(' ')}
+            </Text>
+          </View>
+        ) : null}
+        {!d.steps.length ? (
+          <View style={{ gap: space.sm }}>
+            <Button
+              title={listening ? t('review.listening') : t('review.fromVideo')}
+              icon="mic-outline"
+              loading={listening}
+              disabled={listening}
+              onPress={() => void completeFromVideo()}
+              testID="review-from-video"
+            />
+            <Text variant="caption" color="textMuted">
+              {t('review.fromVideoHint')}
             </Text>
           </View>
         ) : null}

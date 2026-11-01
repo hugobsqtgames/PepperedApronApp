@@ -431,6 +431,7 @@ class ImportQueue {
         }),
         left(),
       );
+      for (const line of prepared.trace ?? []) this.log(`${job.id.slice(-6)} ${line}`);
       if (prepared.offline) {
         this.log(`${job.id.slice(-6)} offline`);
         // No network: try again later rather than saving an empty recipe.
@@ -469,7 +470,10 @@ class ImportQueue {
         error: null,
       });
       dropFiles(job);
-      this.log(`${job.id.slice(-6)} ${job.status}`);
+      // The log never stops an import: what is missing is counted as nothing.
+      this.log(
+        `${job.id.slice(-6)} ${job.status}: ${prepared.draft?.ingredients?.length ?? 0} ingr, ${prepared.draft?.steps?.length ?? 0} steps, notice ${prepared.notice}`,
+      );
     } catch (e) {
       console.warn('[import] failed', (e as Error).message);
       this.log(`${job.id.slice(-6)} error: ${(e as Error).message}`.slice(0, 200));

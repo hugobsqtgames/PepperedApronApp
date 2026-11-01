@@ -796,6 +796,57 @@ describe('journeys: cooking several dishes, the pantry, sharing', () => {
     read.mockRestore();
   });
 
+  it('a recipe imported without its steps is completed from the saved video (TestFlight)', async () => {
+    const photos =
+      jest.requireActual<typeof import('../src/services/photos')>('../src/services/photos');
+    const auto = jest.requireActual<typeof import('../src/services/autoImport')>(
+      '../src/services/autoImport',
+    );
+    const { emptyRecipe } =
+      jest.requireActual<typeof import('@pepperedapron/client')>('@pepperedapron/client');
+    const pick = jest.spyOn(photos, 'pickVideo').mockResolvedValue('file:///saved-reel.mov');
+    const listen = jest.spyOn(auto, 'recipeFromVideoFile').mockResolvedValue({
+      steps: [
+        {
+          group: null,
+          text: 'Coupe 3 poivrons et enfourne-les 30 min.',
+          timerSeconds: 1800,
+          timerLabel: null,
+        },
+        {
+          group: null,
+          text: 'Mixe les légumes avec la crème.',
+          timerSeconds: null,
+          timerLabel: null,
+        },
+      ],
+      ingredients: [
+        { group: null, name: 'poivrons', quantity: 3, quantityMax: null, unit: null, note: null },
+      ],
+      text: 'Pour commencer tu coupes 3 poivrons…',
+    });
+    const r = await repos.createRecipe({ ...emptyRecipe(4), title: 'Pâtes aux poivrons' });
+    mockParams.current = { id: r.id };
+    const Review = screenOf('../src/app/(app)/import/review');
+    await render(wrap(<Review />));
+    expect(screen.getByText(i18n.t('review.fromVideoHint'))).toBeTruthy();
+    await tap(screen.getByTestId('review-from-video'));
+    await settle();
+    expect(pick).toHaveBeenCalled();
+    expect(listen).toHaveBeenCalledWith('file:///saved-reel.mov');
+    const saved = repos.recipe(r.id)!;
+    expect(saved.data.steps.map((x) => x.text)).toEqual([
+      'Coupe 3 poivrons et enfourne-les 30 min.',
+      'Mixe les légumes avec la crème.',
+    ]);
+    expect(saved.data.ingredients.map((x) => x.name)).toEqual(['poivrons']);
+    // Steps found: the button is gone.
+    expect(screen.queryByTestId('review-from-video')).toBeNull();
+    pick.mockRestore();
+    listen.mockRestore();
+    await repos.deleteRecipe(r.id);
+  });
+
   it('a recipe sent as a web link is read back whole, without fetching anything', async () => {
     const { webRecipeLink, linkPayload, draftFromLink } =
       jest.requireActual<typeof import('../src/lib/recipeLink')>('../src/lib/recipeLink');
