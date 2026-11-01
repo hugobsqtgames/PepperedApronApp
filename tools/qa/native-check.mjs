@@ -130,9 +130,14 @@ try {
     !('UIBackgroundModes' in info) || !info.UIBackgroundModes.includes('location'),
     'no background location',
   );
-  if (variant === 'production')
+  if (variant === 'production') {
     check(!('NSLocalNetworkUsageDescription' in info), 'no local network in production');
-  else check('NSLocalNetworkUsageDescription' in info, 'dev client can reach the computer');
+    check(
+      !info.NSAppTransportSecurity?.NSAllowsLocalNetworking &&
+        !info.NSAppTransportSecurity?.NSAllowsArbitraryLoads,
+      'no App Transport Security exception in production',
+    );
+  } else check('NSLocalNetworkUsageDescription' in info, 'dev client can reach the computer');
   for (const lang of ['fr', 'en']) {
     const strings = path.join(ios, appDir, 'Supporting', `${lang}.lproj`, 'InfoPlist.strings');
     const alt = path.join(ios, appDir, `${lang}.lproj`, 'InfoPlist.strings');
@@ -150,6 +155,29 @@ try {
     );
   }
   // Share extension: present, named "PepperedApron" in the share sheet, accepts what the app reads.
+  // Privacy manifests (required reason APIs): every target that reads the App Group's shared
+  // UserDefaults declares 1C8F.1; none tracks or collects anything.
+  for (const [what, f] of [
+    ['app', `${appDir}/PrivacyInfo.xcprivacy`],
+    ['share extension', 'PepperedApronShare/PrivacyInfo.xcprivacy'],
+    ['widgets', '../targets/widgets/PrivacyInfo.xcprivacy'],
+    ['Siri intents', '../targets/intents/PrivacyInfo.xcprivacy'],
+  ]) {
+    const p = fs.existsSync(path.join(ios, f)) ? read(f) : null;
+    check(p !== null, `privacy manifest (${what})`);
+    check(p?.NSPrivacyTracking === false, `no tracking (${what})`);
+    check(
+      Array.isArray(p?.NSPrivacyCollectedDataTypes) && !p.NSPrivacyCollectedDataTypes.length,
+      `nothing collected (${what})`,
+    );
+    const defaults = (p?.NSPrivacyAccessedAPITypes ?? []).find(
+      (x) => x.NSPrivacyAccessedAPIType === 'NSPrivacyAccessedAPICategoryUserDefaults',
+    );
+    check(
+      defaults?.NSPrivacyAccessedAPITypeReasons?.includes('1C8F.1'),
+      `App Group defaults reason 1C8F.1 (${what})`,
+    );
+  }
   const shareInfo = fs.existsSync(path.join(ios, 'PepperedApronShare/ShareExtension-Info.plist'))
     ? read('PepperedApronShare/ShareExtension-Info.plist')
     : null;

@@ -673,6 +673,77 @@ async function backgroundChange(r: ReturnType<typeof rng>) {
   });
 }
 
+describe('journeys: first launch, as App Review sees it', () => {
+  // A brand-new install: empty database, onboarding from the first slide to the app.
+  const fresh = async () => {
+    const store = await LocalStore.open(betterSqliteDriver());
+    const empty = new Repos(store);
+    (mockRuntime.session as { store: unknown; repos: unknown }).store = store;
+    (mockRuntime.session as { store: unknown; repos: unknown }).repos = empty;
+    return empty;
+  };
+  const toLastSlide = async () => {
+    await act(async () => fireEvent.press(screen.getByTestId('onboarding-next')));
+    await act(async () => fireEvent.press(screen.getByTestId('onboarding-skip')));
+  };
+
+  it('slides → first name → 10 welcome recipes → tutorial → the app opens', async () => {
+    const r = await fresh();
+    expect(r.recipes()).toHaveLength(0);
+    const Onboarding = screenOf('../src/app/onboarding');
+    await render(wrap(<Onboarding />));
+    expect(screen.getByTestId('onboarding-next')).toBeTruthy();
+    await toLastSlide();
+    await act(async () => fireEvent.press(screen.getByTestId('onboarding-start')));
+    await act(async () => fireEvent.changeText(screen.getByTestId('onboarding-name'), 'Camille'));
+    await act(async () => fireEvent.press(screen.getByTestId('onboarding-name-submit')));
+    expect(r.settings().firstName).toBe('Camille');
+    await act(async () => fireEvent.press(screen.getByTestId('onboarding-starter-yes')));
+    expect(r.recipes().length).toBe(10);
+    for (const x of r.recipes()) {
+      expect(x.data.title.length).toBeGreaterThan(2);
+      expect(x.data.ingredients.length).toBeGreaterThan(1);
+      expect(x.data.steps.length).toBeGreaterThan(0);
+    }
+    await act(async () => fireEvent.press(screen.getByTestId('tutorial-later')));
+    expect(r.settings().onboardingDone).toBe(true);
+  });
+
+  it('every step can be skipped: no name, no welcome recipes', async () => {
+    const r = await fresh();
+    const Onboarding = screenOf('../src/app/onboarding');
+    await render(wrap(<Onboarding />));
+    await toLastSlide();
+    await act(async () => fireEvent.press(screen.getByTestId('onboarding-start')));
+    await act(async () => fireEvent.press(screen.getByTestId('onboarding-name-skip')));
+    await act(async () => fireEvent.press(screen.getByTestId('onboarding-starter-no')));
+    await act(async () => fireEvent.press(screen.getByTestId('tutorial-later')));
+    expect(r.recipes()).toHaveLength(0);
+    expect(r.settings().firstName).toBeNull();
+    expect(r.settings().onboardingDone).toBe(true);
+  });
+
+  it('every screen of the app renders on an empty library (nothing planned, nothing saved)', async () => {
+    await fresh();
+    const rr = rng(777);
+    mockChoice.next = rr.next;
+    for (const [name, load, params] of SCREENS) {
+      mockParams.current = params();
+      const Screen = load().default;
+      await render(wrap(<Screen />));
+      if (!screen.toJSON()) throw new Error(`${name}: nothing rendered`);
+      for (let k = 0; k < 5; k++) {
+        const buttons = screen.queryAllByRole('button');
+        if (!buttons.length) break;
+        await act(async () => {
+          fireEvent.press(rr.pick(buttons));
+        });
+      }
+      await cleanup();
+    }
+  });
+});
+
 describe('journeys: a library saved by an older version of the app', () => {
   // Regression: recipes saved before "step notes" existed made cook mode fail on the phone
   // ("Cannot convert undefined value to object"). Every field that can be missing (it has a

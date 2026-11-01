@@ -1,7 +1,12 @@
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { ConfigContext, ExpoConfig } from 'expo/config';
-import { withEntitlementsPlist, withInfoPlist, type ConfigPlugin } from 'expo/config-plugins';
+import {
+  withEntitlementsPlist,
+  withInfoPlist,
+  withXcodeProject,
+  type ConfigPlugin,
+} from 'expo/config-plugins';
 
 /** Several plugins add the same App Group; keep the entitlement list unique. */
 const withUniqueAppGroups: ConfigPlugin = (c) =>
@@ -43,7 +48,47 @@ const withoutDevNetworkInProduction: ConfigPlugin = (c) =>
     if (process.env.APP_VARIANT === 'production') {
       delete m.modResults.NSLocalNetworkUsageDescription;
       delete m.modResults.NSBonjourServices;
+      // No exception to App Transport Security either: every connection is HTTPS.
+      const ats = m.modResults.NSAppTransportSecurity as Record<string, unknown> | undefined;
+      if (ats) delete ats.NSAllowsLocalNetworking;
     }
+    return m;
+  });
+
+/**
+ * The share extension reads and writes the App Group's shared UserDefaults (it hands what was
+ * shared to the app): its privacy manifest must give the matching required reason (1C8F.1), not
+ * only CA92.1 as expo-share-intent writes it. Applied around the whole config (below).
+ */
+const SHARE_PRIVACY = `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+  <dict>
+    <key>NSPrivacyAccessedAPITypes</key>
+    <array>
+      <dict>
+        <key>NSPrivacyAccessedAPIType</key>
+        <string>NSPrivacyAccessedAPICategoryUserDefaults</string>
+        <key>NSPrivacyAccessedAPITypeReasons</key>
+        <array>
+          <string>CA92.1</string>
+          <string>1C8F.1</string>
+        </array>
+      </dict>
+    </array>
+    <key>NSPrivacyCollectedDataTypes</key>
+    <array/>
+    <key>NSPrivacyTracking</key>
+    <false/>
+  </dict>
+</plist>
+`;
+const withShareExtensionPrivacy: ConfigPlugin = (c) =>
+  // expo-share-intent writes the extension's files in its Xcode project mod: this one, applied
+  // around the whole config, runs after it.
+  withXcodeProject(c, (m) => {
+    const f = join(m.modRequest.platformProjectRoot, 'PepperedApronShare', 'PrivacyInfo.xcprivacy');
+    if (existsSync(f)) writeFileSync(f, SHARE_PRIVACY);
     return m;
   });
 
@@ -235,6 +280,8 @@ const buildConfig = ({ config }: ConfigContext): ExpoConfig => ({
 });
 
 export default (ctx: ConfigContext): ExpoConfig =>
-  withoutDevNetworkInProduction(
-    withoutPushEntitlement(withPrivateICloudContainer(withUniqueAppGroups(buildConfig(ctx)))),
+  withShareExtensionPrivacy(
+    withoutDevNetworkInProduction(
+      withoutPushEntitlement(withPrivateICloudContainer(withUniqueAppGroups(buildConfig(ctx)))),
+    ),
   ) as ExpoConfig;

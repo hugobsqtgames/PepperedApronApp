@@ -1,0 +1,13 @@
+/* Widget gallery (names and descriptions) and the widget's own action. */
+"Ce soir" = "Tonight";
+"Le repas prévu ce soir." = "The meal planned for tonight.";
+"Prochain repas" = "Next meal";
+"Votre prochain repas planifié." = "Your next planned meal.";
+"Liste de courses" = "Grocery list";
+"Ce qu'il reste à acheter." = "What is left to buy.";
+"Recette au hasard" = "Random recipe";
+"Une idée tirée de votre carnet." = "An idea picked from your recipes.";
+"Minuteur" = "Timer";
+"Le minuteur en cours, qui se vide sous vos yeux." = "The running timer, emptying before your eyes.";
+"Check off a grocery item" = "Check off a grocery item";
+"Item" = "Item";

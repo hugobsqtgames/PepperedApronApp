@@ -2,7 +2,7 @@
  * Texts of the website, in French (reference version for legal documents) and English. Have them reviewed by a lawyer before
  * publication. `p` = publisher details (see build.mjs).
  */
-const UPDATED = '2026-10-31';
+const UPDATED = '2026-11-01';
 
 export const UI = {
   fr: {
@@ -14,7 +14,7 @@ export const UI = {
     tagline: 'Vos recettes, votre planning de repas et vos listes de courses, au même endroit.',
     features: [
       'Toutes vos recettes, avec ou sans photo, classées et faciles à retrouver.',
-      'Import depuis un site, TikTok, Instagram, une photo ou un texte, sans intelligence artificielle.',
+      'Import depuis un site, un réseau social, une photo, une vidéo ou un texte, sans intelligence artificielle.',
       'Planning de la semaine et liste de courses générée automatiquement, rangée par rayon.',
       'Mode cuisine avec minuteurs, widgets et Live Activities.',
       'Aucun compte : vos données restent sur votre appareil et dans votre iCloud.',
@@ -30,7 +30,7 @@ export const UI = {
     tagline: 'Your recipes, meal plan and shopping lists, in one place.',
     features: [
       'All your recipes, with or without a photo, organised and easy to find.',
-      'Import from a website, TikTok, Instagram, a photo or a text, without artificial intelligence.',
+      'Import from a website, a social network, a photo, a video or a text, without artificial intelligence.',
       'Weekly meal plan and a shopping list built automatically, sorted by aisle.',
       'Cook mode with timers, widgets and Live Activities.',
       'No account: your data stays on your device and in your iCloud.',
@@ -59,11 +59,11 @@ export const FAQ = {
       ],
       [
         'Puis-je utiliser l’app hors ligne ?',
-        'Oui. Seuls l’import depuis un lien, le scan d’un code-barres et la synchronisation iCloud ont besoin d’internet.',
+        'Oui. Seuls l’import depuis un lien, la recherche d’un code-barres et la synchronisation iCloud ont besoin d’internet. Un import lancé hors ligne attend le retour du réseau.',
       ],
       [
         'Comment importer depuis TikTok ou Instagram ?',
-        'Dans l’app TikTok ou Instagram, touchez Partager puis PepperedApron. Nous récupérons le lien, la description et l’image quand la plateforme les rend publiques ; vous complétez le reste.',
+        'Dans TikTok, Instagram, YouTube, Facebook, Threads, Pinterest ou Safari, touchez Partager puis PepperedApron. L’app lit ce que la publication rend public (description, image) et, s’il manque les ingrédients ou les étapes, écoute la vidéo et lit le texte écrit dessus, sur votre iPhone. Vous vérifiez ensuite le résultat en un coup d’œil.',
       ],
       [
         'L’app est-elle payante ?',
@@ -91,11 +91,11 @@ export const FAQ = {
       ],
       [
         'Can I use the app offline?',
-        'Yes. Only importing from a link, scanning a barcode and iCloud sync need the internet.',
+        'Yes. Only importing from a link, looking up a barcode and iCloud sync need the internet. An import started offline waits for the network to come back.',
       ],
       [
         'How do I import from TikTok or Instagram?',
-        'In TikTok or Instagram, tap Share, then PepperedApron. We fetch the link, description and image when the platform makes them public; you complete the rest.',
+        'In TikTok, Instagram, YouTube, Facebook, Threads, Pinterest or Safari, tap Share, then PepperedApron. The app reads what the post makes public (description, picture) and, when ingredients or steps are missing, listens to the video and reads the text written on it, on your iPhone. You then check the result at a glance.',
       ],
       ['Is the app paid?', 'No. PepperedApron is free, with no ads and no subscription.'],
       [
@@ -141,15 +141,16 @@ export const LEGAL = {
 <h2>En bref</h2><p>PepperedApron n'a ni compte, ni serveur, ni publicité, ni mesure d'audience. Vos recettes, photos, listes, planning et réglages restent sur votre appareil et, si vous l'activez, dans votre iCloud privé. L'éditeur ne reçoit, ne stocke et ne vend aucune de ces données.</p>
 <h2>Responsable de traitement</h2><p>${p.publisher}, ${addr(p, 'fr')} — ${mail(p)}</p>
 <h2>Données sur votre appareil et dans iCloud</h2><p>Vos contenus sont stockés localement. Sur iPhone et iPad, la synchronisation iCloud (activée par défaut, désactivable dans Réglages → Mes données) les copie dans le conteneur privé de l'app dans votre compte iCloud, géré par Apple (voir la politique de confidentialité d'Apple). L'éditeur n'y a pas accès. Elles sont aussi incluses dans la sauvegarde iCloud de l'appareil si vous l'avez activée.</p>
-<h2>Import depuis un lien</h2><p>Lorsque vous importez une recette depuis un lien, l'app contacte directement le site concerné (ou le service oEmbed de TikTok ou YouTube), comme le ferait un navigateur. Ce site reçoit alors votre adresse IP selon sa propre politique.</p>
+<h2>Import depuis un lien</h2><p>Lorsque vous importez une recette depuis un lien, l'app contacte directement le site ou le réseau concerné (page publique, ou service public d'intégration de TikTok, YouTube ou Pinterest), comme le ferait un navigateur, sans cookie ni identifiant. Ce service reçoit alors votre adresse IP selon sa propre politique. Quand une publication contient une vidéo publique et qu'il manque la recette, la vidéo est téléchargée temporairement dans le cache de l'app, écoutée et lue sur l'appareil, puis supprimée ; seules quelques images fixes peuvent être gardées pour illustrer la recette.</p>
 <h2>Photos et texte</h2><p>L'appareil photo et la photothèque ne sont utilisés que lorsque vous le demandez. La lecture du texte d'une photo se fait sur l'appareil ; rien n'est envoyé.</p>
 <h2>Codes-barres</h2><p>Lorsque vous scannez le code-barres d’un produit pour votre placard, l’app envoie uniquement ce numéro à Open Food Facts (base de données libre et gratuite) pour obtenir le nom et le format du produit. Ce service reçoit alors votre adresse IP selon sa propre politique. La caméra n’enregistre ni image ni son.</p>
 <h2>Recettes envoyées par lien</h2><p>Une recette envoyée « par un lien » est contenue dans le lien lui-même, après le signe « # ». Cette partie du lien n’est jamais transmise au serveur de ce site : la page la lit et l’affiche dans le navigateur de la personne qui l’ouvre.</p>
-<h2>Micro, voix et Rappels</h2><p>Le micro n'est utilisé que si vous dictez une recette. Votre voix, comme le son d'une vidéo importée, est transcrite par la reconnaissance vocale de l'iPhone, sur l'appareil, puis l'enregistrement est supprimé ; rien n'est envoyé. L'accès à l'app Rappels n'est demandé que si vous y envoyez votre liste de courses.</p>
+<h2>Sauvegardes et notifications</h2><p>Une copie de vos recettes est enregistrée chaque semaine sur l'appareil (les 5 dernières sont gardées ; désactivable dans Réglages → Mes données). Les rappels et minuteurs sont des notifications locales, programmées sur l'appareil : aucun serveur de notifications n'est utilisé.</p>
+<h2>Micro, voix et Rappels</h2><p>Le micro n'est utilisé que si vous dictez une recette ou activez les commandes vocales en mode cuisine. Votre voix, comme le son d'une vidéo importée, est transcrite par la reconnaissance vocale de l'iPhone, sur l'appareil, puis l'enregistrement est supprimé ; rien n'est envoyé. L'accès à l'app Rappels n'est demandé que si vous y envoyez votre liste de courses.</p>
 <h2>Nous contacter</h2><p>Si vous nous écrivez par e-mail, nous utilisons votre adresse et votre message uniquement pour vous répondre, et les conservons au plus 3 ans.</p>
 <h2>Vos droits</h2><p>Vos contenus sont sous votre contrôle : export et suppression dans Réglages → Mes données. Pour toute question ou pour exercer vos droits d'accès, de rectification, d'effacement, et d'opposition : ${mail(p)}. Réclamation possible auprès de la CNIL (cnil.fr).</p>
 <h2>Enfants</h2><p>L'application ne collecte sciemment aucune donnée personnelle d'enfants.</p>
-<h2>Ce site</h2><p>Ce site n'utilise ni cookie ni traceur.</p></div>`,
+<h2>Ce site</h2><p>Ce site n'utilise ni cookie ni traceur. Il est hébergé par GitHub Pages, qui reçoit l'adresse IP des visiteurs selon sa propre politique.</p></div>`,
     }),
   },
   en: {
@@ -172,15 +173,16 @@ export const LEGAL = {
 <h2>In short</h2><p>PepperedApron has no account, no server, no ads and no analytics. Your recipes, photos, lists, meal plan and settings stay on your device and, if you turn it on, in your private iCloud. The publisher never receives, stores or sells any of this data.</p>
 <h2>Controller</h2><p>${p.publisher}, ${addr(p, 'en')} — ${mailEn(p)}</p>
 <h2>Data on your device and in iCloud</h2><p>Your content is stored locally. On iPhone and iPad, iCloud sync (on by default, can be turned off in Settings → My data) copies it to the app's private container in your iCloud account, operated by Apple (see Apple's privacy policy). The publisher has no access to it. They are also included in the device's iCloud Backup if you turned it on.</p>
-<h2>Importing from a link</h2><p>When you import a recipe from a link, the app contacts that website (or the TikTok or YouTube oEmbed service) directly, like a browser would. That website then receives your IP address under its own policy.</p>
+<h2>Importing from a link</h2><p>When you import a recipe from a link, the app contacts that website or network directly (its public page, or the public embedding service of TikTok, YouTube or Pinterest), like a browser would, with no cookie or identifier. That service then receives your IP address under its own policy. When a post has a public video and the recipe is missing, the video is downloaded temporarily to the app's cache, listened to and read on the device, then deleted; only a few still pictures may be kept to illustrate the recipe.</p>
 <h2>Photos and text</h2><p>The camera and photo library are only used when you ask. Reading the text of a photo happens on the device; nothing is sent.</p>
 <h2>Barcodes</h2><p>When you scan a product’s barcode for your pantry, the app sends only that number to Open Food Facts (a free, open database) to get the product’s name and size. That service then receives your IP address under its own policy. The camera records no picture and no sound.</p>
 <h2>Recipes sent as a link</h2><p>A recipe sent “as a link” is contained in the link itself, after the “#” sign. That part of the link is never sent to this website’s server: the page reads it and shows it in the browser of the person who opens it.</p>
-<h2>Microphone, voice and Reminders</h2><p>The microphone is only used if you dictate a recipe. Your voice, like the sound of an imported video, is transcribed by the iPhone's speech recognition on the device, then the recording is deleted; nothing is sent. Access to the Reminders app is only requested if you send your shopping list there.</p>
+<h2>Backups and notifications</h2><p>A copy of your recipes is saved on the device every week (the last 5 are kept; can be turned off in Settings → My data). Reminders and timers are local notifications scheduled on the device: no notification server is used.</p>
+<h2>Microphone, voice and Reminders</h2><p>The microphone is only used if you dictate a recipe or turn on voice commands in cook mode. Your voice, like the sound of an imported video, is transcribed by the iPhone's speech recognition on the device, then the recording is deleted; nothing is sent. Access to the Reminders app is only requested if you send your shopping list there.</p>
 <h2>Contacting us</h2><p>If you e-mail us, we use your address and message only to answer you and keep them for at most 3 years.</p>
 <h2>Your rights</h2><p>Your content is under your control: export and deletion in Settings → My data. For any question, or to exercise your rights of access, rectification, erasure, and objection: ${mailEn(p)}. You may lodge a complaint with your data protection authority.</p>
 <h2>Children</h2><p>The app does not knowingly collect personal data from children.</p>
-<h2>This website</h2><p>This website uses no cookies or trackers.</p></div>`,
+<h2>This website</h2><p>This website uses no cookies or trackers. It is hosted by GitHub Pages, which receives visitors' IP addresses under its own policy.</p></div>`,
     }),
   },
 };

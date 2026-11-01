@@ -167,6 +167,9 @@ export default function Welcome() {
         pagingEnabled
         showsHorizontalScrollIndicator={false}
         keyExtractor={(s) => s.key}
+        // Every slide is one screen wide: "Next" / "Skip" can scroll to a slide not measured yet
+        // (scrollToIndex without it throws when tapped before the list is laid out).
+        getItemLayout={(_, i) => ({ length: width, offset: width * i, index: i })}
         onViewableItemsChanged={onViewable}
         viewabilityConfig={{ itemVisiblePercentThreshold: 60 }}
         renderItem={({ item }: { item: (typeof SLIDES)[number] }) => (
@@ -234,13 +237,20 @@ export default function Welcome() {
             <Button
               title={t('common.skip')}
               variant="ghost"
-              onPress={() => list.current?.scrollToIndex({ index: SLIDES.length - 1 })}
+              onPress={() => {
+                // The page is known at once (the visible-item callback can come late).
+                list.current?.scrollToIndex({ index: SLIDES.length - 1 });
+                setIndex(SLIDES.length - 1);
+              }}
               style={{ flex: 1 }}
               testID="onboarding-skip"
             />
             <Button
               title={t('common.next')}
-              onPress={() => list.current?.scrollToIndex({ index: index + 1 })}
+              onPress={() => {
+                list.current?.scrollToIndex({ index: index + 1 });
+                setIndex(index + 1);
+              }}
               style={{ flex: 2 }}
               testID="onboarding-next"
             />

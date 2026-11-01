@@ -25,5 +25,5 @@ export const ENV = {
 /** A page of the website, in French or English. */
 export function sitePage(page: 'support' | 'privacy' | 'terms' | 'legal', language: string) {
   const l = language.slice(0, 2);
-  return `${ENV.siteUrl}/${l === 'fr' ? 'fr' : 'en'}/${page}`;
+  return `${ENV.siteUrl}/${l === 'fr' ? 'fr' : 'en'}/${page}/`;
 }
