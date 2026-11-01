@@ -236,12 +236,89 @@ function words(sentence: string): Word[] {
   });
 }
 
+/**
+ * Words that start a new step when a recipe is said out loud ("ensuite", "une fois que…"): the
+ * phone's speech recognition puts few full stops, and a whole video came out as one step.
+ */
+const SPOKEN_BREAKS = new RegExp(
+  '\\s(?=(?:' +
+    [
+      'ensuite',
+      'puis',
+      'apr[eè]s (?:[cç]a|cela|avoir)',
+      'et en attendant',
+      'en attendant',
+      'pendant ce temps',
+      'pendant que',
+      'une fois que',
+      'une fois (?:cuit|cuite|cuits|cuites|fondu|pr[eê]t)',
+      'maintenant',
+      'enfin',
+      'pour finir',
+      'pour terminer',
+      'pour la suite',
+      '[aà] la sortie',
+      'et voil[aà]',
+      '(?:donc |alors )?(?:je vais|on va) commencer par',
+      'pour commencer',
+      'then',
+      'next',
+      'after that',
+      'meanwhile',
+      'once',
+      'finally',
+    ].join('|') +
+    ')\\b)',
+  'giu',
+);
+/** Longer than this, a sentence said out loud is cut where a new action starts. */
+const LONG_SPOKEN = 140;
+
+/** A long spoken passage cut where a new action starts; short pieces stay with the one before. */
+function splitSpoken(sentence: string): string[] {
+  if (sentence.length <= LONG_SPOKEN) return [sentence];
+  const pieces = sentence
+    .split(SPOKEN_BREAKS)
+    .map((x) => x.trim())
+    .filter(Boolean);
+  const out: string[] = [];
+  for (const piece of pieces) {
+    const prev = out[out.length - 1];
+    if (prev !== undefined && (prev.length < 30 || piece.length < 25))
+      out[out.length - 1] = `${prev} ${piece}`;
+    else out.push(piece);
+  }
+  // Still very long (no marker said): cut at ", je…", ", j'…", ", on…".
+  // A piece ending on a linking word ("…tout est prêt donc"): the word goes.
+  for (let i = 0; i < out.length; i++)
+    out[i] = out[i]!.replace(/[\s,]+(?:donc|et|alors|and|so)$/iu, '');
+  return out.flatMap((x) =>
+    x.length > 260 ? x.split(/,\s+(?=(?:je|j'|j’|on|tu|vous)\s?)/iu).map((y) => y.trim()) : [x],
+  );
+}
+
 function sentences(lines: string[]): string[] {
-  const joined = lines.join(' ').replace(/\s+/g, ' ').trim();
+  const joined = lines
+    .join(' ')
+    .replace(/\s+/g, ' ')
+    // "2 00 °" heard for "200 °".
+    .replace(/\b(\d) (\d{2})\s?°/g, '$1$2 °')
+    // "j' ajoute", "l' eau": the phone's recognition spaces the apostrophe.
+    .replace(/\b(qu|[ljdnmtsc])(['’]) (?=\p{L})/giu, '$1$2')
+    .trim();
   const punctuated = (joined.match(/[.!?]/g)?.length ?? 0) * 200 >= joined.length;
-  // Auto captions without punctuation: each caption line is the best unit we have.
-  const parts = punctuated ? joined.split(/(?<=[.!?…])\s+/) : lines;
-  return parts.map((s) => s.trim()).filter(Boolean);
+  // Auto captions without punctuation: each caption line is the best unit we have — unless the
+  // whole video came as one or two lines (the phone's own recognition): then the full stops it
+  // did put are used.
+  const parts =
+    punctuated || lines.length <= 2 || lines.some((l) => l.length > 400)
+      ? joined.split(/(?<=[.!?…])\s+/)
+      : lines;
+  return parts
+    .map((x) => x.trim())
+    .filter(Boolean)
+    .flatMap(splitSpoken)
+    .filter(Boolean);
 }
 
 function isCookingSentence(s: string): boolean {
@@ -249,7 +326,10 @@ function isCookingSentence(s: string): boolean {
   // Questions and fragments ("Et je vais ajouter") are not instructions.
   if (ws.length < 3 || /\?\s*$/.test(s)) return false;
   const last = ws[ws.length - 1]!.plain;
-  if (/(er|ir|re)$/.test(last) && COOKING_VERBS.some((v) => last.startsWith(v))) return false;
+  // A fragment ending on the verb ("Et je vais ajouter"): not one; a long sentence that ends so
+  // ("…les morceaux de tomate à cuire") is.
+  if (ws.length < 8 && /(er|ir|re)$/.test(last) && COOKING_VERBS.some((v) => last.startsWith(v)))
+    return false;
   // A verb stem plus a short conjugation ending ("ajout" → "ajoute", "ajoutez", "ajouté").
   return COOKING_VERBS.some((v) =>
     ws.some((w) => w.plain.startsWith(v) && w.plain.length - v.length <= (v.length <= 4 ? 2 : 4)),
