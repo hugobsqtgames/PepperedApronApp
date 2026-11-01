@@ -7,6 +7,7 @@ import {
   isHook,
   pruneCaptionNotes,
   recipeFromTranscript,
+  takeSpokenSteps,
   titleFromScreen,
   uuidv7,
   type DraftIngredient,
@@ -255,10 +256,13 @@ export async function listenToVideo(
         frames: pictures.frames,
       };
     const spoken = heard.spoken;
-    // Quantities written on the video are more precise than what is said: they come first.
-    draft.ingredients = mergeIngredients(draft.ingredients, spoken.ingredients);
-    // Steps said in the video when the caption only lists the ingredients.
-    if (!draft.steps.length) draft.steps = spoken.steps;
+    // The ingredients said only when the caption has none (it lists them with their quantities:
+    // "crevettes" heard next to "Crevettes crues" written was a double). Quantities written on
+    // the video are more precise than what is said: they come first.
+    if (!res.draft.ingredients.length)
+      draft.ingredients = mergeIngredients(draft.ingredients, spoken.ingredients);
+    // Steps said in the video when the caption has none, or only comments ("BON AP LES AMIS").
+    takeSpokenSteps(draft, spoken.steps);
     // Still a hook as the title: the dish named in what is said ("je vous fais des pennes au…").
     if (!pictures.title && (!draft.title || isHook(draft.title)))
       draft.title = bestTitle({ captionFirst: draft.title, speech: spoken.text }) ?? draft.title;

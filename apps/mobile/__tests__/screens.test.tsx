@@ -847,6 +847,77 @@ describe('journeys: cooking several dishes, the pantry, sharing', () => {
     await repos.deleteRecipe(r.id);
   });
 
+  it('ingredients heard in the video are not added next to the written ones (TestFlight: doubles)', async () => {
+    const photos =
+      jest.requireActual<typeof import('../src/services/photos')>('../src/services/photos');
+    const auto = jest.requireActual<typeof import('../src/services/autoImport')>(
+      '../src/services/autoImport',
+    );
+    const { emptyRecipe } =
+      jest.requireActual<typeof import('@pepperedapron/client')>('@pepperedapron/client');
+    const { uuidv7 } =
+      jest.requireActual<typeof import('@pepperedapron/core')>('@pepperedapron/core');
+    const pick = jest.spyOn(photos, 'pickVideo').mockResolvedValue('file:///reel.mov');
+    const listen = jest.spyOn(auto, 'recipeFromVideoFile').mockResolvedValue({
+      steps: [
+        {
+          group: null,
+          text: 'Fais revenir les crevettes 5 min.',
+          timerSeconds: 300,
+          timerLabel: null,
+        },
+      ],
+      ingredients: [
+        {
+          group: null,
+          name: 'crevettes',
+          quantity: null,
+          quantityMax: null,
+          unit: null,
+          note: null,
+        },
+        { group: null, name: 'riz', quantity: null, quantityMax: null, unit: null, note: null },
+      ],
+      text: 'Fais revenir les crevettes…',
+    });
+    const r = await repos.createRecipe({
+      ...emptyRecipe(2),
+      title: 'Crevettes au curry',
+      ingredients: [
+        {
+          id: uuidv7(),
+          group: null,
+          name: 'Crevettes crues',
+          quantity: 300,
+          quantityMax: null,
+          unit: 'g',
+          note: null,
+        },
+        {
+          id: uuidv7(),
+          group: null,
+          name: 'Riz basmati',
+          quantity: 150,
+          quantityMax: null,
+          unit: 'g',
+          note: null,
+        },
+      ],
+    });
+    mockParams.current = { id: r.id };
+    const Review = screenOf('../src/app/(app)/import/review');
+    await render(wrap(<Review />));
+    await tap(screen.getByTestId('review-from-video'));
+    await settle();
+    const saved = repos.recipe(r.id)!;
+    expect(saved.data.ingredients.map((x) => x.name)).toEqual(['Crevettes crues', 'Riz basmati']);
+    expect(saved.data.steps).toHaveLength(1);
+    pick.mockRestore();
+    listen.mockRestore();
+    await cleanup();
+    await repos.deleteRecipe(r.id);
+  });
+
   it('a recipe sent as a web link is read back whole, without fetching anything', async () => {
     const { webRecipeLink, linkPayload, draftFromLink } =
       jest.requireActual<typeof import('../src/lib/recipeLink')>('../src/lib/recipeLink');

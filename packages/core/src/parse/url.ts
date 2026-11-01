@@ -13,7 +13,7 @@ import {
   youtubeSubtitles,
   type Subtitles,
 } from './social';
-import { recipeFromTranscript, vttToLines } from './transcript';
+import { hasCookingSteps, recipeFromTranscript, takeSpokenSteps, vttToLines } from './transcript';
 import { parseRecipeText } from './text';
 import { decodeHtmlEntities } from '../text';
 
@@ -190,7 +190,7 @@ export async function importFromUrl(
       .replace(/^.*\bon threads$/i, '')
       .trim();
     draft.title = titleOf(caption, ogTitle && ogTitle !== caption ? ogTitle : null) ?? draft.title;
-    const complete = draft.ingredients.length > 0 && draft.steps.length > 0;
+    const complete = draft.ingredients.length > 0 && hasCookingSteps(draft.steps);
     return {
       draft,
       platform,
@@ -304,7 +304,7 @@ async function importPinterest(
   draft.title = (description ? titleOf(description) : null) ?? draft.title;
   // A pin of an Instagram or TikTok post: the post may have what the description lacks.
   if (link && SOCIAL_HOST.test(link.hostname) && !PINTEREST_HOST.test(link.hostname)) {
-    const complete = draft.ingredients.length > 0 && draft.steps.length > 0;
+    const complete = draft.ingredients.length > 0 && hasCookingSteps(draft.steps);
     if (!complete) {
       const post = await importFromUrl(fetchPage, link.toString(), 1);
       if (!draft.ingredients.length) draft.ingredients = post.draft.ingredients;
@@ -321,7 +321,7 @@ async function importPinterest(
     origin.draft.imageUrl ??= draft.imageUrl;
     return origin;
   }
-  const complete = draft.ingredients.length > 0 && draft.steps.length > 0;
+  const complete = draft.ingredients.length > 0 && hasCookingSteps(draft.steps);
   return {
     draft,
     platform: 'pinterest',
@@ -409,7 +409,7 @@ async function importInstagram(
   }
   const hasRecipe = draft.ingredients.length > 0 || draft.steps.length > 0;
   // Many captions list the ingredients only (or the steps only): the rest is said in the video.
-  const complete = draft.ingredients.length > 0 && draft.steps.length > 0;
+  const complete = draft.ingredients.length > 0 && hasCookingSteps(draft.steps);
   return {
     draft,
     platform: 'instagram',
@@ -498,7 +498,7 @@ async function importVideo(
     draft.title;
   // Recipe explained out loud: complete what the caption lacks with the spoken words.
   let fromSpeech = false;
-  if (subtitles && (!draft.ingredients.length || !draft.steps.length)) {
+  if (subtitles && (!draft.ingredients.length || !hasCookingSteps(draft.steps))) {
     const vtt = await getText(fetchPage, subtitles.url, 'text/vtt,*/*');
     const lines = vtt?.replace(/^\uFEFF/, '').startsWith('WEBVTT') ? vttToLines(vtt) : [];
     if (lines.length) {
@@ -507,10 +507,8 @@ async function importVideo(
         draft.ingredients = spoken.ingredients;
         fromSpeech = true;
       }
-      if (!draft.steps.length && spoken.steps.length) {
-        draft.steps = spoken.steps;
-        fromSpeech = true;
-      }
+      // No steps, or only comments ("BON AP LES AMIS"): the steps said in the video.
+      if (takeSpokenSteps(draft, spoken.steps)) fromSpeech = true;
       // Nothing usable in it: the full transcript stays available to complete it by hand.
       if (!draft.steps.length)
         draft.notes = [draft.notes, `🎙️ ${spoken.text}`]

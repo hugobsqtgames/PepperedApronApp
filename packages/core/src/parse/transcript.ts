@@ -321,6 +321,29 @@ function sentences(lines: string[]): string[] {
     .filter(Boolean);
 }
 
+/**
+ * Whether a step from a caption describes something to do: "Essaye de pas le faire cramer…" or
+ * "BON AP LES AMIS" under the ingredients are comments, not the method.
+ */
+export function hasCookingSteps(steps: { text: string }[]): boolean {
+  return steps.some((st) => isCookingSentence(st.text));
+}
+
+/**
+ * Caption steps that are only comments are replaced by the steps said in the video; the
+ * comments stay in the notes. Returns whether they were replaced.
+ */
+export function takeSpokenSteps(
+  draft: { steps: DraftStep[]; notes: string | null },
+  spoken: DraftStep[],
+): boolean {
+  if (!spoken.length || hasCookingSteps(draft.steps)) return false;
+  const comments = draft.steps.map((st) => st.text).join('\n');
+  draft.steps = spoken;
+  if (comments) draft.notes = [comments, draft.notes].filter(Boolean).join('\n\n').slice(0, 5000);
+  return true;
+}
+
 function isCookingSentence(s: string): boolean {
   const ws = words(s);
   // Questions and fragments ("Et je vais ajouter") are not instructions.

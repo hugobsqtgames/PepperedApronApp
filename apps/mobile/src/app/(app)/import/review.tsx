@@ -177,10 +177,11 @@ export default function ImportReview() {
         return;
       }
       const steps = heard.steps.map((st) => ({ ...st, id: uuidv7() }));
-      const known = new Set(d.ingredients.map((i) => i.name.toLowerCase()));
-      const ingredients = heard.ingredients
-        .filter((i) => !known.has(i.name.toLowerCase()))
-        .map((i) => ({ ...i, id: uuidv7() }));
+      // Ingredients said only when the recipe has none: the written list has the quantities,
+      // and "crevettes" heard next to "Crevettes crues" written is a double.
+      const ingredients = d.ingredients.length
+        ? []
+        : heard.ingredients.map((i) => ({ ...i, id: uuidv7() }));
       await save({
         ...(steps.length && !d.steps.length ? { steps } : {}),
         ...(ingredients.length ? { ingredients: [...d.ingredients, ...ingredients] } : {}),

@@ -119,7 +119,7 @@ const GROUP_RE =
 const HEADER_WITH_YIELD =
   /^(?:les\s+)?(ingredients?|ingredientes|zutaten|ingredienti|liste des ingredients)\s+(?:pour|for|para|fur|per)\b[^:：]{0,50}[:：]?$/;
 
-const SIGN_OFF = /^(?:bon appetit|enjoy|buen provecho|guten appetit|buon appetito)\b/;
+const SIGN_OFF = /^(?:bon app?(?:etit)?\b|enjoy|buen provecho|guten appetit|buon appetito)\b/;
 const NUMBERED_SENTENCE = /^\s*\d{1,2}\s*[.)]\s*\p{L}[^\n]{20,}/u;
 
 function detectHeader(line: string): Section | null {

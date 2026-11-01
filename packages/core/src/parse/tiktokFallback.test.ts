@@ -93,4 +93,55 @@ describe('TikTok: what is said in the video', () => {
     await importFromUrl(fetchPage, URL_);
     expect(calls.some((c) => c.includes('m.tiktok.com'))).toBe(false);
   });
+
+  it('a caption with the ingredients and only comments under them: the steps said are used', async () => {
+    // TestFlight "Big Mac wrap": the comments were taken for the method and the video was not read.
+    const caption = [
+      'Big Mac wrap',
+      '1 wrap de blé 🌾',
+      '1 steak de viande hachée de vache 🥩',
+      '2 tranches fromage en plastique saveur cheddar 🧀',
+      '½ tomates d’Espagne 🍅',
+      'Feuilles de laitue iceberg 🧊',
+      'Essaye de pas le faire cramer comme moi ma poêle était trop chaude mais sinon c’est très bon j’te jure tu vas te régaler 🤤',
+      'BON AP LES AMIS 🫶',
+    ].join('\n');
+    const html = page([
+      { Url: 'https://cdn.example/fr.vtt', Source: 'ASR', LanguageCodeName: 'fra-FR' },
+    ]).replace(
+      'Cette recette de pâtes est hyper addictive ! #pates',
+      caption.replace(/\n/g, '\\n'),
+    );
+    const { fetchPage } = fetcher({ [URL_]: html, 'https://cdn.example/fr.vtt': VTT });
+    const r = await importFromUrl(fetchPage, URL_);
+    expect(r.draft.ingredients.length).toBeGreaterThanOrEqual(4);
+    expect(r.draft.steps.length).toBeGreaterThanOrEqual(3);
+    expect(r.draft.steps.some((s) => /BON AP|cramer/.test(s.text))).toBe(false);
+    // The comment is kept, in the notes.
+    expect(r.draft.notes ?? '').toContain('cramer');
+    expect(r.fromSpeech).toBe(true);
+  });
+
+  it('a caption with real steps keeps them (the video is not needed)', async () => {
+    const caption = [
+      'Pâtes',
+      '200 g de pâtes',
+      '20 cl de crème',
+      '1. Faites cuire les pâtes 10 minutes dans l’eau salée.',
+      '2. Ajoutez la crème et mélangez bien.',
+    ].join('\n');
+    const html = page([
+      { Url: 'https://cdn.example/fr.vtt', Source: 'ASR', LanguageCodeName: 'fra-FR' },
+    ]).replace(
+      'Cette recette de pâtes est hyper addictive ! #pates',
+      caption.replace(/\n/g, '\\n'),
+    );
+    const { fetchPage, calls } = fetcher({ [URL_]: html, 'https://cdn.example/fr.vtt': VTT });
+    const r = await importFromUrl(fetchPage, URL_);
+    expect(r.draft.steps.map((s) => s.text)).toEqual([
+      'Faites cuire les pâtes 10 minutes dans l’eau salée.',
+      'Ajoutez la crème et mélangez bien.',
+    ]);
+    expect(calls.some((c) => c.endsWith('.vtt'))).toBe(false);
+  });
 });
