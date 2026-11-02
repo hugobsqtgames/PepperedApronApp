@@ -1,24 +1,38 @@
 # Notes pour l'équipe App Review
 
-À copier dans App Store Connect → Version → Informations pour la vérification → Notes. Texte en anglais (langue de travail d'App Review).
+À copier dans App Store Connect → Version → Informations utiles à la vérification de l'app → Remarques. Texte en anglais (langue de travail d'App Review), 3833 caractères sur 4 000.
 
 ---
 
-PepperedApron is a free recipe manager, meal planner and grocery list. There is no account, no server, no ads, no in-app purchase and no analytics: all data stays on the device and, if iCloud is on, in the user's private iCloud container. No sign-in is needed to review the app.
+PepperedApron is a free recipe book, meal planner and grocery list. No account, no sign-in, no server, no ads, no in-app purchase, no analytics, no tracking. Data stays on the device and, if iCloud is on, in the user's private iCloud container. Nothing needs to be set up to review the app.
 
-HOW TO TEST
-1. First launch: swipe through the intro, enter a first name (or skip), accept the 10 welcome recipes, then tap "Later" on the share tutorial. The home screen shows tonight's idea and the recipe library.
-2. Recipes: open a recipe, change the number of servings (quantities and steps adjust), tap "Cook" for step-by-step cook mode, start a timer from a step (it appears on the Lock Screen / Dynamic Island as a Live Activity and ends when the timer ends or the recipe is finished).
-3. Import (main feature): in Safari, open any recipe web page, tap Share → PepperedApron. The recipe is read from the public page, saved, and a "Check the recipe" screen opens. The same works from the share sheet of other apps (public posts only) and with "+ → Paste a link / Photo / Text / Dictate".
-4. Plan & groceries: Planning tab → add recipes to days → "Add the week to groceries"; the Groceries tab sorts items by aisle; the list can be sent to Apple Reminders.
-5. Pantry: Profile → Pantry → scan a product barcode (only the barcode number is sent to the free Open Food Facts database) or photograph a receipt (read on device).
-6. Siri / Shortcuts: "What's for dinner in PepperedApron". Widgets: Tonight, Next meal, Grocery list, Random recipe, Timer.
+QUICK TEST (about 5 minutes)
+1. First launch: swipe through the intro, type a first name (or skip), tap "Add the 10 recipes" to get classic recipes to try, then "Later" on the share tutorial.
+2. Open a recipe: change the servings (quantities and steps adjust), tap "Start cooking" for step-by-step cook mode. Start a timer from a step: it shows on the Lock Screen / Dynamic Island (Live Activity) and ends when the timer or the recipe ends.
+3. Import (main feature): in Safari, open any recipe page (e.g. a large cooking site), tap Share > PepperedApron. The app reads the public page, saves the recipe and opens "Check the recipe" to fix a line in one tap. The + button also offers: From a link, From text, From a photo (printed or handwritten recipe, read on device), My latest screenshot, A PDF, Dictate a recipe, New recipe.
+4. Planning tab: add recipes to days, then "Add the week to my shopping list". Groceries tab: items are sorted by aisle; the list can be sent to Apple Reminders.
+5. Pantry (basket icon on the home screen): scan a product barcode or photograph a receipt.
+6. Siri: "What's for dinner in PepperedApron". Widgets: tonight's meal, next meal, grocery list, random recipe, timer.
 
-PERMISSIONS (all requested only when the related feature is used)
-Camera (recipe photo, printed recipe, receipt, barcode), Photos (choose a picture, latest screenshot), Microphone + Speech Recognition (dictating a recipe, optional voice commands in cook mode; recognition runs on device with requiresOnDeviceRecognition), Reminders (send the grocery list), Notifications (timers and optional reminders; local notifications only).
+SHARING FROM SOCIAL APPS
+Users can share a public post (TikTok, Instagram, YouTube, Pinterest, Facebook) to the app. The app reads only what any logged-out browser sees: no login, no cookies, no private content, no automation of the user's account. Many creators say the recipe out loud instead of writing it. The app then uses the public subtitles of the post when there are some; otherwise it downloads the public video temporarily to its cache, transcribes the speech on the device (Apple Speech, requiresOnDeviceRecognition = true), and deletes the file right away. The video is never played, saved, shown or exported. Only the recipe text and one still picture are kept in the user's private recipe book, with a link to the original post and its author.
+If a recipe still comes without steps, "Complete with the video" lets the user pick a video they saved themselves; it is transcribed on the device too.
 
-CONTENT FROM OTHER SERVICES
-When the user shares a public post or page, the app reads what any browser would see (no login, no cookies). If the recipe is only spoken in a public video, the video is downloaded temporarily to the app's cache, its speech is transcribed on the device, then the file is deleted; the video is never played back, saved or exported. Only the recipe text and a still picture are kept in the user's private recipe book, with a link to the original source.
+PERMISSIONS (each asked only when the related feature is used, never at launch)
+- Camera: recipe photo, printed recipe, receipt, barcode.
+- Photos: choose a picture or a video, latest screenshot (system picker).
+- Microphone + Speech Recognition: dictating a recipe, optional voice commands in cook mode ("next"), transcription of a video. Always on device.
+- Reminders: send the grocery list to a list the user chooses.
+- Notifications: timers and optional reminders. Local notifications only, no push.
+
+NETWORK
+The app only contacts: the page or post the user shares; the free Open Food Facts database for a scanned barcode (only the barcode number is sent); and Apple's own captive.apple.com check, to tell "no network" from "site not answering" during an import. There is no PepperedApron server.
+
+CONTENT AND AGE RATING
+Recipes come from the user. The 10 starter recipes were written for the app. Drink pairings are alcohol-free by default; wine, beer or cider are suggested only if the user turns on "Also suggest wine, beer or cider" in settings (marked "For adults only").
 
 PRIVACY
-Data Not Collected. Privacy policy: https://hugobsqtgames.github.io/PepperedApronApp/en/privacy/ (also in the app: Profile → Privacy). Users can export and delete all their data in Profile → My data.
+Data Not Collected. Privacy policy: https://hugobsqtgames.github.io/PepperedApronApp/en/privacy/ (also in the app: Profile > Privacy). Profile > My data: "Export my data" and "Delete all my data".
+
+Works offline except web imports, barcode lookups and iCloud sync. iPhone and iPad, French and English.
+Contact: hugobsqt.collab@gmail.com
