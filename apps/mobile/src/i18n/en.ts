@@ -937,7 +937,7 @@ const en: Translations = {
       {
         icon: 'pricetags-outline',
         title: 'Several categories',
-        body: 'A recipe can be both “Pasta” and “Main course”: pick as many as you like.',
+        body: 'A recipe can be in both “Pasta” and “Mains”: pick as many as you like.',
       },
       {
         icon: 'basket-outline',

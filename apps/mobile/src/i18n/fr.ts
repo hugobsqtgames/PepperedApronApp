@@ -946,7 +946,7 @@ const fr = {
       {
         icon: 'pricetags-outline',
         title: 'Plusieurs catégories',
-        body: 'Une recette peut être à la fois « Pâtes » et « Plat principal » : choisissez-en autant que vous voulez.',
+        body: 'Une recette peut être à la fois dans « Pâtes » et dans « Plats » : choisissez-en autant que vous voulez.',
       },
       {
         icon: 'basket-outline',
