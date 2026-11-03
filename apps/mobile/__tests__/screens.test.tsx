@@ -738,6 +738,49 @@ describe('journeys: what the user does is really saved', () => {
     await repos.deleteRecipe(r.id);
   });
 
+  it('the recipe page estimates calories per serving (feedback)', async () => {
+    const { emptyRecipe } =
+      jest.requireActual<typeof import('@pepperedapron/client')>('@pepperedapron/client');
+    const { uuidv7 } =
+      jest.requireActual<typeof import('@pepperedapron/core')>('@pepperedapron/core');
+    const ing = (name: string, quantity: number | null, unit: string | null = null) => ({
+      id: uuidv7(),
+      group: null,
+      name,
+      quantity,
+      quantityMax: null,
+      unit,
+      note: null,
+    });
+    const r = await repos.createRecipe({
+      ...emptyRecipe(4),
+      title: 'Crêpes du dimanche',
+      ingredients: [
+        ing('farine', 250, 'g'),
+        ing('œufs', 4),
+        ing('lait', 500, 'ml'),
+        ing('beurre fondu', 50, 'g'),
+        ing('sel', 1, 'pinch'),
+      ],
+    });
+    mockParams.current = { id: r.id };
+    const Recipe = screenOf('../src/app/(app)/recipe/[id]/index');
+    await render(wrap(<Recipe />));
+    expect(screen.getByText(i18n.t('recipe.kcal', { count: 440 }))).toBeTruthy();
+    (Alert.alert as jest.Mock).mockClear();
+    await tap(screen.getByTestId('recipe-kcal'));
+    expect((Alert.alert as jest.Mock).mock.calls[0]![0]).toBe(i18n.t('recipe.kcalTitle'));
+    await cleanup();
+    // Not enough known ingredients: no number rather than a wrong one.
+    await repos.updateRecipe(r.id, {
+      ingredients: [ing('ingrédient mystère', 1), ing('autre chose', 2)],
+    });
+    await render(wrap(<Recipe />));
+    expect(screen.queryByTestId('recipe-kcal')).toBeNull();
+    await cleanup();
+    await repos.deleteRecipe(r.id);
+  });
+
   it('all your recipes: one page with every recipe, sorted and filtered (feedback)', async () => {
     // From home: the big tile and "See all" next to the recent recipes.
     mockNav.push.mockClear();

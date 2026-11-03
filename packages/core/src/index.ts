@@ -40,3 +40,4 @@ export * from './equipment';
 export * from './parse/receipt';
 export * from './parse/screenshot';
 export * from './parse/title';
+export * from './nutrition';

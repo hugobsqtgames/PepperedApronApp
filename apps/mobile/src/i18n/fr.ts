@@ -190,6 +190,12 @@ const fr = {
     myFavorites: 'Mes préférées',
   },
   recipe: {
+    kcal: '≈ {{count}} kcal / pers.',
+    kcalTitle: 'Calories (estimation)',
+    kcalBody:
+      'Environ {{count}} kcal par portion ({{total}} kcal pour toute la recette). Calculé sur votre iPhone à partir des ingrédients et de valeurs moyennes : c’est un ordre de grandeur, pas une mesure.',
+    kcalMissing: 'Pas pris en compte : {{names}}.',
+    kcalHint: 'Explique comment les calories sont estimées',
     personalNote: 'Mes remarques',
     personalNoteHint:
       'Ce que vous changeriez la prochaine fois : moins de sel, cuisson plus longue…',
@@ -958,6 +964,11 @@ const fr = {
     title: 'Quoi de neuf',
     version: 'Version {{version}}',
     items: [
+      {
+        icon: 'nutrition-outline',
+        title: 'Les calories',
+        body: 'Chaque recette affiche une estimation des calories par portion, calculée sur votre iPhone à partir des ingrédients. Touchez-la pour voir le détail.',
+      },
       {
         icon: 'grid-outline',
         title: 'Toutes vos recettes',

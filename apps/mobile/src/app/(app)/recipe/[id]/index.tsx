@@ -20,6 +20,7 @@ import {
   readyTimeChoices,
   startTimeFor,
   computeTotalMinutes,
+  estimateCalories,
   CUISINE_COUNTRY,
   CUISINES,
   detectSeasons,
@@ -173,6 +174,7 @@ function RecipeDetailBody({ id }: { id: string }) {
   const current = servings ?? d.servings;
   const factor = current / d.servings;
   const total = computeTotalMinutes(d);
+  const calories = estimateCalories(d);
   const photo = recipePhotoUri(recipe);
   // Phones: the photo fills the top of the screen, the title written on it.
   const bigHeader = !layout.sidebar;
@@ -518,6 +520,30 @@ function RecipeDetailBody({ id }: { id: string }) {
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space.sm }}>
         {total ? (
           <Badge icon="time-outline" label={formatMinutes(total, locale)} tone="primary" />
+        ) : null}
+        {calories ? (
+          <Badge
+            icon="nutrition-outline"
+            label={t('recipe.kcal', { count: calories.perServing })}
+            onPress={() =>
+              Alert.alert(
+                t('recipe.kcalTitle'),
+                [
+                  t('recipe.kcalBody', {
+                    count: calories.perServing,
+                    total: Math.round(calories.total / 10) * 10,
+                  }),
+                  calories.missing.length
+                    ? t('recipe.kcalMissing', { names: calories.missing.join(', ') })
+                    : '',
+                ]
+                  .filter(Boolean)
+                  .join('\n\n'),
+              )
+            }
+            accessibilityHint={t('recipe.kcalHint')}
+            testID="recipe-kcal"
+          />
         ) : null}
         {d.difficulty ? <Badge label={t(`difficulty.${d.difficulty}`)} /> : null}
         {recipeCategories(d).map((c) => (

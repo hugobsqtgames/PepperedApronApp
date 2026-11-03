@@ -190,6 +190,12 @@ const en: Translations = {
     myFavorites: 'My favorites',
   },
   recipe: {
+    kcal: '≈ {{count}} kcal / serving',
+    kcalTitle: 'Calories (estimate)',
+    kcalBody:
+      'About {{count}} kcal per serving ({{total}} kcal for the whole recipe). Worked out on your iPhone from the ingredients and average values: a ballpark figure, not a measurement.',
+    kcalMissing: 'Not counted: {{names}}.',
+    kcalHint: 'Explains how calories are estimated',
     personalNote: 'My notes',
     personalNoteHint: 'What you would change next time: less salt, longer baking…',
     personalNoteEmpty: 'Tap to write your notes (less sugar, longer baking…).',
@@ -944,6 +950,11 @@ const en: Translations = {
     title: 'What’s new',
     version: 'Version {{version}}',
     items: [
+      {
+        icon: 'nutrition-outline',
+        title: 'Calories',
+        body: 'Each recipe shows an estimate of the calories per serving, worked out on your iPhone from the ingredients. Tap it for details.',
+      },
       {
         icon: 'grid-outline',
         title: 'All your recipes',
