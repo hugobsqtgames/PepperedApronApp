@@ -969,24 +969,9 @@ const fr = {
         body: 'Une recette peut être à la fois dans « Pâtes » et dans « Plats » : choisissez-en autant que vous voulez.',
       },
       {
-        icon: 'basket-outline',
-        title: 'Vos courses rangées d’un coup',
-        body: 'Cochez ce que vous avez acheté, puis « Ranger les articles cochés » : tout part au frigo, au placard ou au congélo.',
-      },
-      {
-        icon: 'layers-outline',
-        title: 'Batch cooking de la semaine prochaine',
-        body: 'Dès dimanche, préparez les plats de la semaine suivante. Et planifiez vos repas jusqu’à 4 semaines à l’avance.',
-      },
-      {
-        icon: 'water-outline',
-        title: 'Plus d’eau du robinet dans la liste',
-        body: '« Un verre d’eau » ne s’ajoute plus aux courses ni au placard.',
-      },
-      {
         icon: 'phone-portrait-outline',
         title: 'Lisible sur tous les iPhone',
-        body: 'Le titre du planning ne se coupe plus sur les écrans plus petits ou en grand texte.',
+        body: 'Les textes ne se coupent plus en plein mot : planning, carte « Ce soir », frigo, courses… même sur les écrans plus petits ou en grand texte.',
       },
     ],
   },

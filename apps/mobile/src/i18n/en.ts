@@ -955,24 +955,9 @@ const en: Translations = {
         body: 'A recipe can be in both “Pasta” and “Mains”: pick as many as you like.',
       },
       {
-        icon: 'basket-outline',
-        title: 'Groceries put away at once',
-        body: 'Tick what you bought, then “Put away the ticked items”: everything goes to the fridge, cupboard or freezer.',
-      },
-      {
-        icon: 'layers-outline',
-        title: 'Batch cooking for next week',
-        body: 'On Sunday, cook the dishes of the week after. And plan your meals up to 4 weeks ahead.',
-      },
-      {
-        icon: 'water-outline',
-        title: 'No more tap water on the list',
-        body: '“A glass of water” no longer goes on your groceries or into the cupboard.',
-      },
-      {
         icon: 'phone-portrait-outline',
         title: 'Readable on every iPhone',
-        body: 'The planning title no longer breaks on smaller screens or with large text.',
+        body: 'Words are no longer cut: planning, tonight card, fridge, groceries… even on smaller screens or with large text.',
       },
     ],
   },
