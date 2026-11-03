@@ -1,4 +1,4 @@
-import type { RecipeCategory } from './enums';
+import { RECIPE_CATEGORIES, type RecipeCategory } from './enums';
 import { singularize, tokenize } from './text';
 
 /**
@@ -146,4 +146,40 @@ export function guessCategory(r: {
   if (names.some((n) => matches(n, SUGAR)) && names.some((n) => matches(n, FLOUR)))
     return 'dessert';
   return null;
+}
+
+/**
+ * A recipe can be in several categories (a "Gratin de pâtes" is pasta and a main dish). The
+ * first one stays in `category` (photo placeholder, pairings); the others are kept among its
+ * tags, under their category name. Tags are what every version of the app already reads and
+ * syncs, so a device not updated yet keeps receiving the recipe (an unknown new field would make
+ * it refuse the whole recipe). Search already took such tags for categories.
+ */
+const CATEGORY_SET = new Set<string>(RECIPE_CATEGORIES);
+
+export function isRecipeCategory(s: string): s is RecipeCategory {
+  return CATEGORY_SET.has(s);
+}
+
+/** Every category of a recipe, the main one first. */
+export function recipeCategories(r: {
+  category: RecipeCategory | null;
+  tags: string[];
+}): RecipeCategory[] {
+  return [...new Set([...(r.category ? [r.category] : []), ...r.tags.filter(isRecipeCategory)])];
+}
+
+/** The tags the user wrote, without the extra categories. */
+export function userTags(tags: string[]): string[] {
+  return tags.filter((t) => !isRecipeCategory(t));
+}
+
+/** Adds or removes one category; the main one is replaced by the next if it is removed. */
+export function toggleCategory(
+  r: { category: RecipeCategory | null; tags: string[] },
+  c: RecipeCategory,
+): { category: RecipeCategory | null; tags: string[] } {
+  const all = recipeCategories(r);
+  const next = all.includes(c) ? all.filter((x) => x !== c) : [...all, c];
+  return { category: next[0] ?? null, tags: [...userTags(r.tags), ...next.slice(1)] };
 }

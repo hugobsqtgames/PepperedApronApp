@@ -34,6 +34,8 @@ import {
   type MoldSize,
   type Step,
   stepReminders,
+  recipeCategories,
+  userTags,
 } from '@pepperedapron/core';
 import { noticeText, WARNING_NOTICES } from '../../../../features/recipe/notices';
 import { dayMonth } from '../../../../lib/dates';
@@ -518,7 +520,9 @@ function RecipeDetailBody({ id }: { id: string }) {
           <Badge icon="time-outline" label={formatMinutes(total, locale)} tone="primary" />
         ) : null}
         {d.difficulty ? <Badge label={t(`difficulty.${d.difficulty}`)} /> : null}
-        {d.category ? <Badge label={t(`categories.${d.category}`)} /> : null}
+        {recipeCategories(d).map((c) => (
+          <Badge key={c} label={t(`categories.${c}`)} />
+        ))}
         <Badge
           label={
             cuisine
@@ -786,9 +790,9 @@ function RecipeDetailBody({ id }: { id: string }) {
       <TextBlock title={t('recipe.notes')} text={d.notes} icon="document-text-outline" />
       <TextBlock title={t('recipe.info')} text={d.extraInfo} icon="information-circle-outline" />
       <SourceLink source={d.source} url={d.sourceUrl} />
-      {d.tags.length ? (
+      {userTags(d.tags).length ? (
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space.sm }}>
-          {d.tags.map((tag) => (
+          {userTags(d.tags).map((tag) => (
             <Badge key={tag} label={`#${tag}`} />
           ))}
         </View>
@@ -811,7 +815,7 @@ function RecipeDetailBody({ id }: { id: string }) {
   ) : null;
 
   const kicker = [
-    d.category ? t(`categories.${d.category}`) : null,
+    ...recipeCategories(d).map((c) => t(`categories.${c}`)),
     cuisine ? `${flagOf(CUISINE_COUNTRY[cuisine])} ${t(`delight.cuisines.${cuisine}`)}` : null,
   ]
     .filter(Boolean)

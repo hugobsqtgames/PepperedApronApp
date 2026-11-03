@@ -261,7 +261,7 @@ const fr = {
     total: 'Total (min)',
     totalAuto: 'calculé : {{time}}',
     details: 'Détails',
-    category: 'Catégorie',
+    category: 'Catégories (plusieurs possibles)',
     difficulty: 'Difficulté',
     seasons: 'Saisons',
     oven: 'Four (°C)',
@@ -944,6 +944,11 @@ const fr = {
     version: 'Version {{version}}',
     items: [
       {
+        icon: 'pricetags-outline',
+        title: 'Plusieurs catégories',
+        body: 'Une recette peut être à la fois « Pâtes » et « Plat principal » : choisissez-en autant que vous voulez.',
+      },
+      {
         icon: 'basket-outline',
         title: 'Vos courses rangées d’un coup',
         body: 'Cochez ce que vous avez acheté, puis « Ranger les articles cochés » : tout part au frigo, au placard ou au congélo.',
@@ -1081,8 +1086,8 @@ const fr = {
     },
     season: {
       banner: 'C’est la saison : {{name}}',
-      count_one: '{{count}} de vos recettes en utilise',
-      count_other: '{{count}} de vos recettes en utilisent',
+      count_one: 'Dans {{count}} de vos recettes',
+      count_other: 'Dans {{count}} de vos recettes',
     },
     leftovers: {
       title: 'Avec les restes d’hier',

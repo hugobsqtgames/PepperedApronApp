@@ -619,7 +619,11 @@ export function searchRecipes<T extends SearchableRecipe>(
     if (maxM !== null && (r.totalMinutes === null || r.totalMinutes > maxM)) continue;
     if (difficulty && r.difficulty !== difficulty) continue;
     if (seasons.length && r.seasons.length && !r.seasons.some((s) => seasons.includes(s))) continue;
-    if (filters.categories.length && (!r.category || !filters.categories.includes(r.category)))
+    // A recipe in several categories (the extra ones among its tags) matches each of them.
+    if (
+      filters.categories.length &&
+      !filters.categories.some((c) => r.category === c || r.tags.includes(c))
+    )
       continue;
     if (
       filters.tags.length &&

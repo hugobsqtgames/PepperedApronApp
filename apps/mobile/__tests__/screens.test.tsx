@@ -657,6 +657,24 @@ describe('journeys: what the user does is really saved', () => {
     expect(screen.getByText(i18n.t('delight.pairing.drink'))).toBeTruthy();
   });
 
+  it('home: the tonight reason never shares its row with the buttons (feedback: "Pour change|r")', async () => {
+    const Home = screenOf('../src/app/(app)/(tabs)/index');
+    await render(wrap(<Home />));
+    const why = screen.getByTestId('tonight-why');
+    // The nearest row (flexDirection: row) holding the cook button holds no reason text.
+    let row = screen.getByTestId('tonight-cook').parent;
+    const isRow = (n: typeof row) => {
+      const st = [n?.props.style].flat(Infinity) as ({ flexDirection?: string } | undefined)[];
+      return st.some((x) => x?.flexDirection === 'row');
+    };
+    while (row && !isRow(row)) row = row.parent;
+    expect(row).toBeTruthy();
+    const inRow = (n: typeof row): boolean => n === row || (n?.parent ? inRow(n.parent) : false);
+    expect(inRow(why)).toBe(false);
+    // Season banner: a sentence that reads right.
+    expect(i18n.t('delight.season.count', { count: 1 })).toBe('Dans 1 de vos recettes');
+  });
+
   it('home: tonight’s planned dinner is the big card', async () => {
     const today = new Date().toISOString().slice(0, 10);
     await repos.planMeal({ date: today, slot: 'dinner', recipeId: ids.recipe2! });
@@ -686,6 +704,37 @@ describe('journeys: what the user does is really saved', () => {
       [250, 'g', 'farine'],
     ]);
     expect(mockNav.replace).toHaveBeenCalledWith(`/recipe/${saved!.id}`);
+  });
+
+  it('a recipe can be put in several categories (feedback)', async () => {
+    const { emptyRecipe } =
+      jest.requireActual<typeof import('@pepperedapron/client')>('@pepperedapron/client');
+    const r = await repos.createRecipe({
+      ...emptyRecipe(4),
+      title: 'Gratin de pâtes',
+      tags: ['famille'],
+    });
+    mockParams.current = { id: r.id };
+    const Edit = screenOf('../src/app/(app)/recipe/edit');
+    await render(wrap(<Edit />));
+    await tap(screen.getByText(i18n.t('categories.pasta')));
+    await tap(screen.getByText(i18n.t('categories.main')));
+    await tap(screen.getByTestId('editor-save'));
+    await settle();
+    const saved = repos.recipe(r.id)!;
+    expect(saved.data.category).toBe('pasta');
+    // The other category is kept with the tags; the user's own tag is still there.
+    expect(saved.data.tags).toEqual(['famille', 'main']);
+    await cleanup();
+    // The recipe page shows both categories, and only the user's tag as a tag.
+    mockParams.current = { id: r.id };
+    const Recipe = screenOf('../src/app/(app)/recipe/[id]/index');
+    await render(wrap(<Recipe />));
+    expect(screen.getAllByText(i18n.t('categories.main')).length).toBeGreaterThan(0);
+    expect(screen.queryByText('#main')).toBeNull();
+    expect(screen.getByText('#famille')).toBeTruthy();
+    await cleanup();
+    await repos.deleteRecipe(r.id);
   });
 
   it('an empty title is refused and nothing is saved', async () => {

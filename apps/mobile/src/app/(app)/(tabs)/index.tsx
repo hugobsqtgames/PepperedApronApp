@@ -18,6 +18,7 @@ import {
   seasonalHighlights,
   toIsoDate,
   type RecipeCategory,
+  recipeCategories,
 } from '@pepperedapron/core';
 import type { Recipe } from '@pepperedapron/client';
 import { TonightCard, type TonightReason } from '../../../features/home/Tonight';
@@ -178,7 +179,7 @@ export default function Home() {
       };
       const counts: Partial<Record<RecipeCategory, number>> = {};
       for (const x of library)
-        if (x.data.category) counts[x.data.category] = (counts[x.data.category] ?? 0) + 1;
+        for (const c of recipeCategories(x.data)) counts[c] = (counts[c] ?? 0) + 1;
       return {
         library,
         favorites: favs.slice(0, 12),

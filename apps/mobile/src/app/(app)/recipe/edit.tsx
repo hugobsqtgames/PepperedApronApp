@@ -24,6 +24,9 @@ import {
   uuidv7,
   type Locale,
   type RecipeData,
+  recipeCategories,
+  toggleCategory,
+  userTags,
 } from '@pepperedapron/core';
 import { emptyRecipe, ValidationError } from '@pepperedapron/client';
 import {
@@ -735,8 +738,9 @@ export default function RecipeEditor() {
                       <Chip
                         key={c}
                         label={t(`categories.${c}`)}
-                        selected={data.category === c}
-                        onPress={() => patch({ category: data.category === c ? null : c })}
+                        selected={recipeCategories(data).includes(c)}
+                        // Several categories: "Gratin de pâtes" is pasta and a main dish.
+                        onPress={() => patch(toggleCategory(data, c))}
                       />
                     ))}
                   </View>
@@ -857,7 +861,7 @@ export default function RecipeEditor() {
                       blurOnSubmit={false}
                     />
                     <View style={styles.wrap}>
-                      {data.tags.map((tag) => (
+                      {userTags(data.tags).map((tag) => (
                         <Chip
                           key={tag}
                           label={`#${tag}  ✕`}

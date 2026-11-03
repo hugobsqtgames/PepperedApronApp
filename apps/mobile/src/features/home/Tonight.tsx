@@ -75,9 +75,18 @@ export function TonightCard({
             </View>
           </Pressable>
         </Link>
+        {/* The reason on its own line, the buttons below sharing the width: on a narrower
+            iPhone the reason was squeezed into "Pour change|r". */}
         <View style={styles.footer}>
-          <View style={{ flex: 1, gap: 2 }}>
-            <Text variant="callout" color="accent" weight="600">
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'baseline',
+              gap: space.sm,
+              flexWrap: 'wrap',
+            }}
+          >
+            <Text variant="callout" color="accent" weight="600" testID="tonight-why">
               {why}
             </Text>
             {minutes ? (
@@ -86,23 +95,27 @@ export function TonightCard({
               </Text>
             ) : null}
           </View>
-          {onPlan ? (
+          <View style={{ flexDirection: 'row', gap: space.sm }}>
+            {onPlan ? (
+              <Button
+                title={t('delight.tonight.plan')}
+                icon="calendar-outline"
+                variant="secondary"
+                size="sm"
+                onPress={onPlan}
+                style={{ flex: 1 }}
+                testID="tonight-plan"
+              />
+            ) : null}
             <Button
-              title={t('delight.tonight.plan')}
-              icon="calendar-outline"
-              variant="secondary"
+              title={t('delight.tonight.cook')}
+              icon="play"
               size="sm"
-              onPress={onPlan}
-              testID="tonight-plan"
+              onPress={() => router.push(`/recipe/${recipe.id}/cook`)}
+              style={{ flex: 1 }}
+              testID="tonight-cook"
             />
-          ) : null}
-          <Button
-            title={t('delight.tonight.cook')}
-            icon="play"
-            size="sm"
-            onPress={() => router.push(`/recipe/${recipe.id}/cook`)}
-            testID="tonight-cook"
-          />
+          </View>
         </View>
       </Card>
     </TintScope>
@@ -118,11 +131,8 @@ const styles = StyleSheet.create({
     gap: space.xs,
   },
   footer: {
-    flexDirection: 'row',
-    alignItems: 'center',
     gap: space.sm,
     padding: space.md,
     paddingLeft: space.lg,
-    flexWrap: 'wrap',
   },
 });

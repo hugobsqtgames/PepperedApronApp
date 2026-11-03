@@ -289,8 +289,15 @@ export default function Search() {
             ) : null}
             {pantry.length ? (
               <View style={{ gap: space.sm }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  <Text variant="bodyStrong" style={{ flex: 1 }}>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    flexWrap: 'wrap',
+                    gap: space.sm,
+                  }}
+                >
+                  <Text variant="bodyStrong" style={{ flexGrow: 1 }}>
                     {t('fridge.atHome')}
                   </Text>
                   <Button

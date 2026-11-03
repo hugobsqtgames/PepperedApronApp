@@ -40,6 +40,8 @@ export interface SmartCandidate {
   diets: DietTag[];
   totalMinutes: number | null;
   category: RecipeCategory | null;
+  /** Other categories of the recipe (kept among its tags). */
+  extraCategories?: RecipeCategory[];
   seasons: Season[];
   rating: number | null;
   /** Last day it was cooked, null if never. */
@@ -51,7 +53,10 @@ export function matchesSmartRules(r: SmartCandidate, rules: SmartRules, today: s
   if (rules.diet && !r.diets.includes(rules.diet)) return false;
   if (rules.maxMinutes !== null && (r.totalMinutes === null || r.totalMinutes > rules.maxMinutes))
     return false;
-  if (rules.categories.length && (!r.category || !rules.categories.includes(r.category)))
+  if (
+    rules.categories.length &&
+    !rules.categories.some((c) => r.category === c || (r.extraCategories ?? []).includes(c))
+  )
     return false;
   // A recipe without a season goes with every season.
   if (rules.season && r.seasons.length && !r.seasons.includes(rules.season)) return false;

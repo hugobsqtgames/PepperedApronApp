@@ -260,7 +260,7 @@ const en: Translations = {
     total: 'Total (min)',
     totalAuto: 'calculated: {{time}}',
     details: 'Details',
-    category: 'Category',
+    category: 'Categories (several possible)',
     difficulty: 'Difficulty',
     seasons: 'Seasons',
     oven: 'Oven (°C)',
@@ -935,6 +935,11 @@ const en: Translations = {
     version: 'Version {{version}}',
     items: [
       {
+        icon: 'pricetags-outline',
+        title: 'Several categories',
+        body: 'A recipe can be both “Pasta” and “Main course”: pick as many as you like.',
+      },
+      {
         icon: 'basket-outline',
         title: 'Groceries put away at once',
         body: 'Tick what you bought, then “Put away the ticked items”: everything goes to the fridge, cupboard or freezer.',
@@ -1072,8 +1077,8 @@ const en: Translations = {
     },
     season: {
       banner: 'In season now: {{name}}',
-      count_one: '{{count}} of your recipes uses them',
-      count_other: '{{count}} of your recipes use them',
+      count_one: 'In {{count}} of your recipes',
+      count_other: 'In {{count}} of your recipes',
     },
     leftovers: {
       title: 'With yesterday’s leftovers',
