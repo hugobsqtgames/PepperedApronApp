@@ -40,6 +40,23 @@ import { inBackground } from '../../../lib/errors';
 
 type Entry = LocalRecord<'mealPlanEntry'>;
 
+/** The recipes of a week to batch-cook: still to come, not leftovers, with steps, each once (≤ 6). */
+function batchRecipeIds(
+  entries: Entry[],
+  today: string,
+  recipe: (id: string) => { data: { steps: unknown[] } } | null,
+): string[] {
+  return [
+    ...new Set(
+      entries
+        .filter((e) => e.data.recipeId && !e.data.leftover && e.data.date >= today)
+        .map((e) => e.data.recipeId!),
+    ),
+  ]
+    .filter((id) => (recipe(id)?.data.steps.length ?? 0) > 0)
+    .slice(0, 6);
+}
+
 export default function Planning() {
   const { t, i18n } = useTranslation();
   const { colors } = useTheme();
@@ -54,7 +71,7 @@ export default function Planning() {
   const [dragging, setDragging] = useState(false);
   const days = useMemo(() => weekDates(weekStart), [weekStart]);
   const end = days[6]!;
-  const { entries, titles } = useLive(
+  const { entries, titles, nextBatchIds } = useLive(
     ['mealPlanEntry', 'recipe'],
     (r) => {
       const es = r.entries(weekStart, end);
@@ -63,23 +80,19 @@ export default function Planning() {
         const rec = e.data.recipeId ? r.recipe(e.data.recipeId) : null;
         titles.set(e.id, { title: rec?.data.title ?? e.data.customTitle ?? '—', recipe: rec });
       }
-      return { entries: es, titles };
+      // Batch cooking is usually done on Sunday for the week after: this week shows it too.
+      const nextStart = addDays(weekStart, 7);
+      const nextBatchIds =
+        weekStart === startOfWeek(today)
+          ? batchRecipeIds(r.entries(nextStart, addDays(nextStart, 6)), today, (id) => r.recipe(id))
+          : [];
+      return { entries: es, titles, nextBatchIds };
     },
-    [weekStart, end],
+    [weekStart, end, today],
   );
 
   // Batch cooking: the week's recipes to cook (not leftovers), each once, up to six.
-  const batchIds = [
-    ...new Set(
-      entries
-        .filter((e) => e.data.recipeId && !e.data.leftover && e.data.date >= today)
-        .map((e) => e.data.recipeId!),
-    ),
-  ]
-    .filter((rid) =>
-      [...titles.values()].some((x) => x.recipe?.id === rid && x.recipe.data.steps.length),
-    )
-    .slice(0, 6);
+  const batchIds = batchRecipeIds(entries, today, (id) => repos.recipe(id));
 
   const cell = (d: string, s: MealSlot) =>
     entries.filter((e) => e.data.date === d && e.data.slot === s);
@@ -167,23 +180,29 @@ export default function Planning() {
   const header = (
     <View style={{ gap: space.md, paddingHorizontal: layout.gutter, paddingTop: space.lg }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.sm }}>
-        <Text variant="title1" style={{ flex: 1 }} accessibilityRole="header">
+        {/* One line whatever the screen width and text size (an iPhone 17 cut "Plannin|g"). */}
+        <Text
+          variant="title1"
+          style={{ flex: 1 }}
+          accessibilityRole="header"
+          numberOfLines={1}
+          adjustsFontSizeToFit
+          minimumFontScale={0.7}
+          testID="planning-title"
+        >
           {t('planning.title')}
         </Text>
-        <Button
-          title={t('planning.templates')}
+        <IconButton
           icon="copy-outline"
-          variant="ghost"
-          size="sm"
+          label={t('planning.templates')}
           onPress={() => router.push({ pathname: '/plan/templates', params: { weekStart } })}
           testID="plan-templates"
         />
-        <Button
-          title={t('planning.calendar')}
+        <IconButton
           icon="calendar-outline"
-          variant="ghost"
-          size="sm"
+          label={t('planning.calendar')}
           onPress={() => router.push('/calendar')}
+          testID="plan-calendar"
         />
       </View>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.sm }}>
@@ -249,6 +268,16 @@ export default function Planning() {
             onPress={() => router.push(`/cook-plan?ids=${batchIds.join(',')}&mode=asap`)}
             style={{ flexGrow: 1 }}
             testID="plan-batch"
+          />
+        ) : null}
+        {nextBatchIds.length >= 2 ? (
+          <Button
+            title={t('plan.batchNextWeek')}
+            icon="layers-outline"
+            variant="secondary"
+            onPress={() => router.push(`/cook-plan?ids=${nextBatchIds.join(',')}&mode=asap`)}
+            style={{ flexGrow: 1 }}
+            testID="plan-batch-next"
           />
         ) : null}
       </View>

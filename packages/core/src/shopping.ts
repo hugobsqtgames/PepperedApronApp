@@ -885,6 +885,25 @@ export interface PlannedRecipe {
 }
 
 /** Ingredients for a set of planned meals, scaled to planned servings and merged. */
+/**
+ * Tap water is not bought: "eau", "eau tiède", "un verre d'eau", "warm water" never go on the
+ * list (nor into the pantry when ticked). Waters that are bought stay: "eau gazeuse", "eau de
+ * coco", "eau de fleur d'oranger", "sparkling water".
+ */
+const TAP_WATER = new RegExp(
+  '^(?:(?:un |1 |deux |2 )?(?:grand |petit )?(?:verre|bol|tasse|filet|trait|peu|cuillere|cuilleree|louche|litre|l|cl|ml|dl|cup|glass|glasse|tablespoon|teaspoon|tbsp|tsp)s? (?:d |de |of )?)?' +
+    '(?:l |de l |d )?(?:(?:warm|cold|hot|boiling|lukewarm|ice|iced|tap|filtered) )*(?:eau|water)' +
+    '(?: (?:tiede|froide|chaude|bouillante|fremissante|glacee|du robinet|potable|filtree|tempere|temperee|a temperature ambiante|warm|cold|hot|boiling|lukewarm|ice|iced|tap|filtered))*$',
+);
+export function isTapWater(name: string): boolean {
+  const n = normalizeText(name)
+    .replace(/[’']/g, ' ')
+    .replace(/[^a-z0-9 ]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  return TAP_WATER.test(n);
+}
+
 export function shoppingLinesFromPlan(
   planned: PlannedRecipe[],
   defaultServings: number,
@@ -896,6 +915,7 @@ export function shoppingLinesFromPlan(
       p.plannedServings ?? p.recipeServings ?? defaultServings,
     );
     for (const ing of p.ingredients) {
+      if (isTapWater(ing.name)) continue;
       const s = scaleAmount(ing, factor);
       // Ranges are shopped at the upper bound.
       lines.push({

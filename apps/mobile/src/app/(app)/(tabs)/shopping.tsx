@@ -19,6 +19,8 @@ import {
   budgetSummary,
   formatShoppingQuantity,
   groupByCategory,
+  isTapWater,
+  pantryPlaceFor,
   startOfWeek,
   toIsoDate,
   type Locale,
@@ -56,7 +58,6 @@ import { Tip } from '../../../ui/Tip';
 type Item = LocalRecord<'shoppingItem'>;
 
 /** Aisles whose products are kept in the fridge once bought. */
-const FRESH = new Set(['produce', 'meat_fish', 'dairy_eggs']);
 export default function Shopping() {
   const { t, i18n } = useTranslation();
   const { colors } = useTheme();
@@ -191,13 +192,8 @@ export default function Shopping() {
     await repos.toggleItem(i.id);
     if (!i.data.checked && remaining === 1) haptic.success();
     // Bought: it can go straight into the cupboard or the fridge.
-    if (!i.data.checked) {
-      const place =
-        i.data.categoryKey === 'frozen'
-          ? 'freezer'
-          : FRESH.has(i.data.categoryKey)
-            ? 'fridge'
-            : 'pantry';
+    if (!i.data.checked && !isTapWater(i.data.name)) {
+      const place = pantryPlaceFor(i.data.name);
       toast(t('pantry.bought', { name: i.data.name }), {
         tone: 'info',
         action: {
@@ -205,6 +201,23 @@ export default function Shopping() {
           onPress: () => inBackground(repos.storeBoughtItem(i.id, place)),
         },
       });
+    }
+  };
+
+  /** Back from the shop: everything ticked goes into the cupboard, fridge or freezer. */
+  const storeChecked = async () => {
+    if (!list) return;
+    try {
+      const done = await repos.storeCheckedItems(list.id);
+      haptic.success();
+      const parts = (['fridge', 'pantry', 'freezer'] as const)
+        .filter((p) => done[p] > 0)
+        .map((p) => t(`pantry.storedIn.${p}`, { count: done[p] }));
+      toast(
+        parts.length ? t('pantry.storedAll', { places: parts.join(', ') }) : t('pantry.storedNone'),
+      );
+    } catch (e) {
+      toast(errorMessage(e, t), { tone: 'error' });
     }
   };
 
@@ -519,11 +532,20 @@ export default function Shopping() {
         />
         {text ? <Button title={t('common.add')} size="sm" onPress={add} /> : null}
       </View>
+      {checkedCount > 0 ? (
+        <Button
+          title={t('pantry.storeChecked', { count: checkedCount })}
+          icon="basket-outline"
+          variant={remaining === 0 ? 'primary' : 'secondary'}
+          onPress={() => void storeChecked()}
+          testID="shopping-store-checked"
+        />
+      ) : null}
       {items.length > 0 && remaining === 0 ? (
         <View style={[styles.done, { backgroundColor: colors.accentSoft }]}>
           <Text variant="bodyStrong">{t('shopping.allDone')}</Text>
           <Button
-            title={t('shopping.clearChecked')}
+            title={t('pantry.clearWithoutStoring')}
             variant="ghost"
             size="sm"
             onPress={() => list && inBackground(repos.clearChecked(list.id))}

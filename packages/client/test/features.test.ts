@@ -162,6 +162,48 @@ describe('pantry', () => {
     ]);
     await repos.storeBoughtItem(items[1]!.id, 'fridge');
     expect(repos.pantryItems('fridge').map((p) => p.data.name)).toEqual(['lait']);
+    // Put away: it leaves the list (it cannot be put away twice).
+    expect(repos.items(list.id).map((i) => i.data.name)).toEqual(['farine']);
+  });
+
+  it('every ticked item is put away at once, each in its place, water never (feedback)', async () => {
+    const { repos } = await open();
+    const list = await repos.createList('Courses');
+    for (const line of [
+      '200 g de beurre',
+      '500 g de pâtes',
+      '2 escalopes de poulet',
+      'un verre d’eau',
+      '1 salade',
+    ])
+      await repos.addItemText(list.id, line);
+    // Everything but the salad was bought.
+    for (const it of repos.items(list.id))
+      if (it.data.name !== 'salade') await repos.toggleItem(it.id);
+    const done = await repos.storeCheckedItems(list.id);
+    const names = (place: 'pantry' | 'fridge' | 'freezer') =>
+      repos
+        .pantryItems(place)
+        .map((p) => p.data.name)
+        .sort();
+    expect(names('fridge')).toEqual(['beurre', 'escalopes de poulet']);
+    expect(names('pantry')).toEqual(['pâtes']);
+    // The glass of water left the list, but not into the cupboard.
+    expect(repos.pantryItems().some((p) => /eau/.test(p.data.name))).toBe(false);
+    expect(done).toEqual({ fridge: 2, pantry: 1, freezer: 0 });
+    expect(repos.items(list.id).map((i) => i.data.name)).toEqual(['salade']);
+  });
+
+  it('tap water never goes on the shopping list', async () => {
+    const { repos } = await open();
+    const r = await repos.createRecipe({
+      ...emptyRecipe(4),
+      title: 'Pain',
+      ingredients: [ing('farine', 500, 'g'), ing('eau tiède', 30, 'cl'), ing('verre d’eau', 1)],
+    });
+    const list = await repos.createList('Courses');
+    await repos.addRecipeToList(list.id, r.id, 4);
+    expect(repos.items(list.id).map((i) => i.data.name)).toEqual(['farine']);
   });
 
   it('sums up a week', async () => {

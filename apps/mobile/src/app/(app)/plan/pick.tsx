@@ -89,7 +89,8 @@ export default function PickMeal() {
     }
   };
 
-  const days = Array.from({ length: 14 }, (_, i) => addDays(today, i));
+  // Four weeks ahead: meals (and batch cooking) are often planned for the week after.
+  const days = Array.from({ length: 28 }, (_, i) => addDays(today, i));
   const header = (
     <View style={{ gap: space.md, padding: space.lg }}>
       <View style={{ flexDirection: 'row', alignItems: 'center' }}>

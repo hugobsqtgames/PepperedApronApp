@@ -2,6 +2,8 @@ import {
   addDays,
   categorizeIngredient,
   deductPantry,
+  isTapWater,
+  pantryPlaceFor,
   matchesSmartRules,
   smartCollectionDataSchema,
   type SmartCollectionData,
@@ -1021,16 +1023,43 @@ export class Repos {
   removePantryItem(id: string) {
     return this.store.remove('pantryItem', id);
   }
-  /** A ticked shopping line goes into the cupboard (or fridge). */
+  /**
+   * A ticked shopping line goes into the cupboard (or fridge), and leaves the list: it is put
+   * away, and cannot be put away twice. Tap water is never stored.
+   */
   async storeBoughtItem(itemId: string, place: PantryPlace) {
     const it = this.store.get('shoppingItem', itemId);
     if (!it) throw new Error('not_found');
-    return this.addPantryItem({
-      name: it.data.name,
-      quantity: it.data.quantity,
-      unit: it.data.unit,
-      place,
-    });
+    if (!isTapWater(it.data.name))
+      await this.addPantryItem({
+        name: it.data.name,
+        quantity: it.data.quantity,
+        unit: it.data.unit,
+        place,
+      });
+    await this.store.remove('shoppingItem', itemId);
+  }
+  /**
+   * Back from the shop: every ticked line of the list is put away at once, each where it
+   * belongs (fresh food in the fridge, frozen food in the freezer, the rest in the cupboard), and
+   * leaves the list. Before, only the lines whose notification was tapped one by one went in.
+   */
+  async storeCheckedItems(listId: string): Promise<Record<PantryPlace, number>> {
+    const done: Record<PantryPlace, number> = { pantry: 0, fridge: 0, freezer: 0 };
+    for (const it of this.items(listId).filter((x) => x.data.checked)) {
+      if (!isTapWater(it.data.name)) {
+        const place = pantryPlaceFor(it.data.name);
+        await this.addPantryItem({
+          name: it.data.name,
+          quantity: it.data.quantity,
+          unit: it.data.unit,
+          place,
+        });
+        done[place]++;
+      }
+      await this.store.remove('shoppingItem', it.id);
+    }
+    return done;
   }
 
   /** Planning screen: what the week looked like (meals, cooking, vegetarian share, budget). */

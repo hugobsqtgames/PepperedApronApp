@@ -439,6 +439,61 @@ describe('journeys: what the user does is really saved', () => {
     expect(mockNav.push).toHaveBeenCalledWith('/pantry');
   });
 
+  it('planning: the title stays on one line, its tools are icons (feedback: "Plannin|g")', async () => {
+    const Planning = screenOf('../src/app/(app)/(tabs)/planning');
+    await render(wrap(<Planning />));
+    const title = screen.getByTestId('planning-title');
+    expect(title.props.numberOfLines).toBe(1);
+    expect(title.props.adjustsFontSizeToFit).toBe(true);
+    // Templates and calendar no longer take the title's room with their text.
+    expect(screen.queryByText(i18n.t('planning.templates'))).toBeNull();
+    expect(screen.getByLabelText(i18n.t('planning.templates'))).toBeTruthy();
+    expect(screen.getByLabelText(i18n.t('planning.calendar'))).toBeTruthy();
+  });
+
+  it('batch cooking for next week, from this week (feedback)', async () => {
+    const { addDays, startOfWeek, toIsoDate } =
+      jest.requireActual<typeof import('@pepperedapron/core')>('@pepperedapron/core');
+    const next = addDays(startOfWeek(toIsoDate(new Date())), 7);
+    const withSteps = repos
+      .recipes()
+      .filter((r) => r.data.steps.length)
+      .slice(0, 2);
+    expect(withSteps).toHaveLength(2);
+    const planned = [];
+    for (const [i, r] of withSteps.entries())
+      planned.push(
+        await repos.planMeal({ date: addDays(next, i), slot: 'dinner', recipeId: r.id }),
+      );
+    mockNav.push.mockClear();
+    const Planning = screenOf('../src/app/(app)/(tabs)/planning');
+    await render(wrap(<Planning />));
+    await tap(screen.getByTestId('plan-batch-next'));
+    const url = String(mockNav.push.mock.calls.at(-1)?.[0]);
+    expect(url).toContain('/cook-plan?ids=');
+    for (const r of withSteps) expect(url).toContain(r.id);
+    await cleanup();
+    for (const e of planned) await repos.removeMeal(e.id);
+  });
+
+  it('groceries: every ticked item is put away in one tap (feedback: only some went in)', async () => {
+    const list = await repos.ensureActiveList(i18n.t('shopping.defaultName'));
+    for (const it of repos.items(list.id)) await repos.removeItem(it.id);
+    for (const line of ['200 g de beurre', '500 g de riz', '1 verre d’eau'])
+      await repos.addItemText(list.id, line);
+    for (const it of repos.items(list.id)) await repos.toggleItem(it.id);
+    const before = repos.pantryItems().length;
+    const Shopping = screenOf('../src/app/(app)/(tabs)/shopping');
+    await render(wrap(<Shopping />));
+    await tap(screen.getByTestId('shopping-store-checked'));
+    await settle();
+    expect(repos.items(list.id)).toHaveLength(0);
+    const names = repos.pantryItems().map((p) => p.data.name);
+    expect(names).toEqual(expect.arrayContaining(['beurre', 'riz']));
+    expect(names.some((n) => /eau/.test(n))).toBe(false);
+    expect(repos.pantryItems().length).toBeGreaterThanOrEqual(before + 1);
+  });
+
   it('a waiting import says what it waits for (TestFlight feedback)', async () => {
     const { importQueue } = jest.requireActual<typeof import('../src/services/importQueue')>(
       '../src/services/importQueue',
@@ -710,6 +765,12 @@ describe('journeys: what the user does is really saved', () => {
     mockParams.current = {};
     const list = repos.activeList()!;
     for (const it of repos.items(list.id)) await repos.removeItem(it.id);
+    // Meals of the week shown, whatever today's date (the demo library plans another week).
+    const { startOfWeek, toIsoDate, addDays } =
+      jest.requireActual<typeof import('@pepperedapron/core')>('@pepperedapron/core');
+    const monday = startOfWeek(toIsoDate(new Date()));
+    for (const [i, r] of repos.recipes().slice(0, 3).entries())
+      await repos.planMeal({ date: addDays(monday, i), slot: 'dinner', recipeId: r.id });
     const Planning = screenOf('../src/app/(app)/(tabs)/planning');
     await render(wrap(<Planning />));
     await tap(screen.getByTestId('plan-to-shopping'));
