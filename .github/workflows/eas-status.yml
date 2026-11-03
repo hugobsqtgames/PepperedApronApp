@@ -1,0 +1,37 @@
+name: EAS build status
+
+# Read only: the last iOS builds on EAS (queued, in progress, finished, errored) and their
+# TestFlight submissions. Changes nothing.
+on:
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: How many builds
+        default: '3'
+
+jobs:
+  status:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/mobile
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+      - name: Builds
+        env:
+          APP_VARIANT: production
+        run: eas build:list --platform ios --limit ${{ inputs.limit }} --non-interactive
+      - name: Submissions
+        env:
+          APP_VARIANT: production
+        run: eas submission:list --platform ios --limit ${{ inputs.limit }} --non-interactive || true
