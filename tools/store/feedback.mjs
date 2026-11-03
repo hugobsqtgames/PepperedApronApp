@@ -20,10 +20,18 @@ for (const s of shots.data) {
   for (const img of a.screenshots ?? []) console.info(`SHOT: ${img.url}`);
 }
 
-const crashes = await api(
-  'GET',
-  `/v1/apps/${app.id}/betaFeedbackCrashSubmissions?limit=${count}&sort=-createdDate`,
-);
+// Apple's crash list sometimes answers 500 for a moment: the comments above are already
+// printed, so the run reports it and ends without failing.
+let crashes;
+try {
+  crashes = await api(
+    'GET',
+    `/v1/apps/${app.id}/betaFeedbackCrashSubmissions?limit=${count}&sort=-createdDate`,
+  );
+} catch (e) {
+  console.info(`\n##### plantages indisponibles pour le moment (${e.message.slice(0, 120)})`);
+  crashes = { data: [] };
+}
 console.info(`\n##### ${crashes.data.length} plantage(s)`);
 for (const c of crashes.data) {
   const a = c.attributes;
