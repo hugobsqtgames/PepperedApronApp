@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<style>
+@font-face { font-family: Fraunces; font-weight: 600; src: url('../../../../apps/mobile/assets/fonts/Fraunces_600SemiBold.ttf'); }
+@font-face { font-family: Fraunces; font-weight: 700; src: url('../../../../apps/mobile/assets/fonts/Fraunces_700Bold.ttf'); }
+@font-face { font-family: Fraunces; font-weight: 400; font-style: italic; src: url('../../../../apps/mobile/assets/fonts/Fraunces_400Regular_Italic.ttf'); }
+@font-face { font-family: Fraunces; font-weight: 600; font-style: italic; src: url('../../../../apps/mobile/assets/fonts/Fraunces_600SemiBold_Italic.ttf'); }
+:root {
+  --forest: #1F4D3A; --forestDeep: #163A2B; --paprika: #D2642A; --paprikaText: #A84A1A;
+  --cream: #F7F1E6; --sand: #E8DFCF; --ink: #1F2A24; --muted: #5E655F; --surface: #FFFCF6;
+  --primarySoft: #DDE8E1; --accentSoft: #F8E3D5; --sage: #86C1A2;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #000; font-family: Inter, sans-serif; color: var(--ink); }
+.story { width: 1080px; height: 1920px; position: relative; overflow: hidden; }
+.serif { font-family: Fraunces, serif; }
+.cream { background: var(--cream); }
+.forest { background: radial-gradient(120% 80% at 50% 0%, #2A6249 0%, var(--forest) 45%, var(--forestDeep) 100%); color: var(--cream); }
+.grain::after { content: ''; position: absolute; inset: 0; pointer-events: none; opacity: .05;
+  background-image: radial-gradient(#000 1px, transparent 1px); background-size: 6px 6px; }
+/* Instagram keeps the top ~220px and bottom ~300px for its own UI: content stays between. */
+.top { position: absolute; top: 230px; left: 80px; right: 80px; }
+.brand { display: flex; align-items: center; gap: 18px; font-weight: 600; font-size: 34px; letter-spacing: .2px; }
+.brand img { width: 64px; height: 64px; border-radius: 16px; }
+.kicker { display: inline-block; font-size: 30px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: var(--paprika); margin-top: 46px; }
+.forest .kicker { color: #F2A578; }
+h1 { font-family: Fraunces, serif; font-weight: 700; font-size: 100px; line-height: 1.02; letter-spacing: -1.5px; margin-top: 18px; }
+h1 em { font-style: italic; font-weight: 600; color: var(--paprika); }
+.forest h1 em { color: #F2A578; }
+.lead { font-size: 38px; line-height: 1.35; margin-top: 26px; color: var(--muted); }
+.forest .lead { color: #D6E4DA; }
+
+/* phone */
+.phone { position: absolute; width: 560px; height: 1150px; border-radius: 84px; background: #0E1411; padding: 16px;
+  box-shadow: 0 60px 120px rgba(0,0,0,.35), 0 0 0 3px rgba(255,255,255,.08) inset; }
+.screen { width: 100%; height: 100%; border-radius: 70px; overflow: hidden; background: var(--cream); position: relative; color: var(--ink); }
+.island { position: absolute; top: 18px; left: 50%; transform: translateX(-50%); width: 170px; height: 50px; background: #000; border-radius: 30px; z-index: 5; }
+.status { display: flex; justify-content: space-between; padding: 26px 46px 0; font-weight: 600; font-size: 22px; }
+.pad { padding: 30px 32px; }
+.chip { display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 30px; font-size: 20px; font-weight: 600; }
+.card { background: var(--surface); border: 2px solid var(--sand); border-radius: 30px; }
+.photo { background-size: cover; background-position: center; }
+.tabbar { position: absolute; bottom: 0; left: 0; right: 0; height: 110px; background: rgba(255,252,246,.95); border-top: 2px solid var(--sand);
+  display: flex; justify-content: space-around; align-items: center; font-size: 15px; color: var(--muted); padding-bottom: 14px; }
+.tabbar .plus { width: 76px; height: 76px; border-radius: 40px; background: var(--paprika); color: #fff; font-size: 44px; display: grid; place-items: center; margin-top: -40px; box-shadow: 0 10px 20px rgba(210,100,42,.4); }
+
+/* feature bullets */
+.bullets { position: absolute; left: 80px; right: 80px; display: grid; gap: 22px; }
+.bullet { display: flex; align-items: center; gap: 22px; font-size: 34px; font-weight: 600; line-height: 1.25; }
+.bullet .ico { flex: none; width: 74px; height: 74px; border-radius: 22px; display: grid; place-items: center; font-size: 38px; background: var(--accentSoft); }
+.forest .bullet .ico { background: rgba(255,255,255,.1); }
+.swipe { position: absolute; bottom: 330px; left: 0; right: 0; text-align: center; font-size: 28px; font-weight: 600; letter-spacing: 1px; opacity: .7; }
+</style>
+</head>
+<style>
+.day { display: inline-flex; align-items: center; gap: 12px; font-size: 28px; font-weight: 800; letter-spacing: 3px; text-transform: uppercase; padding: 12px 24px; border-radius: 40px; background: var(--accentSoft); color: var(--paprikaText); }
+.forest .day { background: rgba(255,255,255,.12); color: #F2A578; }
+.paprika { background: radial-gradient(90% 60% at 50% 30%, #E8894F 0%, #D2642A 40%, #8E3A14 100%); color: var(--cream); }
+.paprika h1 em { color: #FFE3CF; }
+.paprika .lead { color: #FFE3CF; }
+.shadow { box-shadow: 0 30px 60px rgba(31,42,36,.14); }
+.row { display: flex; align-items: center; gap: 18px; }
+.ing { font-size: 30px; padding: 14px 0; border-bottom: 2px solid var(--sand); display: flex; justify-content: space-between; }
+.ing b { color: var(--paprikaText); }
+</style>
+<body>
+
+<!-- W1 · Lundi -->
+<section class="story cream grain" id="w1">
+  <div class="top">
+    <span class="day">Lundi</span>
+    <h1>« On mange quoi ce soir ? »<br><em>Débat terminé.</em></h1>
+    <p class="lead">Chaque jour, l’app te propose une idée tirée de <b style="color: var(--ink)">tes</b> recettes. Plus besoin de réfléchir.</p>
+  </div>
+  <div class="card shadow" style="position: absolute; left: 80px; right: 80px; top: 900px; overflow: hidden; border-radius: 44px;">
+    <div class="photo" style="height: 400px; background-image: url('../../../../apps/mobile/assets/photos/meat.jpg');"></div>
+    <div style="padding: 34px 38px;">
+      <span class="chip" style="background: var(--accentSoft); color: var(--paprikaText); font-size: 22px;">🌙 CE SOIR</span>
+      <div class="serif" style="font-size: 54px; font-weight: 700; margin-top: 14px;">Steak-frites maison</div>
+      <div style="font-size: 28px; color: var(--muted); margin-top: 8px;">30 min · 2 pers. · pas fait depuis 3 semaines</div>
+    </div>
+  </div>
+  <div style="position: absolute; left: 80px; right: 80px; top: 1555px; display: flex; gap: 18px; align-items: center;">
+    <div style="flex: none; width: 90px; height: 90px; border-radius: 50%; background: conic-gradient(#D2642A, #86C1A2, #1F4D3A, #D2642A); display: grid; place-items: center;"><div style="width: 74px; height: 74px; border-radius: 50%; background: var(--cream); display: grid; place-items: center; font-size: 40px;">🎙️</div></div>
+    <div style="background: var(--ink); color: var(--cream); font-size: 30px; padding: 22px 30px; border-radius: 34px 34px 34px 10px;">« Dis Siri, qu’est-ce qu’on mange ce soir dans PepperedApron ? »</div>
+  </div>
+</section>
+
+<!-- W2 · Mardi -->
+<section class="story forest grain" id="w2">
+  <div class="top">
+    <span class="day">Mardi</span>
+    <h1>Ton frigo<br><em>a des idées.</em></h1>
+    <p class="lead">Dis ce que tu as, l’app trouve les recettes qui en utilisent le plus. Anti-gaspi sans effort.</p>
+  </div>
+  <div style="position: absolute; left: 80px; right: 80px; top: 870px;">
+    <div style="font-size: 26px; font-weight: 800; letter-spacing: 3px; color: #F2A578;">DANS MON FRIGO</div>
+    <div style="display: flex; flex-wrap: wrap; gap: 14px; margin-top: 18px;">
+      <span class="chip" style="background: var(--cream); color: var(--ink); font-size: 32px; padding: 16px 26px;">🥒 Courgette</span>
+      <span class="chip" style="background: var(--cream); color: var(--ink); font-size: 32px; padding: 16px 26px;">🥚 Œufs</span>
+      <span class="chip" style="background: var(--cream); color: var(--ink); font-size: 32px; padding: 16px 26px;">🧀 Feta</span>
+      <span class="chip" style="background: var(--cream); color: var(--ink); font-size: 32px; padding: 16px 26px;">🍅 Tomates ⏰</span>
+    </div>
+    <div style="text-align: center; font-size: 64px; color: #F2A578; margin: 24px 0 10px;">↓</div>
+    <div class="card" style="padding: 26px; border-radius: 40px; display: flex; gap: 24px; align-items: center; color: var(--ink); box-shadow: 0 30px 60px rgba(0,0,0,.3);">
+      <div class="photo" style="flex: none; width: 190px; height: 190px; border-radius: 28px; background-image: url('../../../../apps/mobile/assets/photos/vegetarian.jpg');"></div>
+      <div>
+        <div class="serif" style="font-size: 42px; font-weight: 700; line-height: 1.1;">Clafoutis courgette &amp; feta</div>
+        <div style="font-size: 27px; color: var(--forest); font-weight: 700; margin-top: 12px;">✓ Tu as 4 ingrédients sur 5</div>
+        <div style="font-size: 25px; color: var(--muted); margin-top: 6px;">+ Ajouter le reste aux courses</div>
+      </div>
+    </div>
+  </div>
+  <div style="position: absolute; left: 0; right: 0; top: 1540px; text-align: center;" class="serif"><span style="font-size: 44px; font-weight: 700;">« Qu’est-ce que je fais avec ça ? »</span><br><span style="font-size: 30px; font-family: Inter; color: #D6E4DA;">Accueil → Mon frigo</span></div>
+</section>
+
+<!-- W3 · Mercredi -->
+<section class="story cream grain" id="w3">
+  <div class="top">
+    <span class="day">Mercredi</span>
+    <h1>La recette de mamie,<br><em>sauvée pour toujours.</em></h1>
+    <p class="lead">Une photo de sa fiche écrite à la main ou d’un livre : l’iPhone lit l’écriture et range tout. Rien n’est envoyé.</p>
+  </div>
+  <div style="position: absolute; left: 110px; top: 990px; width: 480px; height: 560px; background: #FFFBEF; border-radius: 10px; transform: rotate(-6deg); box-shadow: 0 24px 50px rgba(31,42,36,.22); padding: 40px 36px; background-image: repeating-linear-gradient(transparent 0 52px, #D9E3EE 52px 54px);">
+    <div class="serif" style="font-style: italic; font-weight: 400; font-size: 44px; color: #2B3A67; line-height: 54px;">Gâteau au yaourt<br>— 1 pot de yaourt<br>— 3 pots de farine<br>— 2 pots de sucre<br>— 3 œufs<br>Four 180°, 35 min ♡</div>
+  </div>
+  <div style="position: absolute; left: 520px; top: 1210px; font-size: 80px; transform: rotate(10deg);">📸</div>
+  <div class="card shadow" style="position: absolute; right: 80px; top: 1300px; width: 470px; padding: 28px; border-radius: 36px; transform: rotate(3deg); background: #fff;">
+    <span class="chip" style="background: var(--primarySoft); color: var(--forest); font-size: 20px;">✓ Lue et rangée</span>
+    <div class="serif" style="font-size: 40px; font-weight: 700; margin-top: 12px;">Gâteau au yaourt</div>
+    <div style="font-size: 24px; color: var(--muted); margin-top: 6px;">5 ingrédients · four 180 °C · 35 min</div>
+    <div style="font-size: 24px; margin-top: 12px; line-height: 1.6;">1 pot de yaourt<br>3 pots de farine<br>…</div>
+  </div>
+</section>
+
+<!-- W4 · Jeudi -->
+<section class="story paprika grain" id="w4">
+  <div class="top">
+    <span class="day" style="background: var(--cream);">Jeudi</span>
+    <h1>À table à 20 h.<br><em>Pile.</em></h1>
+    <p class="lead">Dis à quelle heure tu veux manger : l’app te dit quand commencer, et te prévient au bon moment. Même avec plusieurs plats.</p>
+  </div>
+  <div style="position: absolute; left: 80px; right: 80px; top: 920px; background: rgba(255,255,255,.88); color: var(--ink); border-radius: 44px; padding: 26px 30px; display: flex; gap: 22px; align-items: center; box-shadow: 0 24px 50px rgba(0,0,0,.25); backdrop-filter: blur(10px);">
+    <img src="../../../../apps/mobile/assets/icon.png" style="width: 92px; height: 92px; border-radius: 22px;">
+    <div style="flex: 1;"><div style="display: flex; justify-content: space-between; font-size: 24px; color: var(--muted); font-weight: 600;"><span>PEPPEREDAPRON</span><span>19:15</span></div>
+    <div style="font-size: 32px; font-weight: 700; margin-top: 6px;">⏰ C’est l’heure de lancer : Gratin dauphinois</div></div>
+  </div>
+  <div class="card" style="position: absolute; left: 80px; right: 80px; top: 1170px; padding: 36px; border-radius: 44px; color: var(--ink); box-shadow: 0 30px 60px rgba(0,0,0,.25);">
+    <div class="serif" style="font-size: 44px; font-weight: 700;">Prêt à quelle heure ?</div>
+    <div style="display: grid; gap: 16px; margin-top: 24px; font-size: 30px;">
+      <div class="row"><span style="width: 120px; font-weight: 800; color: var(--paprikaText);">19:15</span>Gratin dauphinois au four</div>
+      <div class="row"><span style="width: 120px; font-weight: 800; color: var(--paprikaText);">19:35</span>Rôti de porc</div>
+      <div class="row"><span style="width: 120px; font-weight: 800; color: var(--paprikaText);">19:50</span>Haricots verts</div>
+      <div class="row" style="padding-top: 14px; border-top: 2px solid var(--sand);"><span style="width: 120px; font-weight: 800; color: var(--forest);">20:00</span><b>🍽️ Tout est prêt ensemble</b></div>
+    </div>
+  </div>
+</section>
+
+<!-- W5 · Vendredi (poll) -->
+<section class="story forest grain" id="w5">
+  <div class="top" style="text-align: center;">
+    <span class="day">Vendredi · sondage</span>
+    <h1 style="font-size: 116px; margin-top: 30px;">Ce week-end,<br><em>t’es plutôt…</em></h1>
+  </div>
+  <div style="position: absolute; left: 80px; right: 80px; top: 760px; display: flex; gap: 30px;">
+    <div style="flex: 1; transform: rotate(-4deg);"><div class="photo" style="height: 470px; border-radius: 40px; border: 8px solid var(--cream); background-image: url('../../../../apps/mobile/assets/photos/main.jpg'); box-shadow: 0 24px 50px rgba(0,0,0,.35);"></div><div class="serif" style="text-align: center; font-size: 46px; font-weight: 700; margin-top: 18px;">Salé 🥩</div></div>
+    <div style="flex: 1; transform: rotate(4deg);"><div class="photo" style="height: 470px; border-radius: 40px; border: 8px solid var(--cream); background-image: url('../../../../apps/mobile/assets/photos/snack.jpg'); box-shadow: 0 24px 50px rgba(0,0,0,.35);"></div><div class="serif" style="text-align: center; font-size: 46px; font-weight: 700; margin-top: 18px;">Sucré 🍓</div></div>
+  </div>
+  <div style="position: absolute; left: 0; right: 0; top: 1400px; text-align: center; font-size: 34px; font-weight: 700; color: #F2A578;">Vote ici 👇</div>
+  <div id="pollzone" style="position: absolute; left: 160px; right: 160px; top: 1470px; height: 200px; border: 4px dashed rgba(242,165,120,.75); border-radius: 40px;"></div>
+</section>
+
+<!-- W6 · Samedi -->
+<section class="story cream grain" id="w6">
+  <div class="top">
+    <span class="day">Samedi</span>
+    <h1>Prévu pour 4.<br><em>Vous êtes 9 ?</em></h1>
+    <p class="lead">Change le nombre de personnes : les quantités <b style="color: var(--ink)">et les étapes</b> suivent. Même la taille du moule.</p>
+  </div>
+  <div class="card shadow" style="position: absolute; left: 80px; right: 80px; top: 900px; padding: 38px; border-radius: 44px;">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <div class="serif" style="font-size: 46px; font-weight: 700;">Lasagnes maison</div>
+      <div style="display: flex; align-items: center; gap: 16px; background: var(--primarySoft); border-radius: 40px; padding: 10px 14px;">
+        <span style="width: 56px; height: 56px; border-radius: 50%; background: #fff; display: grid; place-items: center; font-size: 34px; font-weight: 700;">−</span>
+        <span style="font-size: 34px; font-weight: 800; color: var(--forest);">9 pers.</span>
+        <span style="width: 56px; height: 56px; border-radius: 50%; background: var(--forest); color: #fff; display: grid; place-items: center; font-size: 34px; font-weight: 700;">+</span>
+      </div>
+    </div>
+    <div style="margin-top: 24px;">
+      <div class="ing"><span>Feuilles de lasagne</span><span><s style="color: var(--muted);">250 g</s> → <b>560 g</b></span></div>
+      <div class="ing"><span>Bœuf haché</span><span><s style="color: var(--muted);">400 g</s> → <b>900 g</b></span></div>
+      <div class="ing"><span>Sauce tomate</span><span><s style="color: var(--muted);">50 cl</s> → <b>1,1 L</b></span></div>
+      <div class="ing" style="border: 0;"><span>Parmesan</span><span><s style="color: var(--muted);">80 g</s> → <b>180 g</b></span></div>
+    </div>
+  </div>
+  <div class="bullets" style="top: 1480px; gap: 18px;">
+    <div class="bullet" style="font-size: 30px;"><div class="ico" style="width: 64px; height: 64px; font-size: 32px;">⚖️</div>Convertisseur : tasses, cuillères, grammes</div>
+  </div>
+</section>
+
+<!-- W7 · Dimanche -->
+<section class="story forest grain" id="w7">
+  <div class="top">
+    <span class="day">Dimanche</span>
+    <h1>Dimanche, 30 min.<br><em>Toute la semaine prête.</em></h1>
+    <p class="lead">Planifie tes repas, lance le batch cooking : l’app organise les plats ensemble, et la liste de courses part dans Rappels.</p>
+  </div>
+  <div style="position: absolute; left: 80px; right: 80px; top: 920px; display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px;">
+    <div style="text-align: center;"><div class="photo" style="height: 190px; border-radius: 26px; background-image: url('../../../../apps/mobile/assets/photos/pasta.jpg');"></div><div style="font-size: 24px; font-weight: 700; margin-top: 10px; color: #F2A578;">LUN</div></div>
+    <div style="text-align: center;"><div class="photo" style="height: 190px; border-radius: 26px; background-image: url('../../../../apps/mobile/assets/photos/soup.jpg');"></div><div style="font-size: 24px; font-weight: 700; margin-top: 10px; color: #F2A578;">MAR</div></div>
+    <div style="text-align: center;"><div class="photo" style="height: 190px; border-radius: 26px; background-image: url('../../../../apps/mobile/assets/photos/salad.jpg');"></div><div style="font-size: 24px; font-weight: 700; margin-top: 10px; color: #F2A578;">MER</div></div>
+    <div style="text-align: center;"><div class="photo" style="height: 190px; border-radius: 26px; background-image: url('../../../../apps/mobile/assets/photos/fish.jpg');"></div><div style="font-size: 24px; font-weight: 700; margin-top: 10px; color: #F2A578;">JEU</div></div>
+    <div style="text-align: center;"><div class="photo" style="height: 190px; border-radius: 26px; background-image: url('../../../../apps/mobile/assets/photos/meat.jpg');"></div><div style="font-size: 24px; font-weight: 700; margin-top: 10px; color: #F2A578;">VEN</div></div>
+  </div>
+  <div class="card" style="position: absolute; left: 80px; right: 80px; top: 1230px; padding: 34px; border-radius: 44px; color: var(--ink); box-shadow: 0 30px 60px rgba(0,0,0,.3);">
+    <div style="display: flex; justify-content: space-between; align-items: center;"><div class="serif" style="font-size: 42px; font-weight: 700;">🍳 Batch cooking</div><span class="chip" style="background: var(--accentSoft); color: var(--paprikaText); font-size: 24px;">5 plats</span></div>
+    <div style="font-size: 29px; margin-top: 20px; line-height: 1.7;">
+      <div>☑ <s style="color: var(--muted);">Lancer la soupe (35 min sans toi)</s></div>
+      <div>☐ Pendant ce temps : cuire les pâtes</div>
+      <div>☐ Couper les légumes de la salade</div>
+    </div>
+  </div>
+</section>
+
+<!-- W8 · Rappel lien -->
+<section class="story paprika grain" id="w8">
+  <div class="top" style="text-align: center;">
+    <img src="../../../../apps/mobile/assets/icon.png" style="width: 200px; height: 200px; border-radius: 46px; box-shadow: 0 24px 50px rgba(0,0,0,.3);">
+    <h1 style="margin-top: 36px; font-size: 104px;">Tu ne l’as<br><em>toujours pas ?</em></h1>
+    <p class="lead" style="font-size: 38px;">Cette semaine, tu as vu tout ce qu’elle sait faire :</p>
+  </div>
+  <div style="position: absolute; left: 80px; right: 80px; top: 1040px; display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+    <span class="chip" style="background: rgba(255,255,255,.92); color: var(--ink); font-size: 30px; padding: 20px 24px;">🌙 L’idée du soir</span>
+    <span class="chip" style="background: rgba(255,255,255,.92); color: var(--ink); font-size: 30px; padding: 20px 24px;">🥒 Ton frigo</span>
+    <span class="chip" style="background: rgba(255,255,255,.92); color: var(--ink); font-size: 30px; padding: 20px 24px;">📸 Les fiches de mamie</span>
+    <span class="chip" style="background: rgba(255,255,255,.92); color: var(--ink); font-size: 30px; padding: 20px 24px;">⏰ Prêt à l’heure</span>
+    <span class="chip" style="background: rgba(255,255,255,.92); color: var(--ink); font-size: 30px; padding: 20px 24px;">⚖️ Les portions</span>
+    <span class="chip" style="background: rgba(255,255,255,.92); color: var(--ink); font-size: 30px; padding: 20px 24px;">🍳 Le batch cooking</span>
+  </div>
+  <div style="position: absolute; left: 0; right: 0; top: 1360px; text-align: center;"><div class="serif" style="font-size: 50px; font-weight: 700;">Gratuite, c’est ici 👇</div></div>
+  <div id="linkzone8" style="position: absolute; left: 190px; right: 190px; top: 1450px; height: 170px; border: 4px dashed rgba(255,227,207,.8); border-radius: 40px;"></div>
+</section>
+
+</body>
+</html>
