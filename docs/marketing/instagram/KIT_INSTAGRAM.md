@@ -1,5 +1,16 @@
 # Kit Instagram : PepperedApron
 
+## 📍 Où j'en suis (mis à jour le 3 novembre 2026)
+
+| Post | Statut |
+|---|---|
+| 1 à 5 | ✅ Programmés (le post 5 sort le **11 novembre**) |
+| 6 à 10 | ⬜ À programmer, à partir du 12 novembre |
+
+Prochaine étape : programmer le post 6 (carrousel planning, 4 images) pour le 12 ou le 13 novembre.
+
+---
+
 ## Le profil
 
 **Nom d'utilisateur** (dans l'ordre de préférence, selon ce qui est libre) :
