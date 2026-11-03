@@ -939,10 +939,30 @@ const fr = {
     sent_other: '{{count}} articles ajoutés à « {{list}} »',
     denied: 'Autorisez l’accès aux Rappels pour PepperedApron dans Réglages.',
   },
+  allRecipes: {
+    title: 'Toutes vos recettes',
+    tile: 'Toutes vos recettes',
+    seeAll: 'Tout voir',
+    filter: 'Filtrer vos recettes',
+    sort: {
+      recent: 'Récentes',
+      az: 'De A à Z',
+      quick: 'Les plus rapides',
+      rated: 'Les mieux notées',
+    },
+    empty: 'Votre carnet est encore vide.',
+    noMatch: 'Aucune recette ne correspond.',
+    add: 'Ajouter une recette',
+  },
   whatsNew: {
     title: 'Quoi de neuf',
     version: 'Version {{version}}',
     items: [
+      {
+        icon: 'grid-outline',
+        title: 'Toutes vos recettes',
+        body: 'Une page avec toutes vos recettes, triées par date, de A à Z, par durée ou par note, et un filtre rapide.',
+      },
       {
         icon: 'pricetags-outline',
         title: 'Plusieurs catégories',

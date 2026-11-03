@@ -930,10 +930,25 @@ const en: Translations = {
     sent_other: '{{count}} items added to “{{list}}”',
     denied: 'Allow access to Reminders for PepperedApron in Settings.',
   },
+  allRecipes: {
+    title: 'All your recipes',
+    tile: 'All your recipes',
+    seeAll: 'See all',
+    filter: 'Filter your recipes',
+    sort: { recent: 'Recent', az: 'A to Z', quick: 'Quickest', rated: 'Top rated' },
+    empty: 'Your recipe book is still empty.',
+    noMatch: 'No recipe matches.',
+    add: 'Add a recipe',
+  },
   whatsNew: {
     title: 'What’s new',
     version: 'Version {{version}}',
     items: [
+      {
+        icon: 'grid-outline',
+        title: 'All your recipes',
+        body: 'One page with every recipe, sorted by date, A to Z, time or rating, with a quick filter.',
+      },
       {
         icon: 'pricetags-outline',
         title: 'Several categories',

@@ -625,8 +625,10 @@ const styles = StyleSheet.create({
   },
   done: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'center',
     justifyContent: 'space-between',
+    gap: space.sm,
     padding: space.md,
     borderRadius: radius.lg,
   },

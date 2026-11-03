@@ -11,9 +11,12 @@ import { Text } from '../../ui';
 export function CategoryGrid({
   counts,
   limit,
+  total,
 }: {
   counts: Partial<Record<RecipeCategory, number>>;
   limit?: number;
+  /** Number of recipes in the library: shows the "All your recipes" tile first, full width. */
+  total?: number;
 }) {
   const { t } = useTranslation();
   const layout = useLayout();
@@ -29,6 +32,43 @@ export function CategoryGrid({
   const cats = HOME_CATEGORIES.slice(0, limit ?? HOME_CATEGORIES.length);
   return (
     <View style={styles.grid}>
+      {total !== undefined ? (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`${t('allRecipes.tile')}, ${t('common.recipes', { count: total })}`}
+          onPress={() => router.push('/recipes')}
+          testID="all-recipes-tile"
+          style={({ pressed }) => [
+            {
+              width: '100%',
+              height: Math.round(h * 0.8),
+              borderRadius: radius.xl,
+              overflow: 'hidden',
+              transform: [{ scale: pressed ? 0.98 : 1 }],
+            },
+          ]}
+        >
+          <Image
+            source={CATEGORY_PHOTOS.main}
+            style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
+            resizeMode="cover"
+            accessibilityIgnoresInvertColors
+          />
+          <View style={styles.scrim} />
+          <View style={styles.label}>
+            <Text
+              variant="title3"
+              style={{ color: '#FFFCF6', textShadowColor: 'rgba(0,0,0,0.35)', textShadowRadius: 6 }}
+              numberOfLines={2}
+            >
+              {t('allRecipes.tile')}
+            </Text>
+            <Text variant="caption" style={{ color: 'rgba(255,252,246,0.9)' }}>
+              {t('common.recipes', { count: total })}
+            </Text>
+          </View>
+        </Pressable>
+      ) : null}
       {cats.map((c) => (
         <Pressable
           key={c}

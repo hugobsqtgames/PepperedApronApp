@@ -475,6 +475,9 @@ export function Segmented<T extends string>({
                 color: selected ? colors.text : colors.textMuted,
               }}
               numberOfLines={1}
+              // A long word on a narrow iPhone ("Petit-déjeuner") shrinks a little, never cut.
+              adjustsFontSizeToFit
+              minimumFontScale={0.7}
             >
               {o.label}
             </Text>

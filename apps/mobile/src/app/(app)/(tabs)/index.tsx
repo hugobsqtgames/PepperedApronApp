@@ -198,6 +198,7 @@ export default function Home() {
           .entries(today, today)
           .map((e) => ({ entry: e, recipe: e.data.recipeId ? r.recipe(e.data.recipeId) : null })),
         counts,
+        total: library.length,
         ...tonightAndMore(r, library, favs, today, season, toUseSoon().soonRecipes),
       };
     },
@@ -527,14 +528,18 @@ export default function Home() {
                 />
               </Section>
             ) : null}
-            <Section title={t('home.recent')}>
+            <Section
+              title={t('home.recent')}
+              action={t('allRecipes.seeAll')}
+              onAction={() => router.push('/recipes')}
+            >
               <RecipeCarousel recipes={data.recent} repos={repos} favorites={data.favoriteIds} />
             </Section>
           </>
         )}
 
         <Section title={t('home.categories')}>
-          <CategoryGrid counts={data.counts} />
+          <CategoryGrid counts={data.counts} total={data.total} />
         </Section>
       </View>
     </Screen>

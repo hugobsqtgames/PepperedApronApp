@@ -311,7 +311,14 @@ export default function RecipeEditor() {
   const header = (
     <View style={[styles.header, { borderBottomColor: colors.line }]}>
       <Button title={t('common.cancel')} variant="ghost" onPress={() => router.back()} />
-      <Text variant="title3" style={{ flex: 1 }} align="center" numberOfLines={1}>
+      <Text
+        variant="title3"
+        style={{ flex: 1 }}
+        align="center"
+        numberOfLines={1}
+        adjustsFontSizeToFit
+        minimumFontScale={0.75}
+      >
         {existing ? t('editor.editTitle') : t('editor.newTitle')}
       </Text>
       <Button title={t('common.save')} size="sm" onPress={save} testID="editor-save" />

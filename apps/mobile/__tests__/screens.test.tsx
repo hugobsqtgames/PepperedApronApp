@@ -198,6 +198,7 @@ const SCREENS: [string, () => { default: () => ReactElement }, () => Record<stri
   ['home', () => require('../src/app/(app)/(tabs)/index'), () => ({})],
   ['search', () => require('../src/app/(app)/(tabs)/search'), () => ({})],
   ['favorites', () => require('../src/app/(app)/(tabs)/favorites'), () => ({})],
+  ['all recipes', () => require('../src/app/(app)/recipes'), () => ({})],
   ['planning', () => require('../src/app/(app)/(tabs)/planning'), () => ({})],
   ['shopping', () => require('../src/app/(app)/(tabs)/shopping'), () => ({})],
   ['add', () => require('../src/app/(app)/add'), () => ({})],
@@ -735,6 +736,39 @@ describe('journeys: what the user does is really saved', () => {
     expect(screen.getByText('#famille')).toBeTruthy();
     await cleanup();
     await repos.deleteRecipe(r.id);
+  });
+
+  it('all your recipes: one page with every recipe, sorted and filtered (feedback)', async () => {
+    // From home: the big tile and "See all" next to the recent recipes.
+    mockNav.push.mockClear();
+    const Home = screenOf('../src/app/(app)/(tabs)/index');
+    await render(wrap(<Home />));
+    await tap(screen.getByTestId('all-recipes-tile'));
+    expect(mockNav.push).toHaveBeenCalledWith('/recipes');
+    await cleanup();
+    const Page = screenOf('../src/app/(app)/recipes');
+    await render(wrap(<Page />));
+    const total = repos.recipes().length;
+    expect(screen.getByText(i18n.t('common.recipes', { count: total }))).toBeTruthy();
+    const titles = () =>
+      repos
+        .recipes()
+        .map((r) => r.data.title)
+        .filter((title) => screen.queryAllByText(title).length > 0);
+    // A to Z.
+    await tap(screen.getByTestId('all-recipes-sort-az'));
+    const shown = titles();
+    expect(shown.length).toBeGreaterThan(0);
+    // Filter.
+    const one = repos.recipes()[0]!.data.title;
+    await act(async () => {
+      fireEvent.changeText(screen.getByTestId('all-recipes-filter'), one);
+    });
+    expect(screen.getAllByText(one).length).toBeGreaterThan(0);
+    await act(async () => {
+      fireEvent.changeText(screen.getByTestId('all-recipes-filter'), 'zzzz introuvable');
+    });
+    expect(screen.getByText(i18n.t('allRecipes.noMatch'))).toBeTruthy();
   });
 
   it('an empty title is refused and nothing is saved', async () => {
