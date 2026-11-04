@@ -947,6 +947,35 @@ const en: Translations = {
     noMatch: 'No recipe matches.',
     add: 'Add a recipe',
   },
+  dishShare: {
+    open: 'Share my dish',
+    title: 'Share my dish',
+    homemade: 'HOMEMADE 😋',
+    storyLine: 'Cooked step by step with PepperedApron, the app that keeps all my recipes.',
+    footer: 'Free on the App Store',
+    message:
+      'I just cooked “{{title}}” 😋 with PepperedApron, the app that keeps all my recipes (TikTok, Insta, books…) and makes the shopping list by itself. Free on iPhone: {{url}}',
+    instagramCaption:
+      '{{title}}, homemade 😋\n\nSaved and cooked step by step with PepperedApron 🌶️ The free app that keeps all your TikTok & Insta recipes.\n\n#homemade #recipe #cooking #pepperedapron',
+    facebookCaption:
+      '{{title}}, homemade 😋\n\nSaved and cooked step by step with PepperedApron 🌶️ the free iPhone app that keeps all my recipes: {{url}}',
+    xText: '{{title}}, homemade 😋 Cooked step by step with PepperedApron 🌶️ #homemade {{url}}',
+    storyHint: 'App link copied: in Instagram, pick “Story”, then add the Link sticker.',
+    postHint: 'Caption copied: paste it under your photo in Instagram.',
+    facebookHint: 'Text copied: paste it with your photo in Facebook.',
+    messengerHint: 'Pick Messenger in the list.',
+    note: 'The images are made on your iPhone, with a QR code to the App Store.',
+    to: {
+      story: 'Instagram Story',
+      post: 'Instagram post',
+      facebook: 'Facebook',
+      sms: 'Text message',
+      whatsapp: 'WhatsApp',
+      messenger: 'Messenger',
+      x: 'X (Twitter)',
+      more: 'More',
+    },
+  },
   whatsNew: {
     title: 'What’s new',
     version: 'Version {{version}}',
@@ -955,6 +984,11 @@ const en: Translations = {
         icon: 'nutrition-outline',
         title: 'Calories',
         body: 'Each recipe shows an estimate of the calories per serving, worked out on your iPhone from the ingredients. Tap it for details.',
+      },
+      {
+        icon: 'share-social-outline',
+        title: 'Share your dish',
+        body: 'At the end of a recipe, share a photo of your dish: a ready-made Instagram story, a post, a text message with the photo, WhatsApp, Facebook, Messenger, X…',
       },
       {
         icon: 'grid-outline',

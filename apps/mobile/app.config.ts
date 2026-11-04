@@ -162,6 +162,8 @@ const buildConfig = ({ config }: ConfigContext): ExpoConfig => ({
       ITSAppUsesNonExemptEncryption: false,
       CFBundleAllowMixedLocalizations: true,
       NSSupportsLiveActivities: true,
+      // "Share my dish": WhatsApp opens with the message ready (otherwise, the share sheet).
+      LSApplicationQueriesSchemes: ['whatsapp'],
       // Handoff: the recipe or the cook mode continues on the user's other device.
       // Per variant, so a development build never picks up the App Store app's activities.
       NSUserActivityTypes: [`${bundleId}.recipe`, `${bundleId}.cook`],

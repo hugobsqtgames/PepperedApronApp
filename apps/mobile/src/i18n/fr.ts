@@ -961,6 +961,36 @@ const fr = {
     noMatch: 'Aucune recette ne correspond.',
     add: 'Ajouter une recette',
   },
+  dishShare: {
+    open: 'Partager mon plat',
+    title: 'Partager mon plat',
+    homemade: 'FAIT MAISON 😋',
+    storyLine: 'Cuisiné pas à pas avec PepperedApron, l’app qui range toutes mes recettes.',
+    footer: 'Gratuit sur l’App Store',
+    message:
+      'Je viens de cuisiner « {{title}} » 😋 avec PepperedApron, l’app qui range toutes mes recettes (TikTok, Insta, livres…) et fait les courses toute seule. Gratuite sur iPhone : {{url}}',
+    instagramCaption:
+      '{{title}}, fait maison 😋\n\nRecette rangée et cuisinée pas à pas avec PepperedApron 🌶️ L’app gratuite qui range toutes tes recettes TikTok & Insta.\n\n#faitmaison #recette #cuisine #pepperedapron',
+    facebookCaption:
+      '{{title}}, fait maison 😋\n\nRecette rangée et cuisinée pas à pas avec PepperedApron 🌶️ l’app gratuite sur iPhone qui range toutes mes recettes : {{url}}',
+    xText: '{{title}}, fait maison 😋 Cuisiné pas à pas avec PepperedApron 🌶️ #faitmaison {{url}}',
+    storyHint:
+      'Lien de l’app copié : dans Instagram, choisis « Story » puis ajoute le sticker Lien.',
+    postHint: 'Légende copiée : dans Instagram, colle-la sous ta photo.',
+    facebookHint: 'Texte copié : dans Facebook, colle-le avec ta photo.',
+    messengerHint: 'Choisis Messenger dans la liste.',
+    note: 'Les images sont créées sur ton iPhone, avec un QR code vers l’App Store.',
+    to: {
+      story: 'Story Instagram',
+      post: 'Post Instagram',
+      facebook: 'Facebook',
+      sms: 'SMS',
+      whatsapp: 'WhatsApp',
+      messenger: 'Messenger',
+      x: 'X (Twitter)',
+      more: 'Autres',
+    },
+  },
   whatsNew: {
     title: 'Quoi de neuf',
     version: 'Version {{version}}',
@@ -969,6 +999,11 @@ const fr = {
         icon: 'nutrition-outline',
         title: 'Les calories',
         body: 'Chaque recette affiche une estimation des calories par portion, calculée sur votre iPhone à partir des ingrédients. Touchez-la pour voir le détail.',
+      },
+      {
+        icon: 'share-social-outline',
+        title: 'Partagez votre plat',
+        body: 'À la fin d’une recette, partagez la photo de votre plat : une story Instagram toute prête, un post, un SMS avec la photo, WhatsApp, Facebook, Messenger, X…',
       },
       {
         icon: 'grid-outline',

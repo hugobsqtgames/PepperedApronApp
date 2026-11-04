@@ -45,6 +45,19 @@ jest.mock('expo-router', () => {
   };
 });
 jest.mock('react-native-view-shot', () => ({ captureRef: jest.fn() }));
+// "Share my dish": what is copied, shared or texted is read by the tests.
+jest.mock('expo-clipboard', () => ({
+  ...jest.requireActual<object>('expo-clipboard'),
+  setStringAsync: jest.fn(async () => true),
+}));
+jest.mock('expo-sharing', () => ({
+  ...jest.requireActual<object>('expo-sharing'),
+  shareAsync: jest.fn(async () => {}),
+}));
+jest.mock('expo-sms', () => ({
+  isAvailableAsync: jest.fn(async () => true),
+  sendSMSAsync: jest.fn(async () => ({ result: 'sent' })),
+}));
 // The barcode camera: permission given, no barcode seen (the journeys call the lookup directly).
 jest.mock('expo-camera', () => ({
   CameraView: () => null,
@@ -889,6 +902,69 @@ describe('journeys: what the user does is really saved', () => {
     expect(screen.getByText(i18n.t('delight.cook.resultTitle'))).toBeTruthy();
     await tap(screen.getByTestId('cook-result-later'));
     expect(screen.getByText(i18n.t('cook.doneTitle'))).toBeTruthy();
+  });
+
+  it('end of cooking: share my dish, made for each app (feedback)', async () => {
+    const r = repos.recipes().find((x) => x.data.steps.length === 2)!;
+    mockParams.current = { id: r.id };
+    const shot = jest.requireMock<{ captureRef: jest.Mock }>('react-native-view-shot').captureRef;
+    shot.mockResolvedValue('file:///dish.png');
+    const RN = jest.requireActual<typeof import('react-native')>('react-native');
+    const open = jest.spyOn(RN.Linking, 'openURL').mockResolvedValue(undefined);
+    const can = jest.spyOn(RN.Linking, 'canOpenURL').mockResolvedValue(true);
+    const copy = jest.requireMock<{ setStringAsync: jest.Mock }>('expo-clipboard').setStringAsync;
+    const shareFile = jest.requireMock<{ shareAsync: jest.Mock }>('expo-sharing').shareAsync;
+    const sms = jest.requireMock<{ sendSMSAsync: jest.Mock }>('expo-sms').sendSMSAsync;
+    sms.mockClear();
+    const store = 'https://apps.apple.com/app/id6829014530';
+
+    const Cook = screenOf('../src/app/(app)/recipe/[id]/cook');
+    await render(wrap(<Cook />));
+    await tap(screen.getByTestId('cook-next'));
+    await tap(screen.getByTestId('cook-finish'));
+    await settle();
+    await tap(screen.getByTestId('cook-result-later'));
+    await tap(screen.getByTestId('cook-share-dish'));
+    expect(screen.getByTestId('dish-share')).toBeTruthy();
+
+    // Instagram story: a 1080 × 1920 image, the App Store link copied for the Link sticker.
+    await tap(screen.getByTestId('dish-share-story'));
+    expect(shot.mock.calls.at(-1)![1]).toMatchObject({ width: 1080, height: 1920 });
+    expect(copy).toHaveBeenLastCalledWith(store);
+    expect(shareFile).toHaveBeenLastCalledWith('file:///dish.png', expect.anything());
+    // Instagram post: a 1080 × 1350 image and its caption, copied to paste.
+    await tap(screen.getByTestId('dish-share-post'));
+    expect(shot.mock.calls.at(-1)![1]).toMatchObject({ width: 1080, height: 1350 });
+    expect(copy.mock.calls.at(-1)![0]).toContain(r.data.title);
+    // Facebook: the caption carries the link.
+    await tap(screen.getByTestId('dish-share-facebook'));
+    expect(copy.mock.calls.at(-1)![0]).toContain(store);
+    // SMS: the message with the link, and the photo attached.
+    await tap(screen.getByTestId('dish-share-sms'));
+    expect(sms.mock.calls[0]![1]).toContain(r.data.title);
+    expect(sms.mock.calls[0]![1]).toContain(store);
+    expect(sms.mock.calls[0]![2]).toMatchObject({ attachments: { uri: 'file:///dish.png' } });
+    // WhatsApp and X: their own app, the text ready.
+    await tap(screen.getByTestId('dish-share-whatsapp'));
+    expect(open.mock.calls.at(-1)![0]).toMatch(/^whatsapp:\/\/send\?text=.*apps\.apple\.com/);
+    await tap(screen.getByTestId('dish-share-x'));
+    expect(open.mock.calls.at(-1)![0]).toMatch(/^https:\/\/x\.com\/intent\/post\?text=/);
+    expect(decodeURIComponent(open.mock.calls.at(-1)![0])).toContain(r.data.title);
+    // Messenger and the others: the share sheet with the photo and the message.
+    (Share.share as jest.Mock).mockClear();
+    await tap(screen.getByTestId('dish-share-messenger'));
+    expect((Share.share as jest.Mock).mock.calls[0]![0]).toMatchObject({
+      url: 'file:///dish.png',
+      message: expect.stringContaining(store),
+    });
+    // WhatsApp not installed: the share sheet instead.
+    can.mockResolvedValue(false);
+    (Share.share as jest.Mock).mockClear();
+    await tap(screen.getByTestId('dish-share-whatsapp'));
+    expect(Share.share).toHaveBeenCalledTimes(1);
+    for (const m of [open, can]) m.mockRestore();
+    shot.mockReset();
+    await cleanup();
   });
 
   it('ticking a grocery item is saved', async () => {

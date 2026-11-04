@@ -42,7 +42,8 @@ import { maybeAskForReview } from '../../../../services/appMoments';
 import { timers } from '../../../../services/timers';
 import { TintScope, useTheme } from '../../../../theme/ThemeProvider';
 import { useDishColor } from '../../../../lib/photoTint';
-import { recipePhotoUri } from '../../../../lib/media';
+import { photoUri, recipePhotoUri } from '../../../../lib/media';
+import { DishShareModal } from '../../../../features/share/DishShare';
 import { useCookCelebration } from '../../../../features/celebrate';
 import { TimerRings } from '../../../../features/cook/TimerRings';
 import { CookPlanView } from '../../../../features/cook/CookPlanView';
@@ -114,6 +115,8 @@ function CookModeBody() {
   const { id, servings } = params;
   const celebrate = useCookCelebration();
   const [photoAsked, setPhotoAsked] = useState(false);
+  const [dishPhoto, setDishPhoto] = useState<string | null>(null);
+  const [sharing, setSharing] = useState(false);
   const { t, i18n } = useTranslation();
   const repos = useRepos();
   const sheet = useActionSheet();
@@ -398,6 +401,7 @@ function CookModeBody() {
         const log = await repos.logCooked(recipe.id);
         await repos.setCookPhoto(log.id, key);
       });
+      setDishPhoto(key);
       setPhotoAsked(true);
       toast(t('delight.cook.photoSaved'));
     } catch (e) {
@@ -505,6 +509,25 @@ function CookModeBody() {
             {t('history.loggedAuto')}
           </Text>
         </View>
+        <View style={{ paddingHorizontal: space.xxl, marginTop: space.xl }}>
+          <Button
+            title={t('dishShare.open')}
+            icon="share-social-outline"
+            size="lg"
+            full
+            onPress={() => setSharing(true)}
+            testID="cook-share-dish"
+          />
+        </View>
+        <DishShareModal
+          visible={sharing}
+          dish={{
+            title: recipe.data.title,
+            category: recipe.data.category,
+            photo: photoUri(dishPhoto) ?? recipePhotoUri(recipe),
+          }}
+          onClose={() => setSharing(false)}
+        />
       </View>
     );
   }
