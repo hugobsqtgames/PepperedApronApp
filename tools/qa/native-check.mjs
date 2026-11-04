@@ -98,9 +98,16 @@ try {
     'NSRemindersFullAccessUsageDescription',
   ])
     check(typeof info[k] === 'string' && info[k].length > 20, `usage text ${k}`);
-  // The barcode scanner and "latest screenshot" read only: the photo library is never written to,
-  // and the camera never records sound.
-  check(!('NSPhotoLibraryAddUsageDescription' in info), 'no "add to photos" permission');
+  // The photo library is written to for one thing only: the picture of a dish shared to
+  // Instagram, which opens it from the photos. The text says so.
+  check(
+    /instagram/i.test(info.NSPhotoLibraryAddUsageDescription ?? ''),
+    '"add to photos" permission explained (Instagram)',
+  );
+  check(
+    (info.LSApplicationQueriesSchemes ?? []).includes('instagram'),
+    'Instagram can be detected (share my dish)',
+  );
   check(/barcode/i.test(info.NSCameraUsageDescription ?? ''), 'camera text mentions barcodes');
   // Handwriting and French accents: Vision's accurate level with the languages set.
   const vision = fs.readFileSync(

@@ -912,6 +912,9 @@ const FACTS: [keyof NutritionFacts, RegExp][] = [
 
 /** The nutrition values given in a line, null when the line is not a nutrition table. */
 export function parseNutritionFacts(text: string): NutritionFacts | null {
+  // A table is one short line of numbers: anything else is skipped at once (imported drafts
+  // can hold very long texts).
+  if (text.length > 400 || !/\d/.test(text)) return null;
   const facts: NutritionFacts = {
     kcal: null,
     protein: null,
