@@ -6,6 +6,7 @@
 |---|---|
 | 1 à 5 | ✅ Programmés (le post 5 sort le **11 novembre**) |
 | 6 à 10 | ⬜ À programmer, à partir du 12 novembre |
+| Stories à la une | ⬜ 6 bulles à créer (couvertures prêtes) |
 
 Prochaine étape : programmer le post 6 (carrousel planning, 4 images) pour le 12 ou le 13 novembre.
 
@@ -33,12 +34,20 @@ Prochaine étape : programmer le post 6 (carrousel planning, 4 images) pour le 1
 
 **Photo de profil** : `PepperedApron-logo-a-la-une-vert-4K.png` (le logo vert, déjà envoyé).
 
-**Stories à la une** (couvertures : les 3 logos à la une) :
-- **Lancement** : l'annonce + les stories 1 à 5
-- **Tutos** : stories 2, 3, 4
-- **La semaine** : les 8 stories de la semaine 2
-- **Bugs & idées** : la story « Un bug ? Balance-le moi »
-- **Avis** : la story 5 étoiles
+**Stories à la une** : 6 bulles, couvertures dans `docs/marketing/highlights/` (une par bulle, à choisir dans « Modifier la couverture »). Dans cet ordre, de gauche à droite :
+
+| Bulle | Couverture | Ce qu'on y met (dans cet ordre) |
+|---|---|---|
+| **L'appli** | 🚀 vert | `story-0-annonce` (j'ai créé mon app) · `story-1` (tes recettes enfin rangées) · `story-compte-officiel` · semaine 2 n° 8 (« Tu ne l'as toujours pas ? ») · `story-5` (télécharger) |
+| **Astuces** | 💡 crème | `story-2` (importer en partageant) · `story-3` (cuisine mains libres) · `story-4` (semaine + courses) · semaine 2 n° 1 (on mange quoi ce soir), n° 2 (frigo), n° 3 (recette de mamie), n° 4 (à table à 20 h), n° 6 (prévu pour 4), n° 7 (batch du dimanche) |
+| **Nouveautés** | ✨ paprika | `story-maj-2-0-1` · `story-maj-2-0-2` (une fois la version sortie), puis chaque nouvelle mise à jour, la plus récente à la fin |
+| **Vos plats** | 🍴 vert | Les stories où on te mentionne avec « Partager mon plat » : reposte-les (bouton « Ajouter à ta story ») puis ajoute-les ici. Pour la lancer : une story de ton propre plat partagé depuis l'app |
+| **Avis** | ⭐ crème | `story-6-notes` (5 étoiles) · des captures des avis App Store et des messages sympas (avec l'accord des personnes, ou prénom caché) |
+| **Bugs & idées** | 💬 paprika | `story-7-bugs` · des « Corrigé grâce à vous ✅ » : une capture avant / après quand un retour est corrigé |
+
+À ne pas mettre à la une : le sondage « Ce week-end, t'es plutôt… » (semaine 2 n° 5), qui n'a de sens que le jour même.
+
+Comment faire : publie d'abord la story (ou retrouve-la dans Archives › Stories), touche « À la une » en bas, choisis la bulle. Pour la couverture : profil › appui long sur la bulle › Modifier › Modifier la couverture › choisis l'image dans ta galerie, centre l'icône.
 
 ---
 

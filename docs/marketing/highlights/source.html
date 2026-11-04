@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8">
+<style>
+@font-face { font-family: Ion; src: url('Ionicons.ttf'); }
+@font-face { font-family: Fraunces; font-weight: 700; src: url('../../../apps/mobile/assets/fonts/Fraunces_700Bold.ttf'); }
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #000; }
+.cover { width: 1080px; height: 1920px; position: relative; overflow: hidden; display: grid; place-items: center; }
+.forest { background: radial-gradient(70% 45% at 50% 50%, #2A6249 0%, #1F4D3A 55%, #163A2B 100%); color: #F7F1E6; }
+.cream { background: radial-gradient(70% 45% at 50% 50%, #FFFCF6 0%, #F7F1E6 60%, #E8DFCF 100%); color: #1F4D3A; }
+.paprika { background: radial-gradient(70% 45% at 50% 50%, #E07A45 0%, #D2642A 60%, #B5521F 100%); color: #FFFCF6; }
+/* Instagram shows a circle in the middle: the icon stays well inside it. */
+.ring { width: 800px; height: 800px; border-radius: 50%; display: grid; place-items: center; }
+.forest .ring { box-shadow: inset 0 0 0 14px rgba(242,165,120,.85); }
+.cream .ring { box-shadow: inset 0 0 0 14px rgba(210,100,42,.8); }
+.paprika .ring { box-shadow: inset 0 0 0 14px rgba(255,252,246,.85); }
+.ico { font-family: Ion; font-size: 440px; line-height: 1; }
+</style></head><body>
+<section class="cover forest" id="c1"><div class="ring"><span class="ico">&#xf548;</span></div></section>
+<section class="cover cream" id="c2"><div class="ring"><span class="ico">&#xf1c1;</span></div></section>
+<section class="cover paprika" id="c3"><div class="ring"><span class="ico">&#xf58d;</span></div></section>
+<section class="cover forest" id="c4"><div class="ring"><span class="ico">&#xf536;</span></div></section>
+<section class="cover cream" id="c5"><div class="ring"><span class="ico">&#xf599;</span></div></section>
+<section class="cover paprika" id="c6"><div class="ring"><span class="ico">&#xf213;</span></div></section>
+</body></html>
