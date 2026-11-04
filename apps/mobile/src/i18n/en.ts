@@ -548,6 +548,7 @@ const en: Translations = {
     noList: 'Create your first list to get started.',
   },
   profile: {
+    rateApp: 'Rate PepperedApron on the App Store',
     title: 'Settings',
     myRecipes: 'My recipes',
     myFavorites: 'My favorites',

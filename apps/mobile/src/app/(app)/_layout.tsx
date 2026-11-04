@@ -1,6 +1,6 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { AppState } from 'react-native';
-import { Stack, router } from 'expo-router';
+import { Stack, router, usePathname } from 'expo-router';
 import * as Notifications from 'expo-notifications';
 import { useShareIntentContext } from 'expo-share-intent';
 import { useTranslation } from 'react-i18next';
@@ -9,7 +9,7 @@ import { rescheduleExpiry, rescheduleReminders } from '../../services/notificati
 import { sourcesFromShare } from '../../services/autoImport';
 import { maybeAutoBackup } from '../../services/autoBackup';
 import { importQueue } from '../../services/importQueue';
-import { shouldShowWhatsNew } from '../../services/appMoments';
+import { noteAppUse, shouldShowWhatsNew } from '../../services/appMoments';
 import { applyExtensionRequests, publishWidgetData } from '../../services/widgets';
 import { refreshSpotlight } from '../../services/spotlight';
 import { useTheme } from '../../theme/ThemeProvider';
@@ -81,6 +81,29 @@ export default function AppLayout() {
   useEffect(() => {
     if (!rt.session) return;
     void shouldShowWhatsNew().then((show) => show && router.push('/whats-new'));
+  }, [rt.session]);
+
+  // After a few days of use, Apple's rating window, once: a few seconds after the app opens, and
+  // only on a main tab (never over cooking, an import or the What's new screen).
+  const pathname = usePathname();
+  const onTab = useRef(true);
+  onTab.current = ['/', '/planning', '/shopping', '/search', '/profile'].includes(pathname);
+  useEffect(() => {
+    const s = rt.session;
+    if (!s) return;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const opened = () => {
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(() => {
+        if (onTab.current) void noteAppUse(s.repos.recipes().length);
+      }, 4000);
+    };
+    opened();
+    const sub = AppState.addEventListener('change', (st) => st === 'active' && opened());
+    return () => {
+      sub.remove();
+      if (timer) clearTimeout(timer);
+    };
   }, [rt.session]);
 
   useEffect(() => {

@@ -9,6 +9,7 @@ import { useTheme } from '../../../theme/ThemeProvider';
 import { space } from '../../../theme/tokens';
 import { Group, ListRow, Text, usePrompt } from '../../../ui';
 import { inBackground } from '../../../lib/errors';
+import { openAppStoreReview } from '../../../services/appMoments';
 
 /** Settings. No account: everything lives on this device (and in the user's own iCloud). */
 export default function Settings() {
@@ -154,6 +155,12 @@ export default function Settings() {
           icon="help-buoy-outline"
           title={`${t('profile.help')} · ${t('profile.contact')}`}
           onPress={() => router.push('/profile/help')}
+        />
+        <ListRow
+          icon="star-outline"
+          title={t('profile.rateApp')}
+          onPress={() => void openAppStoreReview()}
+          testID="profile-rate-app"
         />
       </Group>
       <View style={{ alignItems: 'center', gap: space.sm }}>

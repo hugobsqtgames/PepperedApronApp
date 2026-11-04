@@ -738,6 +738,40 @@ describe('journeys: what the user does is really saved', () => {
     await repos.deleteRecipe(r.id);
   });
 
+  it('asks for an App Store rating once, after a week of real use (feedback)', async () => {
+    const StoreReview = jest.requireActual<typeof import('expo-store-review')>('expo-store-review');
+    const has = jest.spyOn(StoreReview, 'hasAction').mockResolvedValue(true);
+    const ask = jest.spyOn(StoreReview, 'requestReview').mockResolvedValue();
+    const { noteAppUse } = jest.requireActual<typeof import('../src/services/appMoments')>(
+      '../src/services/appMoments',
+    );
+    const day = (n: number) => Date.UTC(2030, 0, 1, 12) + n * 86_400_000;
+    // Opened every day: nothing before the 7th day, even after 5 days of use.
+    for (let n = 0; n < 7; n++) expect(await noteAppUse(10, day(n))).toBe(false);
+    // Opened twice the same day: one day of use. Few recipes: someone still trying the app.
+    expect(await noteAppUse(1, day(7))).toBe(false);
+    expect(await noteAppUse(10, day(7) + 3600_000)).toBe(true);
+    expect(ask).toHaveBeenCalledTimes(1);
+    // Never again from this route.
+    for (let n = 8; n < 400; n += 30) expect(await noteAppUse(10, day(n))).toBe(false);
+    expect(ask).toHaveBeenCalledTimes(1);
+    has.mockRestore();
+    ask.mockRestore();
+  });
+
+  it('settings: rate the app on the App Store at any time', async () => {
+    const { Linking } = jest.requireActual<typeof import('react-native')>('react-native');
+    const open = jest.spyOn(Linking, 'openURL').mockResolvedValue(undefined);
+    const Settings = screenOf('../src/app/(app)/profile/index');
+    await render(wrap(<Settings />));
+    await tap(screen.getByTestId('profile-rate-app'));
+    expect(open).toHaveBeenCalledWith(
+      'https://apps.apple.com/app/id6829014530?action=write-review',
+    );
+    open.mockRestore();
+    await cleanup();
+  });
+
   it('the recipe page estimates calories per serving (feedback)', async () => {
     const { emptyRecipe } =
       jest.requireActual<typeof import('@pepperedapron/client')>('@pepperedapron/client');

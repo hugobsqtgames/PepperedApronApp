@@ -554,6 +554,7 @@ const fr = {
     noList: 'Créez votre première liste pour commencer.',
   },
   profile: {
+    rateApp: 'Noter PepperedApron sur l’App Store',
     title: 'Réglages',
     myRecipes: 'Mes recettes',
     myFavorites: 'Mes favoris',
