@@ -25,3 +25,26 @@ it('each category photo has the size of its tile', async () => {
     expect(photo.width).toBeGreaterThan(0);
   });
 });
+
+/* Regression (TestFlight): the "All your recipes" tile showed a blurry corner of its photo. */
+it('the "All your recipes" photos fill the tile exactly, side by side', async () => {
+  await render(
+    <ThemeProvider preference="light">
+      <CategoryGrid counts={{}} total={12} />
+    </ThemeProvider>,
+  );
+  const tile = StyleSheet.flatten(screen.getByTestId('all-recipes-tile').props.style);
+  const photos = screen
+    .getAllByTestId('all-recipes-photo')
+    .map((p) => StyleSheet.flatten(p.props.style));
+  expect(photos.length).toBeGreaterThan(1);
+  expect(tile.width).toBeGreaterThan(0);
+  let x = 0;
+  for (const p of photos) {
+    expect(p.left).toBeCloseTo(x);
+    expect(p.height).toBe(tile.height);
+    expect(p.width).toBeGreaterThan(0);
+    x += p.width;
+  }
+  expect(x).toBeCloseTo(tile.width);
+});

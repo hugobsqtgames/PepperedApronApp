@@ -29,6 +29,12 @@ export function CategoryGrid({
     layout.gutter,
   );
   const h = Math.round(w * 0.72);
+  // The "All your recipes" tile spans the row: three photos side by side, each given its exact
+  // size (with only its edges set, a picture keeps its own size and shows a blurry corner).
+  const fullW = w * cols + space.md * (cols - 1);
+  const fullH = Math.round(h * 0.8);
+  const COLLAGE: RecipeCategory[] = ['pasta', 'dessert', 'soup'];
+  const sliceW = fullW / COLLAGE.length;
   const cats = HOME_CATEGORIES.slice(0, limit ?? HOME_CATEGORIES.length);
   return (
     <View style={styles.grid}>
@@ -40,20 +46,30 @@ export function CategoryGrid({
           testID="all-recipes-tile"
           style={({ pressed }) => [
             {
-              width: '100%',
-              height: Math.round(h * 0.8),
+              width: fullW,
+              height: fullH,
               borderRadius: radius.xl,
               overflow: 'hidden',
               transform: [{ scale: pressed ? 0.98 : 1 }],
             },
           ]}
         >
-          <Image
-            source={CATEGORY_PHOTOS.main}
-            style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
-            resizeMode="cover"
-            accessibilityIgnoresInvertColors
-          />
+          {COLLAGE.map((c, i) => (
+            <Image
+              key={c}
+              source={CATEGORY_PHOTOS[c]}
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: i * sliceW,
+                width: sliceW,
+                height: fullH,
+              }}
+              resizeMode="cover"
+              testID="all-recipes-photo"
+              accessibilityIgnoresInvertColors
+            />
+          ))}
           <View style={styles.scrim} />
           <View style={styles.label}>
             <Text
