@@ -2,6 +2,7 @@ import { forwardRef, useRef, useState, type ReactNode } from 'react';
 import {
   Linking,
   Modal,
+  PixelRatio,
   Pressable,
   ScrollView,
   Share,
@@ -10,6 +11,7 @@ import {
 } from 'react-native';
 import { Image } from 'expo-image';
 import * as Clipboard from 'expo-clipboard';
+import * as MediaLibrary from 'expo-media-library/legacy';
 import * as SMS from 'expo-sms';
 import * as Sharing from 'expo-sharing';
 import { captureRef } from 'react-native-view-shot';
@@ -233,42 +235,63 @@ export function DishShareModal({
   const [busy, setBusy] = useState<DishShareTarget | null>(null);
 
   const message = t('dishShare.message', { title: dish.title, url: APP_STORE_URL });
-  const capture = async (which: 'story' | 'post') => {
+  // The size is in points, multiplied by the screen scale: 1080 pixels wide on every iPhone. A
+  // JPEG, not a PNG: a 3x PNG of a photo weighed 27 MB, too much for Facebook (closed at once)
+  // and for a text message (never opened).
+  const capture = async (which: 'story' | 'post', result: 'tmpfile' | 'base64' = 'tmpfile') => {
     const size = which === 'story' ? STORY : POST;
+    const scale = (size.w * 3) / PixelRatio.get() / size.w;
     return captureRef(which === 'story' ? story : post, {
-      format: 'png',
-      quality: 1,
-      result: 'tmpfile',
-      width: size.w * 3,
-      height: size.h * 3,
+      format: 'jpg',
+      quality: 0.9,
+      result,
+      width: size.w * scale,
+      height: size.h * scale,
     });
   };
   const shareImage = (uri: string) =>
-    Sharing.shareAsync(uri, { mimeType: 'image/png', UTI: 'public.png' });
+    Sharing.shareAsync(uri, { mimeType: 'image/jpeg', UTI: 'public.jpeg' });
+
+  /**
+   * Straight into Instagram's editor with the image (no share sheet, no "Reel, post or story?"
+   * page): the image is saved to the photos, then Instagram opens on it. False when Instagram is
+   * not installed or the photos cannot be written.
+   */
+  const openInInstagram = async (uri: string) => {
+    if (!(await Linking.canOpenURL('instagram://app').catch(() => false))) return false;
+    const perm = await MediaLibrary.requestPermissionsAsync(false).catch(() => null);
+    if (!perm?.granted) return false;
+    const asset = await MediaLibrary.createAssetAsync(uri).catch(() => null);
+    if (!asset) return false;
+    await Linking.openURL(`instagram://library?LocalIdentifier=${encodeURIComponent(asset.id)}`);
+    return true;
+  };
 
   const run = async (target: DishShareTarget) => {
     setBusy(target);
     try {
       switch (target) {
-        case 'story': {
-          const uri = await capture('story');
-          // Instagram cannot receive a link with the image: it is copied, for the Link sticker.
-          await Clipboard.setStringAsync(APP_STORE_URL);
-          toast(t('dishShare.storyHint'));
-          await shareImage(uri);
+        case 'story':
+        case 'post': {
+          const uri = await capture(target);
+          // Instagram takes no text with an image: the link (for the Link sticker of a story) or
+          // the caption (for a post) is copied, to paste.
+          await Clipboard.setStringAsync(
+            target === 'story'
+              ? APP_STORE_URL
+              : t('dishShare.instagramCaption', { title: dish.title, url: APP_STORE_URL }),
+          );
+          toast(t(target === 'story' ? 'dishShare.storyHint' : 'dishShare.postHint'));
+          if (!(await openInInstagram(uri))) await shareImage(uri);
           break;
         }
-        case 'post':
         case 'facebook': {
           const uri = await capture('post');
-          // Both apps drop any text sent with an image: the caption is copied, to paste.
+          // Facebook drops any text sent with an image: the text is copied, to paste.
           await Clipboard.setStringAsync(
-            t(target === 'post' ? 'dishShare.instagramCaption' : 'dishShare.facebookCaption', {
-              title: dish.title,
-              url: APP_STORE_URL,
-            }),
+            t('dishShare.facebookCaption', { title: dish.title, url: APP_STORE_URL }),
           );
-          toast(t(target === 'post' ? 'dishShare.postHint' : 'dishShare.facebookHint'));
+          toast(t('dishShare.facebookHint'));
           await shareImage(uri);
           break;
         }
@@ -276,7 +299,7 @@ export function DishShareModal({
           if (await SMS.isAvailableAsync()) {
             const uri = await capture('post');
             await SMS.sendSMSAsync([], message, {
-              attachments: { uri, mimeType: 'image/png', filename: 'PepperedApron.png' },
+              attachments: { uri, mimeType: 'image/jpeg', filename: 'PepperedApron.jpg' },
             });
           } else await Linking.openURL(`sms:&body=${encodeURIComponent(message)}`);
           break;
@@ -287,13 +310,18 @@ export function DishShareModal({
           else await Share.share({ message });
           break;
         }
-        case 'x':
+        case 'x': {
+          // X takes text from a link, never an image: the photo is copied, to paste in the post.
+          const b64 = await capture('post', 'base64');
+          await Clipboard.setImageAsync(b64.replace(/^data:image\/\w+;base64,/, ''));
+          toast(t('dishShare.xHint'));
           await Linking.openURL(
             `https://x.com/intent/post?text=${encodeURIComponent(
               t('dishShare.xText', { title: dish.title, url: APP_STORE_URL }),
             )}`,
           );
           break;
+        }
         case 'messenger':
         case 'more': {
           // Messenger has no way to receive a photo and a text from another app: the share

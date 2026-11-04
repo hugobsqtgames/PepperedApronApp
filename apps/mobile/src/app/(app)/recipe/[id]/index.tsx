@@ -21,6 +21,8 @@ import {
   startTimeFor,
   computeTotalMinutes,
   estimateCalories,
+  isNutritionLine,
+  parseNutritionFacts,
   CUISINE_COUNTRY,
   CUISINES,
   detectSeasons,
@@ -39,6 +41,7 @@ import {
   userTags,
 } from '@pepperedapron/core';
 import { noticeText, WARNING_NOTICES } from '../../../../features/recipe/notices';
+import { CaloriesSection } from '../../../../features/recipe/CaloriesSection';
 import { dayMonth } from '../../../../lib/dates';
 import {
   IngredientList,
@@ -117,6 +120,11 @@ function RecipeDetailBody({ id }: { id: string }) {
   const { colors, a11y } = useTheme();
   const { width: winW, height: winH } = useWindowDimensions();
   const scrollY = useRef(new Animated.Value(0)).current;
+  const scrollRef = useRef<{
+    scrollTo: (o: { y: number; animated?: boolean }) => void;
+  } | null>(null);
+  const contentY = useRef(0);
+  const caloriesY = useRef(0);
   const celebrate = useCookCelebration();
   const repos = useRepos();
   const layout = useLayout();
@@ -175,6 +183,16 @@ function RecipeDetailBody({ id }: { id: string }) {
   const factor = current / d.servings;
   const total = computeTotalMinutes(d);
   const calories = estimateCalories(d);
+  // A nutrition table given by the recipe (moved out of the steps at import) is shown with the
+  // calories, not in the notes.
+  const noteParts = (d.notes ?? '').split(/\n\s*\n/);
+  const factsText = noteParts.find((p) => isNutritionLine(p)) ?? null;
+  const facts = factsText ? parseNutritionFacts(factsText) : null;
+  const notesShown =
+    noteParts
+      .filter((p) => !isNutritionLine(p))
+      .join('\n\n')
+      .trim() || null;
   const photo = recipePhotoUri(recipe);
   // Phones: the photo fills the top of the screen, the title written on it.
   const bigHeader = !layout.sidebar;
@@ -525,22 +543,7 @@ function RecipeDetailBody({ id }: { id: string }) {
           <Badge
             icon="nutrition-outline"
             label={t('recipe.kcal', { count: calories.perServing })}
-            onPress={() =>
-              Alert.alert(
-                t('recipe.kcalTitle'),
-                [
-                  t('recipe.kcalBody', {
-                    count: calories.perServing,
-                    total: Math.round(calories.total / 10) * 10,
-                  }),
-                  calories.missing.length
-                    ? t('recipe.kcalMissing', { names: calories.missing.join(', ') })
-                    : '',
-                ]
-                  .filter(Boolean)
-                  .join('\n\n'),
-              )
-            }
+            onPress={scrollToCalories}
             accessibilityHint={t('recipe.kcalHint')}
             testID="recipe-kcal"
           />
@@ -813,7 +816,7 @@ function RecipeDetailBody({ id }: { id: string }) {
         </View>
       ) : null}
       <TextBlock title={t('recipe.tips')} text={d.tips} icon="bulb-outline" />
-      <TextBlock title={t('recipe.notes')} text={d.notes} icon="document-text-outline" />
+      <TextBlock title={t('recipe.notes')} text={notesShown} icon="document-text-outline" />
       <TextBlock title={t('recipe.info')} text={d.extraInfo} icon="information-circle-outline" />
       <SourceLink source={d.source} url={d.sourceUrl} />
       {userTags(d.tags).length ? (
@@ -912,9 +915,25 @@ function RecipeDetailBody({ id }: { id: string }) {
     </View>
   );
 
+  function scrollToCalories() {
+    scrollRef.current?.scrollTo({
+      y: Math.max(0, contentY.current + caloriesY.current - insets.top - space.xxl),
+      animated: !a11y.reduceMotion,
+    });
+  }
+  const caloriesSection = (
+    <CaloriesSection
+      estimate={calories}
+      facts={facts}
+      servings={d.servings}
+      onLayout={(e) => (caloriesY.current = e.nativeEvent.layout.y)}
+    />
+  );
+
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       <Animated.ScrollView
+        ref={scrollRef as never}
         testID="recipe-scroll"
         scrollEventThrottle={16}
         onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], {
@@ -923,39 +942,48 @@ function RecipeDetailBody({ id }: { id: string }) {
         contentContainerStyle={{ paddingBottom: space.huge * 2 + 72 }}
       >
         {bigHeader ? bigHero : <View style={{ height: insets.top + space.xxl }} />}
+        {/* Opaque: the photo moving slower than the page slides under the text, never shows
+            through it. */}
         <View
-          style={{
-            width: '100%',
-            maxWidth: layout.wide ? 1200 : layout.contentMaxWidth,
-            alignSelf: 'center',
-            paddingHorizontal: layout.gutter,
-            paddingTop: space.xl,
-            gap: space.xxl,
-          }}
+          onLayout={(e) => (contentY.current = e.nativeEvent.layout.y)}
+          style={{ backgroundColor: colors.background }}
         >
-          {layout.wide ? (
-            <View style={{ flexDirection: 'row', gap: space.xxxl, alignItems: 'flex-start' }}>
-              <View style={{ flex: 5, gap: space.xxl }}>
-                {hero}
+          <View
+            style={{
+              width: '100%',
+              maxWidth: layout.wide ? 1200 : layout.contentMaxWidth,
+              alignSelf: 'center',
+              paddingHorizontal: layout.gutter,
+              paddingTop: space.xl,
+              gap: space.xxl,
+            }}
+          >
+            {layout.wide ? (
+              <View style={{ flexDirection: 'row', gap: space.xxxl, alignItems: 'flex-start' }}>
+                <View style={{ flex: 5, gap: space.xxl }}>
+                  {hero}
+                  {header}
+                  {ingredients}
+                </View>
+                <View style={{ flex: 6, gap: space.xxl }}>
+                  {steps}
+                  {pairings}
+                  {extras}
+                  {caloriesSection}
+                </View>
+              </View>
+            ) : (
+              <>
+                {layout.sidebar ? hero : null}
                 {header}
                 {ingredients}
-              </View>
-              <View style={{ flex: 6, gap: space.xxl }}>
                 {steps}
                 {pairings}
                 {extras}
-              </View>
-            </View>
-          ) : (
-            <>
-              {layout.sidebar ? hero : null}
-              {header}
-              {ingredients}
-              {steps}
-              {pairings}
-              {extras}
-            </>
-          )}
+                {caloriesSection}
+              </>
+            )}
+          </View>
         </View>
       </Animated.ScrollView>
       {bigHeader ? (

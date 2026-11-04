@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { estimateCalories, findFood, ingredientCalories } from './nutrition';
+import {
+  estimateCalories,
+  findFood,
+  ingredientCalories,
+  isNutritionLine,
+  parseNutritionFacts,
+} from './nutrition';
 
 const ing = (name: string, quantity: number | null, unit: string | null = null) => ({
   name,
@@ -86,5 +92,43 @@ describe('calories', () => {
     });
     expect(e?.missing).toEqual(['truc']);
     expect(estimateCalories({ servings: 2, ingredients: [ing('sel', null)] })).toBeNull();
+  });
+});
+
+describe('nutrition facts given by a recipe', () => {
+  it('reads the table at the end of an imported recipe (feedback)', () => {
+    const f = parseNutritionFacts(
+      'CALORIES 1918 | PROTÉINES : 42g | MG: 26g | ACIDES GRAS SATURÉS 430 | CICIDES : 120g | SUCRE: 14g | SEL:1,29 [ FIBRES 16(',
+    );
+    expect(f).toMatchObject({
+      kcal: 1918,
+      protein: 42,
+      fat: 26,
+      sugars: 14,
+      salt: 1.29,
+      fiber: 16,
+    });
+    expect(
+      parseNutritionFacts('Per serving: 450 kcal, protein 20 g, fat 12 g, carbs 60 g'),
+    ).toMatchObject({ kcal: 450, protein: 20, fat: 12, carbs: 60 });
+  });
+
+  it('a cooking step is never taken for a nutrition table', () => {
+    for (const step of [
+      'Mélanger 200 g de sucre, 1 pincée de sel et 50 g de beurre.',
+      'Ajouter le sel, le sucre et les protéines de pois, cuire 10 min.',
+      'Cuire 45 min à 180 °C, saler et poivrer.',
+      'Add salt, sugar and 2 tbsp of fat, then bake 20 minutes.',
+    ])
+      expect(isNutritionLine(step)).toBe(false);
+  });
+
+  it('lists what each ingredient brings, the biggest first', () => {
+    const e = estimateCalories({
+      servings: 4,
+      ingredients: [ing('sachet gnocchis', 1, 'packet'), ing('chorizo', 1), ing('oignon', 1)],
+    });
+    expect(e?.lines.map((l) => l.name)).toEqual(['chorizo', 'sachet gnocchis', 'oignon']);
+    expect(e?.perServing).toBe(450);
   });
 });

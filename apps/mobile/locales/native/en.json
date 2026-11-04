@@ -6,6 +6,7 @@
     "NSSpeechRecognitionUsageDescription": "PepperedApron listens to a recipe video you import, the recipe you dictate, or your voice commands in cook mode, on your iPhone. Nothing is sent.",
     "NSMicrophoneUsageDescription": "PepperedApron records the recipe you dictate, and in cook mode listens for “next” or “repeat” if you turn voice commands on. Everything stays on your iPhone.",
     "NSRemindersUsageDescription": "PepperedApron adds your shopping list to the Reminders list you choose, so it can be shared with your family.",
-    "NSRemindersFullAccessUsageDescription": "PepperedApron adds your shopping list to the Reminders list you choose, so it can be shared with your family."
+    "NSRemindersFullAccessUsageDescription": "PepperedApron adds your shopping list to the Reminders list you choose, so it can be shared with your family.",
+    "NSPhotoLibraryAddUsageDescription": "PepperedApron saves the picture of your dish to your photos so that Instagram can open it."
   }
 }

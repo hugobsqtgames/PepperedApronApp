@@ -377,7 +377,7 @@ const FOODS: [string[], Food][] = [
     ['saucisse', 'sausage', 'chipolata', 'merguez', 'saucisse toulouse', 'knack'],
     { kcal: 280, piece: 70 },
   ],
-  [['chorizo', 'salami', 'pepperoni', 'saucisson'], { kcal: 450, slice: 3 }],
+  [['chorizo', 'salami', 'pepperoni', 'saucisson'], { kcal: 450, slice: 3, piece: 225 }],
   [['agneau', 'lamb', 'gigot', 'souris agneau'], { kcal: 250, piece: 200 }],
   [['veau', 'veal', 'blanquette'], { kcal: 160, piece: 150 }],
   [['canard', 'duck'], { kcal: 200, piece: 200 }],
@@ -831,6 +831,8 @@ export interface CalorieEstimate {
   missing: string[];
   /** Share of the ingredients that matter which were counted, 0 to 1. */
   coverage: number;
+  /** Each counted ingredient with its kcal (whole recipe), the biggest first. */
+  lines: { name: string; kcal: number }[];
 }
 
 /**
@@ -845,6 +847,7 @@ export function estimateCalories(r: {
   let counted = 0;
   let relevant = 0;
   const missing: string[] = [];
+  const lines: { name: string; kcal: number }[] = [];
   for (const i of r.ingredients) {
     const kcal = ingredientCalories(i);
     if (kcal === 0) continue;
@@ -853,12 +856,86 @@ export function estimateCalories(r: {
     else {
       counted++;
       total += kcal;
+      lines.push({ name: i.name, kcal: Math.round(kcal) });
     }
   }
+  lines.sort((a, b) => b.kcal - a.kcal);
   if (!counted || r.servings < 1) return null;
   const coverage = counted / relevant;
   if (coverage < 0.75) return null;
   const perServing = Math.round(total / r.servings / 10) * 10;
   if (perServing < 10 || perServing > 5000) return null;
-  return { total: Math.round(total), perServing, missing, coverage };
+  return { total: Math.round(total), perServing, missing, coverage, lines };
 }
+
+/** Values a recipe gives itself ("Calories 1918 | Protéines : 42 g | MG : 26 g…"), as written. */
+export interface NutritionFacts {
+  kcal: number | null;
+  protein: number | null;
+  fat: number | null;
+  saturated: number | null;
+  carbs: number | null;
+  sugars: number | null;
+  fiber: number | null;
+  salt: number | null;
+}
+
+const NUM = String.raw`(\d+(?:[.,]\d+)?)`;
+const FACTS: [keyof NutritionFacts, RegExp][] = [
+  [
+    'kcal',
+    new RegExp(
+      String.raw`(?:calories?|[ée]nergie|energy|kcal)\s*(?:[:=(]\s*)?${NUM}|${NUM}\s*(?:kcal|calories)`,
+      'i',
+    ),
+  ],
+  [
+    'saturated',
+    new RegExp(
+      String.raw`(?:acides?\s+gras\s+satur[ée]s?|satur[ée]s?|saturated(?:\s+fat)?|ags)\s*[:=]?\s*${NUM}`,
+      'i',
+    ),
+  ],
+  ['protein', new RegExp(String.raw`(?:prot[ée]ines?|proteins?)\s*[:=]?\s*${NUM}`, 'i')],
+  [
+    'fat',
+    new RegExp(
+      String.raw`(?:lipides|mati[èe]res?\s+grasses|graisses|\bmg\b|(?<!saturated\s)\bfats?\b|total\s+fat)\s*[:=]?\s*${NUM}`,
+      'i',
+    ),
+  ],
+  ['sugars', new RegExp(String.raw`(?:dont\s+sucres|sucres?|sugars?)\s*[:=]?\s*${NUM}`, 'i')],
+  ['carbs', new RegExp(String.raw`(?:glucides|carbs|carbohydrates?)\s*[:=]?\s*${NUM}`, 'i')],
+  ['fiber', new RegExp(String.raw`(?:fibres?|fibers?)\s*[:=(]?\s*${NUM}`, 'i')],
+  ['salt', new RegExp(String.raw`(?:sel|salt)\s*[:=]?\s*${NUM}`, 'i')],
+];
+
+/** The nutrition values given in a line, null when the line is not a nutrition table. */
+export function parseNutritionFacts(text: string): NutritionFacts | null {
+  const facts: NutritionFacts = {
+    kcal: null,
+    protein: null,
+    fat: null,
+    saturated: null,
+    carbs: null,
+    sugars: null,
+    fiber: null,
+    salt: null,
+  };
+  let found = 0;
+  for (const [key, re] of FACTS) {
+    const m = re.exec(text);
+    const raw = m?.slice(1).find((x) => x !== undefined);
+    if (!raw) continue;
+    const v = Number(raw.replace(',', '.'));
+    if (!Number.isFinite(v)) continue;
+    facts[key] = v;
+    found++;
+  }
+  // A recipe step names an ingredient or two ("le sel et le sucre"), a nutrition table at least
+  // three values, energy or a macronutrient among them.
+  const macro = facts.kcal ?? facts.protein ?? facts.fat ?? facts.carbs;
+  return found >= 3 && macro !== null ? facts : null;
+}
+
+export const isNutritionLine = (text: string) => parseNutritionFacts(text) !== null;

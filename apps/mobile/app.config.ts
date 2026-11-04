@@ -110,6 +110,8 @@ const CAMERA_USAGE =
   'PepperedApron uses the camera to add a photo to your recipes, read a printed or handwritten recipe, a receipt, or the barcode of a product in your pantry.';
 const PHOTOS_USAGE =
   'PepperedApron accesses your photos to illustrate your recipes or import a recipe from an image or your latest screenshot.';
+const SAVE_PHOTOS_USAGE =
+  'PepperedApron saves the picture of your dish to your photos so that Instagram can open it.';
 // Free GitHub Pages address of the website (apps/site); SITE_URL for a domain of its own.
 const siteUrl = process.env.SITE_URL ?? 'https://hugobsqtgames.github.io/PepperedApronApp';
 // Support address shown in Help (mail app); empty → the project's contact page instead.
@@ -163,7 +165,7 @@ const buildConfig = ({ config }: ConfigContext): ExpoConfig => ({
       CFBundleAllowMixedLocalizations: true,
       NSSupportsLiveActivities: true,
       // "Share my dish": WhatsApp opens with the message ready (otherwise, the share sheet).
-      LSApplicationQueriesSchemes: ['whatsapp'],
+      LSApplicationQueriesSchemes: ['whatsapp', 'instagram'],
       // Handoff: the recipe or the cook mode continues on the user's other device.
       // Per variant, so a development build never picks up the App Store app's activities.
       NSUserActivityTypes: [`${bundleId}.recipe`, `${bundleId}.cook`],
@@ -232,7 +234,10 @@ const buildConfig = ({ config }: ConfigContext): ExpoConfig => ({
     // Barcodes of pantry products, scanned live (no recording: no microphone).
     ['expo-camera', { cameraPermission: CAMERA_USAGE, microphonePermission: false }],
     // "My latest screenshot": read only when asked, never saved to (no add-only permission).
-    ['expo-media-library', { photosPermission: PHOTOS_USAGE, savePhotosPermission: false }],
+    [
+      'expo-media-library',
+      { photosPermission: PHOTOS_USAGE, savePhotosPermission: SAVE_PHOTOS_USAGE },
+    ],
     // Dictating a recipe (recorded, then transcribed on the device).
     ['expo-audio', { microphonePermission: MICROPHONE_USAGE, enableBackgroundPlayback: false }],
     // The shopping list can be sent to Apple Reminders (no calendar access).

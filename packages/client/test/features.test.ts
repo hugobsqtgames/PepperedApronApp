@@ -371,3 +371,39 @@ describe('categories guessed for imports (TestFlight feedback)', () => {
     expect(repos.recipe(mine.id)!.data.category).toBe('main');
   });
 });
+
+describe('nutrition tables are not steps (feedback)', () => {
+  const table = 'CALORIES 1918 | PROTÉINES : 42g | MG: 26g | SUCRE: 14g | SEL:1,29 | FIBRES 16';
+  it('an import puts the table in the notes, not in the steps', () => {
+    const d = recipeFromDraft({
+      ...emptyDraft(),
+      title: 'Mac & cheese',
+      steps: [
+        { group: null, text: 'Cuire les pâtes.', timerSeconds: null, timerLabel: null },
+        { group: null, text: table, timerSeconds: null, timerLabel: null },
+      ],
+      notes: 'Meilleur le lendemain.',
+    });
+    expect(d.steps.map((s) => s.text)).toEqual(['Cuire les pâtes.']);
+    expect(d.notes).toBe(`Meilleur le lendemain.\n\n${table}`);
+  });
+
+  it('recipes saved before move their table once', async () => {
+    const { repos } = await open();
+    const r = await repos.createRecipe({
+      ...emptyRecipe(4),
+      title: 'Mac & cheese',
+      steps: ['Cuire les pâtes.', table].map((text) => ({
+        id: crypto.randomUUID(),
+        group: null,
+        text,
+        timerSeconds: null,
+        timerLabel: null,
+      })),
+    });
+    expect(await repos.moveNutritionStepsToNotes()).toBe(1);
+    expect(repos.recipe(r.id)!.data.steps.map((s) => s.text)).toEqual(['Cuire les pâtes.']);
+    expect(repos.recipe(r.id)!.data.notes).toBe(table);
+    expect(await repos.moveNutritionStepsToNotes()).toBe(0);
+  });
+});

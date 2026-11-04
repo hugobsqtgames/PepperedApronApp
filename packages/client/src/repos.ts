@@ -17,6 +17,7 @@ import {
   estimateLinePrice,
   findDuplicate,
   guessCategory,
+  isNutritionLine,
   ingredientKey,
   leftoverSlot,
   LIMITS,
@@ -136,6 +137,9 @@ const httpUrl = (v: string | null | undefined): string | null => {
 };
 
 export function recipeFromDraft(d: RecipeDraft, defaultServings = 4): RecipeData {
+  // "Calories 1918 | Protéines 42 g…" at the end of a post is not a step: it goes to the notes
+  // (the recipe page shows it with the calories).
+  const facts = d.steps.filter((st) => isNutritionLine(st.text)).map((st) => st.text);
   const minutes = (v: number | null) => intIn(v, 0, LIMITS.minutesMax);
   const source = d.author ? `${d.source ?? ''}${d.source ? ' · ' : ''}${d.author}` : d.source;
   return {
@@ -153,7 +157,9 @@ export function recipeFromDraft(d: RecipeDraft, defaultServings = 4): RecipeData
     category: d.category ?? guessCategory({ title: d.title ?? '', ingredients: d.ingredients }),
     ovenTemperatureC: intIn(d.ovenTemperatureC, LIMITS.ovenMinC, LIMITS.ovenMaxC),
     notes: clip(
-      [d.notes, d.unparsed.length ? d.unparsed.join('\n') : null].filter(Boolean).join('\n\n'),
+      [d.notes, d.unparsed.length ? d.unparsed.join('\n') : null, ...facts]
+        .filter(Boolean)
+        .join('\n\n'),
       LIMITS.longText,
     ),
     tips: clip(d.tips, LIMITS.longText),
@@ -181,6 +187,7 @@ export function recipeFromDraft(d: RecipeDraft, defaultServings = 4): RecipeData
       .filter((i) => i.name)
       .slice(0, LIMITS.ingredients),
     steps: d.steps
+      .filter((st) => !isNutritionLine(st.text))
       .map((st) => ({
         id: uuidv7(),
         group: clip(st.group, LIMITS.groupName),
@@ -335,6 +342,24 @@ export class Repos {
       const category = guessCategory(r.data);
       if (!category) continue;
       await this.updateRecipe(r.id, { category });
+      n++;
+    }
+    return n;
+  }
+  /**
+   * Once, for recipes imported before nutrition tables were recognised: the table that became the
+   * last step moves to the notes.
+   */
+  async moveNutritionStepsToNotes(): Promise<number> {
+    let n = 0;
+    for (const r of this.recipes()) {
+      const facts = r.data.steps.filter((st) => isNutritionLine(st.text));
+      if (!facts.length || facts.length === r.data.steps.length) continue;
+      const notes = [r.data.notes, ...facts.map((st) => st.text)].filter(Boolean).join('\n\n');
+      await this.updateRecipe(r.id, {
+        steps: r.data.steps.filter((st) => !isNutritionLine(st.text)),
+        notes: notes.slice(0, LIMITS.longText),
+      });
       n++;
     }
     return n;

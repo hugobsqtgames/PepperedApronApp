@@ -55,6 +55,8 @@ function useNotificationRouting() {
 
 /** Device-local flag: the one-time filing of uncategorized recipes was done. */
 const AUTO_CATEGORY_KEY = 'auto_category_v1';
+/** Device-local flag: nutrition tables imported as a last step were moved to the notes. */
+const NUTRITION_STEPS_KEY = 'nutrition_steps_v1';
 
 export default function AppLayout() {
   const rt = useRuntime();
@@ -70,10 +72,16 @@ export default function AppLayout() {
     void maybeAutoBackup(rt.session.store, rt.session.repos.recipes().length > 0);
     // Once: recipes imported before categories were guessed are filed (pasta into Pasta…).
     const { store, repos } = rt.session;
+    // One after the other: both rewrite recipes.
     void (async () => {
-      if (await store.meta(AUTO_CATEGORY_KEY)) return;
-      await repos.fileUncategorized();
-      await store.setMeta(AUTO_CATEGORY_KEY, '1');
+      if (!(await store.meta(AUTO_CATEGORY_KEY))) {
+        await repos.fileUncategorized();
+        await store.setMeta(AUTO_CATEGORY_KEY, '1');
+      }
+      if (!(await store.meta(NUTRITION_STEPS_KEY))) {
+        await repos.moveNutritionStepsToNotes();
+        await store.setMeta(NUTRITION_STEPS_KEY, '1');
+      }
     })().catch(() => undefined);
   }, [rt.session]);
 

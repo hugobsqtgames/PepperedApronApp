@@ -49,6 +49,7 @@ jest.mock('react-native-view-shot', () => ({ captureRef: jest.fn() }));
 jest.mock('expo-clipboard', () => ({
   ...jest.requireActual<object>('expo-clipboard'),
   setStringAsync: jest.fn(async () => true),
+  setImageAsync: jest.fn(async () => {}),
 }));
 jest.mock('expo-sharing', () => ({
   ...jest.requireActual<object>('expo-sharing'),
@@ -64,7 +65,8 @@ jest.mock('expo-camera', () => ({
   useCameraPermissions: () => [{ granted: true, canAskAgain: true }, async () => ({})],
 }));
 jest.mock('expo-media-library/legacy', () => ({
-  requestPermissionsAsync: async () => ({ granted: false }),
+  requestPermissionsAsync: jest.fn(async () => ({ granted: false })),
+  createAssetAsync: jest.fn(async () => null),
   getAssetsAsync: async () => ({ assets: [] }),
   getAssetInfoAsync: async () => ({}),
   MediaType: { photo: 'photo' },
@@ -814,9 +816,22 @@ describe('journeys: what the user does is really saved', () => {
     const Recipe = screenOf('../src/app/(app)/recipe/[id]/index');
     await render(wrap(<Recipe />));
     expect(screen.getByText(i18n.t('recipe.kcal', { count: 440 }))).toBeTruthy();
-    (Alert.alert as jest.Mock).mockClear();
+    // At the bottom: the estimate explained, ingredient by ingredient; the badge leads there.
+    expect(screen.getByTestId('recipe-calories')).toBeTruthy();
+    expect(screen.getByText(i18n.t('calories.perServing', { count: 440 }))).toBeTruthy();
+    expect(screen.getByText(i18n.t('calories.kcal', { count: 875 }))).toBeTruthy();
     await tap(screen.getByTestId('recipe-kcal'));
-    expect((Alert.alert as jest.Mock).mock.calls[0]![0]).toBe(i18n.t('recipe.kcalTitle'));
+    await cleanup();
+    // The nutrition table the recipe gives (moved out of the steps) shows with the calories, not
+    // in the notes.
+    await repos.updateRecipe(r.id, {
+      notes: 'Meilleur le lendemain.\n\nCALORIES 1918 | PROTÉINES : 42g | MG: 26g | SEL:1,29',
+    });
+    await render(wrap(<Recipe />));
+    expect(screen.getByTestId('recipe-nutrition-facts')).toBeTruthy();
+    expect(screen.getByText(i18n.t('calories.kcal', { count: 1918 }))).toBeTruthy();
+    expect(screen.getByText('Meilleur le lendemain.')).toBeTruthy();
+    expect(screen.queryByText(/CALORIES 1918/)).toBeNull();
     await cleanup();
     // Not enough known ingredients: no number rather than a wrong one.
     await repos.updateRecipe(r.id, {
@@ -927,15 +942,36 @@ describe('journeys: what the user does is really saved', () => {
     await tap(screen.getByTestId('cook-share-dish'));
     expect(screen.getByTestId('dish-share')).toBeTruthy();
 
-    // Instagram story: a 1080 × 1920 image, the App Store link copied for the Link sticker.
+    // The size given to the capture is in points, multiplied by the screen scale: 1080 pixels
+    // wide, a JPEG (a 3x PNG weighed 27 MB: Facebook closed at once, the SMS never opened).
+    const { PixelRatio } = RN;
+    const px = (o: { width: number; height: number }) => [
+      Math.round(o.width * PixelRatio.get()),
+      Math.round(o.height * PixelRatio.get()),
+    ];
+    // Instagram story: straight into Instagram's editor with the image saved to the photos,
+    // the App Store link copied for the Link sticker.
+    const ML = jest.requireMock<{
+      requestPermissionsAsync: jest.Mock;
+      createAssetAsync: jest.Mock;
+    }>('expo-media-library/legacy');
+    ML.requestPermissionsAsync.mockResolvedValue({ granted: true });
+    ML.createAssetAsync.mockResolvedValue({ id: 'ABC/L0/001' });
     await tap(screen.getByTestId('dish-share-story'));
-    expect(shot.mock.calls.at(-1)![1]).toMatchObject({ width: 1080, height: 1920 });
+    expect(px(shot.mock.calls.at(-1)![1])).toEqual([1080, 1920]);
+    expect(shot.mock.calls.at(-1)![1]).toMatchObject({ format: 'jpg' });
     expect(copy).toHaveBeenLastCalledWith(store);
-    expect(shareFile).toHaveBeenLastCalledWith('file:///dish.png', expect.anything());
+    expect(open).toHaveBeenLastCalledWith('instagram://library?LocalIdentifier=ABC%2FL0%2F001');
+    shareFile.mockClear();
     // Instagram post: a 1080 × 1350 image and its caption, copied to paste.
     await tap(screen.getByTestId('dish-share-post'));
-    expect(shot.mock.calls.at(-1)![1]).toMatchObject({ width: 1080, height: 1350 });
+    expect(px(shot.mock.calls.at(-1)![1])).toEqual([1080, 1350]);
     expect(copy.mock.calls.at(-1)![0]).toContain(r.data.title);
+    expect(shareFile).not.toHaveBeenCalled();
+    // No access to the photos: the share sheet instead.
+    ML.requestPermissionsAsync.mockResolvedValue({ granted: false });
+    await tap(screen.getByTestId('dish-share-post'));
+    expect(shareFile).toHaveBeenLastCalledWith('file:///dish.png', expect.anything());
     // Facebook: the caption carries the link.
     await tap(screen.getByTestId('dish-share-facebook'));
     expect(copy.mock.calls.at(-1)![0]).toContain(store);
@@ -947,7 +983,13 @@ describe('journeys: what the user does is really saved', () => {
     // WhatsApp and X: their own app, the text ready.
     await tap(screen.getByTestId('dish-share-whatsapp'));
     expect(open.mock.calls.at(-1)![0]).toMatch(/^whatsapp:\/\/send\?text=.*apps\.apple\.com/);
+    const copyImage = jest.requireMock<{ setImageAsync: jest.Mock }>(
+      'expo-clipboard',
+    ).setImageAsync;
+    shot.mockResolvedValueOnce('data:image/jpeg;base64,QUJD');
     await tap(screen.getByTestId('dish-share-x'));
+    // The dish photo is copied, to paste in the post (X takes no image from a link).
+    expect(copyImage).toHaveBeenLastCalledWith('QUJD');
     expect(open.mock.calls.at(-1)![0]).toMatch(/^https:\/\/x\.com\/intent\/post\?text=/);
     expect(decodeURIComponent(open.mock.calls.at(-1)![0])).toContain(r.data.title);
     // Messenger and the others: the share sheet with the photo and the message.
