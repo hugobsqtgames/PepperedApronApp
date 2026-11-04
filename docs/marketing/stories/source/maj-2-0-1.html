@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<style>
+@font-face { font-family: Fraunces; font-weight: 600; src: url('../../../../apps/mobile/assets/fonts/Fraunces_600SemiBold.ttf'); }
+@font-face { font-family: Fraunces; font-weight: 700; src: url('../../../../apps/mobile/assets/fonts/Fraunces_700Bold.ttf'); }
+@font-face { font-family: Fraunces; font-weight: 400; font-style: italic; src: url('../../../../apps/mobile/assets/fonts/Fraunces_400Regular_Italic.ttf'); }
+@font-face { font-family: Fraunces; font-weight: 600; font-style: italic; src: url('../../../../apps/mobile/assets/fonts/Fraunces_600SemiBold_Italic.ttf'); }
+:root {
+  --forest: #1F4D3A; --forestDeep: #163A2B; --paprika: #D2642A; --paprikaText: #A84A1A;
+  --cream: #F7F1E6; --sand: #E8DFCF; --ink: #1F2A24; --muted: #5E655F; --surface: #FFFCF6;
+  --primarySoft: #DDE8E1; --accentSoft: #F8E3D5; --sage: #86C1A2;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #000; font-family: Inter, sans-serif; color: var(--ink); }
+.story { width: 1080px; height: 1920px; position: relative; overflow: hidden; }
+.serif { font-family: Fraunces, serif; }
+.cream { background: var(--cream); }
+.forest { background: radial-gradient(120% 80% at 50% 0%, #2A6249 0%, var(--forest) 45%, var(--forestDeep) 100%); color: var(--cream); }
+.grain::after { content: ''; position: absolute; inset: 0; pointer-events: none; opacity: .05;
+  background-image: radial-gradient(#000 1px, transparent 1px); background-size: 6px 6px; }
+/* Instagram keeps the top ~220px and bottom ~300px for its own UI: content stays between. */
+.top { position: absolute; top: 230px; left: 80px; right: 80px; }
+.brand { display: flex; align-items: center; gap: 18px; font-weight: 600; font-size: 34px; letter-spacing: .2px; }
+.brand img { width: 64px; height: 64px; border-radius: 16px; }
+.kicker { display: inline-block; font-size: 30px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: var(--paprika); margin-top: 46px; }
+.forest .kicker { color: #F2A578; }
+h1 { font-family: Fraunces, serif; font-weight: 700; font-size: 100px; line-height: 1.02; letter-spacing: -1.5px; margin-top: 18px; }
+h1 em { font-style: italic; font-weight: 600; color: var(--paprika); }
+.forest h1 em { color: #F2A578; }
+.lead { font-size: 38px; line-height: 1.35; margin-top: 26px; color: var(--muted); }
+.forest .lead { color: #D6E4DA; }
+
+/* phone */
+.phone { position: absolute; width: 560px; height: 1150px; border-radius: 84px; background: #0E1411; padding: 16px;
+  box-shadow: 0 60px 120px rgba(0,0,0,.35), 0 0 0 3px rgba(255,255,255,.08) inset; }
+.screen { width: 100%; height: 100%; border-radius: 70px; overflow: hidden; background: var(--cream); position: relative; color: var(--ink); }
+.island { position: absolute; top: 18px; left: 50%; transform: translateX(-50%); width: 170px; height: 50px; background: #000; border-radius: 30px; z-index: 5; }
+.status { display: flex; justify-content: space-between; padding: 26px 46px 0; font-weight: 600; font-size: 22px; }
+.pad { padding: 30px 32px; }
+.chip { display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 30px; font-size: 20px; font-weight: 600; }
+.card { background: var(--surface); border: 2px solid var(--sand); border-radius: 30px; }
+.photo { background-size: cover; background-position: center; }
+.tabbar { position: absolute; bottom: 0; left: 0; right: 0; height: 110px; background: rgba(255,252,246,.95); border-top: 2px solid var(--sand);
+  display: flex; justify-content: space-around; align-items: center; font-size: 15px; color: var(--muted); padding-bottom: 14px; }
+.tabbar .plus { width: 76px; height: 76px; border-radius: 40px; background: var(--paprika); color: #fff; font-size: 44px; display: grid; place-items: center; margin-top: -40px; box-shadow: 0 10px 20px rgba(210,100,42,.4); }
+
+/* feature bullets */
+.bullets { position: absolute; left: 80px; right: 80px; display: grid; gap: 22px; }
+.bullet { display: flex; align-items: center; gap: 22px; font-size: 34px; font-weight: 600; line-height: 1.25; }
+.bullet .ico { flex: none; width: 74px; height: 74px; border-radius: 22px; display: grid; place-items: center; font-size: 38px; background: var(--accentSoft); }
+.forest .bullet .ico { background: rgba(255,255,255,.1); }
+.swipe { position: absolute; bottom: 330px; left: 0; right: 0; text-align: center; font-size: 28px; font-weight: 600; letter-spacing: 1px; opacity: .7; }
+</style>
+</head>
+<body>
+<section class="story forest grain" id="ig">
+  <div class="top" style="text-align:center;">
+    <span class="chip" style="background: #F2A578; color: var(--ink); font-size: 30px; padding: 14px 30px; letter-spacing: 3px; font-weight: 800;">🆕 MISE À JOUR 2.0.1</span>
+    <h1 style="font-size: 96px; margin-top: 34px;">Vous l’avez dit,<br><em>on l’a fait.</em></h1>
+  </div>
+  <div style="position:absolute; left: 80px; right: 80px; top: 590px; display:grid; gap: 20px;">
+    <div class="card" style="display:flex; gap: 28px; padding: 28px 32px; border-radius: 40px; color: var(--ink); align-items: center; box-shadow: 0 24px 50px rgba(0,0,0,.25);">
+      <div style="flex:none; width: 92px; height: 92px; border-radius: 26px; background: var(--accentSoft); display:grid; place-items:center; font-size: 52px;">🧺</div>
+      <div><div class="serif" style="font-size: 42px; font-weight: 700; line-height: 1.1;">Courses rangées d’un coup</div>
+      <div style="font-size: 28px; line-height: 1.35; color: var(--muted); margin-top: 8px;">Coche ce que tu as acheté : tout part au frigo, au placard ou au congélo.</div></div>
+    </div>
+    <div class="card" style="display:flex; gap: 28px; padding: 28px 32px; border-radius: 40px; color: var(--ink); align-items: center; box-shadow: 0 24px 50px rgba(0,0,0,.25);">
+      <div style="flex:none; width: 92px; height: 92px; border-radius: 26px; background: var(--primarySoft); display:grid; place-items:center; font-size: 52px;">🍲</div>
+      <div><div class="serif" style="font-size: 42px; font-weight: 700; line-height: 1.1;">Batch cooking en avance</div>
+      <div style="font-size: 28px; line-height: 1.35; color: var(--muted); margin-top: 8px;">Dès dimanche, prépare la semaine suivante. Et planifie jusqu’à 4 semaines.</div></div>
+    </div>
+    <div class="card" style="display:flex; gap: 28px; padding: 28px 32px; border-radius: 40px; color: var(--ink); align-items: center; box-shadow: 0 24px 50px rgba(0,0,0,.25);">
+      <div style="flex:none; width: 92px; height: 92px; border-radius: 26px; background: #DCEBF3; display:grid; place-items:center; font-size: 52px;">💧</div>
+      <div><div class="serif" style="font-size: 42px; font-weight: 700; line-height: 1.1;">Fini le « verre d’eau »</div>
+      <div style="font-size: 28px; line-height: 1.35; color: var(--muted); margin-top: 8px;">L’eau du robinet ne s’ajoute plus à ta liste de courses.</div></div>
+    </div>
+    <div class="card" style="display:flex; gap: 28px; padding: 28px 32px; border-radius: 40px; color: var(--ink); align-items: center; box-shadow: 0 24px 50px rgba(0,0,0,.25);">
+      <div style="flex:none; width: 92px; height: 92px; border-radius: 26px; background: var(--accentSoft); display:grid; place-items:center; font-size: 52px;">📱</div>
+      <div><div class="serif" style="font-size: 42px; font-weight: 700; line-height: 1.1;">Lisible sur tous les iPhone</div>
+      <div style="font-size: 28px; line-height: 1.35; color: var(--muted); margin-top: 8px;">Le planning ne se coupe plus, même sur les petits écrans.</div></div>
+    </div>
+  </div>
+  <div style="position:absolute; left:0; right:0; top: 1420px; text-align:center;">
+    <div style="font-size: 32px; color: #D6E4DA; font-weight: 600;">Merci pour vos retours 💚</div>
+    <div class="serif" style="font-size: 50px; font-weight: 700; margin-top: 14px;">Mets à jour ici 👇</div>
+  </div>
+  <div id="linkzone" style="position:absolute; left: 230px; right: 230px; top: 1580px; height: 130px; border: 4px dashed rgba(242,165,120,.75); border-radius: 40px;"></div>
+</section>
+</body></html>
