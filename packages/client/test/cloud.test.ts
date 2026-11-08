@@ -129,6 +129,21 @@ describe('iCloud sync between the devices of one user (no server)', () => {
     expect(iphone.repos.items(list.id).find((i) => i.id === milk.id)?.data.checked).toBe(true);
   });
 
+  it('tells how many devices share this iCloud: an iPad alone on another account sees only itself', async () => {
+    await iphone.repos.createRecipe(recipe('Gratin'));
+    await iphone.cloud.sync();
+    expect(iphone.cloud.snapshot.devices).toBe(1);
+    await ipad.cloud.sync();
+    expect(ipad.cloud.snapshot.devices).toBe(2);
+    await iphone.cloud.sync();
+    expect(iphone.cloud.snapshot.devices).toBe(2);
+    // Another Apple account: another iCloud, nothing from the iPhone.
+    const other = await SimDevice.create('family-ipad', new FakeCloud(time), time);
+    await other.cloud.sync();
+    expect(other.cloud.snapshot.devices).toBe(1);
+    expect(other.repos.recipes().find((r) => r.data.title === 'Gratin')).toBeUndefined();
+  });
+
   it('a new device signed in to the same iCloud gets everything', async () => {
     const r = await iphone.repos.createRecipe(recipe('Ratatouille'));
     await iphone.repos.planMeal({ date: '2026-10-02', slot: 'dinner', recipeId: r.id });

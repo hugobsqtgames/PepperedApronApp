@@ -795,6 +795,8 @@ const en: Translations = {
     statusSyncing: 'Syncing…',
     statusSynced: 'Up to date in iCloud · {{time}}',
     openSettings: 'Open Settings',
+    devices_one: '1 device (this one)',
+    devices_other: '{{count}} devices',
     syncNow: 'Sync now',
   },
   time: {

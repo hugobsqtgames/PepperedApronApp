@@ -15,9 +15,13 @@ export function cloudStatusText(s: CloudSnapshot, t: TFunction, locale?: string)
     case 'syncing':
       return t('cloud.statusSyncing');
     case 'idle':
-      return s.lastSyncedAt
-        ? t('cloud.statusSynced', { time: formatRelativeTime(s.lastSyncedAt, t, locale) })
-        : t('cloud.statusSyncing');
+      if (!s.lastSyncedAt) return t('cloud.statusSyncing');
+      return [
+        t('cloud.statusSynced', { time: formatRelativeTime(s.lastSyncedAt, t, locale) }),
+        s.devices ? t('cloud.devices', { count: s.devices }) : null,
+      ]
+        .filter(Boolean)
+        .join(' · ');
   }
 }
 

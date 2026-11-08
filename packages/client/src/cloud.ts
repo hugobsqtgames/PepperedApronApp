@@ -47,6 +47,11 @@ export type CloudStatus = 'off' | 'unavailable' | 'syncing' | 'idle' | 'error';
 export interface CloudSnapshot {
   status: CloudStatus;
   lastSyncedAt: string | null;
+  /**
+   * Devices whose data is in this iCloud, this one included (after a sync): 1 on an iPad that
+   * should see an iPhone means another Apple account, or the iPhone has not uploaded yet.
+   */
+  devices: number | null;
 }
 
 export interface CloudSyncOptions {
@@ -77,7 +82,7 @@ export const isPhotoKey = (k: unknown): k is string =>
 export class CloudSync {
   private running: Promise<void> | null = null;
   private again = false;
-  private snap: CloudSnapshot = { status: 'idle', lastSyncedAt: null };
+  private snap: CloudSnapshot = { status: 'idle', lastSyncedAt: null, devices: null };
   private listeners = new Set<(s: CloudSnapshot) => void>();
   private readonly now: () => number;
 
@@ -131,9 +136,12 @@ export class CloudSync {
       const { complete } = await this.pull();
       const downloaded = await this.syncPhotos(complete);
       await this.push();
+      const devices = (await this.drive.list('devices')).filter((f) =>
+        f.name.endsWith('.json'),
+      ).length;
       const at = new Date(this.now()).toISOString();
       await this.store.setMeta('cloud_last_sync', at);
-      this.set({ status: 'idle', lastSyncedAt: at });
+      this.set({ status: 'idle', lastSyncedAt: at, devices });
       if (downloaded) this.store.notify(['recipe']);
       if (this.store.revision !== before || downloaded) this.o.onChanged?.();
     } catch (e) {

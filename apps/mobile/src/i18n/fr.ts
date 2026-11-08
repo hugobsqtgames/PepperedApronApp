@@ -802,6 +802,8 @@ const fr = {
     statusSyncing: 'Synchronisation…',
     statusSynced: 'À jour dans iCloud · {{time}}',
     openSettings: 'Ouvrir les Réglages',
+    devices_one: '1 appareil (celui-ci)',
+    devices_other: '{{count}} appareils',
     syncNow: 'Synchroniser maintenant',
   },
   time: {
