@@ -11,7 +11,8 @@ export function cloudStatusText(s: CloudSnapshot, t: TFunction, locale?: string)
     case 'unavailable':
       return t('cloud.statusUnavailable');
     case 'error':
-      return t('cloud.statusError');
+      // The system's own words help find the cause (iCloud Drive off, storage full…).
+      return s.error ? `${t('cloud.statusError')} (${s.error})` : t('cloud.statusError');
     case 'syncing':
       return t('cloud.statusSyncing');
     case 'idle':

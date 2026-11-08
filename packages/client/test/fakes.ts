@@ -28,6 +28,8 @@ export class FakeCloud {
   available = true;
   /** Paths whose next read fails (file still downloading, or half-written by its device). */
   unreadable = new Set<string>();
+  /** The next listing fails with this error (iCloud Drive turned off, storage full…). */
+  failNext: Error | null = null;
   constructor(private readonly time: TestTime) {}
 
   /** Like APFS, every write gets a distinct modification time. */
@@ -43,6 +45,11 @@ export class FakeCloud {
       isAvailable: async () => this.available,
       list: async (dir) => {
         check();
+        if (this.failNext) {
+          const e = this.failNext;
+          this.failNext = null;
+          throw e;
+        }
         const out: CloudEntry[] = [];
         for (const [p, f] of this.files)
           if (p.startsWith(`${dir}/`) && !p.slice(dir.length + 1).includes('/'))

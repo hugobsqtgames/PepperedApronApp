@@ -52,6 +52,8 @@ export interface CloudSnapshot {
    * should see an iPhone means another Apple account, or the iPhone has not uploaded yet.
    */
   devices: number | null;
+  /** Why the last run failed, as the system said it (shown to help find the cause). */
+  error: string | null;
 }
 
 export interface CloudSyncOptions {
@@ -82,7 +84,7 @@ export const isPhotoKey = (k: unknown): k is string =>
 export class CloudSync {
   private running: Promise<void> | null = null;
   private again = false;
-  private snap: CloudSnapshot = { status: 'idle', lastSyncedAt: null, devices: null };
+  private snap: CloudSnapshot = { status: 'idle', lastSyncedAt: null, devices: null, error: null };
   private listeners = new Set<(s: CloudSnapshot) => void>();
   private readonly now: () => number;
 
@@ -141,12 +143,13 @@ export class CloudSync {
       ).length;
       const at = new Date(this.now()).toISOString();
       await this.store.setMeta('cloud_last_sync', at);
-      this.set({ status: 'idle', lastSyncedAt: at, devices });
+      this.set({ status: 'idle', lastSyncedAt: at, devices, error: null });
       if (downloaded) this.store.notify(['recipe']);
       if (this.store.revision !== before || downloaded) this.o.onChanged?.();
     } catch (e) {
-      console.warn('[cloud] sync failed', (e as Error).message);
-      this.set({ status: 'error' });
+      const message = (e as Error)?.message ?? String(e);
+      console.warn('[cloud] sync failed', message);
+      this.set({ status: 'error', error: message.slice(0, 200) });
     }
   }
 

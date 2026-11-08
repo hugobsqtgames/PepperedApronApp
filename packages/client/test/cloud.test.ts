@@ -144,6 +144,18 @@ describe('iCloud sync between the devices of one user (no server)', () => {
     expect(other.repos.recipes().find((r) => r.data.title === 'Gratin')).toBeUndefined();
   });
 
+  it('a failed run says why, and the next good run clears it', async () => {
+    await iphone.repos.createRecipe(recipe('Gratin'));
+    icloud.failNext = new Error('The operation couldn’t be completed. (iCloud Drive is off)');
+    await iphone.cloud.sync();
+    expect(iphone.cloud.snapshot).toMatchObject({
+      status: 'error',
+      error: 'The operation couldn’t be completed. (iCloud Drive is off)',
+    });
+    await iphone.cloud.sync();
+    expect(iphone.cloud.snapshot).toMatchObject({ status: 'idle', error: null, devices: 1 });
+  });
+
   it('a new device signed in to the same iCloud gets everything', async () => {
     const r = await iphone.repos.createRecipe(recipe('Ratatouille'));
     await iphone.repos.planMeal({ date: '2026-10-02', slot: 'dinner', recipeId: r.id });
