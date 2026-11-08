@@ -1,0 +1,63 @@
+name: iCloud check
+
+# Read only: what Apple allows the app to do with iCloud. Prints the bundle id's capabilities
+# (App Store Connect API) and the iCloud entitlements inside the last finished EAS build (its
+# provisioning profile and its signed binary). Changes nothing.
+on:
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Bundle id capabilities
+        env:
+          KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+        run: |
+          node -e '
+            const fs = require("fs");
+            const body = (process.env.KEY_P8 || "")
+              .replace(/\\n/g, "\n")
+              .replace(/-----[^-]+-----/g, "")
+              .replace(/[^A-Za-z0-9+/=]/g, "");
+            const pem = "-----BEGIN PRIVATE KEY-----\n" + body.match(/.{1,64}/g).join("\n") + "\n-----END PRIVATE KEY-----\n";
+            fs.writeFileSync(process.env.RUNNER_TEMP + "/asc.json", JSON.stringify({
+              key_id: process.env.KEY_ID.trim(), issuer_id: process.env.ISSUER_ID.trim(), key: pem }));'
+          ASC_KEY_JSON="$RUNNER_TEMP/asc.json" node tools/store/capabilities.mjs app.pepperedapron.com || true
+          rm -f "$RUNNER_TEMP/asc.json"
+      - uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+      - name: Entitlements of the last build
+        working-directory: apps/mobile
+        env:
+          APP_VARIANT: production
+        run: |
+          eas build:list --platform ios --status finished --limit 1 --json --non-interactive > "$RUNNER_TEMP/builds.json"
+          node -e 'const b=require(process.argv[1])[0]; console.log("build", b.appBuildVersion, b.appVersion, b.gitCommitHash); require("fs").writeFileSync(process.env.RUNNER_TEMP+"/url", b.artifacts.buildUrl)' "$RUNNER_TEMP/builds.json"
+          curl -sSL -o "$RUNNER_TEMP/app.ipa" "$(cat "$RUNNER_TEMP/url")"
+          mkdir -p "$RUNNER_TEMP/ipa" && unzip -q "$RUNNER_TEMP/app.ipa" -d "$RUNNER_TEMP/ipa"
+          APP=$(ls -d "$RUNNER_TEMP"/ipa/Payload/*.app)
+          echo "--- provisioning profile entitlements"
+          openssl smime -inform der -verify -noverify -in "$APP/embedded.mobileprovision" 2>/dev/null \
+            | python3 -c 'import plistlib,sys; p=plistlib.loads(sys.stdin.buffer.read()); print(p["Name"], p.get("TeamName")); [print(" ",k,"=",v) for k,v in p["Entitlements"].items()]'
+          echo "--- entitlements signed into the app"
+          BIN="$APP/$(basename "$APP" .app)"
+          python3 - "$BIN" <<'PY'
+          import sys, re
+          data = open(sys.argv[1], 'rb').read()
+          for m in re.finditer(rb'<\?xml[^>]*>\s*<!DOCTYPE plist.*?</plist>', data, re.S):
+              t = m.group(0).decode('utf-8', 'replace')
+              if 'icloud' in t or 'application-groups' in t:
+                  print(t)
+          PY
