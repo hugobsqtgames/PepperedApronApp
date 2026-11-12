@@ -43,7 +43,8 @@ export function sentencesOf(text: string): string[] {
     const end = m.index + m[0].length;
     const before = text.slice(start, m.index);
     const last = normalizeText(before.split(/\s+/).pop() ?? '').replace(/[^a-z0-9]/g, '');
-    const after = text.slice(end).trimStart();
+    // Only the start of what follows matters (and long texts stay fast).
+    const after = text.slice(end, end + 120).trimStart();
     // "4.5 kg", "1. Couper": a number, not a sentence end.
     if (/\d$/.test(before) && /^\d/.test(after)) continue;
     if (m[0] === '.' && ABBREVIATION.has(last) && !/^\p{Lu}/u.test(after)) continue;
@@ -61,14 +62,15 @@ export function sentencesOf(text: string): string[] {
 
 /** The clauses of one sentence that each are an instruction. */
 export function clausesOf(sentence: string): string[] {
-  if (sentence.length < LONG_SENTENCE) return [sentence];
+  // Not a sentence a person wrote: left as it is.
+  if (sentence.length < LONG_SENTENCE || sentence.length > 1500) return [sentence];
   const pieces: string[] = [];
   let start = 0;
   CLAUSE_CUT.lastIndex = 0;
   for (let m = CLAUSE_CUT.exec(sentence); m; m = CLAUSE_CUT.exec(sentence)) {
     const end = m.index + m[0].length;
     const head = sentence.slice(start, m.index);
-    const rest = sentence.slice(end);
+    const rest = sentence.slice(end, end + 160);
     // "sel et poivre", "la farine et la levure": "et"/"and" only before a verb itself.
     const plainAnd = /^\s+(et|and)\s+$/i.test(m[0]);
     if (!startsWithAction(rest, plainAnd)) continue;
