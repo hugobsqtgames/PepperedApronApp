@@ -143,7 +143,7 @@ const buildConfig = ({ config }: ConfigContext): ExpoConfig => ({
   // iPhone and iPad only.
   platforms: ['ios'],
   scheme: 'pepperedapron',
-  version: '2.0.2',
+  version: '2.0.3',
   orientation: 'default',
   icon: './assets/icon.png',
   userInterfaceStyle: 'automatic',
