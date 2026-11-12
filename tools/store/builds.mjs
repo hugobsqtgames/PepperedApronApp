@@ -13,3 +13,16 @@ for (const b of list.data) {
       `${a.expired ? ' · expired' : ''} · min iOS ${a.minOsVersion ?? '?'}`,
   );
 }
+
+// The versions on the App Store side (read-only): which are live, in review, being prepared,
+// and the version numbers TestFlight has builds for.
+const versions = await api(
+  'GET',
+  `/v1/apps/${app.id}/appStoreVersions?filter[platform]=IOS&limit=10&fields[appStoreVersions]=versionString,appStoreState,appVersionState,createdDate`,
+);
+for (const v of versions.data)
+  console.info(
+    `version ${v.attributes.versionString} · ${v.attributes.appVersionState ?? v.attributes.appStoreState} · created ${v.attributes.createdDate}`,
+  );
+const pre = await api('GET', `/v1/preReleaseVersions?filter[app]=${app.id}&limit=10&sort=-version`);
+console.info(`testflight versions: ${pre.data.map((p) => p.attributes.version).join(', ')}`);
