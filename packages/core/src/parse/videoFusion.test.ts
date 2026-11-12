@@ -600,3 +600,72 @@ describe('hooks and titles (feedback: "la phrase d’accroche devient la premiè
     expect(chooseVideoRecipe(f, g).draft.title).toBe('Spaghetti carbonara');
   });
 });
+
+describe('seen when checking 5 generated videos by eye', () => {
+  it('a step written over two lines on the video is one step, not two pieces', () => {
+    const line = (text: string, y: number) => ({
+      text,
+      confidence: 0.9,
+      x: 0.1,
+      y,
+      width: 0.5,
+      height: 0.04,
+    });
+    const f = trackScreenText(
+      [1, 3, 5].map((time) => ({
+        time,
+        lines: [line('Melt the butter in a', 0.2), line('large pan over medium heat.', 0.245)],
+      })),
+    );
+    expect(f.map((t) => t.text)).toEqual(['Melt the butter in a large pan over medium heat.']);
+    // Two texts one under the other (a hook over the dish's name) stay two.
+    const g = trackScreenText([
+      { time: 1, lines: [line('YOU NEED TO TRY THIS', 0.06), line('GARLIC BUTTER SHRIMP', 0.11)] },
+    ]);
+    expect(g.map((t) => t.text)).toEqual(['YOU NEED TO TRY THIS', 'GARLIC BUTTER SHRIMP']);
+  });
+
+  it('a text read in capitals on some pictures keeps its written case', () => {
+    const f = fuseVideoRecipe({
+      caption: caption({}),
+      screen: [1, 3, 5, 7].map((time, i) => ({
+        time,
+        lines: [
+          {
+            text: i % 2 ? '1 KG DE POMMES DE TERRE' : '1 kg de pommes de terre',
+            confidence: 0.9,
+            x: 0.1,
+            y: 0.3,
+            width: 0.5,
+            height: 0.04,
+          },
+        ],
+      })),
+      speech: [],
+    });
+    expect(f.draft.ingredients[0]).toMatchObject({
+      quantity: 1,
+      unit: 'kg',
+      name: 'pommes de terre',
+    });
+  });
+
+  it('what is said around an instruction is left out of the step', () => {
+    const f = fuseVideoRecipe({
+      caption: caption({}),
+      screen: [],
+      speech: speech(
+        'Ensuite on va éplucher et couper les pommes de terre en fines rondelles.',
+        'Et là il faut faire chauffer la crème et le lait avec l’ail.',
+        'Now you want to add the shrimp and cook until pink.',
+        'Ensuite on ajoute le fromage râpé.',
+      ),
+    });
+    expect(f.draft.steps.map((s) => s.text)).toEqual([
+      'Éplucher et couper les pommes de terre en fines rondelles.',
+      'Faire chauffer la crème et le lait avec l’ail.',
+      'Add the shrimp and cook until pink.',
+      'On ajoute le fromage râpé.',
+    ]);
+  });
+});

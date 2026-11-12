@@ -2,7 +2,7 @@ import { parseTimerSeconds } from '../duration';
 import { ingredientKey, normalizeText, singularize, tokenize } from '../text';
 import type { DraftIngredient, DraftStep, RecipeDraft } from './draft';
 import { parseIngredientLine } from './ingredient';
-import { paragraphsFromLines, type PlacedLine } from './ocrLayout';
+import type { PlacedLine } from './ocrLayout';
 import { cleanTitle, dishPhrase, isHook, isHookSentence } from './title';
 import { isCookingStep, recipeFromTranscript, SPOKEN_NUMBERS } from './transcript';
 
@@ -232,18 +232,14 @@ export function trackScreenText(frames: ScreenFrame[]): ScreenText[] {
   }
   const tracks: Track[] = [];
   for (const frame of sorted) {
-    const lines = frame.lines.filter((l) => l.text.trim());
-    // Lines of one block written over several lines ("Faire revenir l'oignon / 5 minutes")
-    // become one text, as on a printed page.
-    const blocks = paragraphsFromLines(lines)
-      .split('\n')
-      .map((t) => t.trim())
-      .filter(Boolean);
+    // A text written over two lines is one text; two texts one under the other (a hook over the
+    // dish's name) stay two: unlike a printed page, overlays are short and stacked.
+    const lines = joinContinuations(frame.lines.filter((l) => l.text.trim()));
     const used = new Set<Track>();
-    for (const text of blocks) {
-      const src = lines.find((l) => text.startsWith(l.text.trim())) ?? lines[0];
-      const conf = src?.confidence ?? 0.8;
-      const y = src ? src.y : 0.5;
+    for (const src of lines) {
+      const text = src.text.replace(/\s+/g, ' ').trim();
+      const conf = src.confidence ?? 0.8;
+      const y = src.y;
       let best: Track | null = null;
       let bestSim = 0.78;
       for (const t of tracks) {
@@ -277,7 +273,7 @@ export function trackScreenText(frames: ScreenFrame[]): ScreenText[] {
   }
   const out: ScreenText[] = [];
   for (const t of tracks) {
-    const text = [...t.variants.entries()].sort((a, b) => b[1] - a[1])[0]![0];
+    const text = bestReading(t.variants);
     const conf = t.conf / t.frames;
     // Read once, unsure: a blur, a reflection, half a word.
     if (t.frames === 1 && conf < 0.5) continue;
@@ -293,7 +289,79 @@ export function trackScreenText(frames: ScreenFrame[]): ScreenText[] {
     const weight = Math.min(1, conf * (0.55 + 0.15 * Math.min(t.frames, 3)));
     out.push({ text, kind, first: t.first, last: t.last, frames: t.frames, weight, y: t.y });
   }
-  return out.sort((a, b) => a.first - b.first || a.y - b.y);
+  // A piece of a longer text shown at the same time ("Melt the butter in a" of "Melt the butter
+  // in a large pan…") is not a text of its own.
+  const norm = (x: string) =>
+    normalizeText(x)
+      .replace(/[^\p{L}\p{N} ]/gu, '')
+      .trim();
+  const kept = out.filter(
+    (a) =>
+      !out.some(
+        (b) =>
+          b !== a &&
+          b.text.length > a.text.length + 3 &&
+          b.first <= a.last + gap &&
+          a.first <= b.last + gap &&
+          norm(b.text).includes(norm(a.text)),
+      ),
+  );
+  return kept.sort((a, b) => a.first - b.first || a.y - b.y);
+}
+
+/**
+ * Lines of one picture that continue each other ("Melt the butter in a" / "large pan over
+ * medium heat."): the next one starts with a small letter or the first ends on a small word,
+ * and it sits right under it.
+ */
+function joinContinuations(lines: ScreenLine[]): ScreenLine[] {
+  const sorted = [...lines].sort((a, b) => a.y - b.y);
+  const out: ScreenLine[] = [];
+  for (const l of sorted) {
+    const prev = out[out.length - 1];
+    const text = l.text.trim();
+    if (prev) {
+      const gapY = l.y - (prev.y + prev.height);
+      const below = gapY >= -0.01 && gapY < Math.max(prev.height, l.height) * 1.2;
+      const aligned = Math.abs(l.x - prev.x) < 0.12;
+      const lastWord = normalizeText(prev.text.trim().split(/\s+/).pop() ?? '');
+      const opens = /[.!?:;…)]$/.test(prev.text.trim());
+      const continues =
+        /^\p{Ll}/u.test(text) ||
+        (!opens &&
+          /^(a|an|the|of|and|in|on|with|de|du|des|la|le|les|un|une|et|a|au|aux|dans|sur|avec|en|pour|puis)$/.test(
+            lastWord,
+          ));
+      if (below && aligned && !opens && continues) {
+        out[out.length - 1] = {
+          ...prev,
+          text: `${prev.text.trim()} ${text}`,
+          width: Math.max(prev.width, l.width),
+          height: l.y + l.height - prev.y,
+          confidence: Math.min(prev.confidence ?? 0.8, l.confidence ?? 0.8),
+        };
+        continue;
+      }
+    }
+    out.push(l);
+  }
+  return out;
+}
+
+/** The reading kept for a text: seen most (case aside), in its written case rather than capitals. */
+function bestReading(variants: Map<string, number>): string {
+  const byKey = new Map<string, { score: number; forms: [string, number][] }>();
+  for (const [text, score] of variants) {
+    const k = normalizeText(text);
+    const e = byKey.get(k) ?? { score: 0, forms: [] };
+    e.score += score;
+    e.forms.push([text, score]);
+    byKey.set(k, e);
+  }
+  const best = [...byKey.values()].sort((a, b) => b.score - a.score)[0]!;
+  const mixed = best.forms.filter(([t]) => t !== t.toUpperCase());
+  const pool = mixed.length ? mixed : best.forms;
+  return pool.sort((a, b) => b[1] - a[1])[0]![0];
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -421,8 +489,18 @@ export function stepsQuality(steps: { text: string }[], ingredients: DraftIngred
   return count * (0.3 + cooking) * (0.6 + 0.4 * coverage) * shape;
 }
 
+/**
+ * What is said around an instruction: "Ensuite on va éplucher…", "Et là il faut faire chauffer…",
+ * "Now you want to add…" → "Éplucher…", "Faire chauffer…", "Add…".
+ */
+const SPOKEN_LEAD =
+  /^(?:(?:et|alors|ensuite|puis|apres|après|maintenant|donc|bon|ok|voila|voilà|et puis|et la|et là|la|là|enfin|now|then|so|next|and|after that|okay|ok so)[\s,]+)*(?:(?:on va|il faut|il va falloir|tu vas|vous allez|je vais|we(?:'re going to| are going to)?|you(?:'re going to| want to| need to| are going to)?|i(?:'m going to| am going to)?|let's)\s+)?/i;
+
 const step = (text: string): DraftStep => {
-  const clean = text.replace(STEP_NUMBER, '').trim();
+  let clean = text.replace(STEP_NUMBER, '').trim();
+  const lead = SPOKEN_LEAD.exec(clean)?.[0] ?? '';
+  // Only when what is left is still an instruction ("Ensuite on ajoute" stays as it is).
+  if (lead && isCookingStep(clean.slice(lead.length))) clean = clean.slice(lead.length);
   const t = clean.charAt(0).toUpperCase() + clean.slice(1);
   return { group: null, text: t, timerSeconds: parseTimerSeconds(t), timerLabel: null };
 };
@@ -510,7 +588,10 @@ export function pickVideoTitle(p: {
     .join('. ');
   const inCaption = asTitle(dishPhrase(opening));
   if (inCaption) return { title: inCaption, from: 'caption' };
-  for (const t of p.screen.filter((x) => x.kind !== 'chrome' && x.text.split(/\s+/).length <= 8)) {
+  // Only texts that are neither an ingredient nor a step ("2 c. à soupe de curry" is no soup).
+  for (const t of p.screen.filter(
+    (x) => (x.kind === 'title' || x.kind === 'other') && x.text.split(/\s+/).length <= 8,
+  )) {
     const d = asTitle(dishPhrase(t.text));
     if (d) return { title: d, from: 'screen' };
   }
@@ -571,7 +652,7 @@ export function fuseVideoRecipe(ev: VideoEvidence): FusedRecipe {
       .map((t) => ({ s: step(t.text), t: t.first })),
     speech: spoken.steps
       .filter(notHook)
-      .map((s) => ({ s, t: timeOfSpoken(s.text, ev.speech) }))
+      .map((s) => ({ s: step(s.text), t: timeOfSpoken(s.text, ev.speech) }))
       .sort((a, b) => a.t - b.t),
   };
   const stepScores: Partial<Record<VideoSource, number>> = {};

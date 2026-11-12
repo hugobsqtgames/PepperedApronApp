@@ -57,6 +57,9 @@ export function dishPhrase(text: string): string | null {
   const norm = ws.map((w) => normalizeText(w).replace(/['’]/g, ''));
   for (let i = 0; i < ws.length; i++) {
     if (!DISH_HEADS.has(norm[i]!)) continue;
+    // "cuillère à soupe", "dans une casserole": a measure or a pan, not the dish.
+    const before = norm[i - 1] ?? '';
+    if (before === 'a' || (i > 1 && norm[i - 2] === 'dans')) continue;
     const out: string[] = [ws[i]!];
     let j = i + 1;
     for (; j < ws.length && out.length < 7; j++) {

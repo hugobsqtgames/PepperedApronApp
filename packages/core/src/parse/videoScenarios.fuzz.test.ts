@@ -534,11 +534,32 @@ function run(seed: number): Score {
   const shownTitle = frames.some((f) =>
     f.lines.some((l) => contentWords(l.text).join(' ') === contentWords(t.title).join(' ')),
   );
-  const fused = fuseVideoRecipe({
-    caption: draft,
-    screen: frames,
-    speech: mute ? [] : speech(r, t, ingAt.includes('speech'), stepAt.includes('speech')),
-  }).draft;
+  const said = mute ? [] : speech(r, t, ingAt.includes('speech'), stepAt.includes('speech'));
+  const full = fuseVideoRecipe({ caption: draft, screen: frames, speech: said });
+  const fused = full.draft;
+  if (process.env.DUMP_VIDEOS)
+    samples.push({
+      seed,
+      klass: `ingr:${ingAt.join('+')} steps:${stepAt.join('+')}${mute ? ' (music)' : ''}`,
+      truth: t,
+      caption: text,
+      // What the text reader saw, each line once with when it first appeared.
+      screen: [
+        ...new Map(
+          frames.flatMap((f) => f.lines.map((l) => [l.text, `${f.time}s · ${l.text}`] as const)),
+        ).values(),
+      ],
+      speech: said.map((x) => `${x.start}s · ${x.text}`),
+      result: {
+        title: fused.title,
+        ingredients: fused.ingredients.map((i) =>
+          [i.quantity, i.unit, i.name].filter((x) => x !== null).join(' '),
+        ),
+        steps: fused.steps.map((x) => x.text),
+      },
+      report: full.report,
+      screenKept: full.screen.map((x) => `${x.kind}: ${x.text}`),
+    });
   const got = fused.ingredients.map((i) => i.name);
   if (process.env.DEBUG_VIDEO && ingAt.join() === 'caption' && seed < 400) {
     const missed = t.ingredients.filter(
@@ -586,6 +607,17 @@ function run(seed: number): Score {
   const noise = [...got, ...fused.steps.map((s) => s.text)].filter((x) => NOISE.test(x));
   // A hook is never a step, and never the title.
   for (const st of fused.steps) if (isHookSentence(st.text)) noise.push(`hook step: ${st.text}`);
+  // No step twice, no piece of a step.
+  fused.steps.forEach((st, i) => {
+    if (!isCookingStep(st.text)) noise.push(`not a step: ${st.text}`);
+    const ws = contentWords(st.text);
+    for (const other of fused.steps.slice(i + 1)) {
+      const os = contentWords(other.text);
+      const shared = ws.filter((w) => os.includes(w)).length;
+      if (shared >= Math.max(3, Math.min(ws.length, os.length) * 0.8))
+        noise.push(`twice: ${st.text} / ${other.text}`);
+    }
+  });
   const title = fused.title ?? '';
   if (!title || isHook(title) || isHookSentence(title) || /\p{Extended_Pictographic}/u.test(title))
     noise.push(`bad title: ${title}`);
@@ -608,6 +640,8 @@ function run(seed: number): Score {
     seed,
   };
 }
+
+const samples: unknown[] = [];
 
 describe('every kind of recipe video', () => {
   it(`${N} generated videos: what is there is found, nothing is invented`, () => {
@@ -674,7 +708,13 @@ describe('every kind of recipe video', () => {
   });
 });
 
-afterAll(() => console.info(`QA-COUNT core.fuzz.videos.cases ${casesRun()}`));
+afterAll(async () => {
+  console.info(`QA-COUNT core.fuzz.videos.cases ${casesRun()}`);
+  if (process.env.DUMP_VIDEOS) {
+    const fs = await import('node:fs');
+    fs.writeFileSync(process.env.DUMP_VIDEOS, JSON.stringify(samples, null, 1));
+  }
+});
 
 describe('captions written every way (found by the generator)', () => {
   const names = (t: string) =>
