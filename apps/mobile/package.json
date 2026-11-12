@@ -93,6 +93,7 @@
           "text-vision",
           "voice-commands",
           "ios-integration",
+          "recipe-model",
           "expo-text-extractor"
         ]
       }

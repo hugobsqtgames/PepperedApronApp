@@ -2,22 +2,35 @@ import { Directory, File, Paths } from 'expo-file-system';
 import {
   importFromUrl,
   ingredientsFromScreenText,
-  mergeIngredients,
   bestTitle,
+  chooseVideoRecipe,
+  fuseVideoRecipe,
+  fusionSummary,
+  groundModelRecipe,
   isHook,
+  modelPrompt,
   pruneCaptionNotes,
   recipeFromTranscript,
-  takeSpokenSteps,
   titleFromScreen,
   uuidv7,
   type DraftIngredient,
   type FetchPage,
   type ImportResult,
+  type RecipeDraft,
+  type ScreenFrame,
+  type SpeechSegment,
+  type VideoEvidence,
 } from '@pepperedapron/core';
-import { transcribeVideo, videoFrames, videoSpeechAvailable } from '../../modules/video-speech';
+import {
+  transcribeVideo,
+  transcribeVideoTimed,
+  videoFrames,
+  videoSpeechAvailable,
+} from '../../modules/video-speech';
+import { recipeModelAvailability, structureRecipe } from '../../modules/recipe-model';
 import i18n from '../i18n';
 import { pickFrames } from '../lib/frames';
-import { ocrSupported, readTextFromImage } from './ocr';
+import { ocrSupported, readTextFromImage, readTextLines } from './ocr';
 
 const TIMEOUT_MS = 12_000;
 const MAX_CHARS = 3_000_000;
@@ -109,12 +122,22 @@ function listenError(e: unknown): VideoListenError {
 export async function transcribeFile(
   uri: string,
   language?: string | null,
-): Promise<{ lines: string[] } | { error: VideoListenError }> {
+): Promise<{ lines: string[]; phrases: SpeechSegment[] } | { error: VideoListenError }> {
   if (!videoSpeechAvailable) return { error: 'unsupported' };
   const lang = (language ?? i18n.language.slice(0, 2)) as SpeechLanguage;
+  const locale = SPEECH_LOCALES[lang] ?? 'fr-FR';
   try {
-    const lines = await transcribeVideo(uri, SPEECH_LOCALES[lang] ?? 'fr-FR');
-    return lines.length ? { lines } : { error: 'noAudio' };
+    // With the time of each phrase when the build has it (the fusion orders steps by it).
+    const phrases: SpeechSegment[] =
+      typeof transcribeVideoTimed === 'function'
+        ? await transcribeVideoTimed(uri, locale)
+        : (await transcribeVideo(uri, locale)).map((text, i) => ({
+            text,
+            start: i * 4,
+            end: i * 4 + 4,
+          }));
+    const lines = phrases.map((p) => p.text).filter(Boolean);
+    return lines.length ? { lines, phrases } : { error: 'noAudio' };
   } catch (e) {
     return { error: listenError(e) };
   }
@@ -129,13 +152,19 @@ export async function transcribeBest(
   uri: string,
   guessed?: string | null,
 ): Promise<
-  | { lines: string[]; spoken: ReturnType<typeof recipeFromTranscript>; language: string }
+  | {
+      lines: string[];
+      phrases: SpeechSegment[];
+      spoken: ReturnType<typeof recipeFromTranscript>;
+      language: string;
+    }
   | { error: VideoListenError }
 > {
   const app = i18n.language.slice(0, 2);
   const tries = [...new Set([guessed ?? app, app])].filter((l) => l in SPEECH_LOCALES);
   let best: {
     lines: string[];
+    phrases: SpeechSegment[];
     spoken: ReturnType<typeof recipeFromTranscript>;
     language: string;
   } | null = null;
@@ -156,7 +185,7 @@ export async function transcribeBest(
     const spoken = recipeFromTranscript(heard.lines);
     const score = spoken.steps.length * 2 + spoken.ingredients.length;
     if (!best || score > best.spoken.steps.length * 2 + best.spoken.ingredients.length)
-      best = { lines: heard.lines, spoken, language };
+      best = { lines: heard.lines, phrases: heard.phrases, spoken, language };
     // Heard in the app's language with steps: that is the one (another would only cost time).
     if (language === app && best.language === app && best.spoken.steps.length) break;
   }
@@ -170,12 +199,14 @@ export interface VideoPictures {
   title?: string | null;
   /** Up to 6 pictures of the video for the recipe photo, sharpest and best exposed first. */
   frames: string[];
+  /** The text read on each picture, with its place and time (for the fusion). */
+  screen?: ScreenFrame[];
 }
 
 /** Pictures taken from a video: about one every 2 s of a one-minute reel. */
 const FRAMES_PER_VIDEO = 30;
 /** Pictures whose text is read (the slow part): text on a reel stays several seconds. */
-const FRAMES_READ = 20;
+const FRAMES_READ = 24;
 
 /**
  * Look at a video on the device: about one picture every 2 seconds, the text written on 20 of them read
@@ -186,13 +217,22 @@ export async function readVideoPictures(uri: string): Promise<VideoPictures> {
   try {
     const frames = await videoFrames(uri, FRAMES_PER_VIDEO);
     const texts: string[][] = [];
+    const screen: ScreenFrame[] = [];
     // Evenly spread over the video, so a text shown only at the end is still seen.
     const step = Math.max(1, frames.length / FRAMES_READ);
     const toRead = frames.filter((_, i) => i % step < 1).slice(0, FRAMES_READ);
     if (await ocrSupported())
       for (const f of toRead) {
         try {
-          texts.push((await readTextFromImage(f.uri)).split('\n'));
+          // With the place of each line and how sure the reader is, when the build has it.
+          const placed = await readTextLines(f.uri);
+          const lines = placed
+            ? placed
+            : (await readTextFromImage(f.uri))
+                .split('\n')
+                .map((text) => ({ text, x: 0, y: 0, width: 0, height: 0 }));
+          texts.push(lines.map((l) => l.text));
+          screen.push({ time: f.time, lines });
         } catch {
           // An unreadable picture: the others still count.
         }
@@ -210,10 +250,81 @@ export async function readVideoPictures(uri: string): Promise<VideoPictures> {
       ingredients: ingredientsFromScreenText(texts),
       title: titleFromScreen(texts),
       frames: kept,
+      screen,
     };
   } catch {
     return { ingredients: [], frames: [] };
   }
+}
+
+/** What the on-device model is told (the evidence follows in the prompt). */
+const MODEL_INSTRUCTIONS = [
+  'Tu es un assistant de cuisine. Tu reçois trois sources sur une même recette en vidéo : le texte de la publication, le texte écrit sur la vidéo (avec l’instant où il apparaît) et ce qui est dit dans la vidéo (avec l’instant).',
+  'Compare les trois et écris la recette complète.',
+  'Règles : utilise uniquement ce que disent les sources. N’invente aucun ingrédient, aucune quantité, aucune étape.',
+  'Quand les quantités diffèrent, préfère celle qui est écrite (publication ou vidéo) à celle qui est entendue.',
+  'Ignore les salutations, les appels à s’abonner, les noms de compte et le nom des applications.',
+  'Les étapes sont des instructions courtes, dans l’ordre de la vidéo. Écris dans la langue de la recette.',
+].join('\n');
+
+/** The model may take a while on a long video: past this, the fused version is kept. */
+const MODEL_TIMEOUT_MS = 30_000;
+
+/**
+ * The post, the text on the video and what is said put together (see fuseVideoRecipe), then,
+ * when the iPhone has Apple's on-device model, its version checked against the three sources
+ * and taken where it is better. Returns the recipe and lines for the import log.
+ */
+export async function fuseVideo(
+  caption: RecipeDraft,
+  pictures: VideoPictures,
+  phrases: SpeechSegment[],
+): Promise<{ draft: RecipeDraft; trace: string[]; spokenText: string }> {
+  const evidence: VideoEvidence = { caption, screen: pictures.screen ?? [], speech: phrases };
+  const fused = fuseVideoRecipe(evidence);
+  const trace: string[] = [];
+  let fromModel: string[] = [];
+  let draft = fused.draft;
+  const worthAsking = fused.screen.some((t) => t.kind !== 'chrome') || phrases.length > 0;
+  const availability = worthAsking ? await recipeModelAvailability() : 'unavailable:nothing';
+  if (availability === 'available') {
+    try {
+      const answer = await Promise.race([
+        structureRecipe(MODEL_INSTRUCTIONS, modelPrompt(evidence, fused)),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('timeout')), MODEL_TIMEOUT_MS),
+        ),
+      ]);
+      const grounded = groundModelRecipe(
+        {
+          title: answer.title ?? null,
+          servings: answer.servings ?? null,
+          ingredients: (answer.ingredients ?? []).map((i) => ({
+            name: i.name,
+            quantity: i.quantity ?? null,
+            unit: i.unit ?? null,
+          })),
+          steps: answer.steps ?? [],
+        },
+        evidence,
+        fused,
+      );
+      const chosen = chooseVideoRecipe(fused, grounded);
+      draft = chosen.draft;
+      fromModel = chosen.fromModel;
+      trace.push(`model: ${grounded.dropped.length} invented line(s) dropped`);
+    } catch (e) {
+      trace.push(`model: ${(e as Error).message.slice(0, 80)}`);
+    }
+  } else trace.push(`model: ${availability}`);
+  trace.unshift(fusionSummary(fused, fromModel));
+  // The dish named in the caption's hook or in what is said, when nothing better was found.
+  if (!draft.title || isHook(draft.title))
+    draft = {
+      ...draft,
+      title: bestTitle({ captionFirst: draft.title, speech: fused.spokenText }) ?? draft.title,
+    };
+  return { draft, trace, spokenText: fused.spokenText };
 }
 
 /**
@@ -221,9 +332,12 @@ export async function readVideoPictures(uri: string): Promise<VideoPictures> {
  * written on it) and, when the caption lacks ingredients or steps, transcribe it with the
  * phone's on-device speech recognition to complete them. The video is then deleted.
  */
-export async function listenToVideo(
-  res: ImportResult,
-): Promise<{ result: ImportResult; error: VideoListenError | null; frames: string[] }> {
+export async function listenToVideo(res: ImportResult): Promise<{
+  result: ImportResult;
+  error: VideoListenError | null;
+  frames: string[];
+  trace?: string[];
+}> {
   if (!res.videoUrl) return { result: res, error: null, frames: [] };
   if (!videoSpeechAvailable) return { result: res, error: 'unsupported', frames: [] };
   const dir = new Directory(Paths.cache, 'video-import');
@@ -240,43 +354,33 @@ export async function listenToVideo(
       await File.downloadFileAsync(res.videoUrl, video);
     }
     pictures = await readVideoPictures(video.uri);
-    const draft = { ...res.draft };
-    draft.ingredients = mergeIngredients(draft.ingredients, pictures.ingredients);
-    // The name written on the video beats the caption's hook.
-    if (pictures.title) draft.title = bestTitle({ screen: pictures.title });
-    const seen = pictures.ingredients.length > 0;
-    // The caption has the whole recipe: the video only gives its pictures (the photo).
-    if (res.listen === false)
-      return { result: { ...res, draft }, error: null, frames: pictures.frames };
-    const heard = await transcribeBest(video.uri, res.language);
-    if ('error' in heard)
+    // The caption has the whole recipe: the video only gives its pictures and its text.
+    const heard = res.listen === false ? null : await transcribeBest(video.uri, res.language);
+    const phrases = heard && !('error' in heard) ? heard.phrases : [];
+    const { draft, trace, spokenText } = await fuseVideo(res.draft, pictures, phrases);
+    const found = phrases.length > 0 && (draft.steps.length > 0 || draft.ingredients.length > 0);
+    if (heard === null)
+      return { result: { ...res, draft }, error: null, frames: pictures.frames, trace };
+    if ('error' in heard) {
+      const seen = draft.ingredients.length > res.draft.ingredients.length;
       return {
         result: seen ? { ...res, draft, completeness: 'partial' } : res,
         error: heard.error,
         frames: pictures.frames,
+        trace,
       };
-    const spoken = heard.spoken;
-    // The ingredients said only when the caption has none (it lists them with their quantities:
-    // "crevettes" heard next to "Crevettes crues" written was a double). Quantities written on
-    // the video are more precise than what is said: they come first.
-    if (!res.draft.ingredients.length)
-      draft.ingredients = mergeIngredients(draft.ingredients, spoken.ingredients);
-    // Steps said in the video when the caption has none, or only comments ("BON AP LES AMIS").
-    takeSpokenSteps(draft, spoken.steps);
-    // Still a hook as the title: the dish named in what is said ("je vous fais des pennes au…").
-    if (!pictures.title && (!draft.title || isHook(draft.title)))
-      draft.title = bestTitle({ captionFirst: draft.title, speech: spoken.text }) ?? draft.title;
+    }
     if (draft.ingredients.length && draft.steps.length)
       // Complete now: the notes keep only what the recipe does not already say.
       draft.notes = pruneCaptionNotes(draft.notes, draft);
     // Nothing usable heard: the transcript stays in the notes, to complete the recipe by hand.
-    else
-      draft.notes = [draft.notes, `🎙️ ${spoken.text}`].filter(Boolean).join('\n\n').slice(0, 5000);
-    const found = spoken.ingredients.length > 0 || spoken.steps.length > 0;
+    else if (spokenText)
+      draft.notes = [draft.notes, `🎙️ ${spokenText}`].filter(Boolean).join('\n\n').slice(0, 5000);
     return {
       result: { ...res, draft, fromSpeech: found, completeness: 'partial' },
       error: null,
       frames: pictures.frames,
+      trace,
     };
   } catch (e) {
     return { result: res, error: listenError(e), frames: pictures.frames };
@@ -367,7 +471,8 @@ export async function importLinkFull(
   );
   if (!res.videoUrl) return { result: res, listenError: null, offline, frames: [], trace };
   onListening();
-  const { result, error, frames } = await listenToVideo(res);
+  const { result, error, frames, trace: fusion } = await listenToVideo(res);
+  trace.push(...(fusion ?? []));
   trace.push(
     error
       ? `video: ${error}`

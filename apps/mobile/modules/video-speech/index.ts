@@ -16,8 +16,17 @@ export interface VideoFrame {
   score: number;
 }
 
+/** A phrase said in the video, with when (seconds) and how sure the recognition is (0–1). */
+export interface SpokenPhrase {
+  text: string;
+  start: number;
+  end: number;
+  confidence: number;
+}
+
 interface VideoSpeechNative {
   transcribe(videoUri: string, language: string): Promise<string[]>;
+  transcribeTimed?(videoUri: string, language: string): Promise<SpokenPhrase[]>;
   frames(videoUri: string, count: number): Promise<VideoFrame[]>;
 }
 
@@ -29,6 +38,21 @@ export function transcribeVideo(videoUri: string, language: string): Promise<str
   if (!native)
     return Promise.reject(Object.assign(new Error('unsupported'), { code: 'ERR_UNSUPPORTED' }));
   return native.transcribe(videoUri, language);
+}
+
+/**
+ * The phrases with their times. Builds made before this function only give the text: the
+ * phrases then come one every 4 seconds, in order (the timeline is only used for ordering).
+ */
+export async function transcribeVideoTimed(
+  videoUri: string,
+  language: string,
+): Promise<SpokenPhrase[]> {
+  if (!native)
+    return Promise.reject(Object.assign(new Error('unsupported'), { code: 'ERR_UNSUPPORTED' }));
+  if (native.transcribeTimed) return native.transcribeTimed(videoUri, language);
+  const lines = await native.transcribe(videoUri, language);
+  return lines.map((text, i) => ({ text, start: i * 4, end: i * 4 + 4, confidence: 0 }));
 }
 
 /** About one picture per second (at most `count`), saved in the caches folder, in time order. */

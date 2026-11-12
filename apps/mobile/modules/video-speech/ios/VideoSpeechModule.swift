@@ -30,7 +30,37 @@ public class VideoSpeechModule: Module {
           Recognition.run(wav: wav, language: language) { result in
             try? FileManager.default.removeItem(at: wav)
             switch result {
-            case .success(let lines): promise.resolve(lines)
+            case .success(let t): promise.resolve(t.map { Recognition.lines(of: $0) } ?? [])
+            case .failure(let error): promise.reject(error.code, error.message)
+            }
+          }
+        }
+      }
+    }
+
+    // The same, each phrase with when it is said and how sure the recognition is: the import
+    // puts what is said and what is written on the video in the same timeline.
+    AsyncFunction("transcribeTimed") { (videoUri: URL, language: String, promise: Promise) in
+      SFSpeechRecognizer.requestAuthorization { status in
+        guard status == .authorized else {
+          promise.reject("ERR_PERMISSION", "Speech recognition is not allowed for this app.")
+          return
+        }
+        DispatchQueue.global(qos: .userInitiated).async {
+          let wav: URL
+          do {
+            wav = try SpeechAudio.extract(from: videoUri)
+          } catch let error as VideoSpeechError {
+            promise.reject(error.code, error.message)
+            return
+          } catch {
+            promise.reject("ERR_TRANSCRIBE", error.localizedDescription)
+            return
+          }
+          Recognition.run(wav: wav, language: language) { result in
+            try? FileManager.default.removeItem(at: wav)
+            switch result {
+            case .success(let t): promise.resolve(t.map { Recognition.phrases(of: $0) } ?? [])
             case .failure(let error): promise.reject(error.code, error.message)
             }
           }
@@ -197,7 +227,8 @@ enum Recognition {
   private static var task: SFSpeechRecognitionTask?
 
   static func run(
-    wav: URL, language: String, completion: @escaping (Result<[String], VideoSpeechError>) -> Void
+    wav: URL, language: String,
+    completion: @escaping (Result<SFTranscription?, VideoSpeechError>) -> Void
   ) {
     DispatchQueue.main.async {
       task?.cancel()
@@ -220,7 +251,7 @@ enum Recognition {
         if done { return }
         if let result, result.isFinal {
           done = true
-          completion(.success(lines(of: result.bestTranscription)))
+          completion(.success(result.bestTranscription))
           recognizer = nil
           task = nil
           return
@@ -230,7 +261,7 @@ enum Recognition {
           let ns = error as NSError
           // 1110: no speech detected — an empty transcript, not a failure.
           if ns.domain == "kAFAssistantErrorDomain" && ns.code == 1110 {
-            completion(.success([]))
+            completion(.success(nil))
           } else {
             completion(.failure(VideoSpeechError(code: "ERR_TRANSCRIBE", message: error.localizedDescription)))
           }
@@ -239,6 +270,39 @@ enum Recognition {
         }
       }
     }
+  }
+
+  /// Phrases cut at pauses longer than 0.7 s, each with its start, end (seconds) and the
+  /// average confidence of its words (0 when iOS does not give one).
+  static func phrases(of transcription: SFTranscription) -> [[String: Any]] {
+    var out: [[String: Any]] = []
+    var words: [String] = []
+    var start: TimeInterval = 0
+    var end: TimeInterval = 0
+    var confidence: Float = 0
+    func flush() {
+      guard !words.isEmpty else { return }
+      out.append([
+        "text": words.joined(separator: " "),
+        "start": start,
+        "end": end,
+        "confidence": Double(confidence / Float(words.count)),
+      ])
+      words = []
+      confidence = 0
+    }
+    for segment in transcription.segments {
+      if !words.isEmpty && segment.timestamp - end > 0.7 { flush() }
+      if words.isEmpty { start = segment.timestamp }
+      words.append(segment.substring)
+      confidence += segment.confidence
+      end = segment.timestamp + segment.duration
+    }
+    flush()
+    if out.isEmpty && !transcription.formattedString.isEmpty {
+      out.append(["text": transcription.formattedString, "start": 0.0, "end": 0.0, "confidence": 0.0])
+    }
+    return out
   }
 
   /// The transcript cut at pauses longer than 0.7 s: one line per spoken phrase.

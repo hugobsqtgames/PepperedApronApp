@@ -1,0 +1,7 @@
+{
+  "name": "recipe-model",
+  "version": "1.0.0",
+  "description": "Apple's on-device language model (Foundation Models) to put a recipe video's sources together.",
+  "main": "index.ts",
+  "private": true
+}

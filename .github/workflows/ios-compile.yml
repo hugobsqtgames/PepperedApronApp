@@ -1,0 +1,43 @@
+name: iOS compile check
+
+# Compiles the iOS app (all native modules, Swift included) for the simulator, without signing.
+# Nothing is uploaded anywhere: it only proves the native code builds before an EAS build is
+# spent on it.
+on:
+  workflow_dispatch:
+
+jobs:
+  compile:
+    runs-on: macos-26
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Xcode
+        run: xcodebuild -version && xcrun --sdk iphonesimulator --show-sdk-version
+      - name: Native project
+        working-directory: apps/mobile
+        env:
+          APP_VARIANT: production
+          CI: '1'
+        run: |
+          npx expo prebuild --platform ios --no-install --clean
+          cd ios && pod install
+      - name: Compile
+        working-directory: apps/mobile/ios
+        run: |
+          set -o pipefail
+          xcodebuild -workspace PepperedApron.xcworkspace -scheme PepperedApron \
+            -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO COMPILER_INDEX_STORE_ENABLE=NO build 2>&1 | tee build.log \
+            | grep -E "error:|BUILD (SUCCEEDED|FAILED)|RecipeModelModule|VideoSpeechModule" || true
+          grep -q "BUILD SUCCEEDED" build.log
+      - name: Errors
+        if: failure()
+        working-directory: apps/mobile/ios
+        run: grep -n -B2 -A6 "error:" build.log | head -200

@@ -4,7 +4,6 @@ import {
   emptyDraft,
   extractUrls,
   looksLikeScreenshot,
-  mergeIngredients,
   parseRecipeText,
   recipeFromTranscript,
   type DuplicateMatch,
@@ -20,6 +19,7 @@ import i18n from '../i18n';
 import {
   importLinkFull,
   readVideoPictures,
+  fuseVideo,
   transcribeBest,
   type VideoListenError,
 } from './importer';
@@ -176,14 +176,17 @@ export async function prepareImport(
     onStage('reading');
     const pictures = await readVideoPictures(src.uri);
     onStage('listening');
-    const caption = src.text?.trim() ? fromText(src.text) : null;
-    const best = await transcribeBest(src.uri);
-    const heard = 'error' in best ? best : { lines: best.lines };
+    const caption = src.text?.trim() ? fromText(src.text) : emptyDraft();
+    const heard = await transcribeBest(src.uri);
+    // What is written on the video, what is said and the text shared with it, put together.
+    const { draft: d, spokenText } = await fuseVideo(
+      caption,
+      pictures,
+      'error' in heard ? [] : heard.phrases,
+    );
     // A video file has no other picture: its best frame is the photo (changeable in the editor).
     const photo = pictures.frames[0] ?? null;
-    if ('error' in heard) {
-      const d = caption ?? emptyDraft();
-      d.ingredients = mergeIngredients(d.ingredients, pictures.ingredients);
+    if ('error' in heard)
       return {
         draft: d,
         notice:
@@ -197,11 +200,9 @@ export async function prepareImport(
         offline: false,
         frames: pictures.frames,
       };
-    }
-    const d = fromSpeech(heard.lines, { title: caption?.title ?? null });
-    if (caption?.ingredients.length) d.ingredients = caption.ingredients;
-    if (caption?.steps.length) d.steps = caption.steps;
-    d.ingredients = mergeIngredients(pictures.ingredients, d.ingredients);
+    // Nothing usable heard: the transcript stays in the notes, to complete by hand.
+    if (!d.steps.length && spokenText)
+      d.notes = [d.notes, `🎙️ ${spokenText}`].filter(Boolean).join('\n\n').slice(0, 5000);
     return {
       draft: d,
       notice: 'speech',
