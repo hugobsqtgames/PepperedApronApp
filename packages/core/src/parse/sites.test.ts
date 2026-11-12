@@ -144,7 +144,9 @@ describe('big recipe sites', () => {
     expect(ricardo.steps.map((s) => s.group)).toEqual(['Purée', 'Montage']);
     const bbc = await get(Object.keys(SITES)[4]!);
     expect(bbc.imageUrl).toBe('https://images.immediate.co.uk/curry.jpg');
-    expect(bbc.steps[0]!.text).toBe('Heat the oil and fry the onion for 5 mins.');
+    // One action per step.
+    expect(bbc.steps[0]!.text).toBe('Heat the oil.');
+    expect(bbc.steps[1]!.text).toBe('Fry the onion for 5 mins.');
     expect(bbc.author).toBe('Good Food team');
     const allrecipes = await get(Object.keys(SITES)[5]!);
     expect(allrecipes.servings).toBe(12);

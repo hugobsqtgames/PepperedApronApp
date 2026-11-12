@@ -152,7 +152,7 @@ export function instagramCaption(description: string): string {
 }
 
 const SECTION_WORDS =
-  'ingr[ée]dients?|ingredientes|zutaten|ingredienti|pr[ée]paration|instructions?|[ée]tapes?|steps?|method|directions|zubereitung|preparaci[óo]n|procedimento|preparazione';
+  "il (?:vous|te) faut|you(?:'ll)? need|ingr[ée]dients?|ingredientes|zutaten|ingredienti|pr[ée]paration|instructions?|[ée]tapes?|steps?|method|directions|zubereitung|preparaci[óo]n|procedimento|preparazione";
 
 /**
  * Captions are often flattened onto one line (TikTok removes line breaks): rebuild the lines the
@@ -167,6 +167,11 @@ export function unflattenCaption(text: string): string {
     text
       // Section headers ("Ingrédients pour 2 personnes :") start a new line and end with one.
       .replace(new RegExp(`\\s*\\b(${SECTION_WORDS})\\b([^:\\n]{0,40}:)`, 'gi'), '\n$1$2\n')
+      // "Pour 4 : 8 tranches…", "for 4 burgers: 500g…": the list of ingredients follows.
+      .replace(
+        /(?<!(?:ingr[ée]dients?|ingredientes|zutaten|ingredienti)\s*)\s*\b((?:pour|for|serves)\s+\d{1,2}(?:\s+[\p{L}.]{1,15})?\s*:)\s*/giu,
+        '\n$1\n',
+      )
       // List bullets.
       .replace(/\s+[-–•·▪✅🔸]\s*(?=\S)/gu, '\n- ')
       // Numbered steps: "1." / "2)" preceded by a space and followed by text.
@@ -194,7 +199,7 @@ export function captionTitle(caption: string): string | null {
     .trim();
   // First sentence: ends with punctuation, or with an emoji followed by a new capitalised phrase.
   const sentence = cleaned
-    .split(/(?<=[.!?])\s|(?<=\p{Extended_Pictographic}\ufe0f?)\s+(?=\p{Lu})/u)[0]!
+    .split(/(?<=[.!?])\s|(?<=\p{Extended_Pictographic}\ufe0f?)\s+(?=[\p{Lu}\d])/u)[0]!
     .trim();
   // "Pâtes crémeuses (petit budget): INGRÉDIENTS…" → what comes before the colon.
   const beforeColon = (sentence || cleaned).split(/\s*[:：]\s/)[0]!;

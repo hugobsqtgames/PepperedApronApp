@@ -323,7 +323,12 @@ export async function fuseVideo(
   if (!draft.title || isHook(draft.title))
     draft = {
       ...draft,
-      title: bestTitle({ captionFirst: draft.title, speech: fused.spokenText }) ?? draft.title,
+      title:
+        bestTitle({
+          captionFirst: draft.title,
+          speech: fused.spokenText,
+          ingredients: draft.ingredients.map((i) => i.name),
+        }) ?? draft.title,
     };
   return { draft, trace, spokenText: fused.spokenText };
 }

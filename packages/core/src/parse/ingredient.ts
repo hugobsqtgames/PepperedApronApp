@@ -194,6 +194,9 @@ export function parseIngredientLine(input: string): ParsedIngredient | null {
   }
 
   if (quantity !== null && !(quantity > 0)) quantity = null;
+  // "du parmesan", "de la coriandre", "some salt": the food without its article.
+  if (quantity === null)
+    rest = rest.replace(/^(?:(?:du|de la|des|some)\s+|de l['’]\s*)(?=\p{L})/iu, '');
   const { name, note } = quantity !== null ? splitNote(rest) : { name: rest, note: null };
   const finalName = cleanName(name);
   if (!finalName) {

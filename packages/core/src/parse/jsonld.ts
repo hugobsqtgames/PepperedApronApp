@@ -2,6 +2,7 @@ import { parseIsoDuration, parseDurationText, parseTimerSeconds } from '../durat
 import { decodeHtmlEntities, stripHtml } from '../text';
 import { emptyDraft, type DraftStep, type RecipeDraft } from './draft';
 import { parseIngredientLine } from './ingredient';
+import { splitSteps } from './stepSplit';
 
 type Json = null | boolean | number | string | Json[] | { [k: string]: Json };
 type Obj = { [k: string]: Json };
@@ -170,7 +171,7 @@ export function parseJsonLdRecipe(html: string): RecipeDraft | null {
     const p = parseIngredientLine(decodeHtmlEntities(t));
     if (p) d.ingredients.push({ group: null, ...p });
   }
-  d.steps = steps(recipe['recipeInstructions']);
+  d.steps = splitSteps(steps(recipe['recipeInstructions']));
   d.tags = [
     ...new Set([...keywords(recipe['keywords']), ...keywords(recipe['recipeCuisine'])]),
   ].slice(0, 20);

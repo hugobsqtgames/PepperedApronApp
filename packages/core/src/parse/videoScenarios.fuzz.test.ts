@@ -600,8 +600,12 @@ function run(seed: number): Score {
   const stepRecall =
     t.steps.filter((s) => {
       const ws = contentWords(s);
-      return stepsText.some(
-        (g) => ws.filter((w) => g.includes(w)).length >= Math.ceil(ws.length * 0.6),
+      // One action per step: an instruction may now be found over two or three steps in a row.
+      return stepsText.some((_, i) =>
+        [1, 2, 3].some((n) => {
+          const g = stepsText.slice(i, i + n).flat();
+          return ws.filter((w) => g.includes(w)).length >= Math.ceil(ws.length * 0.6);
+        }),
       );
     }).length / t.steps.length;
   const noise = [...got, ...fused.steps.map((s) => s.text)].filter((x) => NOISE.test(x));
@@ -771,7 +775,11 @@ describe('captions written every way (found by the generator)', () => {
     const d = parseRecipeText(
       'Gâteau\nIngrédients :\n- 200 g de farine\nPréparation : Mélanger la farine avec le sucre puis cuire 30 minutes.',
     );
-    expect(d.steps).toHaveLength(1);
+    // One action per step.
+    expect(d.steps.map((s) => s.text)).toEqual([
+      'Mélanger la farine avec le sucre.',
+      'Cuire 30 minutes.',
+    ]);
   });
 
   it('nouns that look like verbs are not instructions ("ma poêle", "la farine", "brown sugar")', () => {

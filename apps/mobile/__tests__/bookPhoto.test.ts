@@ -51,12 +51,19 @@ jest.mock('../modules/text-vision', () => {
 
 import { prepareImport } from '../src/services/autoImport';
 
-it('a book page without headings: one step per paragraph', async () => {
+it('a book page without headings: one action per step, never one per printed line', async () => {
   const p = await prepareImport({ kind: 'photos', uris: ['file:///book.jpg'] });
   expect(p.draft.steps.map((s) => s.text)).toEqual([
-    'Portez une grande casserole d’eau salée à ébullition. Pendant ce temps, lavez les broccolinis et coupez les tiges épaisses en deux.',
-    'Plongez les pâtes dans l’eau bouillante. Réunissez les Avengers. J’adore les petites blagues au milieu d’une recette. Prélevez un peu d’eau de cuisson des pâtes, puis égouttez les broccolinis et les pâtes.',
-    'Versez le tout dans la poêle avec le parmesan, mélangez bien et servez aussitôt.',
+    'Portez une grande casserole d’eau salée à ébullition.',
+    'Pendant ce temps, lavez les broccolinis.',
+    'Coupez les tiges épaisses en deux.',
+    'Plongez les pâtes dans l’eau bouillante.',
+    'Réunissez les Avengers. J’adore les petites blagues au milieu d’une recette.',
+    'Prélevez un peu d’eau de cuisson des pâtes.',
+    'Égouttez les broccolinis et les pâtes.',
+    'Versez le tout dans la poêle avec le parmesan.',
+    'Mélangez bien.',
+    'Servez aussitôt.',
   ]);
   expect(p.draft.ingredients).toHaveLength(3);
 });

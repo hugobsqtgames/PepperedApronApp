@@ -284,10 +284,25 @@ function stepRecall(got: string[], want: string[][]): number {
   let at = 0;
   let found = 0;
   for (const words of want) {
-    const k = norm.findIndex((s, i) => i >= at && words.every((w) => s.includes(w)));
+    // One action per step: an expected instruction may be spread over two or three steps.
+    let k = -1;
+    let n = 1;
+    for (let i = at; i < norm.length && k < 0; i++)
+      for (n = 1; n <= 3; n++)
+        if (
+          words.every((w) =>
+            norm
+              .slice(i, i + n)
+              .join(' ')
+              .includes(w),
+          )
+        ) {
+          k = i;
+          break;
+        }
     if (k >= 0) {
       found++;
-      at = k + 1;
+      at = k + Math.min(n, 3);
     }
   }
   return found / want.length;
@@ -664,7 +679,8 @@ describe('seen when checking 5 generated videos by eye', () => {
     expect(f.draft.steps.map((s) => s.text)).toEqual([
       'Éplucher et couper les pommes de terre en fines rondelles.',
       'Faire chauffer la crème et le lait avec l’ail.',
-      'Add the shrimp and cook until pink.',
+      'Add the shrimp.',
+      'Cook until pink.',
       'On ajoute le fromage râpé.',
     ]);
   });

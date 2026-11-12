@@ -30,8 +30,16 @@ Préparation 👇
       'crème fraîche',
       'parmesan',
     ]);
-    expect(d.steps).toHaveLength(4);
-    expect(d.steps[0]!.text).toBe('Fais cuire les pennes dans l’eau bouillante salée.');
+    // One action per step.
+    expect(d.steps.map((s) => s.text)).toEqual([
+      'Fais cuire les pennes dans l’eau bouillante salée.',
+      'Coupe le poulet en morceaux.',
+      'Fais-le dorer avec l’oignon.',
+      'Ajoute la crème et le parmesan.',
+      'Laisse mijoter 5 min.',
+      'Mélange avec les pâtes.',
+      'Sers chaud !',
+    ]);
   });
 
   it('steps written as a paragraph, without numbers', () => {
@@ -60,7 +68,12 @@ La recette :
 👉 Ajoute le lait petit à petit.
 👉 Laisse reposer 1 h puis fais cuire les crêpes.`);
     expect(d.ingredients).toHaveLength(3);
-    expect(d.steps).toHaveLength(3);
+    expect(d.steps.map((s) => s.text)).toEqual([
+      'Mélange la farine et les œufs.',
+      'Ajoute le lait petit à petit.',
+      'Laisse reposer 1 h.',
+      'Fais cuire les crêpes.',
+    ]);
   });
 
   it('ingredients then steps without any header', () => {
@@ -73,7 +86,14 @@ Coupe les courgettes en rondelles et fais-les revenir 10 min.
 Bats les œufs avec la crème, verse sur les courgettes et parsème de gruyère.
 Enfourne 25 min à 180 °C.`);
     expect(d.ingredients).toHaveLength(4);
-    expect(d.steps).toHaveLength(3);
+    expect(d.steps.map((s) => s.text)).toEqual([
+      'Coupe les courgettes en rondelles.',
+      'Fais-les revenir 10 min.',
+      'Bats les œufs avec la crème.',
+      'Verse sur les courgettes.',
+      'Parsème de gruyère.',
+      'Enfourne 25 min à 180 °C.',
+    ]);
     expect(d.ovenTemperatureC).toBe(180);
   });
 });

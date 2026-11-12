@@ -3,6 +3,8 @@ import { normalizeText } from '../text';
 import { fahrenheitToCelsius, thermostatToCelsius } from '../units';
 import { emptyDraft, type RecipeDraft } from './draft';
 import { parseIngredientLine } from './ingredient';
+import { splitSteps } from './stepSplit';
+import { startsWithAction } from './transcript';
 
 type Section = 'none' | 'ingredients' | 'steps' | 'tips' | 'notes';
 
@@ -127,11 +129,14 @@ const PROMO =
 
 /** "Pour 4 personnes :", "Serves 4:": the list of ingredients follows. */
 const SERVES_HEADER =
-  /^(?:pour|for|serves|para|fur|per)\s+\d{1,2}\s*(?:personnes?|pers\.?|parts?|portions?|gourmands?|people|persons?|servings?|personas|personen|persone)?\s*[:：]$/;
+  /^(?:pour|for|serves|para|fur|per)\s+\d{1,2}\s*(?:personnes?|pers\.?|parts?|portions?|gourmands?|people|persons?|servings?|personas|personen|persone|[a-z]{3,15})?\s*[:：]$/;
 /** "🛒 Ingrédients 250 g de farine, 4 œufs": a list after the word, without a colon. */
 const BARE_HEADER =
   /^((?:[\s*_#-]|\p{Extended_Pictographic}|\ufe0f|\u200d)*(?:ingr[ée]dients?|ingredientes|zutaten|ingredienti|you need|what you need|il (?:vous|te) faut))\s+(?=[\d½¼¾⅓])/iu;
 
+/** A last line after the method that is a tip: keeping, swapping, advice. */
+const TIP_AFTER =
+  /^(?:astuce|conseil|tips?|se conserve|conservation|a conserver|storage|keeps?|leftovers?)\b|^(?:tu peux|vous pouvez|you can)\b.*\b(?:garder|conserver|congeler|remplacer|keep|store|freeze|swap|replace|frigo|fridge|freezer|congelateur)\b/;
 const SIGN_OFF = /^(?:bon app?(?:etit)?\b|enjoy|buen provecho|guten appetit|buon appetito)\b/;
 const NUMBERED_SENTENCE = /^\s*\d{1,2}\s*[.)]\s*\p{L}[^\n]{20,}/u;
 
@@ -226,6 +231,57 @@ function splitIngredientList(rest: string): string[] {
     .filter(Boolean);
 }
 
+/**
+ * "LA recette des crêpes ❤️ 250g de farine, 4 oeufs, 50cl de lait, 1 pincée de sel. Mettre la
+ * farine…": a list of ingredients written inside a sentence, without any header, then the method.
+ */
+function embeddedList(line: string): string[] | null {
+  if (line.length < 60) return null;
+  const start =
+    /(?:^|[\s,:;.!?…]|\p{Extended_Pictographic}\ufe0f?)(\d+(?:[.,]\d+)?\s*(?:[a-zA-Zéè.]{1,8}\s+)?(?:de |d'|d’)?\p{L})/u.exec(
+      line,
+    );
+  if (!start) return null;
+  const at = start.index + start[0].length - start[1]!.length;
+  const [list, method] = cutMethod(line.slice(at));
+  const items = splitIngredientList(list);
+  const quantified = items.filter((x) => parseIngredientLine(x)?.quantity != null).length;
+  if (items.length < 3 || quantified < 3 || items.some((x) => x.length > 60)) return null;
+  const before = line.slice(0, at).trim();
+  return [
+    ...(before ? [before] : []),
+    'Ingrédients :',
+    ...items.map((x) => `- ${x.replace(/[.!]+$/, '')}`),
+    ...(method ? ['Préparation :', method] : []),
+  ];
+}
+
+/** A food named alone ("poivre", "cacao en poudre", "sel & poivre"), not a sentence. */
+function shortFood(l: string): boolean {
+  const t = l.trim();
+  return (
+    t.length <= 35 &&
+    t.split(/\s+/).length <= 4 &&
+    !/[.!?:]$/.test(t) &&
+    /^\p{L}/u.test(t) &&
+    // "poivre" alone is the food ("poivrer" is not written in a list).
+    (t.split(/\s+/).length === 1 || !startsWithAction(t))
+  );
+}
+
+/**
+ * "1 kg de pommes de terre, 50 cl de crème, beurre. Éplucher et couper…": a list of ingredients
+ * followed, on the same line, by the method. Returns the list and the method (null when none).
+ */
+function cutMethod(line: string): [string, string | null] {
+  const re = /[.!]\s+(?=\p{Lu})/gu;
+  for (let m = re.exec(line); m; m = re.exec(line)) {
+    const rest = line.slice(m.index + m[0].length);
+    if (startsWithAction(rest)) return [line.slice(0, m.index), rest];
+  }
+  return [line, null];
+}
+
 /** Several ingredients written on the line under an ingredients header. */
 function explodeListsUnderHeaders(lines: string[]): string[] {
   const out: string[] = [];
@@ -242,12 +298,17 @@ function explodeListsUnderHeaders(lines: string[]): string[] {
       continue;
     }
     if (underIngredients && /,\s|;\s?/.test(line)) {
-      const items = splitIngredientList(line);
+      const [list, method] = cutMethod(line);
+      const items = splitIngredientList(list);
       const quantified = items.filter(
         (x) => /^[\d½¼¾⅓]/.test(x) || parseIngredientLine(x)?.quantity != null,
       ).length;
       if (items.length >= 2 && items.every((x) => x.length <= 60) && quantified >= 2) {
         out.push(...items.map((x) => `- ${x}`));
+        if (method) {
+          out.push('Préparation :', method);
+          underIngredients = false;
+        }
         continue;
       }
     }
@@ -263,9 +324,8 @@ function explodeInlineSection(line: string): string[] {
     if (items.length >= 2) return [`${bare[1]!.trim()}:`, ...items.map((x) => `- ${x}`)];
   }
   const m = /^([^:：]{2,60})[:：]\s*(\S.*)$/u.exec(line);
-  if (!m) return [line];
-  const section = detectHeader(`${m[1]}:`);
-  if (!section) return [line];
+  const section = m ? detectHeader(`${m[1]}:`) : null;
+  if (!m || !section) return embeddedList(line) ?? [line];
   const rest = m[2]!.trim();
   // "Préparation : 20 min" is a time, "Préparation : Mélanger la farine et…" the method.
   if (section !== 'ingredients')
@@ -275,8 +335,12 @@ function explodeInlineSection(line: string): string[] {
       /\p{L}{3}/u.test(rest)
       ? [`${m[1]}:`, rest]
       : [line];
-  const items = splitIngredientList(rest);
-  return items.length >= 2 ? [`${m[1]}:`, ...items.map((x) => `- ${x}`)] : [`${m[1]}:`, rest];
+  const [list, method] = cutMethod(rest);
+  const items = splitIngredientList(list);
+  const tail = method ? ['Préparation :', method] : [];
+  return items.length >= 2
+    ? [`${m[1]}:`, ...items.map((x) => `- ${x}`), ...tail]
+    : [`${m[1]}:`, rest];
 }
 
 export function parseRecipeText(input: string): RecipeDraft {
@@ -459,7 +523,10 @@ export function parseRecipeText(input: string): RecipeDraft {
     let prevIngredient = false;
     for (const l of freeLines) {
       const ing = parseIngredientLine(l);
-      const isIngredient = looksLikeIngredient(l, ing, prevIngredient);
+      const isIngredient: boolean =
+        looksLikeIngredient(l, ing, prevIngredient) ||
+        // "poivre", "cacao en poudre" at the end of the list, before the method.
+        (prevIngredient && !draft.steps.length && ing !== null && shortFood(l));
       prevIngredient = isIngredient;
       if (
         STEP_PREFIX.test(l) &&
@@ -509,7 +576,9 @@ export function parseRecipeText(input: string): RecipeDraft {
     let prevIngredient = false;
     for (const l of freeLines) {
       const ing = parseIngredientLine(l);
-      prevIngredient = looksLikeIngredient(l, ing, prevIngredient);
+      prevIngredient =
+        looksLikeIngredient(l, ing, prevIngredient) ||
+        (prevIngredient && ing !== null && shortFood(l));
       if (prevIngredient) draft.ingredients.push({ group: null, ...ing! });
       else rest.push(l);
     }
@@ -525,44 +594,12 @@ export function parseRecipeText(input: string): RecipeDraft {
     const url = freeLines.find((l) => /^https?:\/\/\S+$/i.test(l));
     if (url) draft.sourceUrl = url;
   }
-  draft.steps = splitProse(draft.steps);
+  draft.steps = splitSteps(draft.steps);
+  // "Tu peux la garder 3 jours au frigo ✨" after the method: a tip, not a step.
+  while (draft.steps.length > 1 && TIP_AFTER.test(normalizeText(draft.steps.at(-1)!.text))) {
+    tipLines.push(draft.steps.pop()!.text);
+  }
   if (tipLines.length) draft.tips = tipLines.join('\n');
   if (noteLines.length) draft.notes = noteLines.join('\n');
   return draft;
-}
-
-/**
- * A method written as one paragraph becomes one step per sentence or two (short sentences are
- * kept with the next one): "Fais cuire les pennes 10 min. Pendant ce temps, coupe le poulet…".
- */
-function splitProse(steps: RecipeDraft['steps']): RecipeDraft['steps'] {
-  // Already written in several paragraphs (a book, a site): the author's steps are kept.
-  if (steps.length >= 3) return steps;
-  const out: RecipeDraft['steps'] = [];
-  for (const st of steps) {
-    const sentences =
-      st.text.length > 160 ? st.text.split(/(?<=[.!?])\s+(?=\p{Lu})/u).map((x) => x.trim()) : [];
-    if (sentences.length < 2) {
-      out.push(st);
-      continue;
-    }
-    const first = out.length;
-    let cur = '';
-    for (const sentence of sentences) {
-      cur = cur ? `${cur} ${sentence}` : sentence;
-      if (cur.length >= 40) {
-        out.push({ ...st, text: cur, timerSeconds: parseTimerSeconds(cur) });
-        cur = '';
-      }
-    }
-    if (cur) {
-      // A short last sentence ("Sers aussitôt.") stays with the step before it.
-      const last = out.length > first ? out[out.length - 1]! : null;
-      if (last) {
-        last.text = `${last.text} ${cur}`;
-        last.timerSeconds ??= parseTimerSeconds(cur);
-      } else out.push({ ...st, text: cur, timerSeconds: parseTimerSeconds(cur) });
-    }
-  }
-  return out;
 }

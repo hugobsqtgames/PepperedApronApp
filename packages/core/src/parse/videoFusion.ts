@@ -3,7 +3,15 @@ import { ingredientKey, normalizeText, singularize, tokenize } from '../text';
 import type { DraftIngredient, DraftStep, RecipeDraft } from './draft';
 import { parseIngredientLine } from './ingredient';
 import type { PlacedLine } from './ocrLayout';
-import { cleanTitle, dishPhrase, isHook, isHookSentence } from './title';
+import { splitSteps } from './stepSplit';
+import {
+  cleanTitle,
+  dishPhrase,
+  isHook,
+  isHookSentence,
+  preferDominantDish,
+  tidyTitle,
+} from './title';
 import { isCookingStep, recipeFromTranscript, SPOKEN_NUMBERS } from './transcript';
 
 /**
@@ -686,15 +694,37 @@ export function fuseVideoRecipe(ev: VideoEvidence): FusedRecipe {
     }
   chosen = chosen.slice(0, 40);
 
-  const { title, from: titleFrom } = pickVideoTitle({
+  const picked = pickVideoTitle({
     screen,
     caption: ev.caption,
     spoken: spoken.text,
     ingredients,
   });
+  // A dish named again and again elsewhere wins over a title naming another one ("Salade" said
+  // once in a pizza video: "servez avec une petite salade").
+  const everything = [
+    ev.caption.title,
+    ev.caption.description,
+    ev.caption.notes,
+    ...ev.caption.steps.map((s) => s.text),
+    ...screen.filter((t) => t.kind !== 'chrome').map((t) => t.text),
+    spoken.text,
+  ]
+    .filter(Boolean)
+    .join('\n');
+  const better =
+    picked.from === 'screen'
+      ? picked.title
+      : preferDominantDish(
+          picked.title,
+          everything,
+          ingredients.map((i) => i.name),
+        );
+  const title = tidyTitle(better);
+  const titleFrom = better !== picked.title ? (picked.from ?? 'caption') : picked.from;
 
   return {
-    draft: { ...ev.caption, title, ingredients, steps: chosen.map((x) => x.s) },
+    draft: { ...ev.caption, title, ingredients, steps: splitSteps(chosen.map((x) => x.s)) },
     report: {
       ingredients: provenance,
       stepsFrom,
@@ -907,7 +937,7 @@ export function chooseVideoRecipe(
   const theirs = stepsQuality(model.steps, draft.ingredients);
   // A model rephrases well: it must be clearly better to replace the author's or the video's.
   if (theirs > mine * 1.15) {
-    draft.steps = model.steps;
+    draft.steps = splitSteps(model.steps);
     fromModel.push('steps');
   }
   // The model names the dish when no source did (the title is then only its main ingredients).

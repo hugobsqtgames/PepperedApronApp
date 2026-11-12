@@ -1,5 +1,6 @@
 import { emptyDraft, type RecipeDraft } from './draft';
 import { parseHtmlMeta, parseJsonLdRecipe } from './jsonld';
+import { splitSteps } from './stepSplit';
 import { bestTitle, isHook } from './title';
 import {
   captionTitle,
@@ -113,8 +114,12 @@ function mergeCaption(draft: RecipeDraft, raw: string | null) {
 }
 
 /** The dish's name rather than the caption's hook ("Avec ces pennes au poulet je te jure…"). */
-function titleOf(caption: string, first?: string | null): string | null {
-  return bestTitle({ captionFirst: first ?? captionTitle(caption), caption });
+function titleOf(caption: string, first?: string | null, draft?: RecipeDraft): string | null {
+  return bestTitle({
+    captionFirst: first ?? captionTitle(caption),
+    caption,
+    ingredients: draft?.ingredients.map((i) => i.name),
+  });
 }
 
 /**
@@ -190,7 +195,8 @@ export async function importFromUrl(
       ?.replace(/\s*[|·-]\s*(facebook|threads)\s*$/i, '')
       .replace(/^.*\bon threads$/i, '')
       .trim();
-    draft.title = titleOf(caption, ogTitle && ogTitle !== caption ? ogTitle : null) ?? draft.title;
+    draft.title =
+      titleOf(caption, ogTitle && ogTitle !== caption ? ogTitle : null, draft) ?? draft.title;
     // Listened to unless the post has it all: quantities and a real method.
     const complete = recipeLooksComplete(draft);
     return {
@@ -303,7 +309,7 @@ async function importPinterest(
   draft.author = pin.pinner?.full_name?.slice(0, 100) ?? null;
   draft.imageUrl = image && /^https:\/\//.test(image) ? image : null;
   mergeCaption(draft, description);
-  draft.title = (description ? titleOf(description) : null) ?? draft.title;
+  draft.title = (description ? titleOf(description, null, draft) : null) ?? draft.title;
   // A pin of an Instagram or TikTok post: the post may have what the description lacks.
   if (link && SOCIAL_HOST.test(link.hostname) && !PINTEREST_HOST.test(link.hostname)) {
     // Listened to unless the post has it all: quantities and a real method.
@@ -409,7 +415,7 @@ async function importInstagram(
   }
   if (caption) {
     mergeCaption(draft, caption);
-    draft.title = titleOf(caption) ?? draft.title;
+    draft.title = titleOf(caption, null, draft) ?? draft.title;
   }
   const hasRecipe = draft.ingredients.length > 0 || draft.steps.length > 0;
   // Many captions list the ingredients only (or the steps only): the rest is said in the video.
@@ -497,9 +503,9 @@ async function importVideo(
   // The parser's title guess is unreliable on captions: use the video title or first sentence.
   draft.title =
     (platform === 'youtube' && oembed.title
-      ? titleOf(caption ?? oembed.title, oembed.title.slice(0, 200))
+      ? titleOf(caption ?? oembed.title, oembed.title.slice(0, 200), draft)
       : null) ??
-    (caption ? titleOf(caption) : null) ??
+    (caption ? titleOf(caption, null, draft) : null) ??
     draft.title;
   // Recipe explained out loud: complete what the caption lacks with the spoken words.
   let fromSpeech = false;
@@ -513,7 +519,10 @@ async function importVideo(
         fromSpeech = true;
       }
       // No steps, or only comments ("BON AP LES AMIS"): the steps said in the video.
-      if (takeSpokenSteps(draft, spoken.steps)) fromSpeech = true;
+      if (takeSpokenSteps(draft, spoken.steps)) {
+        draft.steps = splitSteps(draft.steps);
+        fromSpeech = true;
+      }
       // Nothing usable in it: the full transcript stays available to complete it by hand.
       if (!draft.steps.length)
         draft.notes = [draft.notes, `🎙️ ${spoken.text}`]
@@ -521,7 +530,11 @@ async function importVideo(
           .join('\n\n')
           .slice(0, 5000);
       if (draft.title && isHook(draft.title))
-        draft.title = bestTitle({ captionFirst: draft.title, speech: spoken.text });
+        draft.title = bestTitle({
+          captionFirst: draft.title,
+          speech: spoken.text,
+          ingredients: draft.ingredients.map((i) => i.name),
+        });
     }
   }
   const found = draft.ingredients.length > 0 || draft.steps.length > 0;

@@ -70,10 +70,15 @@ const BOOK = page([
 describe('a book page read by the camera (TestFlight: 28 steps instead of 6)', () => {
   it('one step per paragraph, not one per printed line', () => {
     const d = parseRecipeText(paragraphsFromLines(BOOK));
-    expect(d.steps).toHaveLength(6);
-    expect(d.steps[2]!.text).toContain('blagues au milieu d’une recette');
+    const texts = d.steps.map((x) => x.text);
+    // One action per step (never one per printed line): whole sentences only.
+    expect(texts.length).toBeGreaterThanOrEqual(15);
+    expect(texts.length).toBeLessThanOrEqual(20);
+    for (const t of texts) expect(t).toMatch(/^\p{Lu}.*[.!?]$/u);
+    expect(texts).toContain('Coupez les tiges les plus épaisses en deux dans la longueur.');
+    expect(texts.join(' ')).toContain('blagues au milieu d’une recette');
     // The word cut at the end of a line is whole again.
-    expect(d.steps[2]!.text).toContain('eau de cuisson des pâtes');
+    expect(texts).toContain('Prélevez un peu d’eau de cuisson des pâtes dans une tasse.');
     expect(d.ingredients).toHaveLength(5);
     expect(d.title).toBe('Pâtes aux broccolinis et parmesan');
     expect(d.servings).toBe(4);

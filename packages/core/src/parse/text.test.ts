@@ -46,9 +46,14 @@ Ajoutez un peu de cannelle.`);
       name: 'pommes',
       quantity: 4,
     });
-    expect(d.steps).toHaveLength(3);
-    expect(d.steps[0]!.text).toBe('Mélanger la farine et le beurre du bout des doigts.');
-    expect(d.steps[2]!.timerSeconds).toBe(45 * 60);
+    // One action per step: "Étaler la pâte et la disposer dans un moule" is two.
+    expect(d.steps.map((s) => s.text)).toEqual([
+      'Mélanger la farine et le beurre du bout des doigts.',
+      'Étaler la pâte.',
+      'La disposer dans un moule.',
+      'Cuire 45 minutes.',
+    ]);
+    expect(d.steps[3]!.timerSeconds).toBe(45 * 60);
     expect(d.tips).toBe('Ajoutez un peu de cannelle.');
   });
 
@@ -100,14 +105,21 @@ Faites cuire les pâtes puis mélangez avec la crème et le zeste du citron, c'e
     expect(d.title).toBe('Pâtes crémeuses au citron en 15 min !');
     expect(d.tags).toEqual(['recette', 'pasta', 'easyrecipe']);
     expect(d.ingredients).toHaveLength(3);
-    expect(d.steps).toHaveLength(1);
+    expect(d.steps.map((s) => s.text)).toEqual([
+      'Faites cuire les pâtes.',
+      "Mélangez avec la crème et le zeste du citron, c'est prêt !",
+    ]);
   });
 
   it('merges wrapped step lines', () => {
     const d = parseRecipeText('X\nÉtapes\n1. Mélanger le tout et\nlaisser reposer 1 h\n2. Servir.');
-    expect(d.steps).toHaveLength(2);
-    expect(d.steps[0]!.text).toBe('Mélanger le tout et laisser reposer 1 h');
-    expect(d.steps[0]!.timerSeconds).toBe(3600);
+    // The wrapped line is joined back, then cut into its two actions.
+    expect(d.steps.map((s) => s.text)).toEqual([
+      'Mélanger le tout.',
+      'Laisser reposer 1 h.',
+      'Servir.',
+    ]);
+    expect(d.steps[1]!.timerSeconds).toBe(3600);
   });
 
   it('thermostat and fahrenheit', () => {
@@ -168,9 +180,10 @@ Faites cuire les pâtes puis mélangez avec la crème et le zeste du citron, c'e
       'Préchauffez le four à 180 °C.',
       'Mélangez le yaourt, le sucre et les œufs.',
       "Ajoutez la farine, la levure puis l'huile.",
-      'Versez dans un moule beurré et enfournez 35 minutes.',
+      'Versez dans un moule beurré.',
+      'Enfournez 35 minutes.',
     ]);
-    expect(d.steps[3]!.timerSeconds).toBe(35 * 60);
+    expect(d.steps[4]!.timerSeconds).toBe(35 * 60);
     expect(d.unparsed).toEqual([]);
   });
 });

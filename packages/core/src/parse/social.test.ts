@@ -113,8 +113,17 @@ describe('importing a video link', () => {
       [20, 'g', 'beurre'],
       [null, null, 'Fromage râpé'],
     ]);
-    expect(r.draft.steps).toHaveLength(5);
-    expect(r.draft.steps[1]!.text).toBe('Ajouter le vin blanc et mélanger.');
+    // One action per step.
+    expect(r.draft.steps.map((s) => s.text)).toEqual([
+      'Couper les oignons finement.',
+      'Les faire caraméliser avec le beurre dans une poêle a feu moyen.',
+      'Au bout de 20min les oignons vont changer de couleur.',
+      'Ajouter le vin blanc et mélanger.',
+      'Quand le vin blanc est évaporé, ajouter le bouillon.',
+      'Quand le bouillon à réduit, ajouter la crème, mélanger.',
+      'Ajouter les pâtes.',
+      'Terminer avec du fromage râpé, et c’est prêt ! 😋',
+    ]);
     expect(r.draft.tags).toEqual(expect.arrayContaining(['pates', 'recette']));
   });
 
@@ -171,7 +180,9 @@ describe('importing an Instagram post', () => {
       'sel, poivre, muscade',
     ]);
     expect(r.draft.steps.map((s) => s.text)).toEqual([
-      'Mélangez tout, versez dans le moule et enfournez à 180° pendant 45 min 😋',
+      'Mélangez tout.',
+      'Versez dans le moule.',
+      'Enfournez à 180° pendant 45 min 😋',
     ]);
   });
 
@@ -290,7 +301,14 @@ describe('regression: a reel shared from Instagram (hook as title, recipe in the
       'escalopes de poulet',
       'crème fraîche',
     ]);
-    expect(r.draft.steps).toHaveLength(3);
+    expect(r.draft.steps.map((s) => s.text)).toEqual([
+      'Fais cuire les pennes dans l’eau bouillante salée.',
+      'Coupe le poulet en morceaux.',
+      'Fais-le dorer.',
+      'Ajoute la crème.',
+      'Laisse mijoter 5 min.',
+      'Mélange avec les pâtes.',
+    ]);
     expect(r.draft.notes ?? '').not.toContain('Fais cuire');
   });
 });

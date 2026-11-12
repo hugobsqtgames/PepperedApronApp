@@ -487,10 +487,79 @@ export function takeSpokenSteps(
   return true;
 }
 
+/** Verbs only trusted when they open a clause ("pour the sauce", "saler"): nouns elsewhere. */
+const CLAUSE_VERBS = new Set(
+  (
+    'uncover,layer,repeat,place,smash,stack,toast,pour,brown,dip,coat,press,let,top,form,make,' +
+    'saler,salez,poivrer,nacrer,beurrer,beurrez,fariner,farinez,zester,rouler,roulez,pocher,' +
+    'huiler,huilez,sucrer,garnir,griller,refermer,refermez,servir,arroser,faire,fais,faites,laisse,' +
+    'couvre,couvrir,etaler,etale,etalez,poser,pose,posez,ferme,fermer,fermez,ouvrir,ouvre,ouvrez,' +
+    'bats,bat,battre,battez,salez,poivrez,pique,piquer,piquez,roule,coupe,cuis,mets,mettez'
+  ).split(','),
+);
+/** Small words that can come before the verb of an instruction: "puis LES égoutter". */
+const CLAUSE_LEAD = new Set(
+  'puis,ensuite,et,enfin,apres,then,and,finally,next,now,les,la,le,l,en,y,lui,leur,it,them,bien,delicatement,doucement,gently,carefully,immediatement,aussitot,rapidement,quickly,on,va,vas,vais,faut,il,peut,doit,fait,you,we'.split(
+    ',',
+  ),
+);
+
+/**
+ * Whether a clause starts with an instruction verb: "ajouter l'eau", "les verser dans la poêle",
+ * "then stir in the sauce". `strict`: only the verb itself may come first (after "et" / "and").
+ */
+export function startsWithAction(clause: string, strict = false, byEnding = true): boolean {
+  const ws = words(clause);
+  let i = 0;
+  const maxLead = strict ? 2 : 3;
+  while (i < ws.length && i < maxLead && CLAUSE_LEAD.has(ws[i]!.plain)) i++;
+  const w = ws[i]?.plain;
+  if (!w || NOT_VERB.has(w)) return false;
+  // After "le", "la", "les": an infinitive ("les verser", "le faire dorer"), never "le mélange".
+  // ("on le mélange": a pronoun, the verb conjugated.)
+  const afterArticle =
+    i > 0 &&
+    /^(les|la|le|l)$/.test(ws[i - 1]!.plain) &&
+    !/^(on|je|tu|il|elle|nous|vous)$/.test(ws[i - 2]?.plain ?? '');
+  if (afterArticle && !/(?:er|ir|re)$/.test(w) && w !== 'faire') return false;
+  if (CLAUSE_VERBS.has(w) || (byEnding && frenchVerbForm(w))) return true;
+  // A verb's own endings only: "bouillir" is one, "bouillon" a food.
+  return COOKING_VERBS.some((v) => w.startsWith(v) && VERB_ENDING.test(w.slice(v.length)));
+}
+const VERB_ENDING = /^(?:|e|es|ez|er|ir|re|is|it|s|ons|ent|issez|isse|ing)$/;
+
+/** Not verbs though they end like one: "assez", "premier", "papier sulfurisé". */
+const NOT_VERB = new Set(
+  'abonnez,abonner,partagez,partager,likez,liker,commentez,commenter,suivez,regardez,regarder,essayez,testez,tester,enregistrez,enregistrer,cliquez,allez,venez,rejoignez,assez,chez,premier,premiere,dernier,derniere,entier,entiere,leger,legere,papier,panier,cuiller,cahier,super,hier,fer,mer,cher,clair,plaisir,desir,avenir,loisir,saphir,soir,noir,miroir,tiroir,beurre,poivre,sucre,cidre,cendre,ordre,feutre,litre,tendre,autre,entre,contre,notre,votre,quatre,chiffre,cuivre,sabre,arbre,chambre,nombre,membre,octobre,novembre,decembre,septembre,timbre,vinaigre,gingembre,coriandre,muscadier,grenier,plier,dessert,boucher,boulanger,patissier,cuisinier,epicier,fermier,laitier,pommier,poirier,cerisier,olivier,rosier,figuier,dolmen,amer,hiver,ether,cancer,poker,laser,leader,burger,mixer,sticker,timer,starter,shaker,blender,poster,toaster,dinner,butter,water,sugar,flour,pepper,ginger,later,after,over,under,other,either,together,rather,never,ever,whether,better,center,corner,paper'.split(
+    ',',
+  ),
+);
+/** "lavez", "prélever", "pétrir": a French imperative or infinitive by its ending. */
+function frenchVerbForm(w: string): boolean {
+  // "saladier", "tablier": things; "plier", "vérifier": the few verbs so written.
+  if (/ier$/.test(w) && !/^(plier|lier|delier|verifier|trier|deplier|replier)$/.test(w))
+    return false;
+  return w.length >= 5 && /(?:ez|er|ir)$/.test(w) && !NOT_VERB.has(w);
+}
+
+/** Whether a text contains an instruction verb somewhere (used to keep "Quand le beurre est fondu," whole). */
+export function hasActionWord(text: string): boolean {
+  return words(text).some(
+    (w) =>
+      CLAUSE_VERBS.has(w.plain) ||
+      frenchVerbForm(w.plain) ||
+      COOKING_VERBS.some(
+        (v) => w.plain.startsWith(v) && w.plain.length - v.length <= (v.length <= 4 ? 2 : 4),
+      ),
+  );
+}
+
 function isCookingSentence(s: string): boolean {
   const ws = words(s);
   // Questions and fragments ("Et je vais ajouter") are not instructions.
   if (ws.length < 3 || /\?\s*$/.test(s)) return false;
+  // Starts with the instruction: "Le faire dorer.", "Pour into a loaf tin."
+  if (startsWithAction(s, false, false)) return true;
   const last = ws[ws.length - 1]!.plain;
   // A fragment ending on the verb ("Et je vais ajouter"): not one; a long sentence that ends so
   // ("…les morceaux de tomate à cuire") is.
