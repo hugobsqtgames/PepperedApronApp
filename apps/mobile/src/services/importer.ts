@@ -264,7 +264,8 @@ const MODEL_INSTRUCTIONS = [
   'Règles : utilise uniquement ce que disent les sources. N’invente aucun ingrédient, aucune quantité, aucune étape.',
   'Quand les quantités diffèrent, préfère celle qui est écrite (publication ou vidéo) à celle qui est entendue.',
   'Ignore les salutations, les appels à s’abonner, les noms de compte et le nom des applications.',
-  'Les étapes sont des instructions courtes, dans l’ordre de la vidéo. Écris dans la langue de la recette.',
+  'Les étapes sont des instructions courtes, dans l’ordre de la vidéo. Une phrase d’accroche (« je vais vous montrer… », « arrêtez d’acheter… », « faites ça ce soir… ») n’est jamais une étape.',
+  'Le titre est le nom du plat, court et précis (par exemple « Pâtes carbonara », « Poulet au curry »), jamais une accroche ni une phrase. Écris dans la langue de la recette.',
 ].join('\n');
 
 /** The model may take a while on a long video: past this, the fused version is kept. */

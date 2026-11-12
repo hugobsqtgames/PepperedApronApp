@@ -3,6 +3,7 @@ import { emptyDraft, type RecipeDraft } from './draft';
 import { ingredientsFromScreenText } from './onscreen';
 import { takeSpokenSteps, recipeFromTranscript } from './transcript';
 import { ingredientKey } from '../text';
+import { isHookSentence } from './title';
 import {
   chooseVideoRecipe,
   fuseVideoRecipe,
@@ -494,5 +495,108 @@ describe('what is said', () => {
       unit: 'g',
     });
     expect(r.ingredients.filter((i) => i.name === 'poulet')).toHaveLength(1);
+  });
+});
+
+describe('hooks and titles (feedback: "la phrase d’accroche devient la première étape")', () => {
+  const hooks = [
+    'Je vais vous montrer comment faire les meilleures pâtes de votre vie',
+    'Arrêtez d’acheter des cookies, faites-les vous-même !',
+    'Faites ça ce soir et toute la famille va vous remercier',
+    'Si vous aimez le fromage vous allez adorer cette recette',
+    'Cette recette a fait le buzz sur TikTok et je comprends pourquoi',
+    'Stop scrolling, you need to try this pasta',
+    'This is the easiest chicken curry you will ever make',
+    'Trust me, make this tonight',
+  ];
+
+  it('a hook is never a step, said first or written on the video', () => {
+    const f = fuseVideoRecipe({
+      caption: caption({ title: 'Vous allez adorer 😍' }),
+      screen: frames(30, [{ text: 'LA RECETTE QUI REND FOU 🤯', from: 0, to: 3, y: 0.1 }]),
+      speech: speech(
+        hooks[0]!,
+        hooks[1]!,
+        hooks[2]!,
+        'Faites cuire les pâtes dans l’eau bouillante.',
+        'Faites dorer la pancetta dans une poêle.',
+        'Mélangez les jaunes d’œufs avec le parmesan.',
+      ),
+    });
+    expect(f.draft.steps.map((s) => s.text)).toEqual([
+      'Faites cuire les pâtes dans l’eau bouillante.',
+      'Faites dorer la pancetta dans une poêle.',
+      'Mélangez les jaunes d’œufs avec le parmesan.',
+    ]);
+    expect(f.draft.title).toBe('Pâtes');
+  });
+
+  it('real steps are kept, even when they talk to the viewer', () => {
+    for (const s of [
+      'Vous allez faire revenir l’oignon dans un peu d’huile',
+      'Faites cuire les pâtes 10 minutes',
+      'Dans une poêle avec du beurre, je fais caraméliser les oignons.',
+    ])
+      expect(isHookSentence(s)).toBe(false);
+    for (const h of hooks) expect(isHookSentence(h), h).toBe(true);
+  });
+
+  it('a good title: the dish, cleaned, never the hook', () => {
+    const title = (
+      p: Partial<RecipeDraft>,
+      shown: string[] = [],
+      said: string[] = [],
+      ings: string[] = [],
+    ) =>
+      fuseVideoRecipe({
+        caption: caption({ ...p, ingredients: ings.map((n) => ing(100, 'g', n)) }),
+        screen: frames(
+          20,
+          shown.map((text) => ({ text, from: 0, to: 4, y: 0.1 })),
+        ),
+        speech: speech(...said),
+      }).draft.title;
+    expect(title({ title: 'Les meilleures pâtes carbonara de ma vie 😍' })).toBe('Pâtes carbonara');
+    expect(title({ title: 'Cookies au chocolat ultra moelleux 🍪' })).toBe(
+      'Cookies au chocolat ultra moelleux',
+    );
+    expect(title({ title: 'POV : tu as faim' }, ['GARLIC BUTTER SHRIMP'])).toBe(
+      'Garlic butter shrimp',
+    );
+    expect(
+      title({ title: 'Mon péché mignon ❤️' }, [], ['Aujourd’hui on fait un poulet au curry.']),
+    ).toBe('Poulet au curry');
+    // No dish named anywhere: its main ingredients, never "La recette qui rend fou".
+    expect(title({ title: 'La recette qui rend fou 🤯' }, [], [], ['spaghetti', 'pancetta'])).toBe(
+      'Spaghetti & pancetta',
+    );
+    expect(title({ title: 'Tarte tatin de ma grand-mère' })).toBe('Tarte tatin de ma grand-mère');
+  });
+
+  it('the model names the dish more precisely, or when no source did', () => {
+    const f = fuseVideoRecipe({
+      caption: caption({
+        title: 'La recette qui rend fou 🤯',
+        ingredients: [ing(200, 'g', 'spaghetti'), ing(100, 'g', 'pancetta')],
+      }),
+      screen: [],
+      speech: speech(
+        'Faites cuire les spaghetti.',
+        'Ajoutez la pancetta et le pecorino, c’est une carbonara.',
+      ),
+    });
+    const g = groundModelRecipe(
+      { title: 'Spaghetti carbonara', servings: null, ingredients: [], steps: [] },
+      f && {
+        caption: caption({}),
+        screen: [],
+        speech: speech(
+          'Faites cuire les spaghetti.',
+          'Ajoutez la pancetta et le pecorino, c’est une carbonara.',
+        ),
+      },
+      f,
+    );
+    expect(chooseVideoRecipe(f, g).draft.title).toBe('Spaghetti carbonara');
   });
 });

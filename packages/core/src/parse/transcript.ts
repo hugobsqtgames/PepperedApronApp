@@ -3,6 +3,7 @@ import { foodSpans } from '../shopping';
 import { ingredientKey, normalizeText, singularize } from '../text';
 import type { DraftIngredient, DraftStep } from './draft';
 import { parseIngredientLine } from './ingredient';
+import { isHookSentence } from './title';
 
 /**
  * Recipes explained only out loud: reads the video's automatic subtitles (published by TikTok or
@@ -580,12 +581,15 @@ export function recipeFromTranscript(lines: string[]): TranscriptRecipe {
       });
     }
   }
-  const steps = all.filter(isCookingSentence).map((text) => ({
-    group: null,
-    text: text.charAt(0).toUpperCase() + text.slice(1),
-    timerSeconds: parseTimerSeconds(text),
-    timerLabel: null,
-  }));
+  // "Je vais vous montrer comment faire…", "Faites ça ce soir et…": hooks, never steps.
+  const steps = all
+    .filter((x) => isCookingSentence(x) && !isHookSentence(x))
+    .map((text) => ({
+      group: null,
+      text: text.charAt(0).toUpperCase() + text.slice(1),
+      timerSeconds: parseTimerSeconds(text),
+      timerLabel: null,
+    }));
   return { ingredients: ingredients.slice(0, 60), steps: steps.slice(0, 40), text: all.join('\n') };
 }
 

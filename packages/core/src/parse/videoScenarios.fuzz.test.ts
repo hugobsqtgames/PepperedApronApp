@@ -12,6 +12,7 @@ import { casesRun, rng } from '../fuzz/rng';
 import { ingredientKey } from '../text';
 import { unflattenCaption } from './social';
 import { isCookingStep } from './transcript';
+import { isHook, isHookSentence } from './title';
 import { parseRecipeText } from './text';
 import {
   contentWords,
@@ -210,6 +211,30 @@ const BYE: Record<Lang, string[]> = {
     'Honestly this is so good, let me know what you think.',
   ],
 };
+const SAID_HOOKS: Record<Lang, string[]> = {
+  fr: [
+    'Je vais vous montrer comment faire la meilleure recette de votre vie',
+    'Arrêtez d’acheter tout fait, faites-le vous-même !',
+    'Faites ça ce soir et toute la famille va vous remercier',
+    'Si vous aimez cuisiner vous allez adorer cette recette',
+    'Le secret pour la réussir, je vous dis tout',
+    'Cette recette a fait le buzz sur TikTok et je comprends pourquoi',
+  ],
+  en: [
+    'Stop scrolling, you need to try this',
+    'This is the easiest recipe you will ever make',
+    'Trust me, make this tonight',
+    'Let me show you how to make it in ten minutes',
+  ],
+};
+const SHOWN_HOOKS = [
+  'LA RECETTE QUI REND FOU 🤯',
+  'TU VAS ADORER 😍',
+  'POV : TU AS FAIM',
+  'YOU NEED TO TRY THIS',
+  'VIRAL RECIPE 🔥',
+];
+
 const NUM_WORDS: Record<Lang, Record<number, string>> = {
   fr: {
     1: 'un',
@@ -355,6 +380,8 @@ function screen(
     { text: `${r.int(1, 99)},${r.int(1, 9)} k`, from: 0, to: duration, y: 0.55 },
   ];
   if (r.bool(0.6)) shown.push({ text: t.title.toUpperCase(), from: 0, to: 4, y: 0.12 });
+  // A hook written over the first seconds too.
+  if (r.bool(0.4)) shown.push({ text: r.pick(SHOWN_HOOKS), from: 0, to: 3, y: 0.06 });
   if (ings) {
     // All at once as a list, or one by one as they are added.
     const together = r.bool(0.5);
@@ -410,6 +437,8 @@ function speech(
 ): SpeechSegment[] {
   const L = t.lang;
   const phrases: string[] = [r.pick(HELLO[L])];
+  // The hook said first, often with a verb ("faites-le vous-même") or the dish in it.
+  if (r.bool(0.7)) phrases.push(r.pick(SAID_HOOKS[L]));
   const say = (q: number | null) =>
     q !== null && r.bool(0.5) && NUM_WORDS[L][q] ? NUM_WORDS[L][q] : q === null ? '' : String(q);
   if (ings)
@@ -501,9 +530,13 @@ function run(seed: number): Score {
     steps: parsed.steps.filter((s) => !/https?:|www\.|link in bio|lien en bio/i.test(s.text)),
   };
   const duration = 60;
+  const frames = screen(r, t, ingAt.includes('screen'), stepAt.includes('screen'), duration);
+  const shownTitle = frames.some((f) =>
+    f.lines.some((l) => contentWords(l.text).join(' ') === contentWords(t.title).join(' ')),
+  );
   const fused = fuseVideoRecipe({
     caption: draft,
-    screen: screen(r, t, ingAt.includes('screen'), stepAt.includes('screen'), duration),
+    screen: frames,
     speech: mute ? [] : speech(r, t, ingAt.includes('speech'), stepAt.includes('speech')),
   }).draft;
   const got = fused.ingredients.map((i) => i.name);
@@ -551,6 +584,19 @@ function run(seed: number): Score {
       );
     }).length / t.steps.length;
   const noise = [...got, ...fused.steps.map((s) => s.text)].filter((x) => NOISE.test(x));
+  // A hook is never a step, and never the title.
+  for (const st of fused.steps) if (isHookSentence(st.text)) noise.push(`hook step: ${st.text}`);
+  const title = fused.title ?? '';
+  if (!title || isHook(title) || isHookSentence(title) || /\p{Extended_Pictographic}/u.test(title))
+    noise.push(`bad title: ${title}`);
+  // The dish's name when it is written (on the video, or as the post's title).
+  const dishWord = contentWords(t.title)[0]!;
+  const tw = contentWords(title);
+  if (
+    (shownTitle || !isHook(text.split('\n')[0]!)) &&
+    !tw.some((w) => w === dishWord || dishWord.startsWith(w))
+  )
+    noise.push(`title missed: ${title} (${t.title})`);
   return {
     klass: `ingr:${ingAt.join('+')} steps:${stepAt.join('+')}${mute ? ' (music)' : ''}`,
     ingRecall,

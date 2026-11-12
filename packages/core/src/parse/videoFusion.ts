@@ -3,7 +3,7 @@ import { ingredientKey, normalizeText, singularize, tokenize } from '../text';
 import type { DraftIngredient, DraftStep, RecipeDraft } from './draft';
 import { parseIngredientLine } from './ingredient';
 import { paragraphsFromLines, type PlacedLine } from './ocrLayout';
-import { dishPhrase, isHook } from './title';
+import { cleanTitle, dishPhrase, isHook, isHookSentence } from './title';
 import { isCookingStep, recipeFromTranscript, SPOKEN_NUMBERS } from './transcript';
 
 /**
@@ -451,7 +451,8 @@ export interface FusionReport {
   stepsAdded: number;
   /** Quality of each source's steps (stepsQuality). */
   stepScores: Partial<Record<VideoSource, number>>;
-  titleFrom: VideoSource | null;
+  /** 'ingredients': no source names the dish, the title is made of its main ingredients. */
+  titleFrom: VideoSource | 'ingredients' | null;
   /** Texts read on the video: kept, and set aside (interface, watermarks, unsure readings). */
   screenTexts: number;
   screenChrome: number;
@@ -466,12 +467,78 @@ export interface FusedRecipe {
   spokenText: string;
 }
 
+const notHook = (s: { text: string }) => !isHookSentence(s.text);
+
+/** A dish name ready to show: no emoji, no hook, a capital letter, not too long. */
+function asTitle(text: string | null | undefined): string | null {
+  if (!text) return null;
+  let t = cleanTitle(text);
+  if (!t || t.length > 60 || isHook(t) || isHookSentence(t)) return null;
+  // Written in capitals on the video: put back in sentence case.
+  if (t === t.toUpperCase() && /\p{L}{3}/u.test(t)) t = t.toLowerCase();
+  return t.charAt(0).toUpperCase() + t.slice(1);
+}
+
+/**
+ * The recipe's name, best source first: the title written on the video, the author's title when
+ * it is one, the dish named in the author's hook or text, the dish named in any text on the
+ * video, the dish said in the video. "POV : tu as faim" or "La recette qui rend fou" are never a
+ * title: with no dish named anywhere, the main ingredients make it ("Spaghetti & pancetta").
+ */
+export function pickVideoTitle(p: {
+  screen: ScreenText[];
+  caption: RecipeDraft;
+  spoken: string;
+  ingredients: DraftIngredient[];
+}): { title: string | null; from: FusionReport['titleFrom'] } {
+  const shown = p.screen
+    .filter((t) => t.kind === 'title')
+    .sort((a, b) => b.weight * b.frames - a.weight * a.frames)[0];
+  // Written as a title: kept whole ("GARLIC BUTTER SHRIMP" → "Garlic butter shrimp"), else the
+  // dish named in it.
+  const whole = shown && shown.text.split(/\s+/).length <= 6 ? asTitle(shown.text) : null;
+  const fromShown = shown && (whole ?? asTitle(dishPhrase(shown.text)));
+  if (fromShown) return { title: fromShown, from: 'screen' };
+  const own = asTitle(p.caption.title);
+  if (own) return { title: own, from: 'caption' };
+  const opening = [
+    p.caption.title,
+    p.caption.description,
+    p.caption.notes?.split('\n').slice(0, 3).join(' '),
+  ]
+    .filter(Boolean)
+    .join('. ');
+  const inCaption = asTitle(dishPhrase(opening));
+  if (inCaption) return { title: inCaption, from: 'caption' };
+  for (const t of p.screen.filter((x) => x.kind !== 'chrome' && x.text.split(/\s+/).length <= 8)) {
+    const d = asTitle(dishPhrase(t.text));
+    if (d) return { title: d, from: 'screen' };
+  }
+  const said = asTitle(dishPhrase(p.spoken.slice(0, 400)));
+  if (said) return { title: said, from: 'speech' };
+  const main = p.ingredients
+    .map((i) => cleanTitle(i.name))
+    .filter((n) => n && n.length <= 30)
+    .slice(0, 2);
+  if (main.length) {
+    const t = main.join(' & ');
+    return { title: t.charAt(0).toUpperCase() + t.slice(1), from: 'ingredients' };
+  }
+  return { title: asTitle(p.caption.title) ?? null, from: null };
+}
+
 /** Fewer ingredients than this from the post and the screen: the ones said are added too. */
 const FEW_INGREDIENTS = 3;
 
 export function fuseVideoRecipe(ev: VideoEvidence): FusedRecipe {
   const screen = trackScreenText(ev.screen);
-  const spoken = recipeFromTranscript(ev.speech.map((s) => s.text));
+  // Each phrase said ends where the speaker paused: a hook said first ("je vais vous montrer…")
+  // is never glued to the first step.
+  const phrases = ev.speech.map((s) => {
+    const t = s.text.trim();
+    return /[.!?…]$/.test(t) || !t ? t : `${t}.`;
+  });
+  const spoken = recipeFromTranscript(phrases);
   const cands: IngredientCandidate[] = [];
   ev.caption.ingredients.forEach((ing, order) =>
     cands.push({ ing, source: 'caption', weight: 1, order }),
@@ -498,9 +565,12 @@ export function fuseVideoRecipe(ev: VideoEvidence): FusedRecipe {
   // Steps: each source's list as a whole, the best one kept, completed by the steps only written
   // on the video.
   const sets: Partial<Record<Exclude<VideoSource, 'model'>, { s: DraftStep; t: number }[]>> = {
-    caption: ev.caption.steps.map((s, i) => ({ s, t: i })),
-    screen: screen.filter((t) => t.kind === 'step').map((t) => ({ s: step(t.text), t: t.first })),
+    caption: ev.caption.steps.filter(notHook).map((s, i) => ({ s, t: i })),
+    screen: screen
+      .filter((t) => t.kind === 'step' && !isHookSentence(t.text))
+      .map((t) => ({ s: step(t.text), t: t.first })),
     speech: spoken.steps
+      .filter(notHook)
       .map((s) => ({ s, t: timeOfSpoken(s.text, ev.speech) }))
       .sort((a, b) => a.t - b.t),
   };
@@ -535,22 +605,12 @@ export function fuseVideoRecipe(ev: VideoEvidence): FusedRecipe {
     }
   chosen = chosen.slice(0, 40);
 
-  // Title: written on the video, the author's when it is one, the dish said in the video.
-  const screenTitle = screen
-    .filter((t) => t.kind === 'title')
-    .sort((a, b) => b.weight * b.frames - a.weight * a.frames)[0];
-  let title = ev.caption.title;
-  let titleFrom: VideoSource | null = title ? 'caption' : null;
-  if (screenTitle) {
-    title = dishPhrase(screenTitle.text) ?? screenTitle.text;
-    titleFrom = 'screen';
-  } else if (!title || isHook(title)) {
-    const said = dishPhrase(spoken.text.slice(0, 300));
-    if (said) {
-      title = said;
-      titleFrom = 'speech';
-    }
-  }
+  const { title, from: titleFrom } = pickVideoTitle({
+    screen,
+    caption: ev.caption,
+    spoken: spoken.text,
+    ingredients,
+  });
 
   return {
     draft: { ...ev.caption, title, ingredients, steps: chosen.map((x) => x.s) },
@@ -722,10 +782,10 @@ export function groundModelRecipe(
   for (const s of m.steps.slice(0, 40)) {
     const text = s?.trim();
     if (!text) continue;
-    if (share(text) < 0.6) dropped.push(text);
+    if (share(text) < 0.6 || isHookSentence(text)) dropped.push(text);
     else steps.push(step(text));
   }
-  const title = m.title && share(m.title) >= 0.5 ? m.title.trim() : null;
+  const title = m.title && share(m.title) >= 0.5 ? asTitle(m.title) : null;
   const servings =
     m.servings && Number.isInteger(m.servings) && numbers.has(m.servings) && m.servings <= 50
       ? m.servings
@@ -769,7 +829,18 @@ export function chooseVideoRecipe(
     draft.steps = model.steps;
     fromModel.push('steps');
   }
-  if (model.title && (!base.title || isHook(base.title)) && !isHook(model.title)) {
+  // The model names the dish when no source did (the title is then only its main ingredients).
+  // …or a more precise name of the same dish ("Pâtes" said, "Pâtes carbonara" from the model).
+  const sameDish =
+    !!base.title &&
+    !!model.title &&
+    base.title.split(/\s+/).length === 1 &&
+    model.title.length > base.title.length &&
+    normalizeText(model.title).includes(normalizeText(base.title));
+  if (
+    model.title &&
+    (!base.title || isHook(base.title) || fused.report.titleFrom === 'ingredients' || sameDish)
+  ) {
     draft.title = model.title;
     fromModel.push('title');
   }
