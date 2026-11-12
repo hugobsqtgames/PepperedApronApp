@@ -794,3 +794,17 @@ export function fusionSummary(f: FusedRecipe, fromModel: string[] = []): string 
     (fromModel.length ? `, model: ${fromModel.join('+')}` : '')
   );
 }
+
+/**
+ * Whether a recipe read from a post is complete enough to skip listening to its video: several
+ * ingredients, most with their quantity, and a method of at least two real instructions. A
+ * list without quantities or "Mélangez tout et régalez-vous !" is not: the video is listened to.
+ */
+export function recipeLooksComplete(d: {
+  ingredients: DraftIngredient[];
+  steps: { text: string }[];
+}): boolean {
+  const withQty = d.ingredients.filter((i) => i.quantity !== null).length;
+  const cooking = d.steps.filter((s) => isCookingStep(s.text)).length;
+  return d.ingredients.length >= 2 && withQty >= d.ingredients.length * 0.6 && cooking >= 2;
+}

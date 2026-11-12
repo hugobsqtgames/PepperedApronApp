@@ -22,6 +22,8 @@ const HEADERS: [Section, RegExp][] = [
       'ingredienti',
       'liste des ingredients',
       'what you need',
+      'you need',
+      'shopping list',
       'vous aurez besoin de',
       'il vous faut',
       'il te faut',
@@ -119,6 +121,17 @@ const GROUP_RE =
 const HEADER_WITH_YIELD =
   /^(?:les\s+)?(ingredients?|ingredientes|zutaten|ingredienti|liste des ingredients)\s+(?:pour|for|para|fur|per)\b[^:：]{0,50}[:：]?$/;
 
+/** "Lien en bio", "recette complète en commentaire", "follow for more": never a recipe line. */
+const PROMO =
+  /\b(?:lien en bio|link in (?:my )?bio|en commentaires?|in the comments|recette (?:complete|compl[eè]te|entiere)|full recipe|abonne[sz]?(?:-vous| toi)?|follow (?:me |for)|swipe|enregistre[sz]? (?:la|cette)|save (?:this|for later)|partage[sz]? (?:a|à)|tag (?:a|ton|ta|someone))\b/i;
+
+/** "Pour 4 personnes :", "Serves 4:": the list of ingredients follows. */
+const SERVES_HEADER =
+  /^(?:pour|for|serves|para|fur|per)\s+\d{1,2}\s*(?:personnes?|pers\.?|parts?|portions?|gourmands?|people|persons?|servings?|personas|personen|persone)?\s*[:：]$/;
+/** "🛒 Ingrédients 250 g de farine, 4 œufs": a list after the word, without a colon. */
+const BARE_HEADER =
+  /^((?:[\s*_#-]|\p{Extended_Pictographic}|\ufe0f|\u200d)*(?:ingr[ée]dients?|ingredientes|zutaten|ingredienti|you need|what you need|il (?:vous|te) faut))\s+(?=[\d½¼¾⅓])/iu;
+
 const SIGN_OFF = /^(?:bon app?(?:etit)?\b|enjoy|buen provecho|guten appetit|buon appetito)\b/;
 const NUMBERED_SENTENCE = /^\s*\d{1,2}\s*[.)]\s*\p{L}[^\n]{20,}/u;
 
@@ -128,7 +141,7 @@ function detectHeader(line: string): Section | null {
     .replace(/(?:[#*_\s➡→⬇↓►▶]|\p{Extended_Pictographic}|\ufe0f|\u200d)+$/gu, '')
     .replace(/\s*[:：]\s*$/, ':');
   for (const [section, re] of HEADERS) if (re.test(n)) return section;
-  if (HEADER_WITH_YIELD.test(n)) return 'ingredients';
+  if (HEADER_WITH_YIELD.test(n) || SERVES_HEADER.test(n)) return 'ingredients';
   return null;
 }
 
@@ -200,6 +213,72 @@ function looksLikeIngredient(
   );
 }
 
+/**
+ * "Ingrédients : 250 g de farine, 4 œufs, 50 cl de lait" written on one line (captions often
+ * are): the header on its own line, then one ingredient per line. "Préparation : …" also gets
+ * its header on its own line. A decimal comma ("1,5 kg") is not a separator.
+ */
+/** One ingredient per line from "250 g de farine, 4 œufs; 50 cl de lait" (not "1,5 kg"). */
+function splitIngredientList(rest: string): string[] {
+  return rest
+    .split(/\s*[;•▪·|]\s*|,\s+(?=\D|\d+\s*\p{L})|\s+[-–]\s+/u)
+    .map((x) => x.trim())
+    .filter(Boolean);
+}
+
+/** Several ingredients written on the line under an ingredients header. */
+function explodeListsUnderHeaders(lines: string[]): string[] {
+  const out: string[] = [];
+  let underIngredients = false;
+  for (const line of lines) {
+    if (!line.trim()) {
+      out.push(line);
+      continue;
+    }
+    const header = detectHeader(line);
+    if (header) {
+      underIngredients = header === 'ingredients';
+      out.push(line);
+      continue;
+    }
+    if (underIngredients && /,\s|;\s?/.test(line)) {
+      const items = splitIngredientList(line);
+      const quantified = items.filter(
+        (x) => /^[\d½¼¾⅓]/.test(x) || parseIngredientLine(x)?.quantity != null,
+      ).length;
+      if (items.length >= 2 && items.every((x) => x.length <= 60) && quantified >= 2) {
+        out.push(...items.map((x) => `- ${x}`));
+        continue;
+      }
+    }
+    out.push(line);
+  }
+  return out;
+}
+
+function explodeInlineSection(line: string): string[] {
+  const bare = BARE_HEADER.exec(line);
+  if (bare && !/[:：]/.test(line.slice(0, bare[0].length + 1))) {
+    const items = splitIngredientList(line.slice(bare[0].length));
+    if (items.length >= 2) return [`${bare[1]!.trim()}:`, ...items.map((x) => `- ${x}`)];
+  }
+  const m = /^([^:：]{2,60})[:：]\s*(\S.*)$/u.exec(line);
+  if (!m) return [line];
+  const section = detectHeader(`${m[1]}:`);
+  if (!section) return [line];
+  const rest = m[2]!.trim();
+  // "Préparation : 20 min" is a time, "Préparation : Mélanger la farine et…" the method.
+  if (section !== 'ingredients')
+    return section === 'steps' &&
+      !/^[\d½¼¾]/.test(rest) &&
+      rest.split(/\s+/).length >= 4 &&
+      /\p{L}{3}/u.test(rest)
+      ? [`${m[1]}:`, rest]
+      : [line];
+  const items = splitIngredientList(rest);
+  return items.length >= 2 ? [`${m[1]}:`, ...items.map((x) => `- ${x}`)] : [`${m[1]}:`, rest];
+}
+
 export function parseRecipeText(input: string): RecipeDraft {
   const draft = emptyDraft();
   const text = input.replace(/\r\n?/g, '\n').slice(0, 20000);
@@ -215,7 +294,9 @@ export function parseRecipeText(input: string): RecipeDraft {
   );
   draft.tags = [...tags].slice(0, 20);
 
-  const lines = withoutTags.split('\n').map(cleanLine);
+  const lines = explodeListsUnderHeaders(withoutTags.split('\n').flatMap(explodeInlineSection)).map(
+    cleanLine,
+  );
   let section: Section = 'none';
   let group: string | null = null;
   const tipLines: string[] = [];
@@ -225,6 +306,10 @@ export function parseRecipeText(input: string): RecipeDraft {
 
   for (const raw of lines) {
     if (!raw) continue;
+    if (PROMO.test(normalizeText(raw)) && raw.length < 140) {
+      noteLines.push(raw);
+      continue;
+    }
     const header = detectHeader(raw);
     if (header) {
       // "Ingrédients pour 2 personnes :" also gives the servings.

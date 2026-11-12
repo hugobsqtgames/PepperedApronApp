@@ -13,8 +13,9 @@ import {
   youtubeSubtitles,
   type Subtitles,
 } from './social';
-import { hasCookingSteps, recipeFromTranscript, takeSpokenSteps, vttToLines } from './transcript';
+import { recipeFromTranscript, takeSpokenSteps, vttToLines } from './transcript';
 import { parseRecipeText } from './text';
+import { recipeLooksComplete } from './videoFusion';
 import { decodeHtmlEntities } from '../text';
 
 export type ImportPlatform =
@@ -190,7 +191,8 @@ export async function importFromUrl(
       .replace(/^.*\bon threads$/i, '')
       .trim();
     draft.title = titleOf(caption, ogTitle && ogTitle !== caption ? ogTitle : null) ?? draft.title;
-    const complete = draft.ingredients.length > 0 && hasCookingSteps(draft.steps);
+    // Listened to unless the post has it all: quantities and a real method.
+    const complete = recipeLooksComplete(draft);
     return {
       draft,
       platform,
@@ -304,7 +306,8 @@ async function importPinterest(
   draft.title = (description ? titleOf(description) : null) ?? draft.title;
   // A pin of an Instagram or TikTok post: the post may have what the description lacks.
   if (link && SOCIAL_HOST.test(link.hostname) && !PINTEREST_HOST.test(link.hostname)) {
-    const complete = draft.ingredients.length > 0 && hasCookingSteps(draft.steps);
+    // Listened to unless the post has it all: quantities and a real method.
+    const complete = recipeLooksComplete(draft);
     if (!complete) {
       const post = await importFromUrl(fetchPage, link.toString(), 1);
       if (!draft.ingredients.length) draft.ingredients = post.draft.ingredients;
@@ -321,7 +324,8 @@ async function importPinterest(
     origin.draft.imageUrl ??= draft.imageUrl;
     return origin;
   }
-  const complete = draft.ingredients.length > 0 && hasCookingSteps(draft.steps);
+  // Listened to unless the post has it all: quantities and a real method.
+  const complete = recipeLooksComplete(draft);
   return {
     draft,
     platform: 'pinterest',
@@ -409,7 +413,8 @@ async function importInstagram(
   }
   const hasRecipe = draft.ingredients.length > 0 || draft.steps.length > 0;
   // Many captions list the ingredients only (or the steps only): the rest is said in the video.
-  const complete = draft.ingredients.length > 0 && hasCookingSteps(draft.steps);
+  // Listened to unless the post has it all: quantities and a real method.
+  const complete = recipeLooksComplete(draft);
   return {
     draft,
     platform: 'instagram',
@@ -498,7 +503,7 @@ async function importVideo(
     draft.title;
   // Recipe explained out loud: complete what the caption lacks with the spoken words.
   let fromSpeech = false;
-  if (subtitles && (!draft.ingredients.length || !hasCookingSteps(draft.steps))) {
+  if (subtitles && !recipeLooksComplete(draft)) {
     const vtt = await getText(fetchPage, subtitles.url, 'text/vtt,*/*');
     const lines = vtt?.replace(/^\uFEFF/, '').startsWith('WEBVTT') ? vttToLines(vtt) : [];
     if (lines.length) {
