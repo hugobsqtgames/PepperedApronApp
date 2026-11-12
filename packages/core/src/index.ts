@@ -41,3 +41,4 @@ export * from './parse/receipt';
 export * from './parse/screenshot';
 export * from './parse/title';
 export * from './nutrition';
+export * from './parse/videoFusion';

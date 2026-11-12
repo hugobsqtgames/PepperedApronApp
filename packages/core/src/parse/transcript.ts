@@ -369,7 +369,9 @@ export interface TranscriptRecipe {
 export function recipeFromTranscript(lines: string[]): TranscriptRecipe {
   const all = sentences(lines);
   const ingredients: DraftIngredient[] = [];
-  const seen = new Set<string>();
+  // Index of each food already found: a later mention may bring the quantity the first lacked
+  // ("pour ce poulet au curry il faut 500 grammes de poulet").
+  const seen = new Map<string, number>();
   for (const s of all) {
     const ws = words(s);
     for (const { start, end } of foodSpans(ws.map((w) => w.norm))) {
@@ -383,8 +385,8 @@ export function recipeFromTranscript(lines: string[]): TranscriptRecipe {
         .map((w) => w.raw)
         .join(' ');
       const key = ingredientKey(name);
-      if (seen.has(key)) continue;
-      seen.add(key);
+      const before_ = seen.get(key);
+      if (before_ !== undefined && ingredients[before_]!.quantity !== null) continue;
       // Look back for a spoken quantity: "200 grammes de", "deux cuillères à soupe de".
       let k = start - 1;
       while (k >= 0 && LINKS.has(ws[k]!.norm)) k--;
@@ -416,6 +418,16 @@ export function recipeFromTranscript(lines: string[]): TranscriptRecipe {
         )
           ing = parsed;
       }
+      if (before_ !== undefined) {
+        if (ing)
+          Object.assign(ingredients[before_]!, {
+            quantity: ing.quantity,
+            quantityMax: ing.quantityMax,
+            unit: ing.unit,
+          });
+        continue;
+      }
+      seen.set(key, ingredients.length);
       ingredients.push({
         group: null,
         name: ing?.name || name,
@@ -434,3 +446,9 @@ export function recipeFromTranscript(lines: string[]): TranscriptRecipe {
   }));
   return { ingredients: ingredients.slice(0, 60), steps: steps.slice(0, 40), text: all.join('\n') };
 }
+
+/** Whether a sentence is an instruction to cook ("Faites revenir l'oignon"), not a comment. */
+export const isCookingStep = (sentence: string) => isCookingSentence(sentence);
+
+/** Numbers said out loud ("deux", "cent", "demi"), for checking a quantity against a video. */
+export const SPOKEN_NUMBERS: Readonly<Record<string, number>> = NUMBER_WORDS;
